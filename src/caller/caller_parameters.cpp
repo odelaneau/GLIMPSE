@@ -44,7 +44,8 @@ void caller::declare_options() {
 			("main", bpo::value<int>()->default_value(10), "Main passes")
 			("pbwt-depth", bpo::value<int>()->default_value(2), "Number of neighbors to store")
 			("pbwt-modulo", bpo::value<int>()->default_value(8), "Number of neighbors to store")
-			("init-states", bpo::value<int>()->default_value(1000), "Number of neighbors to store");
+			("init-states", bpo::value<int>()->default_value(1000), "Number of neighbors to store")
+			("beagle5", "Number of neighbors to store");
 
 	bpo::options_description opt_output ("Output files");
 	opt_output.add_options()
