@@ -1,10 +1,10 @@
-#ifndef _HAPLOID_SAMPLING_H
-#define _HAPLOID_SAMPLING_H
+#ifndef _S_PHASING_H
+#define _S_PHASING_H
 
 #include <utils/otools.h>
 #include <containers/conditioning_set.h>
 
-class haploid_sampling {
+class switchphasing {
 private:
 
 	conditioning_set * C;
@@ -20,10 +20,9 @@ private:
 
 public:
 	//CONSTRUCTOR/DESTRUCTOR
-	haploid_sampling(conditioning_set * C);
-	~haploid_sampling();
+	switchphasing(conditioning_set * C);
+	~switchphasing();
 
-	void backward();
 	void sampling(vector < bool > &, vector < bool > &);
 };
 

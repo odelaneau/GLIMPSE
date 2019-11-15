@@ -131,12 +131,13 @@ void diplotype_hmm::backward() {
 }
 
 void diplotype_hmm::rephaseHaplotypes(vector < bool > & H0, vector < bool > & H1) {
+	tac.clock();
 	reallocate(H0, H1);
-	vrb.bullet("DIP Resize (" + stb.str(tac.rel_time()*1.0, 1) + "ms)");tac.clock();
+	//vrb.bullet("DIP Resize (" + stb.str(tac.rel_time()*1.0, 1) + "ms)");
 	forward();
-	vrb.bullet("DIP Forward (" + stb.str(tac.rel_time()*1.0, 1) + "ms)");tac.clock();
+	//vrb.bullet("DIP Forward (" + stb.str(tac.rel_time()*1.0, 1) + "ms)");tac.clock();
 	backward();
-	vrb.bullet("DIP Backward (" + stb.str(tac.rel_time()*1.0, 1) + "ms)");tac.clock();
+	//vrb.bullet("DIP Backward (" + stb.str(tac.rel_time()*1.0, 1) + "ms)");tac.clock();
 
 	vector < int > dip_sampled = vector < int > (n_segs, -1);
 	vector < double > dip_probs = vector < double > (HAP_NUMBER, 0.0);
@@ -177,5 +178,5 @@ void diplotype_hmm::rephaseHaplotypes(vector < bool > & H0, vector < bool > & H1
 			curr_segment_locus = 0;
 		}
 	}
-	vrb.bullet("HAP Expectation (" + stb.str(tac.rel_time()*1.0, 1) + "ms)");tac.clock();
+	vrb.bullet("DIP Phasing meth1 (" + stb.str(tac.rel_time()*1.0, 1) + "ms)");tac.clock();
 }

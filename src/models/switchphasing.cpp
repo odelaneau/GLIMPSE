@@ -1,9 +1,9 @@
-#include <models/haploid_sampling.h>
+#include <models/switchphasing.h>
 
-haploid_sampling::haploid_sampling(conditioning_set * _C) : C(_C) {
+switchphasing::switchphasing(conditioning_set * _C) : C(_C) {
 }
 
-void haploid_sampling::sampling(vector < bool > & H0, vector < bool > & H1) {
+void switchphasing::sampling(vector < bool > & H0, vector < bool > & H1) {
 	UP = vector < unsigned char > (H0.size(), 0);
 	HAP = vector < vector < bool > > (2, vector < bool > (H0.size(), false));
 	HAP[0] = H0;

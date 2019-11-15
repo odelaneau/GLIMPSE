@@ -32,7 +32,8 @@
 
 #include <models/haplotype_hmm.h>
 #include <models/diplotype_hmm.h>
-#include <models/haploid_sampling.h>
+#include <models/switchphasing.h>
+#include <models/switchandflipphasing.h>
 
 #define STAGE_INIT	0
 #define STAGE_BURN	1
@@ -72,7 +73,8 @@ public:
 	vector < conditioning_set * > COND;		// Conditionning states
 	vector < haplotype_hmm * > HMM;
 	vector < diplotype_hmm * > DMM;
-	vector < haploid_sampling * > SMM;
+	vector < switchandflipphasing * > FMM;
+	vector < switchphasing * > SMM;
 
 
 

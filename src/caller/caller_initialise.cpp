@@ -58,13 +58,15 @@ void caller::read_files_and_initialise() {
 	HLC = vector < vector < float > > (options["thread"].as < int > (), vector < float > (H.n_site * 2, 0.0));
 	HMM = vector < haplotype_hmm * > (options["thread"].as < int > (), NULL);
 	DMM = vector < diplotype_hmm * > (options["thread"].as < int > (), NULL);
-	SMM = vector < haploid_sampling * > (options["thread"].as < int > (), NULL);
+	FMM = vector < switchandflipphasing * > (options["thread"].as < int > (), NULL);
+	SMM = vector < switchphasing * > (options["thread"].as < int > (), NULL);
 	COND = vector < conditioning_set * > (options["thread"].as < int > (), NULL);
 	for (int t = 0 ; t < HMM.size() ; t ++) {
 		COND[t] = new conditioning_set(V, (readerG.n_ref_samples+readerG.n_main_samples)*2, 20000);
 		HMM[t] = new haplotype_hmm(COND[t]);
 		DMM[t] = new diplotype_hmm(COND[t]);
-		SMM[t] = new haploid_sampling (COND[t]);
+		FMM[t] = new switchandflipphasing (COND[t]);
+		SMM[t] = new switchphasing (COND[t]);
 	}
 
 	//step5
