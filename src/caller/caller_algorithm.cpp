@@ -30,7 +30,7 @@ void * phase_callback(void * ptr) {
 	for(;;) {
 		pthread_mutex_lock(&S->mutex_workers);
 		id_job = S->i_jobs ++;
-		if (id_job <= S->G.n_ind) vrb.progress("  * HMM imputation", id_job*1.0/S->G.n_ind);
+		//if (id_job <= S->G.n_ind) vrb.progress("  * HMM imputation", id_job*1.0/S->G.n_ind);
 		pthread_mutex_unlock(&S->mutex_workers);
 		if (id_job < S->G.n_ind) S->phase_individual(id_worker, id_job);
 		else pthread_exit(NULL);
@@ -42,10 +42,10 @@ void caller::phase_individual(int id_worker, int id_job) {
 	if (current_stage == STAGE_INIT) {
 		H.selectRandom(options["init-states"].as < int > (), COND[id_worker]);
 		G.vecG[id_job]->initHaplotypeLikelihoods(HLC[id_worker]);
-		vrb.bullet("Selection (" + stb.str(tac.rel_time()*1.0, 1) + "ms)");tac.clock();
+		//vrb.bullet("Selection (" + stb.str(tac.rel_time()*1.0, 1) + "ms)");tac.clock();
 	} else {
 		H.selectPositionalBurrowWheelerTransform(id_job, COND[id_worker]);
-		vrb.bullet("Selection (" + stb.str(tac.rel_time()*1.0, 1) + "ms)");tac.clock();
+		//vrb.bullet("Selection (" + stb.str(tac.rel_time()*1.0, 1) + "ms)");tac.clock();
 		if (options.count("phasing-switch")) SMM[id_worker]->sampling(G.vecG[id_job]->H0, G.vecG[id_job]->H1);
 		else if (options.count("phasing-flipandswitch")) FMM[id_worker]->sampling(G.vecG[id_job]->H0, G.vecG[id_job]->H1);
 		else DMM[id_worker]->rephaseHaplotypes(G.vecG[id_job]->H0, G.vecG[id_job]->H1);
