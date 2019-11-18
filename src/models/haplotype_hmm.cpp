@@ -53,13 +53,13 @@ void haplotype_hmm::init(vector < float > & HL) {
 
 void haplotype_hmm::computePosteriors(vector < float > & HL, vector < float > & HP) {
 	resize();
-	vrb.bullet("HAP Resize (" + stb.str(tac.rel_time()*1.0, 1) + "ms)");tac.clock();
+	//vrb.bullet("HAP Resize (" + stb.str(tac.rel_time()*1.0, 1) + "ms)");tac.clock();
 	init(HL);
-	vrb.bullet("HAP Init (" + stb.str(tac.rel_time()*1.0, 1) + "ms)");tac.clock();
+	//vrb.bullet("HAP Init (" + stb.str(tac.rel_time()*1.0, 1) + "ms)");tac.clock();
 	forward();
-	vrb.bullet("HAP Forward (" + stb.str(tac.rel_time()*1.0, 1) + "ms)");tac.clock();
+	//vrb.bullet("HAP Forward (" + stb.str(tac.rel_time()*1.0, 1) + "ms)");tac.clock();
 	backward(HL, HP);
-	vrb.bullet("HAP Backward (" + stb.str(tac.rel_time()*1.0, 1) + "ms)");tac.clock();
+	//vrb.bullet("HAP Backward (" + stb.str(tac.rel_time()*1.0, 1) + "ms)");tac.clock();
 }
 
 void haplotype_hmm::forward() {

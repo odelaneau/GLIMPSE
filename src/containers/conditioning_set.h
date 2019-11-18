@@ -96,15 +96,15 @@ public:
 	void updateTransitions() {
 		t = vector < double > (Vpoly.size() - 1, 0.0);
 		nt = vector < double > (Vpoly.size() - 1, 0.0);
-		output_file fd("test.txt");
+		//output_file fd("test.txt");
 		for (int l = 1 ; l < Vpoly.size() ; l ++) {
 			double rho = 0.04 * n_effective * (mapG.vec_pos[Vpoly[l]]->cm - mapG.vec_pos[Vpoly[l-1]]->cm);
 			if (rho == 0.0) rho = 0.00001;
 			t[l-1] = -1.0 * expm1(-1.0 * rho / n_haps);
 			nt[l-1] = 1-t[l-1];
-			fd << l-1 << " " << t[l-1] << " " << nt[l-1] << endl;
+			//fd << l-1 << " " << t[l-1] << " " << nt[l-1] << endl;
 		}
-		fd.close();
+		//fd.close();
 	}
 };
 
