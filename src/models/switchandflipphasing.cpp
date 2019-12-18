@@ -162,5 +162,5 @@ void switchandflipphasing::sampling(vector < bool > & H0, vector < bool > & H1) 
 		}
 	}
 
-	//vrb.bullet("DIP Phasing meth2 (" + stb.str(tac.rel_time()*1.0, 1) + "ms)");tac.clock();
+	vrb.bullet("DIP Phasing meth2 (" + stb.str(tac.rel_time()*1.0, 1) + "ms)");tac.clock();
 }
