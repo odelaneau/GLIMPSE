@@ -1,3 +1,6 @@
+#module load Bioinformatics/Software/vital-it
+#module add Development/gcc/9.2.1
+
 #COMPILER MODE C++11
 CXX=g++ -std=c++0x
 
@@ -31,7 +34,7 @@ LDFLAG=-O3
 DYN_LIBS=-lz -lbz2 -lm -lpthread -llzma
 
 #SHAPEIT SOURCES & BINARY
-BFILE=bin/LCC2
+BFILE=bin/concordance
 HFILE=$(shell find src -name *.h)
 CFILE=$(shell find src -name *.cpp)
 OFILE=$(shell for file in `find src -name *.cpp`; do echo obj/$$(basename $$file .cpp).o; done)

@@ -28,6 +28,7 @@ genotype::genotype(int _index, int _n_variants) {
 	name = "";
 	index = _index;
 	n_variants = _n_variants;
+	nHAPstored = 0;
 }
 
 genotype::~genotype() {
@@ -49,6 +50,7 @@ void genotype::allocate() {
 	GP = vector < float > (2 * n_variants, 0.0);
 	H0 = vector < bool > (n_variants, false);
 	H1 = vector < bool > (n_variants, false);
+	HAP = vector < int > (n_variants, 0);
 }
 
 void genotype::initHaplotypeLikelihoods(vector < float > & HL) {
@@ -133,6 +135,14 @@ void genotype::storeGenotypePosteriors(vector < float > & HP0, vector < float > 
 		GP[2*l+0] += p0 / (p0 + p1 + p2);
 		GP[2*l+1] += p1 / (p0 + p1 + p2);
 	}
+}
+
+void genotype::storeSampledHaplotypes() {
+	for (int l = 0 ; l < n_variants ; l ++) {
+		H0[l]?SET(HAP[l],nHAPstored+0):CLR(HAP[l],nHAPstored+0);
+		H1[l]?SET(HAP[l],nHAPstored+1):CLR(HAP[l],nHAPstored+1);
+	}
+	nHAPstored += 2;
 }
 
 void genotype::normGenotypePosteriors(int nStorages) {

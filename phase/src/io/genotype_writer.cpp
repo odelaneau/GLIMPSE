@@ -31,7 +31,7 @@ genotype_writer::genotype_writer(haplotype_set & _H, genotype_set & _G, variant_
 genotype_writer::~genotype_writer() {
 }
 
-void genotype_writer::writeGenotypes(string fname, int start, int stop) {
+void genotype_writer::writeGenotypes(string fname, int start, int stop, int n_main) {
 	// Init
 	tac.clock();
 	string file_format = "w";
@@ -44,7 +44,7 @@ void genotype_writer::writeGenotypes(string fname, int start, int stop) {
 
 	// Create VCF header
 	bcf_hdr_append(hdr, string("##fileDate="+tac.date()).c_str());
-	bcf_hdr_append(hdr, "##source=LCCv2.0");
+	bcf_hdr_append(hdr, "##source=LCC");
 	bcf_hdr_append(hdr, string("##contig=<ID="+ V.vec_pos[0]->chr + ">").c_str());
 	bcf_hdr_append(hdr, "##INFO=<ID=AFref,Number=A,Type=Float,Description=\"Allele Frequency\">");
 	bcf_hdr_append(hdr, "##INFO=<ID=AFmain,Number=A,Type=Float,Description=\"Allele Frequency\">");
@@ -53,6 +53,9 @@ void genotype_writer::writeGenotypes(string fname, int start, int stop) {
 	bcf_hdr_append(hdr, "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Phased genotypes\">");
 	bcf_hdr_append(hdr, "##FORMAT=<ID=DS,Number=1,Type=Float,Description=\"Genotype dosage\">");
 	bcf_hdr_append(hdr, "##FORMAT=<ID=GP,Number=3,Type=Float,Description=\"Genotype posteriors\">");
+	bcf_hdr_append(hdr, "##INFO=<ID=BUF,Number=A,Type=Integer,Description=\"Is it falling within buffer regions (0=no /1=yes)?\">");
+	string label = "##FORMAT=<ID=HS,Number=1,Type=Integer,Description=\"Sampled haplotype pairs packed into intergers (max: 16 pairs, current: " + stb.str(n_main) + " pairs)\">";
+	bcf_hdr_append(hdr, label.c_str());
 
 	//Add samples
 	for (int i = 0 ; i < G.n_ind ; i ++) bcf_hdr_add_sample(hdr, G.vecG[i]->name.c_str());
@@ -63,10 +66,13 @@ void genotype_writer::writeGenotypes(string fname, int start, int stop) {
 	int * genotypes = (int*)malloc(bcf_hdr_nsamples(hdr)*2*sizeof(int));
 	float * dosages = (float*)malloc(bcf_hdr_nsamples(hdr)*1*sizeof(float));
 	float * posteriors = (float*)malloc(bcf_hdr_nsamples(hdr)*3*sizeof(float));
+	int * haplotypes = (int*)malloc(bcf_hdr_nsamples(hdr)*sizeof(int));
 
 	for (int l = 0 ; l < V.size() ; l ++) {
 		int current_position = V.vec_pos[l]->bp;
-		if (current_position >= start && current_position < stop) {
+		int inBufferRegion = (current_position < start || current_position >= stop);
+
+		if (n_main > 0 || !inBufferRegion) {
 			bcf_clear1(rec);
 			rec->rid = bcf_hdr_name2id(hdr, V.vec_pos[l]->chr.c_str());
 			rec->pos = current_position - 1;
@@ -91,11 +97,13 @@ void genotype_writer::writeGenotypes(string fname, int start, int stop) {
 				posteriors[3*i+0] = gp0;
 				posteriors[3*i+1] = gp1;
 				posteriors[3*i+2] = gp2;
+				if (n_main > 0) haplotypes[i] = G.vecG[i]->HAP[l];
 			}
 			float freq_alt_refp = count_alt_ref / (V.vec_pos[l]->calt + V.vec_pos[l]->cref);
 			float freq_alt_main = count_alt / (2 * G.n_ind);
 			float freq_alt_full = (count_alt + count_alt_ref) / (2 * G.n_ind + V.vec_pos[l]->calt + V.vec_pos[l]->cref);
 
+			bcf_update_info_int32(hdr, rec, "BUF", &inBufferRegion, 1);
 			bcf_update_info_float(hdr, rec, "AFref", &freq_alt_refp, 1);
 			bcf_update_info_float(hdr, rec, "AFmain", &freq_alt_main, 1);
 			bcf_update_info_float(hdr, rec, "AFfull", &freq_alt_full, 1);
@@ -107,6 +115,7 @@ void genotype_writer::writeGenotypes(string fname, int start, int stop) {
 			bcf_update_genotypes(hdr, rec, genotypes, bcf_hdr_nsamples(hdr)*2);
 			bcf_update_format_float(hdr, rec, "DS", dosages, bcf_hdr_nsamples(hdr)*1);
 			bcf_update_format_float(hdr, rec, "GP", posteriors, bcf_hdr_nsamples(hdr)*3);
+			bcf_update_format_int32(hdr, rec, "HS", haplotypes, bcf_hdr_nsamples(hdr)*1);
 			bcf_write1(fp, hdr, rec);
 		}
 		vrb.progress("  * VCF writing", (l+1)*1.0/V.size());

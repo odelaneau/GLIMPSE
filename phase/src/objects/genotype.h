@@ -24,6 +24,11 @@
 
 #include <utils/otools.h>
 
+
+#define SET(n,i)	(n |= 1UL << i)
+#define CLR(n,i)	(n &= ~(1UL << i));
+#define GET(n,i)	((n >> i) & 1U);
+
 class genotype {
 public:
 	// INTERNAL DATA
@@ -34,6 +39,8 @@ public:
 	vector < float > GP;				// Output Genotype posteriors
 	vector < bool > H0;					// First haplotype
 	vector < bool > H1;					// Second haplotype
+	vector < int > HAP;					// Storing haplotypes
+	int nHAPstored;
 
 	//CORE METHODS
 	genotype(int, int);
@@ -47,6 +54,7 @@ public:
 	void sampleHaplotypeH1(vector < float > &);
 	void makeHaplotypeLikelihoods(vector < float > &, bool);
 	void storeGenotypePosteriors(vector < float > &, vector < float > &);
+	void storeSampledHaplotypes();
 
 	void normGenotypePosteriors(int);
 	void inferGenotypes();

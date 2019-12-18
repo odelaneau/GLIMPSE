@@ -111,4 +111,6 @@ void caller::verbose_options() {
 	vrb.bullet("PBWT depth : " + stb.str(options["pbwt-depth"].as < int > ()));
 	vrb.bullet("PBWT modulo: " + stb.str(options["pbwt-modulo"].as < int > ()));
 	vrb.bullet("Init K     : " + stb.str(options["init-states"].as < int > ()));
+	if (options.count("haplotypes")) vrb.bullet("Output     : Report haplotypes (HS) in output + buffer regions for ligating chunks");
+	else vrb.bullet("Output     : Do not report report haplotypes (HS) and buffer regions in output");
 }
