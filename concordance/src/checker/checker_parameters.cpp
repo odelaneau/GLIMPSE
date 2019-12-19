@@ -57,9 +57,9 @@ void checker::parse_command_line(vector < string > & args) {
 	if (options.count("log") && !vrb.open_log(options["log"].as < string > ()))
 		vrb.error("Impossible to create log file [" + options["log"].as < string > () +"]");
 
-	vrb.title("Genotype Concordance & Imputation quality");
-	vrb.bullet("Author        : Olivier DELANEAU, University of Lausanne");
-	vrb.bullet("Contact       : olivier.delaneau@gmail.com");
+	vrb.title("LCC_concordance");
+	vrb.bullet("Author        : Simone RUBINACCI & Olivier DELANEAU, University of Lausanne");
+	vrb.bullet("Contact       : simone.rubinacci@unil.ch & olivier.delaneau@unil.ch");
 	vrb.bullet("Version       : 1.0.0");
 	vrb.bullet("Run date      : " + tac.date());
 }
