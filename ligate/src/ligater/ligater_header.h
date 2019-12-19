@@ -31,6 +31,18 @@ public:
 	bpo::options_description descriptions;
 	bpo::variables_map options;
 
+	//FILE DATA
+	int nfiles;
+	vector < string > filenames;
+	vector < bool > file_has_record;
+	vector < bool > body_already_passed;
+
+	//SAMPLE DATA
+	int nsamples;
+	vector < string > sampleIDs;
+	vector < bool > switching;
+	vector < vector < bool > > haplotypes;
+
 	//CONSTRUCTOR
 	ligater();
 	~ligater();

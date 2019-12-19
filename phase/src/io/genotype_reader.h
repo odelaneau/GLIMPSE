@@ -34,7 +34,6 @@ public:
 	genotype_set & G;
 	variant_map & V;
 	string region;
-	bool validation;
 
 	//COUNTS
 	unsigned long n_variants;
@@ -45,8 +44,6 @@ public:
 	genotype_reader(haplotype_set &, genotype_set &, variant_map &, string regions);
 	~genotype_reader();
 	void allocateGenotypes();
-
-
 
 	//IO
 	void scanGenotypes(string funphased, string fphased);

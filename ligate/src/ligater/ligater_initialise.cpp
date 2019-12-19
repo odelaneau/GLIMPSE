@@ -26,4 +26,19 @@ void ligater::read_files_and_initialise() {
 
 	//step0: Initialize seed & other
 	rng.setSeed(options["seed"].as < int > ());
+
+	//step1:read filenames
+	string buffer;
+	string filelist = options["input"].as < string > ();
+	vrb.title("Read filenames in [" + filelist + "]");
+	input_file fd(filelist);
+	while (getline(fd, buffer)) filenames.push_back(buffer);
+	vrb.bullet("#files = " + stb.str(filenames.size()) + "]");
+
+	//step2: initilize flags
+	vrb.title("Initilialize flags");
+	nfiles = filenames.size();
+	file_has_record = vector < bool > (nfiles, false);
+	body_already_passed = vector < bool > (nfiles, false);
+	vrb.bullet("done");
 }

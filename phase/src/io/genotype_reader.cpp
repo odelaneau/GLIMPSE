@@ -54,7 +54,6 @@ void genotype_reader::allocateGenotypes() {
 void genotype_reader::scanGenotypes(string fmain, string fref) {
 	vrb.wait("  * VCF/BCF scanning");
 	tac.clock();
-	validation = false;
 	bcf_srs_t * sr =  bcf_sr_init();
 	sr->collapse = COLLAPSE_NONE;
 	sr->require_index = 1;
