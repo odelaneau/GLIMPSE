@@ -70,9 +70,7 @@ void genotype_writer::writeGenotypes(string fname, int start, int stop, int n_ma
 
 	for (int l = 0 ; l < V.size() ; l ++) {
 		int current_position = V.vec_pos[l]->bp;
-		int inBufferRegion = (current_position < start || current_position >= stop);
-
-		if (n_main > 0 || !inBufferRegion) {
+		if (current_position >= start && current_position < stop) {
 			bcf_clear1(rec);
 			rec->rid = bcf_hdr_name2id(hdr, V.vec_pos[l]->chr.c_str());
 			rec->pos = current_position - 1;
@@ -97,21 +95,17 @@ void genotype_writer::writeGenotypes(string fname, int start, int stop, int n_ma
 				posteriors[3*i+0] = gp0;
 				posteriors[3*i+1] = gp1;
 				posteriors[3*i+2] = gp2;
-				if (n_main > 0) haplotypes[i] = G.vecG[i]->HAP[l];
+				haplotypes[i] = G.vecG[i]->HAP[l];
 			}
 			float freq_alt_refp = count_alt_ref / (V.vec_pos[l]->calt + V.vec_pos[l]->cref);
 			float freq_alt_main = count_alt / (2 * G.n_ind);
 			float freq_alt_full = (count_alt + count_alt_ref) / (2 * G.n_ind + V.vec_pos[l]->calt + V.vec_pos[l]->cref);
-
-			bcf_update_info_int32(hdr, rec, "BUF", &inBufferRegion, 1);
-			bcf_update_info_float(hdr, rec, "AFref", &freq_alt_refp, 1);
 			bcf_update_info_float(hdr, rec, "AFmain", &freq_alt_main, 1);
+			bcf_update_info_float(hdr, rec, "AFref", &freq_alt_refp, 1);
 			bcf_update_info_float(hdr, rec, "AFfull", &freq_alt_full, 1);
 
-			if (V.vec_pos[l]->cm >= 0) {
-				float val = (float)V.vec_pos[l]->cm;
-				bcf_update_info_float(hdr, rec, "CM", &val, 1);
-			}
+			float val = (float)V.vec_pos[l]->cm;
+			bcf_update_info_float(hdr, rec, "CM", &val, 1);
 			bcf_update_genotypes(hdr, rec, genotypes, bcf_hdr_nsamples(hdr)*2);
 			bcf_update_format_float(hdr, rec, "DS", dosages, bcf_hdr_nsamples(hdr)*1);
 			bcf_update_format_float(hdr, rec, "GP", posteriors, bcf_hdr_nsamples(hdr)*3);

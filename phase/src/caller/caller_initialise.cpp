@@ -40,7 +40,7 @@ void caller::read_files_and_initialise() {
 	buildCoordinates();
 
 	//step2: Read input files
-	genotype_reader readerG(H, G, V, gregion);
+	genotype_reader readerG(H, G, V, input_gregion);
 	readerG.scanGenotypes(options["input"].as < string > (), options["reference"].as < string > ());
 	readerG.allocateGenotypes();
 	readerG.readGenotypes(options["input"].as < string > (), options["reference"].as < string > ());

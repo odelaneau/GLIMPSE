@@ -32,11 +32,9 @@ void caller::declare_options() {
 	bpo::options_description opt_input ("Input files");
 	opt_input.add_options()
 			("input,I", bpo::value < string >(), "Genotypes to be phased in VCF/BCF format")
+			("input-region", bpo::value < string >(), "Whole genomic region to be phased (including left/right buffers)")
 			("reference,H", bpo::value < string >(), "Reference panel of haplotypes in VCF/BCF format")
-			("validation,V", bpo::value < string >(), "Validation data in VCF/BCF format")
-			("map,M", bpo::value < string >(), "Genetic map")
-			("region,R", bpo::value < string >(), "Target region")
-			("buffer", bpo::value < int >()->default_value(200), "Size of the buffer on each side in kilobases (200kb by default)");
+			("map,M", bpo::value < string >(), "Genetic map");
 
 	bpo::options_description opt_algo ("Parameters");
 	opt_algo.add_options()
@@ -52,6 +50,7 @@ void caller::declare_options() {
 	bpo::options_description opt_output ("Output files");
 	opt_output.add_options()
 			("output,O", bpo::value< string >(), "Phased haplotypes in VCF/BCF format")
+			("output-region", bpo::value < string >(), "Phased genomic region to output")
 			("log", bpo::value< string >(), "Log file");
 
 	descriptions.add(opt_base).add(opt_input).add(opt_algo).add(opt_output);
@@ -79,8 +78,11 @@ void caller::check_options() {
 	if (!options.count("input"))
 		vrb.error("You must specify one input file using --input");
 
-	if (!options.count("region"))
-		vrb.error("You must specify a region or chromosome to phase using --region");
+	if (!options.count("input-region"))
+		vrb.error("You must specify a region to phase using --input-region");
+
+	if (!options.count("output-region"))
+		vrb.error("You must specify a region to output using --output-region");
 
 	if (!options.count("output"))
 		vrb.error("You must specify a phased output file with --output");
@@ -98,7 +100,8 @@ void caller::verbose_files() {
 	vrb.bullet("Reference VCF : [" + options["reference"].as < string > () + "]");
 	if (options.count("map")) vrb.bullet("Genetic Map   : [" + options["map"].as < string > () + "]");
 	vrb.bullet("Output VCF    : [" + options["output"].as < string > () + "]");
-	vrb.bullet("Genomic region: [" + options["region"].as < string > () + "]");
+	vrb.bullet("Input region  : [" + options["input-region"].as < string > () + "]");
+	vrb.bullet("Output region : [" + options["output-region"].as < string > () + "]");
 	if (options.count("log")) vrb.bullet("Output LOG    : [" + options["log"].as < string > () + "]");
 }
 

@@ -56,7 +56,8 @@ public:
 	int input_stop;
 	int output_start;
 	int output_stop;
-	string gregion;
+	string input_gregion;
+	string output_gregion;
 
 	//MULTI-THREADING
 	int i_workers, i_jobs;
