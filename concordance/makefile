@@ -30,7 +30,7 @@ LDFLAG=-g
 DYN_LIBS=-lz -lbz2 -lm -lpthread -llzma
 
 #SHAPEIT SOURCES & BINARY
-BFILE=bin/MC
+BFILE=bin/LCC_concordance
 HFILE=$(shell find src -name *.h)
 CFILE=$(shell find src -name *.cpp)
 OFILE=$(shell for file in `find src -name *.cpp`; do echo obj/$$(basename $$file .cpp).o; done)
