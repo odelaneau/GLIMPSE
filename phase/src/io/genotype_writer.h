@@ -41,8 +41,7 @@ public:
 	~genotype_writer();
 
 	//IO
-	void writeGenotypes(string foutput, int, int, int);
-	void writeBuffers(string foutput, int, int, int);
+	void writeGenotypes(string foutput, int, int, int, bool);
 };
 
 #endif
