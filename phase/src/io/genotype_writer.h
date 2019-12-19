@@ -42,6 +42,7 @@ public:
 
 	//IO
 	void writeGenotypes(string foutput, int, int, int);
+	void writeBuffers(string foutput, int, int, int);
 };
 
 #endif

@@ -38,11 +38,11 @@ void caller::declare_options() {
 
 	bpo::options_description opt_algo ("Parameters");
 	opt_algo.add_options()
-			("burnin", bpo::value<int>()->default_value(10), "Burn-in passes")
-			("main", bpo::value<int>()->default_value(10), "Main passes")
+			("burnin", bpo::value<int>()->default_value(10), "Number of Burn-in iterations")
+			("main", bpo::value<int>()->default_value(10), "Number of Main iterations")
 			("pbwt-depth", bpo::value<int>()->default_value(2), "Number of neighbors to store")
-			("pbwt-modulo", bpo::value<int>()->default_value(8), "Number of neighbors to store")
-			("init-states", bpo::value<int>()->default_value(1000), "Number of neighbors to store")
+			("pbwt-modulo", bpo::value<int>()->default_value(8), "Frequency of PBWT storage")
+			("init-states", bpo::value<int>()->default_value(1000), "Number of states used for initialization")
 			("phasing-switch", "Phasing using switch likelihoods")
 			("phasing-flipandswitch", "Phasing using flip and switch likelihoods");
 
@@ -51,6 +51,7 @@ void caller::declare_options() {
 	opt_output.add_options()
 			("output,O", bpo::value< string >(), "Phased haplotypes in VCF/BCF format")
 			("output-region", bpo::value < string >(), "Phased genomic region to output")
+			("output-buffer", "Output buffer regions for proper ligation between chunks")
 			("log", bpo::value< string >(), "Log file");
 
 	descriptions.add(opt_base).add(opt_input).add(opt_algo).add(opt_output);

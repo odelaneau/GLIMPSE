@@ -124,3 +124,6 @@ void genotype_writer::writeGenotypes(string fname, int start, int stop, int n_ma
 	case OFILE_BCFC: vrb.bullet("BCF writing [Compressed / N=" + stb.str(G.n_ind) + " / L=" + stb.str(V.size()) + "] (" + stb.str(tac.rel_time()*0.001, 2) + "s)"); break;
 	}
 }
+
+void genotype_writer::writeBuffers(string fname, int start, int stop, int n_main) {
+}
