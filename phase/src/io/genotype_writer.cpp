@@ -44,7 +44,7 @@ void genotype_writer::writeGenotypes(string fname, int start, int stop, int n_ma
 
 	// Create VCF header
 	bcf_hdr_append(hdr, string("##fileDate="+tac.date()).c_str());
-	bcf_hdr_append(hdr, "##source=LCC");
+	bcf_hdr_append(hdr, "##source=LCC_phase");
 	bcf_hdr_append(hdr, string("##contig=<ID="+ V.vec_pos[0]->chr + ">").c_str());
 	bcf_hdr_append(hdr, "##INFO=<ID=AFref,Number=A,Type=Float,Description=\"Allele Frequency\">");
 	bcf_hdr_append(hdr, "##INFO=<ID=AFmain,Number=A,Type=Float,Description=\"Allele Frequency\">");
@@ -53,7 +53,6 @@ void genotype_writer::writeGenotypes(string fname, int start, int stop, int n_ma
 	bcf_hdr_append(hdr, "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Phased genotypes\">");
 	bcf_hdr_append(hdr, "##FORMAT=<ID=DS,Number=1,Type=Float,Description=\"Genotype dosage\">");
 	bcf_hdr_append(hdr, "##FORMAT=<ID=GP,Number=3,Type=Float,Description=\"Genotype posteriors\">");
-	bcf_hdr_append(hdr, "##INFO=<ID=BUF,Number=A,Type=Integer,Description=\"Is it falling within buffer regions (0=no /1=yes)?\">");
 	string label = "##FORMAT=<ID=HS,Number=1,Type=Integer,Description=\"Sampled haplotype pairs packed into intergers (max: 16 pairs, current: " + stb.str(n_main) + " pairs)\">";
 	bcf_hdr_append(hdr, label.c_str());
 
