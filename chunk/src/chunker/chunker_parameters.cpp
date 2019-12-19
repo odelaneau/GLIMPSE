@@ -54,8 +54,6 @@ void chunker::parse_command_line(vector < string > & args) {
 		bpo::notify(options);
 	} catch ( const boost::program_options::error& e ) { cerr << "Error parsing command line arguments: " << string(e.what()) << endl; exit(0); }
 
-	if (options.count("help")) { cout << descriptions << endl; exit(0); }
-
 	if (options.count("log") && !vrb.open_log(options["log"].as < string > ()))
 		vrb.error("Impossible to create log file [" + options["log"].as < string > () +"]");
 
@@ -64,6 +62,8 @@ void chunker::parse_command_line(vector < string > & args) {
 	vrb.bullet("Contact       : simone.rubinacci@unil.ch & olivier.delaneau@unil.ch");
 	vrb.bullet("Version       : 1.0.0");
 	vrb.bullet("Run date      : " + tac.date());
+
+	if (options.count("help")) { cout << descriptions << endl; exit(0); }
 }
 
 void chunker::check_options() {

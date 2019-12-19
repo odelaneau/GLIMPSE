@@ -20,9 +20,9 @@
 // SOFTWARE.
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <checker/checker_header.h>
+#include <ligater/ligater_header.h>
 
-void checker::declare_options() {
+void ligater::declare_options() {
 	bpo::options_description opt_base ("Basic options");
 	opt_base.add_options()
 			("help", "Produce help message")
@@ -30,62 +30,58 @@ void checker::declare_options() {
 
 	bpo::options_description opt_input ("Input files");
 	opt_input.add_options()
-			("input", bpo::value< string >(), "File listing True, Imputed, Frequencies and Regions");
+			("input", bpo::value < string >(), "Text file containing all VCF/BCF to ligate together");
 
 	bpo::options_description opt_algo ("Parameters");
 	opt_algo.add_options()
-			("minDP", bpo::value<int>(), "Minimum depth of coverage in validation data")
-			("minPROB", bpo::value<double>(), "Minimum posterior probability P(G|R) in validation data")
-			("bins", bpo::value< vector < double > >()->multitoken(), "Frequency bins used for Rsquare computations");
+			("dummy", bpo::value<int>()->default_value(10), "Dummy parameter to keep this section in the code");
 
 	bpo::options_description opt_output ("Output files");
 	opt_output.add_options()
-			("output,O", bpo::value< string >(), "Report files")
+			("output,O", bpo::value< string >(), "Output ligated file in VCF/BCF format")
 			("log", bpo::value< string >(), "Log file");
 
 	descriptions.add(opt_base).add(opt_input).add(opt_algo).add(opt_output);
 }
 
-void checker::parse_command_line(vector < string > & args) {
+void ligater::parse_command_line(vector < string > & args) {
 	try {
 		bpo::store(bpo::command_line_parser(args).options(descriptions).run(), options);
 		bpo::notify(options);
 	} catch ( const boost::program_options::error& e ) { cerr << "Error parsing command line arguments: " << string(e.what()) << endl; exit(0); }
 
-	if (options.count("log") && !vrb.open_log(options["log"].as < string > ()))
-		vrb.error("Impossible to create log file [" + options["log"].as < string > () +"]");
 
-	vrb.title("LCC_concordance");
+	vrb.title("LCC_ligate");
 	vrb.bullet("Author        : Simone RUBINACCI & Olivier DELANEAU, University of Lausanne");
 	vrb.bullet("Contact       : simone.rubinacci@unil.ch & olivier.delaneau@unil.ch");
 	vrb.bullet("Version       : 1.0.0");
 	vrb.bullet("Run date      : " + tac.date());
 
 	if (options.count("help")) { cout << descriptions << endl; exit(0); }
+
+	if (options.count("log") && !vrb.open_log(options["log"].as < string > ()))
+		vrb.error("Impossible to create log file [" + options["log"].as < string > () +"]");
 }
 
-void checker::check_options() {
+void ligater::check_options() {
 	if (!options.count("input"))
-		vrb.error("You must specify --input");
+		vrb.error("You must specify the list of VCF/BCF to ligate using --input");
 
 	if (!options.count("output"))
-		vrb.error("You must specify --output");
+		vrb.error("You must specify an output VCF/BCF file with --output");
 
-	if ((options.count("minDP") + options.count("minPROB")) < 1)
-		vrb.error("You must specify --minDP and/or --minPROB");
+	if (options.count("seed") && options["seed"].as < int > () < 0)
+		vrb.error("Random number generator needs a positive seed value");
 }
 
-void checker::verbose_files() {
-	vrb.title("Files are listed in [:" + options["input"].as < string > () + "]");
+void ligater::verbose_files() {
+	vrb.title("Files:");
+	vrb.bullet("Input LIST    : [" + options["input"].as < string > () + "]");
+	vrb.bullet("Output VCF    : [" + options["output"].as < string > () + "]");
 	if (options.count("log")) vrb.bullet("Output LOG    : [" + options["log"].as < string > () + "]");
 }
 
-void checker::verbose_options() {
+void ligater::verbose_options() {
 	vrb.title("Parameters:");
-	vrb.bullet("Seed    : " + stb.str(options["seed"].as < int > ()));
-	if (options.count("minDP")) vrb.bullet("MinDP   : " + stb.str(options["minDP"].as < int > ()) + "x");
-	if (options.count("minPROB")) vrb.bullet("MinPROB : " + stb.str(options["minPROB"].as < double > ()));
-
-	vector < double > tmp = options["bins"].as < vector < double > > ();
-	vrb.bullet("#bins   : " + stb.str(tmp.size()));
+	vrb.bullet("Seed       : " + stb.str(options["seed"].as < int > ()));
 }
