@@ -38,7 +38,6 @@ void ligater::read_files_and_initialise() {
 	//step2: initilize flags
 	vrb.title("Initilialize flags");
 	nfiles = filenames.size();
-	file_has_record = vector < bool > (nfiles, false);
-	body_already_passed = vector < bool > (nfiles, false);
+	current_stages = vector < unsigned char > (nfiles, STAGE_NONE);
 	vrb.bullet("done");
 }

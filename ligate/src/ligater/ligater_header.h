@@ -25,6 +25,12 @@
 
 #include <utils/otools.h>
 
+#define STAGE_NONE	0
+#define STAGE_UBUF	1
+#define STAGE_DBUF	2
+#define STAGE_BODY	3
+#define STAGE_DONE	4
+
 class ligater {
 public:
 	//COMMAND LINE OPTIONS
@@ -34,14 +40,14 @@ public:
 	//FILE DATA
 	int nfiles;
 	vector < string > filenames;
-	vector < bool > file_has_record;
-	vector < bool > body_already_passed;
+	vector < unsigned char > current_stages;
+	vector < int > prev_readers;
 
 	//SAMPLE DATA
 	int nsamples;
 	vector < string > sampleIDs;
 	vector < bool > switching;
-	vector < vector < bool > > haplotypes;
+	vector < int > distances;
 
 	//CONSTRUCTOR
 	ligater();
@@ -59,6 +65,11 @@ public:
 	void ligate(vector < string > &);
 	void ligate();
 	void write_files_and_finalise();
+
+	//FUNCTIONS
+	void update_distances_and_write_record(htsFile *, bcf1_t *, bcf1_t *);
+	void write_record(htsFile *, bcf1_t *);
+
 };
 
 #endif
