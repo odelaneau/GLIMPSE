@@ -44,10 +44,12 @@ public:
 	vector < int > prev_readers;
 
 	//SAMPLE DATA
+	int nmain;
 	int nsamples;
 	vector < string > sampleIDs;
 	vector < bool > switching;
 	vector < int > distances;
+	int * body_hs_fields, * buffer_hs_fields;
 
 	//CONSTRUCTOR
 	ligater();
@@ -67,8 +69,9 @@ public:
 	void write_files_and_finalise();
 
 	//FUNCTIONS
-	void update_distances_and_write_record(htsFile *, bcf1_t *, bcf1_t *);
-	void write_record(htsFile *, bcf1_t *);
+	int updateHS(int *);
+	void update_distances_and_write_record(htsFile *, bcf_hdr_t * , bcf1_t *, bcf1_t *);
+	void write_record(htsFile *, bcf_hdr_t * , bcf1_t *);
 
 };
 

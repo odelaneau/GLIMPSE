@@ -25,12 +25,50 @@
 #define OFILE_VCFC	1
 #define OFILE_BCFC	2
 
-void ligater::update_distances_and_write_record(htsFile * fd, bcf1_t * r0, bcf1_t * r1) {
+#define GET(n,i)	((n >> i) & 1U)
+#define TOG(n,i)	(n ^= 1UL << i)
 
+int ligater::updateHS(int * values) {
+	for (int i = 0 ; i < nsamples ; i++) {
+		for (int m = 0 ; m < nmain ; m ++) {
+			if (switching[i * nmain + m] && (GET(values[i], 2*m+0) != GET(values[i], 2*m+1))) {
+				TOG(values[i], 2*m+0);
+				TOG(values[i], 2*m+1);
+			}
+		}
+	}
 }
 
-void ligater::write_record(htsFile *fd, bcf1_t *r) {
+void ligater::update_distances_and_write_record(htsFile * fd, bcf_hdr_t * hdr, bcf1_t * r_buffer, bcf1_t * r_body) {
+	int n_buffer_hs_fields, n_body_hs_fields;
+	int nhs0 = bcf_get_format_int32(hdr, r_body, "HS", &body_hs_fields, &n_body_hs_fields);
+	int nhs1 = bcf_get_format_int32(hdr, r_buffer, "HS", &buffer_hs_fields, &n_buffer_hs_fields);
+	assert(nhs0 == nsamples && n_body_hs_fields == nsamples);
+	assert(nhs1 == nsamples && n_buffer_hs_fields == nsamples);
 
+	for (int i = 0 ; i < nsamples ; i++) {
+		for (int m = 0 ; m < nmain ; m ++) {
+			bool buf0 = GET(buffer_hs_fields[i], 2*m+0);
+			bool buf1 = GET(buffer_hs_fields[i], 2*m+1);
+			bool bod0 = GET(body_hs_fields[i], 2*m+0);
+			bool bod1 = GET(body_hs_fields[i], 2*m+1);
+			distances[(i * nmain + m) * 2 + 0] += ((buf0 != bod0) + (buf1 != bod1));
+			distances[(i * nmain + m) * 2 + 1] += ((buf0 != bod1) + (buf1 != bod0));
+		}
+	}
+
+	updateHS(body_hs_fields);
+	bcf_update_format_int32(hdr, r_body, "HS", body_hs_fields, nsamples);
+	bcf_write1(fd, hdr, r_body);
+}
+
+void ligater::write_record(htsFile *fd, bcf_hdr_t * hdr, bcf1_t *r_body) {
+	int n_body_hs_fields;
+	int nhs = bcf_get_format_int32(hdr, r_body, "HS", &body_hs_fields, &n_body_hs_fields);
+	assert(nhs == nsamples && n_body_hs_fields == nsamples);
+	updateHS(body_hs_fields);
+	bcf_update_format_int32(hdr, r_body, "HS", body_hs_fields, nsamples);
+	bcf_write1(fd, hdr, r_body);
 }
 
 void ligater::ligate() {
@@ -55,12 +93,11 @@ void ligater::ligate() {
 	// Extract number of main iterations
 	bcf_hrec_t * header_record = bcf_hdr_get_hrec(sr->readers[0].header, BCF_HL_GEN, "NMAIN", NULL, NULL);
 	if (header_record == NULL) vrb.error("Cannot retrieve NMAIN flag in VCF header");
-	int n_main = atoi(header_record->value);
-	if (n_main <1 || n_main > 16) vrb.error("NMAIN out of bounds : " + stb.str(n_main));
-	switching = vector < bool > (n_main * nsamples, false);
-	distances = vector < int > (n_main * 2 * nsamples, 0);
-	vrb.bullet("#main_iterations = " + stb.str(n_main));
-
+	nmain = atoi(header_record->value);
+	if (nmain <1 || nmain > 16) vrb.error("NMAIN out of bounds : " + stb.str(nmain));
+	switching = vector < bool > (nmain * nsamples, false);
+	distances = vector < int > (nmain * 2 * nsamples, 0);
+	vrb.bullet("#main_iterations = " + stb.str(nmain));
 
 	//Check sample overlap between all files
 	vrb.bullet("Check sample consistency across all input files");
@@ -119,7 +156,7 @@ void ligater::ligate() {
 			}
 
 			//Write Output using current switching
-			write_record(fp, line0);
+			write_record(fp, hdr, line0);
 
 			//Update current stage of active reader
 			for (int r = 0 ; r < prev_readers.size() ; r++) current_stages[prev_readers[r]] = STAGE_DONE;
@@ -166,21 +203,21 @@ void ligater::ligate() {
 			// f0 is upBUF / f1 is BODY
 			if (curr_stage0 == STAGE_UBUF && curr_stage1 == STAGE_BODY) {
 				// update hamming distances
-				update_distances_and_write_record(fp, line0, line1);
+				update_distances_and_write_record(fp, hdr, line0, line1);
 			}
 			// f1 is upBUF / f0 is BODY
 			else if (curr_stage1 == STAGE_UBUF && curr_stage0 == STAGE_BODY) {
-				update_distances_and_write_record(fp, line1, line0);
+				update_distances_and_write_record(fp, hdr, line1, line0);
 			}
 			// f0 is dwBUF / f1 is BODY
 			else if (curr_stage0 == STAGE_DBUF && curr_stage1 == STAGE_BODY) {
 				// write F1 using current switching
-				write_record(fp, line1);
+				write_record(fp, hdr, line1);
 			}
 			// f1 is dwBUF / f0 is BODY
 			else if (curr_stage1 == STAGE_DBUF && curr_stage0 == STAGE_BODY) {
 				// write F0 using current switching
-				write_record(fp, line0);
+				write_record(fp, hdr, line0);
 			}
 			//IMPOSSIBLE CASE
 			else vrb.error("Problematic situation: " + stb.str(curr_stage0) + " " + stb.str(curr_stage1));

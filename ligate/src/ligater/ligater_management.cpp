@@ -22,6 +22,8 @@
 #include <ligater/ligater_header.h>
 
 ligater::ligater() {
+	body_hs_fields = NULL;
+	buffer_hs_fields = NULL;
 }
 
 ligater::~ligater() {
