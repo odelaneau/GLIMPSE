@@ -47,8 +47,6 @@ public:
 	std::vector < std::vector < int > > pbwt_arrays;
 	std::vector < std::vector < int > > pbwt_indexes;
 
-	std::vector < std::vector < uint32_t > > iter_estimate_HS;
-	bool store_estimate_HS;
 	int n_iterations_main;
 
 	//CONSTRUCTOR/DESTRUCTOR/INITIALIZATION

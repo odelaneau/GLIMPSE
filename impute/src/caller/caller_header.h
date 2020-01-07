@@ -33,8 +33,6 @@
 
 #include <models/haplotype_hmm.h>
 #include <models/diplotype_hmm.h>
-#include <models/switchphasing.h>
-#include <models/switchandflipphasing.h>
 
 #define STAGE_INIT	0
 #define STAGE_BURN	1
@@ -51,7 +49,6 @@ public:
 	genotype_set G;
 	variant_map V;
 	gmap_reader readerGM;
-	bool perform_delayed_imputation;
 
 	//GENOMIC REGION
 	std::string chrid;
@@ -77,8 +74,6 @@ public:
 	std::vector < probability_set * > TPROB;		// Thresholded posterior probabilities
 	std::vector < haplotype_hmm * > HMM;
 	std::vector < diplotype_hmm * > DMM;
-	std::vector < switchandflipphasing * > FMM;
-	std::vector < switchphasing * > SMM;
 
 	//CONSTRUCTOR
 	caller();

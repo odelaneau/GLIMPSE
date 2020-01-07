@@ -21,7 +21,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include <caller/caller_header.h>
 
-caller::caller() : perform_delayed_imputation(false), input_start(0), input_stop(0), output_start(0), output_stop(0), i_workers(1), i_jobs(1), current_stage(0) {
+caller::caller() : input_start(0), input_stop(0), output_start(0), output_stop(0), i_workers(1), i_jobs(1), current_stage(0) {
 }
 
 caller::~caller()
@@ -30,9 +30,7 @@ caller::~caller()
 		delete COND[t]; COND[t] = nullptr;
 		delete HMM[t]; HMM[t] = nullptr;
 		delete DMM[t]; DMM[t] = nullptr;
-		delete FMM[t]; FMM[t] = nullptr;
-		delete SMM[t]; SMM[t] = nullptr;
-		if (perform_delayed_imputation) {delete TPROB[t]; TPROB[t] = nullptr;}
+		delete TPROB[t]; TPROB[t] = nullptr;
 	}
 }
 

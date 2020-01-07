@@ -42,20 +42,15 @@ void caller::declare_options() {
 	opt_algo.add_options()
 			("burnin", bpo::value<int>()->default_value(10), "Burn-in passes")
 			("main", bpo::value<int>()->default_value(10), "Main passes")
-			("refonly-select", "Selection using only the reference panel")
 			("pbwt-depth", bpo::value<int>()->default_value(2), "Number of neighbors to store")
 			("pbwt-modulo", bpo::value<int>()->default_value(8), "Number of neighbors to store")
 			("init-states", bpo::value<int>()->default_value(1000), "Number of neighbors to store")
-			("phasing-switch", "Phasing using switch likelihoods")
-			("phasing-flipandswitch", "Phasing using flip and switch likelihoods")
-			//("maf-filter", bpo::value<float>()->default_value(0.0f)->implicit_value(0.01f), "MAF filter of variants in the reference panel (requires INFO/AF field)"); for boost >= 1.65
 			("maf-filter", bpo::value<float>()->default_value(0.0f), "MAF filter of variants in the reference panel (requires INFO/AF field)");
 
 
 	bpo::options_description opt_output ("Output files");
 	opt_output.add_options()
 			("output,O", bpo::value< std::string >(), "Phased haplotypes in VCF/BCF format")
-			("output-HS", "Output haplotype estimates of the last (max 16) main iterations. Output is an integer per genotype stored in INFO/HS field.")
 			("log", bpo::value< std::string >(), "Log file");
 
 	descriptions.add(opt_base).add(opt_input).add(opt_algo).add(opt_output);
@@ -95,11 +90,8 @@ void caller::check_options() {
 	if (options.count("seed") && options["seed"].as < int > () < 0)
 		vrb.error("Random number generator needs a positive seed value");
 
-	if (options.count("maf-filter") && (options["maf-filter"].as < float > () > 0.5 || options["maf-filter"].as < float > () < 0.0))
-		vrb.error("maf-filter parameter needs a value bounded between 0 and 0.5");
-
-
-
+	if (options.count("maf-filter") && (options["maf-filter"].as < float > () > 0.5 || options["maf-filter"].as < float > () <= 0.0))
+		vrb.error("maf-filter parameter needs a value in the interval: (0, 0.5].");
 }
 
 void caller::verbose_files() {
@@ -121,8 +113,5 @@ void caller::verbose_options() {
 	vrb.bullet("PBWT depth : " + stb.str(options["pbwt-depth"].as < int > ()));
 	vrb.bullet("PBWT modulo: " + stb.str(options["pbwt-modulo"].as < int > ()));
 	vrb.bullet("Init K     : " + stb.str(options["init-states"].as < int > ()));
-	if (options["maf-filter"].as < float > () > 0.0)
-		vrb.bullet("maf-filter : " + stb.str(options["maf-filter"].as < float > ()));
-	else
-		vrb.bullet("maf-filter : 0.0 (using all sites)");
+	vrb.bullet("maf-filter : " + stb.str(options["maf-filter"].as < float > ()));
 }

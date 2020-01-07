@@ -36,7 +36,6 @@ genotype_writer::genotype_writer(haplotype_set & _H, genotype_set & _G, variant_
 	genotypes = (int*)malloc(n_main_samples*2*sizeof(int));
 	dosages = (float*)malloc(n_main_samples*1*sizeof(float));
 	posteriors = (float*)malloc(n_main_samples*3*sizeof(float));
-	if (H.store_estimate_HS) hs_estimates = (int*)malloc(n_main_samples*1*sizeof(int));
 }
 
 genotype_writer::~genotype_writer()
@@ -44,7 +43,6 @@ genotype_writer::~genotype_writer()
 	free(genotypes);
 	free(dosages);
 	free(posteriors);
-	if (H.store_estimate_HS) free(hs_estimates);
 }
 
 void genotype_writer::writeGenotypes(std::string fname, int start, int stop) {
@@ -57,7 +55,6 @@ void genotype_writer::writeGenotypes(std::string fname, int start, int stop) {
 	htsFile * fp = hts_open(fname.c_str(),file_format.c_str());
 	bcf_hdr_t * hdr = bcf_hdr_init("w");
 	bcf1_t *rec = bcf_init1();
-	const bool output_hs_format = H.store_estimate_HS;
 
 	// Create VCF header
 	bcf_hdr_append(hdr, std::string("##fileDate="+tac.date()).c_str());
@@ -70,11 +67,6 @@ void genotype_writer::writeGenotypes(std::string fname, int start, int stop) {
 	bcf_hdr_append(hdr, "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Phased genotypes\">");
 	bcf_hdr_append(hdr, "##FORMAT=<ID=DS,Number=1,Type=Float,Description=\"Genotype dosage\">");
 	bcf_hdr_append(hdr, "##FORMAT=<ID=GP,Number=3,Type=Float,Description=\"Genotype posteriors\">");
-	if (output_hs_format)
-	{
-		bcf_hdr_append(hdr, "##FORMAT=<ID=HS,Number=1,Type=Integer,Description=\"Phased haplotype estimates iterations\">");
-		bcf_hdr_append(hdr, std::string("##HS_iterations=" + std::to_string(H.n_iterations_main) + "").c_str());
-	}
 
 	//Add samples
 	for (int i = 0 ; i < G.n_ind ; i ++) bcf_hdr_add_sample(hdr, G.vecG[i]->name.c_str());
@@ -109,7 +101,6 @@ void genotype_writer::writeGenotypes(std::string fname, int start, int stop) {
 				posteriors[3*i+0] = gp0;
 				posteriors[3*i+1] = gp1;
 				posteriors[3*i+2] = gp2;
-				if (output_hs_format) hs_estimates[i] = H.iter_estimate_HS[i][l];
 			}
 			float freq_alt_refp = count_alt_ref / (V.vec_pos[l]->calt + V.vec_pos[l]->cref);
 			float freq_alt_main = count_alt / (2 * G.n_ind);
@@ -126,7 +117,6 @@ void genotype_writer::writeGenotypes(std::string fname, int start, int stop) {
 			bcf_update_genotypes(hdr, rec, genotypes, bcf_hdr_nsamples(hdr)*2);
 			bcf_update_format_float(hdr, rec, "DS", dosages, bcf_hdr_nsamples(hdr)*1);
 			bcf_update_format_float(hdr, rec, "GP", posteriors, bcf_hdr_nsamples(hdr)*3);
-			if (output_hs_format) bcf_update_format_int32(hdr, rec, "HS", hs_estimates, bcf_hdr_nsamples(hdr)*1);
 			static_cast<void>(bcf_write1(fp, hdr, rec));
 		}
 		vrb.progress("  * VCF writing", (l+1)*1.0/V.size());
@@ -155,7 +145,6 @@ void genotype_writer::writeGenotypesAndImpute(std::string funphased, std::string
 	htsFile * fp = hts_open(fname.c_str(),file_format.c_str());
 	bcf_hdr_t * hdr = bcf_hdr_init("w");
 	bcf1_t *rec = bcf_init1();
-	const bool output_hs_format = H.store_estimate_HS;
 
 	// Create VCF header
 	bcf_hdr_append(hdr, std::string("##fileDate="+tac.date()).c_str());
@@ -168,11 +157,6 @@ void genotype_writer::writeGenotypesAndImpute(std::string funphased, std::string
 	bcf_hdr_append(hdr, "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Phased genotypes\">");
 	bcf_hdr_append(hdr, "##FORMAT=<ID=DS,Number=1,Type=Float,Description=\"Genotype dosage\">");
 	bcf_hdr_append(hdr, "##FORMAT=<ID=GP,Number=3,Type=Float,Description=\"Genotype posteriors\">");
-	if (output_hs_format)
-	{
-		bcf_hdr_append(hdr, "##FORMAT=<ID=HS,Number=1,Type=Integer,Description=\"Phased haplotype estimates iterations\">");
-		bcf_hdr_append(hdr, std::string("##HS_iterations=" + std::to_string(H.n_iterations_main) + "").c_str());
-	}
 
 	//Add samples
 	for (int i = 0 ; i < G.n_ind ; i ++) bcf_hdr_add_sample(hdr, G.vecG[i]->name.c_str());
@@ -221,7 +205,6 @@ void genotype_writer::writeGenotypesAndImpute(std::string funphased, std::string
 					posteriors[3*i+0] = gp0;
 					posteriors[3*i+1] = gp1;
 					posteriors[3*i+2] = gp2;
-					if (output_hs_format) hs_estimates[i] = H.iter_estimate_HS[i][l];
 				}
 			}
 			else
@@ -262,7 +245,6 @@ void genotype_writer::writeGenotypesAndImpute(std::string funphased, std::string
 			bcf_update_genotypes(hdr, rec, genotypes, bcf_hdr_nsamples(hdr)*2);
 			bcf_update_format_float(hdr, rec, "DS", dosages, bcf_hdr_nsamples(hdr)*1);
 			bcf_update_format_float(hdr, rec, "GP", posteriors, bcf_hdr_nsamples(hdr)*3);
-			if (output_hs_format && input_stream.is_common_variant) bcf_update_format_int32(hdr, rec, "HS", hs_estimates, bcf_hdr_nsamples(hdr)*1);
 			static_cast<void>(bcf_write1(fp, hdr, rec));
 		}
 		vrb.progress("  * VCF writing", (input_stream.i_common+1)*1.0/V.size());

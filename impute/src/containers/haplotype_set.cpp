@@ -33,7 +33,6 @@ haplotype_set::haplotype_set() :
 	pbwt_built(false),
 	pbwt_modulo(1),
 	pbwt_depth(1),
-	store_estimate_HS(false),
 	n_iterations_main(0)
 {
 }
@@ -55,28 +54,6 @@ void haplotype_set::updateHaplotypes(genotype_set & G) {
 	vrb.bullet("HAP update (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
 }
 
-/** iter must be a number between 0 and 15 **/
-void haplotype_set::recordHS(genotype_set & G, int iter) {
-	if (store_estimate_HS)
-	{
-		tac.clock();
-		uint32_t iter_shift = 2*iter;
-		for (int i = 0 ; i < G.n_ind ; i ++) {
-			for (int v = 0 ; v < n_site ; v ++) {
-				bool a0 = G.vecG[i]->H0[v];
-				bool a1 = G.vecG[i]->H1[v];
-
-				iter_estimate_HS[i][v] |= (a0 + 2*a1) << iter_shift;
-				//H_opt_var.set(v, n_ref+2*i+0, a0);
-				//H_opt_var.set(v, n_ref+2*i+1, a1);
-			}
-		}
-		n_iterations_main++;
-		vrb.bullet("HS iteration estimate stored (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
-	}
-}
-
-
 void haplotype_set::initPositionalBurrowWheelerTransform(int _pbwt_depth, int _pbwt_modulo) {
 	n_haps_pbwt = refonly_pbwt? n_ref : n_hap;
 
@@ -89,9 +66,6 @@ void haplotype_set::initPositionalBurrowWheelerTransform(int _pbwt_depth, int _p
 		pbwt_indexes = std::vector < std::vector < int > > ((n_site) + 1, std::vector < int > (n_haps_pbwt+1, 0));
 	else
 		pbwt_indexes = std::vector < std::vector < int > > ((n_site/pbwt_modulo) + 1, std::vector < int > (n_haps_pbwt, 0));
-
-	if (store_estimate_HS)
-		iter_estimate_HS = std::vector < std::vector < uint32_t> > ((n_targ/2), std::vector< uint32_t > (n_site,0));
 }
 
 void haplotype_set::updatePositionalBurrowWheelerTransform() {

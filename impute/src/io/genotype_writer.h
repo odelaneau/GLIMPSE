@@ -45,7 +45,6 @@ public:
 	int * genotypes;
 	float * dosages;
 	float * posteriors;
-	int * hs_estimates;
 	float count_alt;
 
 	std::string region;

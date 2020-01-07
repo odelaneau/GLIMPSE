@@ -39,7 +39,6 @@ void * phase_callback(void * ptr) {
 
 void caller::phase_individual(int id_worker, int id_job) {
 	tac.clock();
-	const bool store_posteriors = perform_delayed_imputation && current_stage == STAGE_MAIN;
 	if (current_stage == STAGE_INIT) {
 		H.selectRandomRefOnly(options["init-states"].as < int > (), COND[id_worker]);
 		G.vecG[id_job]->initHaplotypeLikelihoods(HLC[id_worker]);
@@ -47,16 +46,14 @@ void caller::phase_individual(int id_worker, int id_job) {
 	} else {
 		H.selectPositionalBurrowWheelerTransform(id_job, COND[id_worker]);
 		vrb.bullet("Selection (" + stb.str(tac.rel_time()*1.0, 1) + "ms)");tac.clock();
-		if (options.count("phasing-switch")) SMM[id_worker]->sampling(G.vecG[id_job]->H0, G.vecG[id_job]->H1);
-		else if (options.count("phasing-flipandswitch")) FMM[id_worker]->sampling(G.vecG[id_job]->H0, G.vecG[id_job]->H1);
-		else DMM[id_worker]->rephaseHaplotypes(G.vecG[id_job]->H0, G.vecG[id_job]->H1);
+		DMM[id_worker]->rephaseHaplotypes(G.vecG[id_job]->H0, G.vecG[id_job]->H1);
 		G.vecG[id_job]->makeHaplotypeLikelihoods(HLC[id_worker], true);
 		//vrb.bullet("Rephasing (" + stb.str(tac.rel_time()*1.0, 1) + "ms)");tac.clock();
 	}
-	HMM[id_worker]->computePosteriors(HLC[id_worker], HP0[id_worker], 0, store_posteriors);
+	HMM[id_worker]->computePosteriors(HLC[id_worker], HP0[id_worker], 0, current_stage == STAGE_MAIN);
 	G.vecG[id_job]->sampleHaplotypeH0(HP0[id_worker]);
 	G.vecG[id_job]->makeHaplotypeLikelihoods(HLC[id_worker], false);
-	HMM[id_worker]->computePosteriors(HLC[id_worker], HP1[id_worker], 1, store_posteriors);
+	HMM[id_worker]->computePosteriors(HLC[id_worker], HP1[id_worker], 1, current_stage == STAGE_MAIN);
 	G.vecG[id_job]->sampleHaplotypeH1(HP1[id_worker]);
 	//vrb.bullet("Imputation (" + stb.str(tac.rel_time()*1.0, 1) + "ms)");
 	if (current_stage == STAGE_MAIN) G.vecG[id_job]->storeGenotypePosteriors(HP0[id_worker], HP1[id_worker]);
@@ -107,8 +104,6 @@ void caller::phase_loop() {
 		H.updateHaplotypes(G);
 		H.updatePositionalBurrowWheelerTransform();
 		phase_iteration();
-		if (options.count("output-HS") && nMain - iter < 16)
-			H.recordHS(G, std::min(nMain,15)-(nMain - iter));
 	}
 
 	//Finalization
@@ -116,17 +111,10 @@ void caller::phase_loop() {
 	for (int i = 0 ; i < G.vecG.size() ; i ++) {
 		G.vecG[i]->normGenotypePosteriors(nMain);
 		G.vecG[i]->inferGenotypes();
-		if (perform_delayed_imputation)
-		{
-			//delayed imputation, so we need to scale probs;
-			for (int h=0;h<2; h++)
-			{
-				for (int l = 0; l<G.n_site; ++l)
-				{
-					TPROB[i]->normaliseProbNoSum(h,l);
-				}
-			}
-		}
+
+		//delayed imputation, so we need to scale probs;
+		for (int l = 0; l<G.n_site; ++l) TPROB[i]->normaliseProbNoSum(0,l);
+		for (int l = 0; l<G.n_site; ++l) TPROB[i]->normaliseProbNoSum(1,l);
 	}
 	vrb.bullet("done");
 }
