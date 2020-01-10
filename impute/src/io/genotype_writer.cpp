@@ -265,11 +265,18 @@ void genotype_writer::impute_marker(const int l, const float w,  const genotype_
 	const float w1M = std::max(1.0 - w,0.0);
 	float sum = 0.0f;
 	float post0, post1,post2;
+	std::array<float,2> p1hL {0.0f,0.0f};
+	std::array<float,2> p1hR {0.0f,0.0f};
+	float p1h0Comb, p1h1Comb;
+	int max_el;
+	bool a0,a1;
 
 	for (int i = 0 ; i < G.n_ind ; i++)
 	{
-		std::array<float,2> p1hL {0.0f,0.0f};
-		std::array<float,2> p1hR {0.0f,0.0f};
+		p1hL[0] = 0.0f;
+		p1hL[1] = 0.0f;
+		p1hR[0] = 0.0f;
+		p1hR[1] = 0.0f;
 
 		for (int h = 0; h < 2; ++ h)
 		{
@@ -279,28 +286,24 @@ void genotype_writer::impute_marker(const int l, const float w,  const genotype_
 			const std::vector<float>& pR = P[i]->prob_stateR[h][l];
 			const size_t num_states = pS.size();
 
-			for (int j =0; j<num_states; ++j) //avoid -1 state
-			{
-				const int s = pS[j];
-				if (input_stream.ref_haps[s])
+			for (size_t j =0; j<num_states; ++j)
+				if (input_stream.ref_haps[pS[j]])
 				{
 					p1hL[h]+=pL[j];
 					p1hR[h]+=pR[j];
 				}
-			}
 		}
-
-		float p1h0Comb = p1hL[0] * w + p1hR[0] * w1M;
-		float p1h1Comb = p1hL[1] * w + p1hR[1] * w1M;
+		p1h0Comb = p1hL[0] * w + p1hR[0] * w1M;
+		p1h1Comb = p1hL[1] * w + p1hR[1] * w1M;
 
 		p1h0Comb = 0.9999 * p1h0Comb + 0.0001 * abs(1.0f - p1h0Comb);
 		p1h1Comb = 0.9999 * p1h1Comb + 0.0001 * abs(1.0f - p1h1Comb);
 
-		post0 = abs((1.0f - p1h0Comb) * (1.0f - p1h1Comb));
+		post0 = abs(1.0f - p1h0Comb) * abs(1.0f - p1h1Comb);
 		post2 = p1h0Comb * p1h1Comb;
 		post1 = abs(1.0f - post0 - post2);
 
-		//curr_GL are assured to be ones if flat likelihood or values with sum > 0.0
+		//curr_GL are assured to be .333 if flat likelihood or values with sum > 0.0
 		///otherwise division problem!
 		post0 *= input_stream.curr_GL[3*i + 0];
 		post1 *= input_stream.curr_GL[3*i + 1];
@@ -308,22 +311,27 @@ void genotype_writer::impute_marker(const int l, const float w,  const genotype_
 
 		sum = post0 + post1 + post2;
 
-		posteriors[3*i + 0] = post0/sum;
-		posteriors[3*i + 1] = post1/sum;
-		posteriors[3*i + 2] = post2/sum;
+		post0/=sum;
+		post1/=sum;
+		post2/=sum;
 
-		int max_el = max3gt(posteriors[3*i + 0],posteriors[3*i + 1],posteriors[3*i + 0]);
-		bool a0 = max_el > 0;
-		bool a1 = max_el > 1;
+		max_el = max3gt(post0,post1,post2);
+		a0 = max_el > 0;
+		a1 = max_el > 1;
+		if (max_el ==1 && p1h0Comb < p1h1Comb)
+		{
+			a0 = false;
+			a1 = true;
+		}
 		genotypes[2*i+0] = bcf_gt_phased(a0);
 		genotypes[2*i+1] = bcf_gt_phased(a1);
-		float ds = posteriors[3*i + 1] + 2 * posteriors[3*i + 2];
-		count_alt += ds;
-		dosages[i] = roundf(ds * 1000.0) / 1000.0;
 
-		posteriors[3*i + 0] = roundf(posteriors[3*i + 0] * 1000.0) / 1000.0;
-		posteriors[3*i + 1] = roundf(posteriors[3*i + 1] * 1000.0) / 1000.0;
-		posteriors[3*i + 2] = roundf(posteriors[3*i + 2] * 1000.0) / 1000.0;
+		posteriors[3*i + 0] = roundf(post0 * 1000.0) / 1000.0;
+		posteriors[3*i + 1] = roundf(post1 * 1000.0) / 1000.0;
+		posteriors[3*i + 2] = roundf(post2 * 1000.0) / 1000.0;
+
+		dosages[i] = roundf((posteriors[3*i + 1] + 2 * posteriors[3*i + 2]) * 1000.0) / 1000.0;
+		count_alt += dosages[i];
 	}
 }
 
@@ -331,36 +339,34 @@ void genotype_writer::impute_marker_border(const int l, const genotype_stream& i
 {
 	float sum = 0.0f;
 	float post0, post1,post2;
+	std::array<float,2> p1h {0.0,0.0};
+	float p1h0Comb, p1h1Comb;
+	int max_el;
+	bool a0,a1;
 
 	for (int i = 0 ; i < G.n_ind ; i++)
 	{
-		std::array<float,2> p1h {0.0f,0.0f};
+		p1h[0] = 0.0f;
+		p1h[1] = 0.0f;
 
-		for (int h = 0; h < 2; ++ h)
+		for (size_t h = 0; h < 2; ++ h)
 		{
 			//sum 1s for h
 			const std::vector<int>& pS = P[i]->reference_haps[h][l];
 			const std::vector<float>& pLR = left ? P[i]->prob_stateL[h][l] : P[i]->prob_stateR[h][l];
 			const size_t num_states = pS.size();
 
-			for (int j =0; j<num_states; ++j) //avoid -1 state
-			{
-				const int s = pS[j];
-				if (input_stream.ref_haps[s])
-				{
-					p1h[h]+=pLR[j];
-				}
-			}
+			for (size_t j =0; j<num_states; ++j) if (input_stream.ref_haps[pS[j]]) p1h[h]+=pLR[j];
 		}
 
-		float p1h0Comb = 0.9999 * p1h[0] + 0.0001 * abs(1.0f - p1h[0]);
-		float p1h1Comb = 0.9999 * p1h[1] + 0.0001 * abs(1.0f - p1h[1]);
+		p1h0Comb = 0.9999 * p1h[0] + 0.0001 * abs(1.0f - p1h[0]);
+		p1h1Comb = 0.9999 * p1h[1] + 0.0001 * abs(1.0f - p1h[1]);
 
-		post0 = abs((1.0f - p1h0Comb) * (1.0f - p1h1Comb));
+		post0 = abs(1.0f - p1h0Comb) * (1.0f - p1h1Comb);
 		post2 = p1h0Comb * p1h1Comb;
 		post1 = abs(1.0f - post0 - post2);
 
-		//curr_GL are assured to be ones if flat likelihood or values with sum > 0.0
+		//curr_GL are assured to be .333 if flat likelihood or values with sum > 0.0
 		///otherwise division problem!
 		post0 *= input_stream.curr_GL[3*i + 0];
 		post1 *= input_stream.curr_GL[3*i + 1];
@@ -368,22 +374,28 @@ void genotype_writer::impute_marker_border(const int l, const genotype_stream& i
 
 		sum = post0 + post1 + post2;
 
-		posteriors[3*i + 0] = post0/sum;
-		posteriors[3*i + 1] = post1/sum;
-		posteriors[3*i + 2] = post2/sum;
+		post0/=sum;
+		post1/=sum;
+		post2/=sum;
 
-		int max_el = max3gt(posteriors[3*i + 0],posteriors[3*i + 1],posteriors[3*i + 0]);
-		bool a0 = max_el > 0;
-		bool a1 = max_el > 1;
+		max_el = max3gt(post0,post1,post2);
+
+		a0 = max_el > 0;
+		a1 = max_el > 1;
+		if (max_el ==1 && p1h[0] < p1h[1])
+		{
+			a0 = false;
+			a1 = true;
+		}
 		genotypes[2*i+0] = bcf_gt_phased(a0);
 		genotypes[2*i+1] = bcf_gt_phased(a1);
-		float ds = posteriors[3*i + 1] + 2 * posteriors[3*i + 2];
-		count_alt += ds;
-		dosages[i] = roundf(ds * 1000.0) / 1000.0;
 
-		posteriors[3*i + 0] = roundf(posteriors[3*i + 0] * 1000.0) / 1000.0;
-		posteriors[3*i + 1] = roundf(posteriors[3*i + 1] * 1000.0) / 1000.0;
-		posteriors[3*i + 2] = roundf(posteriors[3*i + 2] * 1000.0) / 1000.0;
+		posteriors[3*i + 0] = roundf(post0 * 1000.0) / 1000.0;
+		posteriors[3*i + 1] = roundf(post1 * 1000.0) / 1000.0;
+		posteriors[3*i + 2] = roundf(post2 * 1000.0) / 1000.0;
+
+		dosages[i] = roundf((posteriors[3*i + 1] + 2 * posteriors[3*i + 2]) * 1000.0) / 1000.0;
+		count_alt += dosages[i];
 	}
 }
 

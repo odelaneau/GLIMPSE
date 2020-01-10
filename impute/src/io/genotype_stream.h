@@ -25,6 +25,8 @@ public:
 	std::vector<bool> ref_haps;
 	std::vector<double> curr_GL;
 
+	const float flat_gl;
+
 	//reader
 	bcf_srs_t * sr;
 	unsigned int i_variant;

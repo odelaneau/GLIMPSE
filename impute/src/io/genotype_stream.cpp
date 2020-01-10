@@ -7,7 +7,8 @@ genotype_stream::genotype_stream(std::string _region, float _maf_common, unsigne
 	maf_common(_maf_common),
 	n_variants(_n_variants),
 	n_main_samples(_n_main_samples),
-	n_ref_samples(_n_ref_samples)
+	n_ref_samples(_n_ref_samples),
+	flat_gl(1.0 / 3.0)
 {
 	is_open = false;
 	sr = nullptr;
@@ -26,7 +27,6 @@ genotype_stream::genotype_stream(std::string _region, float _maf_common, unsigne
 	nval = 0;
 	line_main = nullptr;
 	line_ref = nullptr;
-
 }
 
 genotype_stream::~genotype_stream()
@@ -91,26 +91,33 @@ bool genotype_stream::readMarker()
 
 				ngl_main = bcf_get_format_int32(sr->readers[0].header, line_main, "PL", &gl_arr_main, &ngl_arr_main);
 				if (ngl_main == 3 * n_main_samples) {
-					for(int i = 0 ; i < 3 * n_main_samples ; i += 3) {
-						if (gl_arr_main[i+0] != bcf_float_missing && gl_arr_main[i+1] != bcf_float_missing && gl_arr_main[i+2] != bcf_float_missing) {
+					for(int i = 0 ; i < 3 * n_main_samples ; i += 3)
+					{
+						sum = 0.0f;
+						if (gl_arr_main[i+0] != bcf_float_missing && gl_arr_main[i+1] != bcf_float_missing && gl_arr_main[i+2] != bcf_float_missing)
+						{
 							lg0 = unphred[(unsigned char)gl_arr_main[i+0]];
 							lg1 = unphred[(unsigned char)gl_arr_main[i+1]];
 							lg2 = unphred[(unsigned char)gl_arr_main[i+2]];
 							sum = lg0+lg1+lg2;
-							if (sum > 0.0f)
-							{
-								curr_GL[i+0] = lg0 / sum;
-								curr_GL[i+1] = lg1 / sum;
-								curr_GL[i+2] = lg2 / sum;
-							}
-							else std::fill(std::next(curr_GL.begin(),i+0), std::next(curr_GL.begin(),i+3), 1.0f);
 						}
-						else std::fill(std::next(curr_GL.begin(),i+0), std::next(curr_GL.begin(),i+3), 1.0f);
+						if (sum > 0.0f)
+						{
+							curr_GL[i+0] = lg0 / sum;
+							curr_GL[i+1] = lg1 / sum;
+							curr_GL[i+2] = lg2 / sum;
+						}
+						else
+						{
+							curr_GL[i+0] = flat_gl;
+							curr_GL[i+1] = flat_gl;
+							curr_GL[i+2] = flat_gl;
+						}
 					}
 				}
 				else
 				{
-					std::fill(curr_GL.begin(), curr_GL.end(), 1.0f);
+					std::fill(curr_GL.begin(), curr_GL.end(), flat_gl);
 				}
 
 				curr_variant.cref = cref;curr_variant.calt = calt;curr_variant.cmis = cmis;
