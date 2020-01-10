@@ -40,11 +40,9 @@ void call_set::computeRsquaredPerBin(string output) {
 		for (int i = 0 ; i < GTtrue[l].size() ; i ++) {
 			if (goodForValidation(l, i)) {
 				int dsT = (int)GTtrue[l][i];
-				float dsE = (float)GTesti[l][i];
 				float dsP = DSesti[l][i];
 				if (flip[l]) {
 					dsT = 2.0 - dsT;
-					dsE = 2.0 - dsE;
 					dsP = 2.0 - dsP;
 				}
 
@@ -83,11 +81,9 @@ void call_set::computeRsquaredPerBinPerSample(string output) {
 			bool add = false;
 			if (goodForValidation(l, i)) {
 				int dsT = (int)GTtrue[l][i];
-				float dsE = (float)GTesti[l][i];
 				float dsP = DSesti[l][i];
 				if (flip[l]) {
 					dsT = 2.0 - dsT;
-					dsE = 2.0 - dsE;
 					dsP = 2.0 - dsP;
 				}
 

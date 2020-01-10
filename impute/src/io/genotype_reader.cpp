@@ -75,13 +75,10 @@ void genotype_reader::scanGenotypes(std::string fmain, std::string fref) {
 			line_main =  bcf_sr_get_line(sr, 0);
 			line_ref =  bcf_sr_get_line(sr, 1);
 			if (line_main->n_allele == 2 && line_ref->n_allele == 2) {
-				if (maf_common > 0.0f)
-				{
-					if (bcf_get_info_float(sr->readers[1].header, line_ref, "AF", &af_ptr, &nval) <0)
-						vrb.error("No INFO/AF field in the reference file. Cannot apply MAF filter.");
-					if (std::min(af_ptr[0],1.0f -af_ptr[0]) < maf_common)
-						continue;
-				}
+				if (bcf_get_info_float(sr->readers[1].header, line_ref, "AF", &af_ptr, &nval) <0)
+					vrb.error("No INFO/AF field in the reference file. Cannot apply MAF filter.");
+				if (std::min(af_ptr[0],1.0f -af_ptr[0]) < maf_common)
+					continue;
 				n_variants ++;
 			}
 		}

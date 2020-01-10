@@ -55,38 +55,32 @@ void haplotype_set::updateHaplotypes(genotype_set & G) {
 }
 
 void haplotype_set::initPositionalBurrowWheelerTransform(int _pbwt_depth, int _pbwt_modulo) {
-	n_haps_pbwt = refonly_pbwt? n_ref : n_hap;
+	n_haps_pbwt = n_ref;
 
 	pbwt_depth = _pbwt_depth;
 	pbwt_modulo = _pbwt_modulo;
 	pbwt_arrays = std::vector < std::vector < int > > ((n_site/pbwt_modulo) + 1, std::vector < int > (n_haps_pbwt, 0));
-	pbwt_indexes = std::vector < std::vector < int > > ((n_site/pbwt_modulo) + 1, std::vector < int > (n_haps_pbwt, 0));
+	pbwt_indexes = std::vector < std::vector < int > > ((n_site) + 1, std::vector < int > (n_haps_pbwt+1, 0));
 
-	if (refonly_pbwt)
-		pbwt_indexes = std::vector < std::vector < int > > ((n_site) + 1, std::vector < int > (n_haps_pbwt+1, 0));
-	else
-		pbwt_indexes = std::vector < std::vector < int > > ((n_site/pbwt_modulo) + 1, std::vector < int > (n_haps_pbwt, 0));
 }
 
 void haplotype_set::updatePositionalBurrowWheelerTransform() {
-	if (!pbwt_built || !refonly_pbwt) {
+	if (!pbwt_built) {
 		tac.clock();
 		std::vector < int > A = std::vector < int >(n_haps_pbwt, 0);
 		std::vector < int > B = std::vector < int >(n_haps_pbwt, 0);
 		for (int l = 0, idx_store = 0 ; l < n_site ; l ++) {
 			int u = 0, v = 0;
 			for (int h = 0 ; h < n_haps_pbwt ; h ++) {
-				if (refonly_pbwt) pbwt_indexes[l][h] = v;
+				pbwt_indexes[l][h] = v;
 				int alookup = l?A[h]:h;
 				if (!H_opt_var.get(l,alookup)) A[u++] = alookup;
 				else B[v++] = alookup;
 			}
 			std::copy(B.begin(), B.begin()+v, A.begin()+u);
-			if (refonly_pbwt) pbwt_indexes[l][n_haps_pbwt] = v;
+			pbwt_indexes[l][n_haps_pbwt] = v;
 			if ((l%pbwt_modulo) == 0) {
 				std::copy(A.begin(), A.end(), pbwt_arrays[idx_store].begin());
-				if (!refonly_pbwt)
-					for (int h = 0 ; h < n_haps_pbwt ; h ++) pbwt_indexes[idx_store][A[h]] = h;
 				idx_store++;
 			}
 		}
@@ -126,10 +120,7 @@ void haplotype_set::selectPositionalBurrowWheelerTransform(int ind, conditioning
 	std::vector < int >& idxH = C->idxH;
 	idxH.clear();
 
-	if (refonly_pbwt)
-		selectFmIndexRefOnly(ind, idxH);
-	else
-		selectStandardFull(ind, idxH);
+	selectFmIndexRefOnly(ind, idxH);
 
 	//C->clear();
 	C->n_states = idxH.size();
