@@ -32,8 +32,6 @@
 
 #include <models/haplotype_hmm.h>
 #include <models/diplotype_hmm.h>
-#include <models/switchphasing.h>
-#include <models/switchandflipphasing.h>
 
 #define STAGE_INIT	0
 #define STAGE_BURN	1
@@ -71,13 +69,11 @@ public:
 	vector < vector < float > > HP0;			// Haplotype posteriors 0
 	vector < vector < float > > HP1;			// Haplotype posteriors 1
 	vector < vector < float > > HLC;			// Conditional haplotype likelihoods
-	vector < conditioning_set * > COND;		// Conditionning states
+	vector < conditioning_set * > COND;			// Conditionning states
 	vector < haplotype_hmm * > HMM;
 	vector < diplotype_hmm * > DMM;
-	vector < switchandflipphasing * > FMM;
-	vector < switchphasing * > SMM;
-
-
+	//vector < switchandflipphasing * > FMM;
+	//vector < switchphasing * > SMM;
 
 	//CONSTRUCTOR
 	caller();

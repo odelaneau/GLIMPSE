@@ -46,9 +46,10 @@ void caller::phase_individual(int id_worker, int id_job) {
 	} else {
 		H.selectPositionalBurrowWheelerTransform(id_job, COND[id_worker]);
 		//vrb.bullet("Selection (" + stb.str(tac.rel_time()*1.0, 1) + "ms)");tac.clock();
-		if (options.count("phasing-switch")) SMM[id_worker]->sampling(G.vecG[id_job]->H0, G.vecG[id_job]->H1);
-		else if (options.count("phasing-flipandswitch")) FMM[id_worker]->sampling(G.vecG[id_job]->H0, G.vecG[id_job]->H1);
-		else DMM[id_worker]->rephaseHaplotypes(G.vecG[id_job]->H0, G.vecG[id_job]->H1);
+		//if (options.count("phasing-switch")) SMM[id_worker]->sampling(G.vecG[id_job]->H0, G.vecG[id_job]->H1);
+		//else if (options.count("phasing-flipandswitch")) FMM[id_worker]->sampling(G.vecG[id_job]->H0, G.vecG[id_job]->H1);
+		//else
+		DMM[id_worker]->rephaseHaplotypes(G.vecG[id_job]->H0, G.vecG[id_job]->H1);
 		G.vecG[id_job]->makeHaplotypeLikelihoods(HLC[id_worker], true);
 		//vrb.bullet("Rephasing (" + stb.str(tac.rel_time()*1.0, 1) + "ms)");tac.clock();
 	}

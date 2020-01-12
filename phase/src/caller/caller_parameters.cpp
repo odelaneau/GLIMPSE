@@ -42,9 +42,7 @@ void caller::declare_options() {
 			("main", bpo::value<int>()->default_value(10), "Number of Main iterations")
 			("pbwt-depth", bpo::value<int>()->default_value(2), "Number of neighbors to store")
 			("pbwt-modulo", bpo::value<int>()->default_value(8), "Frequency of PBWT storage")
-			("init-states", bpo::value<int>()->default_value(1000), "Number of states used for initialization")
-			("phasing-switch", "Phasing using switch likelihoods")
-			("phasing-flipandswitch", "Phasing using flip and switch likelihoods");
+			("init-states", bpo::value<int>()->default_value(1000), "Number of states used for initialization");
 
 
 	bpo::options_description opt_output ("Output files");
