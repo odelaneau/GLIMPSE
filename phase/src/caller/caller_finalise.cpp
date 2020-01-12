@@ -30,7 +30,7 @@ void caller::write_files_and_finalise() {
 	if (options["thread"].as < int > () > 1) pthread_mutex_destroy(&mutex_workers);
 
 	//step1: writing best guess haplotypes in VCF/BCF file
-	genotype_writer(H, G, V).writeGenotypes(options["output"].as < string > (), output_start, output_stop, options["main"].as < int > (), options.count("output-buffer"));
+	genotype_writer(H, G, V).writeGenotypes(options["output"].as < string > (), output_start, output_stop, options["main"].as < int > ());
 
 
 	//step2: Measure overall running time
