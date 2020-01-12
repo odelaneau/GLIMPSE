@@ -77,10 +77,10 @@ void caller::check_options() {
 		vrb.error("You must specify one input file using --input");
 
 	if (!options.count("input-region"))
-		vrb.error("You must specify a region to phase using --input-region");
+		vrb.error("You must specify a region to phase using --input-region (this is given by LCC_chunk)");
 
 	if (!options.count("output-region"))
-		vrb.error("You must specify a region to output using --output-region");
+		vrb.error("You must specify a region to output using --output-region (this is given by LCC_chunk)");
 
 	if (!options.count("output"))
 		vrb.error("You must specify a phased output file with --output");
