@@ -134,9 +134,6 @@ void ligater::ligate() {
 			active_readers.push_back(f);
 		}
 
-		if (active_readers.size() >= 3) vrb.error("Too much overlap at a given position!");
-		if (active_readers.size() == 0) vrb.error("Not enough overlap at a given position!");
-
 		//Retrieve variant informations
 		line0 =  bcf_sr_get_line(sr, active_readers[0]);
 		bcf_unpack(line0, BCF_UN_STR);
@@ -145,6 +142,8 @@ void ligater::ligate() {
 		string rsid = string(line0->d.id);
 		string ref = string(line0->d.allele[0]);
 		string alt = string(line0->d.allele[1]);
+		if (active_readers.size() >= 3) vrb.error("Too many files overlap at position [" + stb.str(position) + "]");
+		if (active_readers.size() == 0) vrb.error("Not enough files overlap at position [" + stb.str(position) + "]");
 
 		//CASE0: WE ARE NOT IN AN OVERLAPPING REGION [STANDARD CASE]
 		if (active_readers.size() == 1) {
@@ -154,10 +153,8 @@ void ligater::ligate() {
 				for (int d = 0 ; d < distances.size() ; d += 2) if (distances[d+0] > distances[d+1]) switching[d/2] = !switching[d/2];
 				fill(distances.begin(), distances.end(), 0);
 			}
-
 			//Write Output using current switching
 			write_record(fp, hdr, line0);
-
 			//Update current stage of active reader
 			for (int r = 0 ; r < prev_readers.size() ; r++) current_stages[prev_readers[r]] = STAGE_DONE;
 			current_stages[active_readers[0]] = STAGE_BODY;
@@ -166,17 +163,14 @@ void ligater::ligate() {
 		//CASE1: WE ARE IN AN OVERLAPPING REGION [LIGATION CASE]
 		if (active_readers.size() == 2) {
 			line1 =  bcf_sr_get_line(sr, active_readers[1]);
-
 			//Retrieve in which stages the readers were for previous variants
 			unsigned char prev_stage0 = current_stages[active_readers[0]];
 			unsigned char prev_stage1 = current_stages[active_readers[1]];
-
 			//Retrieve who is buffer, who is main
-			rbuffer0 = bcf_get_info_int32(sr->readers[active_readers[0]].header,line0,"BUFFER",&buffer0, &nbuffer0);
-			rbuffer1 = bcf_get_info_int32(sr->readers[active_readers[1]].header,line1,"BUFFER",&buffer1, &nbuffer1);
+			rbuffer0 = bcf_get_info_int32(sr->readers[active_readers[0]].header,line0,"BUF",&buffer0, &nbuffer0);
+			rbuffer1 = bcf_get_info_int32(sr->readers[active_readers[1]].header,line1,"BUF",&buffer1, &nbuffer1);
 			if ((buffer0 + buffer1) == 0) vrb.error("Only main regions are overlapping");
 			if ((buffer0 + buffer1) == 2) vrb.error("Only buffer are overlapping");
-
 			//Check in which stages the readers are now
 			unsigned char curr_stage0, curr_stage1;
 			if (rbuffer0) {
@@ -195,11 +189,9 @@ void ligater::ligate() {
 				case STAGE_DBUF: curr_stage1 = STAGE_DBUF; break;
 				}
 			} else curr_stage1 = STAGE_BODY;
-
-			//Check is stage has changed?
+			//Check if stage has changed?
 			bool change0 = (prev_stage0 != curr_stage0);
 			bool change1 = (prev_stage1 != curr_stage1);
-
 			// f0 is upBUF / f1 is BODY
 			if (curr_stage0 == STAGE_UBUF && curr_stage1 == STAGE_BODY) {
 				// update hamming distances
@@ -221,23 +213,25 @@ void ligater::ligate() {
 			}
 			//IMPOSSIBLE CASE
 			else vrb.error("Problematic situation: " + stb.str(curr_stage0) + " " + stb.str(curr_stage1));
-
 			//Update the stages in which the readers are now
 			current_stages[active_readers[0]] = curr_stage0;
 			current_stages[active_readers[1]] = curr_stage1;
 		}
-
 		//Store current readers
 		prev_readers = active_readers;
-
 		//
 		n_variants++;
-
 	}
+	//Close file descriptors
+	free(body_hs_fields);
+	free(buffer_hs_fields);
+	bcf_destroy1(line0);
+	bcf_destroy1(line1);
 	bcf_sr_destroy(sr);
+	bcf_hdr_destroy(hdr);
+	if (hts_close(fp)) vrb.error("Non zero status when closing VCF/BCF file descriptor");
+	//Last verbose
 	if (n_variants == 0) vrb.error("No variants to be phased in files");
 	vrb.bullet("Writing completed [L=" + stb.str(n_variants) + " (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
-
-
 }
 
