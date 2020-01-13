@@ -178,5 +178,5 @@ void diplotype_hmm::rephaseHaplotypes(vector < bool > & H0, vector < bool > & H1
 			curr_segment_locus = 0;
 		}
 	}
-	vrb.bullet("DIP Phasing meth1 (" + stb.str(tac.rel_time()*1.0, 1) + "ms)");tac.clock();
+	//vrb.bullet("DIP Phasing meth1 (" + stb.str(tac.rel_time()*1.0, 1) + "ms)");tac.clock();
 }
