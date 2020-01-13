@@ -43,7 +43,8 @@ void caller::declare_options() {
 			("main", bpo::value<int>()->default_value(10), "Number of Main iterations")
 			("pbwt-depth", bpo::value<int>()->default_value(2), "Number of neighbors to store")
 			("pbwt-modulo", bpo::value<int>()->default_value(8), "Frequency of PBWT storage")
-			("init-states", bpo::value<int>()->default_value(1000), "Number of states used for initialization");
+			("init-states", bpo::value<int>()->default_value(1000), "Number of states used for initialization")
+			("init-pool", bpo::value< string >(), "Pool of samples from which initializing haplotypes should be chosen");
 
 
 	bpo::options_description opt_output ("Output files");

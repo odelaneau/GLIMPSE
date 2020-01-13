@@ -35,6 +35,14 @@ genotype_reader::~genotype_reader() {
 	region = "";
 }
 
+void genotype_reader::readInitializingSamples(string ftext) {
+	string buffer;
+	input_file fd (ftext);
+	while (getline(fd, buffer)) initializing_samples.insert(buffer);
+	vrb.wait("Subset of "+stb.str(initializing_samples.size()) + " samples used for initialization");
+	fd.close();
+}
+
 void genotype_reader::allocateGenotypes() {
 	//Genotypes
 	G.vecG = vector < genotype * > (n_main_samples);
@@ -46,6 +54,7 @@ void genotype_reader::allocateGenotypes() {
 	G.n_site = n_variants;
 	//Haplotypes
 	H.n_hap = 2 * (n_ref_samples + n_main_samples);
+	H.initializing_haps = vector < bool > (2*n_ref_samples, false);
 	H.n_ref = 2 * n_ref_samples;
 	H.n_site = n_variants;
 	H.H_opt_var.allocate(H.n_site, H.n_hap);
@@ -86,6 +95,14 @@ void genotype_reader::readGenotypes(string funphased, string freference) {
 	bcf_sr_add_reader (sr, funphased.c_str());
 	bcf_sr_add_reader (sr, freference.c_str());
 	for (int i = 0 ; i < n_main_samples ; i ++) G.vecG[i]->name = string(sr->readers[0].header->samples[i]);
+	if (initializing_samples.size() > 0) {
+		for (int i = 0 ; i < n_ref_samples ; i ++) {
+			if (initializing_samples.count(string(sr->readers[1].header->samples[i]))) {
+				H.initializing_haps[2*i+0] = true;
+				H.initializing_haps[2*i+1] = true;
+			}
+		}
+	} else fill(H.initializing_haps.begin(),H.initializing_haps.end(), true);
 	unsigned int i_variant = 0, nset = 0, n_ref_unphased = 0;
 	int ngl_main, ngl_arr_main = 0, *gl_arr_main = NULL;
 	int ngt_ref, *gt_arr_ref = NULL, ngt_arr_ref = 0;
@@ -121,7 +138,6 @@ void genotype_reader::readGenotypes(string funphased, string freference) {
 							G.vecG[i/3]->GL[3*i_variant+0] = (unsigned char)gl_arr_main[i+0];
 							G.vecG[i/3]->GL[3*i_variant+1] = (unsigned char)gl_arr_main[i+1];
 							G.vecG[i/3]->GL[3*i_variant+2] = (unsigned char)gl_arr_main[i+2];
-							//cout << (unsigned int)gl_arr_main[i+0] << " " << (unsigned int)gl_arr_main[i+1] << " " << (unsigned int)gl_arr_main[i+2]<<  endl;
 						}
 					}
 				}

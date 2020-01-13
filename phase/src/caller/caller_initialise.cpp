@@ -41,6 +41,7 @@ void caller::read_files_and_initialise() {
 
 	//step2: Read input files
 	genotype_reader readerG(H, G, V, input_gregion);
+	if (options.count("init-pool")) readerG.readInitializingSamples(options["init-pool"].as < string > ());
 	readerG.scanGenotypes(options["input"].as < string > (), options["reference"].as < string > ());
 	readerG.allocateGenotypes();
 	readerG.readGenotypes(options["input"].as < string > (), options["reference"].as < string > ());

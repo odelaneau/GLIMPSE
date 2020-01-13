@@ -75,7 +75,7 @@ void haplotype_set::updatePositionalBurrowWheelerTransform() {
 
 void haplotype_set::selectRandom(int K, conditioning_set * C) {
 	vector < int > idxH;
-	for (int h = 0 ; h < n_ref ; h ++) idxH.push_back(h);
+	for (int h = 0 ; h < n_ref ; h ++) if (initializing_haps[h]) idxH.push_back(h);
 	if (n_ref > K) {
 		random_shuffle(idxH.begin(), idxH.end());
 		idxH.erase(idxH.begin() + K, idxH.end());
@@ -138,20 +138,17 @@ void haplotype_set::selectPositionalBurrowWheelerTransform(int ind, conditioning
 
 	C->clear();
 	C->n_states = idxH.size();
-	//vector < int > freq = vector < int > (10, 0);
 	for (int l = 0 ; l < n_site ; l ++) {
 		unsigned int ac = H_opt_var.get(l, 2*ind + n_ref + 0) + H_opt_var.get(l, 2*ind + n_ref + 1);
 		unsigned int ac2 = H_opt_var.get(l, 2*ind + n_ref + 0) + H_opt_var.get(l, 2*ind + n_ref + 1);
 		C->Hmono.push_back(H_opt_var.get(l,idxH[0]));
 		for (int k = 0 ; k < idxH.size() ; k ++) ac2 += H_opt_var.get(l,idxH[k]);
 		ac += ac2;
-		//freq[(ac2>4)?4:ac2]++;
 		if (ac > 0 && ac < (idxH.size()+2)) {
 			C->Vpoly.push_back(l);
 			for (int k = 0 ; k < idxH.size() ; k ++) C->Hpoly.push_back(H_opt_var.get(l,idxH[k]));
 		} else C->Vmono.push_back(l);
 	}
-	//cout << freq[0] << " " << freq[1] << " " << freq[2] << " " << freq[3] << " " << freq[4] << endl;
 	C->n_sites = C->Vpoly.size();
 	C->updateTransitions();
 }

@@ -34,6 +34,7 @@ public:
 	genotype_set & G;
 	variant_map & V;
 	string region;
+	set < string > initializing_samples;
 
 	//COUNTS
 	unsigned long n_variants;
@@ -46,6 +47,7 @@ public:
 	void allocateGenotypes();
 
 	//IO
+	void readInitializingSamples(string);
 	void scanGenotypes(string funphased, string fphased);
 	void readGenotypes(string funphased, string fphased);
 };

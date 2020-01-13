@@ -54,7 +54,6 @@ void genotype::allocate() {
 }
 
 void genotype::initHaplotypeLikelihoods(vector < float > & HL) {
-	//double sum, ph0, ph1, lh0, lh1, lg0, lg1, lg2;
 	double sum, lg0, lg1, lg2;
 	for (int l = 0 ; l < n_variants ; l ++) {
 		lg0 = unphred[GL[3*l+0]];
@@ -66,19 +65,10 @@ void genotype::initHaplotypeLikelihoods(vector < float > & HL) {
 		lg2 /= sum;
 		HL[2*l+0] = lg0 + 0.5 * lg1;
 		HL[2*l+1] = lg2 + 0.5 * lg1;
-		/*
-		lh0 = lg0 + 0.5 * lg1;
-		lh1 = lg2 + 0.5 * lg1;
-		ph0 = ee * lh0 + ed * lh1;
-		ph1 = ed * lh0 + ee * lh1;
-		HL[2*l+0] = ph0 / (ph0 + ph1);
-		HL[2*l+1] = ph1 / (ph0 + ph1);
-		*/
 	}
 }
 
 void genotype::makeHaplotypeLikelihoods(vector < float > & HL, bool first) {
-	//double sum, ph0, ph1, lh0, lh1, lg0, lg1, lg2;
 	double sum, lg0, lg1, lg2;
 	for (int l = 0 ; l < n_variants ; l ++) {
 		bool condAllele = first?H1[l]:H0[l];
@@ -96,20 +86,6 @@ void genotype::makeHaplotypeLikelihoods(vector < float > & HL, bool first) {
 			HL[2*l+0] = lg0 / (lg0 + lg1);
 			HL[2*l+1] = lg1 / (lg0 + lg1);
 		}
-
-		/*
-		if (condAllele) {
-			lh0 = lg1 / (lg1 + lg2);
-			lh1 = lg2 / (lg1 + lg2);
-		} else {
-			lh0 = lg0 / (lg0 + lg1);
-			lh1 = lg1 / (lg0 + lg1);
-		}
-		ph0 = ee * lh0 + ed * lh1;
-		ph1 = ed * lh0 + ee * lh1;
-		HL[2*l+0] = ph0 / (ph0 + ph1);
-		HL[2*l+1] = ph1 / (ph0 + ph1);
-		*/
 	}
 }
 

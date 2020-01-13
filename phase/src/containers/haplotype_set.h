@@ -36,6 +36,9 @@ public:
 	unsigned long n_hap;							// #haplotypes
 	unsigned long n_ref;							// #reference haplotypes
 	bitmatrix H_opt_var;							// Bit matrix of haplotypes (variant first)
+	vector < bool > initializing_haps;
+
+
 
 	//PBWT
 	int pbwt_depth;
