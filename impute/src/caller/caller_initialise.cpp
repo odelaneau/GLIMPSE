@@ -51,11 +51,9 @@ void caller::read_files_and_initialise() {
 	}
 
 	//step3: Read and initialise genetic map
-	if (options.count("map")) {
-		//gmap_reader readerGM;
-		readerGM.readGeneticMapFile(options["map"].as < std::string > ());
-		V.setGeneticMap(readerGM);
-	}
+	//gmap_reader readerGM;
+	readerGM.readGeneticMapFile(options["map"].as < std::string > ());
+	V.setGeneticMap(readerGM);
 
 	//step4
 	HP0 = std::vector < std::vector < float > > (options["thread"].as < int > (), std::vector < float > (H.n_site * 2, 0.0));

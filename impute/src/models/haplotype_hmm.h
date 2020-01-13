@@ -40,7 +40,6 @@ private:
 	std::vector < float > Alpha;
 	std::vector < float > AlphaSum;
 
-	bool store_posteriors;
 	float posterior_threshold;
 
 public:
@@ -53,7 +52,7 @@ public:
 	void forward();
 	void backward(std::vector < float > &, std::vector < float > &);
 	void computePosteriors(std::vector < float > &, std::vector < float > &, int, bool);
-	void applyThreshold(int l);
+	void applyThreshold();
 };
 
 #endif

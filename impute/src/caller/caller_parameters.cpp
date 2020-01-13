@@ -45,7 +45,7 @@ void caller::declare_options() {
 			("pbwt-depth", bpo::value<int>()->default_value(2), "Number of neighbors to store")
 			("pbwt-modulo", bpo::value<int>()->default_value(8), "Number of neighbors to store")
 			("init-states", bpo::value<int>()->default_value(1000), "Number of neighbors to store")
-			("maf-filter", bpo::value<float>()->default_value(0.0f), "MAF filter of variants in the reference panel (requires INFO/AF field)");
+			("maf-filter", bpo::value<float>()->default_value(0.001f), "MAF filter of variants in the reference panel (requires INFO/AF field)");
 
 
 	bpo::options_description opt_output ("Output files");
@@ -92,13 +92,17 @@ void caller::check_options() {
 
 	if (options.count("maf-filter") && (options["maf-filter"].as < float > () > 0.5 || options["maf-filter"].as < float > () <= 0.0))
 		vrb.error("maf-filter parameter needs a value in the interval: (0, 0.5].");
+
+	if (!options.count("map"))
+		vrb.error("You must specify a fine-scale recombination map.");
+
 }
 
 void caller::verbose_files() {
 	vrb.title("Files:");
 	vrb.bullet("Input VCF     : [" + options["input"].as < std::string > () + "]");
 	vrb.bullet("Reference VCF : [" + options["reference"].as < std::string > () + "]");
-	if (options.count("map")) vrb.bullet("Genetic Map   : [" + options["map"].as < std::string > () + "]");
+	vrb.bullet("Genetic Map   : [" + options["map"].as < std::string > () + "]");
 	vrb.bullet("Output VCF    : [" + options["output"].as < std::string > () + "]");
 	vrb.bullet("Genomic region: [" + options["region"].as < std::string > () + "]");
 	if (options.count("log")) vrb.bullet("Output LOG    : [" + options["log"].as < std::string > () + "]");

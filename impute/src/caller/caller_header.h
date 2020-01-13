@@ -57,6 +57,7 @@ public:
 	int output_start;
 	int output_stop;
 	std::string gregion;
+	std::string gregion_nobuff;
 
 	//MULTI-THREADING
 	int i_workers, i_jobs;

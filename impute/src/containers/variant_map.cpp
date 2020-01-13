@@ -55,7 +55,7 @@ double variant_map::getCentiMorganPos(gmap_reader & readerGM, int pos_bp)
 	double base, rate, dist;
 	int idx;
 	auto lower = std::lower_bound(readerGM.pos_bp.cbegin(), readerGM.pos_bp.cend(), pos_bp);
-	if(lower != readerGM.pos_bp.cend()) idx = lower- readerGM.pos_bp.cbegin();
+	if(lower != readerGM.pos_bp.end()) idx = lower- readerGM.pos_bp.cbegin();
 	else return readerGM.pos_cm.back();
 
 	if (idx <= 0) return readerGM.pos_cm[0];
