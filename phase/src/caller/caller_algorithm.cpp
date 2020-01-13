@@ -38,7 +38,6 @@ void * phase_callback(void * ptr) {
 }
 
 void caller::phase_individual(int id_worker, int id_job) {
-	tac.clock();
 	if (current_stage == STAGE_INIT) {
 		H.selectRandom(options["init-states"].as < int > (), COND[id_worker]);
 		G.vecG[id_job]->initHaplotypeLikelihoods(HLC[id_worker]);
