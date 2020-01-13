@@ -72,7 +72,7 @@ void genotype_writer::writeGenotypes(string fname, int output_start, int output_
 
 	for (int l = 0 ; l < V.size() ; l ++) {
 		int current_position = V.vec_pos[l]->bp;
-		int buffer = ((current_position < output_start) || (current_position >= output_stop));
+		int buffer = ((current_position < output_start) || (current_position > output_stop));
 		bcf_clear1(rec);
 		rec->rid = bcf_hdr_name2id(hdr, V.vec_pos[l]->chr.c_str());
 		rec->pos = current_position - 1;

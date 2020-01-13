@@ -40,7 +40,7 @@ int ligater::updateHS(int * values) {
 }
 
 void ligater::update_distances_and_write_record(htsFile * fd, bcf_hdr_t * hdr, bcf1_t * r_buffer, bcf1_t * r_body) {
-	int n_buffer_hs_fields, n_body_hs_fields;
+	int n_buffer_hs_fields = 0, n_body_hs_fields = 0;
 	int nhs0 = bcf_get_format_int32(hdr, r_body, "HS", &body_hs_fields, &n_body_hs_fields);
 	int nhs1 = bcf_get_format_int32(hdr, r_buffer, "HS", &buffer_hs_fields, &n_buffer_hs_fields);
 	assert(nhs0 == nsamples && n_body_hs_fields == nsamples);
@@ -63,7 +63,7 @@ void ligater::update_distances_and_write_record(htsFile * fd, bcf_hdr_t * hdr, b
 }
 
 void ligater::write_record(htsFile *fd, bcf_hdr_t * hdr, bcf1_t *r_body) {
-	int n_body_hs_fields;
+	int n_body_hs_fields = 0;
 	int nhs = bcf_get_format_int32(hdr, r_body, "HS", &body_hs_fields, &n_body_hs_fields);
 	assert(nhs == nsamples && n_body_hs_fields == nsamples);
 	updateHS(body_hs_fields);
@@ -109,7 +109,7 @@ void ligater::ligate() {
 			if (spl != sampleIDs[i]) vrb.error("Sample overlap problem between [" + filenames[0] + "] and [" + filenames[f] + "] idx=" + stb.str(i) + " id1=" + sampleIDs[i] + " / id2=" + spl);
 		}
 	}
-	vrb.bullet("looks good!");
+	vrb.bullet("Sample overlap looks good");
 
 	//Create output file + header by duplication
 	string file_format = "w";
@@ -122,7 +122,7 @@ void ligater::ligate() {
 
 	//Main loop
 	int n_variants = 0;
-	int buffer0, buffer1, nbuffer0, nbuffer1, rbuffer0, rbuffer1;
+	int *buffer0=NULL, *buffer1=NULL, nbuffer0=0, nbuffer1=0, rbuffer0=0, rbuffer1=0;
 	bcf1_t * line0, * line1;
 	while (bcf_sr_next_line (sr)) {
 
@@ -131,7 +131,7 @@ void ligater::ligate() {
 		vector < bool > file_has_record = vector < bool > (nfiles, false);
 		for (int f = 0 ; f < nfiles ; f ++) {
 			file_has_record[f] = bcf_sr_has_line(sr, f);
-			active_readers.push_back(f);
+			if (file_has_record[f]) active_readers.push_back(f);
 		}
 
 		//Retrieve variant informations
@@ -150,7 +150,15 @@ void ligater::ligate() {
 			//Update switching
 			if (prev_readers.size() == 2) {
 				assert(switching.size() * 2 == distances.size());
-				for (int d = 0 ; d < distances.size() ; d += 2) if (distances[d+0] > distances[d+1]) switching[d/2] = !switching[d/2];
+				for (int d = 0 ; d < distances.size() ; d += 2) {
+					if (switching[d/2]) {
+						if (distances[d+0] < distances[d+1]) switching[d/2] = true;
+						else switching[d/2] = false;
+					} else {
+						if (distances[d+0] > distances[d+1]) switching[d/2] = true;
+						else switching[d/2] = false;
+					}
+				}
 				fill(distances.begin(), distances.end(), 0);
 			}
 			//Write Output using current switching
@@ -163,17 +171,18 @@ void ligater::ligate() {
 		//CASE1: WE ARE IN AN OVERLAPPING REGION [LIGATION CASE]
 		if (active_readers.size() == 2) {
 			line1 =  bcf_sr_get_line(sr, active_readers[1]);
+			bcf_unpack(line0, BCF_UN_STR);
 			//Retrieve in which stages the readers were for previous variants
 			unsigned char prev_stage0 = current_stages[active_readers[0]];
 			unsigned char prev_stage1 = current_stages[active_readers[1]];
 			//Retrieve who is buffer, who is main
 			rbuffer0 = bcf_get_info_int32(sr->readers[active_readers[0]].header,line0,"BUF",&buffer0, &nbuffer0);
 			rbuffer1 = bcf_get_info_int32(sr->readers[active_readers[1]].header,line1,"BUF",&buffer1, &nbuffer1);
-			if ((buffer0 + buffer1) == 0) vrb.error("Only main regions are overlapping");
-			if ((buffer0 + buffer1) == 2) vrb.error("Only buffer are overlapping");
+			if ((buffer0[0] + buffer1[0]) == 0) vrb.error("Overlap between chunk specific variants");
+			if ((buffer0[0] + buffer1[0]) == 2) vrb.error("Overlap between buffer-specific variants");
 			//Check in which stages the readers are now
 			unsigned char curr_stage0, curr_stage1;
-			if (rbuffer0) {
+			if (buffer0[0]) {
 				switch (prev_stage0) {
 				case STAGE_NONE: curr_stage0 = STAGE_UBUF; break;
 				case STAGE_UBUF: curr_stage0 = STAGE_UBUF; break;
@@ -181,7 +190,7 @@ void ligater::ligate() {
 				case STAGE_DBUF: curr_stage0 = STAGE_DBUF; break;
 				}
 			} else curr_stage0 = STAGE_BODY;
-			if (rbuffer1) {
+			if (buffer1[0]) {
 				switch (prev_stage1) {
 				case STAGE_NONE: curr_stage1 = STAGE_UBUF; break;
 				case STAGE_UBUF: curr_stage1 = STAGE_UBUF; break;
