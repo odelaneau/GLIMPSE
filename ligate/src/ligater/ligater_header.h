@@ -70,6 +70,7 @@ public:
 
 	//FUNCTIONS
 	int updateHS(int *);
+	int update_switching();
 	void update_distances_and_write_record(htsFile *, bcf_hdr_t * , bcf1_t *, bcf1_t *);
 	void write_record(htsFile *, bcf_hdr_t * , bcf1_t *);
 
