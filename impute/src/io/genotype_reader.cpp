@@ -54,7 +54,6 @@ void genotype_reader::allocateGenotypes() {
 void genotype_reader::scanGenotypes(std::string fmain, std::string fref) {
 	vrb.wait("  * VCF/BCF scanning");
 	tac.clock();
-	validation = false;
 	bcf_srs_t * sr =  bcf_sr_init();
 	sr->collapse = COLLAPSE_NONE;
 	sr->require_index = 1;
@@ -66,25 +65,26 @@ void genotype_reader::scanGenotypes(std::string fmain, std::string fref) {
 	n_ref_samples = bcf_hdr_nsamples(sr->readers[1].header);
 	int nset;
 	bcf1_t * line_main, * line_ref;
-	float *af_ptr=NULL;//read MAF
-	float maf = 0.0f;
-	int nval = 0;
+	int32_t *ac_ptr=NULL;
+	float af = 0.0;
+	int32_t nval = 0;
 
 	while ((nset = bcf_sr_next_line (sr))) {
 		if (nset == 2) {
 			line_main =  bcf_sr_get_line(sr, 0);
 			line_ref =  bcf_sr_get_line(sr, 1);
-			if (line_main->n_allele == 2 && line_ref->n_allele == 2) {
-				if (bcf_get_info_float(sr->readers[1].header, line_ref, "AF", &af_ptr, &nval) <0)
-					vrb.error("No INFO/AF field in the reference file. Cannot apply MAF filter.");
-				if (std::min(af_ptr[0],1.0f -af_ptr[0]) < maf_common)
-					continue;
-				n_variants ++;
+			if (line_main->n_allele == 2 && line_ref->n_allele == 2)
+			{
+				if ( bcf_get_info_int32(sr->readers[1].header, line_ref, "AC", &ac_ptr, &nval) < 0 ) // no AC
+					vrb.error("Cannot find INFO/AC field from INFO field at " + std::string(bcf_hdr_id2name(sr->readers[1].header, line_ref->rid)) + ":" + std::to_string(line_ref->pos + 1));
+				af = *ac_ptr/(2.0*n_ref_samples);
+				if (std::min(af,1.0f -af) >= maf_common) ++n_variants;
 			}
 		}
 	}
 	bcf_sr_destroy(sr);
-	if (n_variants == 0) vrb.error("No variants to be phased in files");
+	if (ac_ptr) free(ac_ptr);
+	if (n_variants == 0) vrb.error("No variants in common between reference and target panel");
 	vrb.bullet("VCF/BCF scanning [Nm=" + stb.str(n_main_samples) + " / Nr=" + stb.str(n_ref_samples) + " / L=" + stb.str(n_variants) + " / Reg=" + region + "] (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
 }
 
@@ -98,10 +98,10 @@ void genotype_reader::readGenotypes(std::string funphased, std::string freferenc
 	bcf_sr_add_reader (sr, freference.c_str());
 	for (int i = 0 ; i < n_main_samples ; i ++) G.vecG[i]->name = std::string(sr->readers[0].header->samples[i]);
 	unsigned int i_variant = 0, nset = 0;
-	int ngl_main, ngl_arr_main = 0, *gl_arr_main = NULL;
+	int ngl_main, ngl_arr_main = 0, *gl_arr_main = NULL, nval = 0;
 	int ngt_ref, *gt_arr_ref = NULL, ngt_arr_ref = 0;
-	float *af_ptr=NULL;///read MAF
-	int nval = 0;
+	int32_t *ac_ptr=NULL;
+	float af;
 	bcf1_t * line_main, * line_ref;
 
 	while ((nset = bcf_sr_next_line (sr))) {
@@ -109,12 +109,10 @@ void genotype_reader::readGenotypes(std::string funphased, std::string freferenc
 			line_main =  bcf_sr_get_line(sr, 0);
 			line_ref =  bcf_sr_get_line(sr, 1);
 			if (line_main->n_allele == 2 && line_ref->n_allele == 2) {
-				if (maf_common > 0.0f)
-				{
-					bcf_get_info_float(sr->readers[1].header, line_ref, "AF", &af_ptr, &nval);
-					if (std::min(af_ptr[0],1.0f -af_ptr[0]) < maf_common)
-						continue;
-				}
+				if ( bcf_get_info_int32(sr->readers[1].header, line_ref, "AC", &ac_ptr, &nval) < 0 ) // no AC
+					vrb.error("Cannot find INFO/AC field from INFO field at " + std::string(bcf_hdr_id2name(sr->readers[1].header, line_ref->rid)) + ":" + std::to_string(line_ref->pos + 1));
+				af = *ac_ptr/(2.0*n_ref_samples);
+				if (std::min(af,1.0f -af) < maf_common) continue;
 
 				bcf_unpack(line_main, BCF_UN_STR);
 				std::string chr = bcf_hdr_id2name(sr->readers[0].header, line_main->rid);
@@ -156,6 +154,7 @@ void genotype_reader::readGenotypes(std::string funphased, std::string freferenc
 	}
 	free(gl_arr_main);
 	free(gt_arr_ref);
+	free(ac_ptr);
 	bcf_sr_destroy(sr);
 
 	// Report

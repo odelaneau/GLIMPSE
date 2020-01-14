@@ -45,7 +45,6 @@ public:
 	int * genotypes;
 	float * dosages;
 	float * posteriors;
-	float count_alt;
 
 	std::string region;
 	const float maf_common;
@@ -66,6 +65,7 @@ public:
 
 	void writeGenotypesAndImpute(std::string funphased, std::string freference, std::string fname, int start, int stop);
 
+	void phase_marker(const int l, const genotype_stream& input_stream);
 	void impute_marker(const int l, const float w,  const genotype_stream& input_stream);
 	void impute_marker_border(const int l, const genotype_stream& input_stream, const bool left);
 

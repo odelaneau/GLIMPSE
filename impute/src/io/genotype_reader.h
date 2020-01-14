@@ -35,7 +35,6 @@ public:
 	variant_map & V;
 	std::string region;
 	const float maf_common;
-	bool validation;
 
 	//COUNTS
 	unsigned long n_variants;

@@ -33,7 +33,6 @@ genotype_writer::genotype_writer(haplotype_set & _H, genotype_set & _G, variant_
 	n_variants = H.n_site;
 	n_main_samples = H.n_targ/2;
 	n_ref_samples = H.n_ref/2;
-	count_alt = 0;
 	e2sum = 0.0;
 	fsum = 0.0;
 	esum=0.0;
@@ -54,7 +53,7 @@ void genotype_writer::writeGenotypesAndImpute(std::string funphased, std::string
 	tac.clock();
 	genotype_stream input_stream(region, maf_common, n_variants, n_main_samples, n_ref_samples);
 	input_stream.openStream(funphased, freference);
-	// Init
+
 	tac.clock();
 	std::string file_format = "w";
 	unsigned int file_type = OFILE_VCFU;
@@ -73,34 +72,28 @@ void genotype_writer::writeGenotypesAndImpute(std::string funphased, std::string
 	bcf_hdr_append(hdr, "##FORMAT=<ID=DS,Number=1,Type=Float,Description=\"Genotype dosage\">");
 	bcf_hdr_append(hdr, "##FORMAT=<ID=GP,Number=3,Type=Float,Description=\"Genotype posteriors\">");
 
-	//Add samples
 	for (int i = 0 ; i < G.n_ind ; i ++) bcf_hdr_add_sample(hdr, G.vecG[i]->name.c_str());
 	bcf_hdr_add_sample(hdr, NULL);      // to update internal structures
 	static_cast<void>(bcf_hdr_write(fp, hdr));
 	int32_t tmpi = bcf_hdr_id2int(hdr, BCF_DT_ID, "PASS");
-	double counter_limit = 1.0/V.size();
+	const double counter_limit = 1.0/V.size();
 
 	variant& curr_variant = *V.vec_pos[0];
 	auto it_minPosW = std::lower_bound(V.vec_pos.begin(), V.vec_pos.end(), start, compLB);
+	if (it_minPosW == V.vec_pos.end())	vrb.error("Error finding first unbuffered position.");
 
-	//no values <minPosW
-	if (it_minPosW == V.vec_pos.end())
-	{
-		vrb.error("Error finding position.");
-	}
 	input_stream.i_next_common_variant = std::distance(V.vec_pos.begin(),it_minPosW);
 	input_stream.i_common_variant =  input_stream.i_next_common_variant-1;
 
 	int current_position;
 	double est_af;
-	float info;
-	double n_main_haps_d = 2*(double)n_main_samples;
+	float info, count_alt_ref;
+	const double n_main_haps_d = 2*(double)n_main_samples;
 
 	while (input_stream.readMarker())
 	{
-		const int l = input_stream.i_common_variant;
 		if (input_stream.is_common_variant)
-			curr_variant = *V.vec_pos[l];//COPY, maybe a reference is enough
+			curr_variant = *V.vec_pos[input_stream.i_common_variant];//COPY, maybe a reference is enough
 		else curr_variant = input_stream.curr_variant;
 
 		current_position = curr_variant.bp;
@@ -109,44 +102,16 @@ void genotype_writer::writeGenotypesAndImpute(std::string funphased, std::string
 			bcf_clear1(rec);
 
 			esum=0.0;e2sum=0.0;fsum=0.0;
-			count_alt = 0;
-			float count_alt_ref = curr_variant.calt;
+			count_alt_ref = curr_variant.calt;
 
-			if (input_stream.is_common_variant)
-			{
-				for (int i = 0 ; i < G.n_ind ; i++) {
-					bool a0 = G.vecG[i]->H0[l];
-					bool a1 = G.vecG[i]->H1[l];
-					genotypes[2*i+0] = bcf_gt_phased(a0);
-					genotypes[2*i+1] = bcf_gt_phased(a1);
-					float gp0 = G.vecG[i]->GP[2*l+0];
-					float gp1 = G.vecG[i]->GP[2*l+1];
-					float gp2 = abs(1.0 - gp0 - gp1);
-					float ds = gp1 + 2 * gp2;
-					count_alt += ds;
-					gp0 = roundf(gp0 * 1000.0) / 1000.0;
-					gp1 = roundf(gp1 * 1000.0) / 1000.0;
-					gp2 = roundf(gp2 * 1000.0) / 1000.0;
-					dosages[i] = roundf(ds * 1000.0) / 1000.0;
-					posteriors[3*i+0] = gp0;
-					posteriors[3*i+1] = gp1;
-					posteriors[3*i+2] = gp2;
-
-					esum+= posteriors[3*i + 1] + 2.0*posteriors[3*i + 2];
-					e2sum+= (posteriors[3*i + 1] + 2.0*posteriors[3*i + 2]) * (posteriors[3*i + 1] + 2.0*posteriors[3*i + 2]);
-					fsum+= posteriors[3*i + 1] + 4.0*posteriors[3*i + 2];
-				}
-			}
+			if (input_stream.is_common_variant) phase_marker(input_stream.i_common_variant, input_stream);
 			else
-			{
-				if (input_stream.i_common_variant<0) impute_marker_border(0, input_stream, true);
-				else impute_marker(l, get_linear_interp_weight(l, current_position), input_stream);
-			}
+					if (input_stream.i_common_variant<0) impute_marker_border(0, input_stream, true);
+					else impute_marker(input_stream.i_common_variant, get_linear_interp_weight(input_stream.i_common_variant, current_position), input_stream);
 
 			//est_af = (esum + (double)count_alt_ref) / (2 * (double)(n_main_samples+n_ref_samples)); //AF in main + ref
 			est_af = esum / n_main_haps_d; //AF in main - Original INFO score
-			//info can be negative
-			info = (est_af>0.0 && est_af<1.0) ? (float)(1.0 - (fsum - e2sum) / (n_main_haps_d * est_af * (1.0 - est_af))) : 1;
+			info = (est_af>0.0 && est_af<1.0) ? (float)(1.0 - (fsum - e2sum) / (n_main_haps_d * est_af * (1.0 - est_af))) : 1; //info can be negative
 
 			rec->rid = bcf_hdr_name2id(hdr, curr_variant.chr.c_str());
 			rec->pos = current_position - 1;
@@ -173,6 +138,30 @@ void genotype_writer::writeGenotypesAndImpute(std::string funphased, std::string
 	}
 }
 
+void genotype_writer::phase_marker(const int l, const genotype_stream& input_stream)
+{
+	bool a0, a1;
+	float gp0, gp1, gp2, ds;
+
+	for (int i = 0 ; i < G.n_ind ; i++) {
+		a0 = G.vecG[i]->H0[l];
+		a1 = G.vecG[i]->H1[l];
+		genotypes[2*i+0] = bcf_gt_phased(a0);
+		genotypes[2*i+1] = bcf_gt_phased(a1);
+		gp0 = G.vecG[i]->GP[2*l+0];
+		gp1 = G.vecG[i]->GP[2*l+1];
+		gp2 = abs(1.0 - gp0 - gp1);
+		ds = gp1 + 2 * gp2;
+		dosages[i] = roundf(ds * 1000.0) / 1000.0;
+		posteriors[3*i+0] = roundf(gp0 * 1000.0) / 1000.0;;
+		posteriors[3*i+1] = roundf(gp1 * 1000.0) / 1000.0;;
+		posteriors[3*i+2] = roundf(gp2 * 1000.0) / 1000.0;;
+
+		esum+= posteriors[3*i + 1] + 2.0*posteriors[3*i + 2];
+		e2sum+= (posteriors[3*i + 1] + 2.0*posteriors[3*i + 2]) * (posteriors[3*i + 1] + 2.0*posteriors[3*i + 2]);
+		fsum+= posteriors[3*i + 1] + 4.0*posteriors[3*i + 2];
+	}
+}
 void genotype_writer::impute_marker(const int l, const float w,  const genotype_stream& input_stream)
 {
 	const float w1M = std::max(1.0 - w,0.0);
@@ -248,7 +237,6 @@ void genotype_writer::impute_marker(const int l, const float w,  const genotype_
 		fsum+= posteriors[3*i + 1] + 4.0*posteriors[3*i + 2];
 
 		dosages[i] = roundf((posteriors[3*i + 1] + 2 * posteriors[3*i + 2]) * 1000.0) / 1000.0;
-		count_alt += dosages[i];
 	}
 }
 
@@ -316,7 +304,6 @@ void genotype_writer::impute_marker_border(const int l, const genotype_stream& i
 		fsum+= posteriors[3*i + 1] + 4.0*posteriors[3*i + 2];
 
 		dosages[i] = roundf((posteriors[3*i + 1] + 2 * posteriors[3*i + 2]) * 1000.0) / 1000.0;
-		count_alt += dosages[i];
 	}
 }
 

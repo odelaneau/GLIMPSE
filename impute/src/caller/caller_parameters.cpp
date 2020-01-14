@@ -21,6 +21,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include <caller/caller_header.h>
+#include <version/version.h>
 
 void caller::declare_options() {
 	bpo::options_description opt_base ("Basic options");
@@ -70,7 +71,7 @@ void caller::parse_command_line(std::vector < std::string > & args) {
 	vrb.title("LCC_impute");
 	vrb.bullet("Author        : Simone RUBINACCI & Olivier DELANEAU, University of Lausanne");
 	vrb.bullet("Contact       : simone.rubinacci@unil.ch & olivier.delaneau@unil.ch");
-	vrb.bullet("Version       : 1.0.0");
+	vrb.bullet("Version       : " + std::string(VERSION));
 	vrb.bullet("Run date      : " + tac.date());
 }
 
