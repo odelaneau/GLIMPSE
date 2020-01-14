@@ -259,6 +259,6 @@ void ligater::ligate() {
 	if (hts_close(fp)) vrb.error("Non zero status when closing VCF/BCF file descriptor");
 	//Last verbose
 	if (n_variants == 0) vrb.error("No variants to be phased in files");
-	vrb.title("Writing completed [L=" + stb.str(n_variants) + " (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
+	vrb.title("Writing completed [L=" + stb.str(n_variants) + "] (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
 }
 
