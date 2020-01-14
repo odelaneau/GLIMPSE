@@ -32,8 +32,6 @@ axiom: BOOST_LIB_IO=/software/lib64/libboost_iostreams.a
 axiom: BOOST_LIB_PO=/software/lib64/libboost_program_options.a
 axiom: $(BFILE)
 
-jura: module load Bioinformatics/Software/vital-it
-jura: module load module add Development/gcc/9.2.1
 jura: HTSLIB_INC=/software/UHTS/Analysis/samtools/1.4/include
 jura: HTSLIB_LIB=/software/UHTS/Analysis/samtools/1.4/lib64/libhts.a
 jura: BOOST_INC=/software/include

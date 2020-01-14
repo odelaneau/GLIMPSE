@@ -39,6 +39,27 @@ int ligater::updateHS(int * values) {
 	}
 }
 
+int ligater::update_switching() {
+	assert(switching.size() * 2 == distances.size());
+	int n_changes = 0;
+	for (int d = 0 ; d < distances.size() ; d += 2) {
+		if (switching[d/2]) {
+			if (distances[d+0] < distances[d+1]) switching[d/2] = true;
+			else {
+				switching[d/2] = false;
+				n_changes ++;
+			}
+		} else {
+			if (distances[d+0] > distances[d+1]) {
+				switching[d/2] = true;
+				n_changes ++;
+			} else switching[d/2] = false;
+		}
+	}
+	fill(distances.begin(), distances.end(), 0);
+	return n_changes;
+}
+
 void ligater::update_distances_and_write_record(htsFile * fd, bcf_hdr_t * hdr, bcf1_t * r_buffer, bcf1_t * r_body) {
 	int n_buffer_hs_fields = 0, n_body_hs_fields = 0;
 	int nhs0 = bcf_get_format_int32(hdr, r_body, "HS", &body_hs_fields, &n_body_hs_fields);
@@ -147,20 +168,8 @@ void ligater::ligate() {
 
 		//CASE0: WE ARE NOT IN AN OVERLAPPING REGION [STANDARD CASE]
 		if (active_readers.size() == 1) {
-			//Update switching
-			if (prev_readers.size() == 2) {
-				assert(switching.size() * 2 == distances.size());
-				for (int d = 0 ; d < distances.size() ; d += 2) {
-					if (switching[d/2]) {
-						if (distances[d+0] < distances[d+1]) switching[d/2] = true;
-						else switching[d/2] = false;
-					} else {
-						if (distances[d+0] > distances[d+1]) switching[d/2] = true;
-						else switching[d/2] = false;
-					}
-				}
-				fill(distances.begin(), distances.end(), 0);
-			}
+			// verbose
+			if (prev_readers.size() == 0) vrb.title("First chunk of data from position [" + stb.str(position) + "]");
 			//Write Output using current switching
 			write_record(fp, hdr, line0);
 			//Update current stage of active reader
@@ -199,8 +208,7 @@ void ligater::ligate() {
 				}
 			} else curr_stage1 = STAGE_BODY;
 			//Check if stage has changed?
-			bool change0 = (prev_stage0 != curr_stage0);
-			bool change1 = (prev_stage1 != curr_stage1);
+			bool changedStatus = (prev_stage0 != curr_stage0) + (prev_stage1 != curr_stage1);
 			// f0 is upBUF / f1 is BODY
 			if (curr_stage0 == STAGE_UBUF && curr_stage1 == STAGE_BODY) {
 				// update hamming distances
@@ -212,11 +220,23 @@ void ligater::ligate() {
 			}
 			// f0 is dwBUF / f1 is BODY
 			else if (curr_stage0 == STAGE_DBUF && curr_stage1 == STAGE_BODY) {
+				// update switching if necessary
+				if (changedStatus) {
+					vrb.title("Next chunk of data from position [" + stb.str(position) + "]");
+					int nc = update_switching();
+					vrb.bullet("#switches=" + stb.str(nc));
+				}
 				// write F1 using current switching
 				write_record(fp, hdr, line1);
 			}
 			// f1 is dwBUF / f0 is BODY
 			else if (curr_stage1 == STAGE_DBUF && curr_stage0 == STAGE_BODY) {
+				// update switching if necessary
+				if (changedStatus) {
+					vrb.title("Next chunk of data from position [" + stb.str(position) + "]");
+					int nc = update_switching();
+					vrb.bullet("#switches=" + stb.str(nc));
+				}
 				// write F0 using current switching
 				write_record(fp, hdr, line0);
 			}
@@ -231,16 +251,14 @@ void ligater::ligate() {
 		//
 		n_variants++;
 	}
-	//Close file descriptors
+	//Close file descriptors & free arrays
 	free(body_hs_fields);
 	free(buffer_hs_fields);
-	bcf_destroy1(line0);
-	bcf_destroy1(line1);
-	bcf_sr_destroy(sr);
 	bcf_hdr_destroy(hdr);
+	bcf_sr_destroy(sr);
 	if (hts_close(fp)) vrb.error("Non zero status when closing VCF/BCF file descriptor");
 	//Last verbose
 	if (n_variants == 0) vrb.error("No variants to be phased in files");
-	vrb.bullet("Writing completed [L=" + stb.str(n_variants) + " (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
+	vrb.title("Writing completed [L=" + stb.str(n_variants) + "] (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
 }
 
