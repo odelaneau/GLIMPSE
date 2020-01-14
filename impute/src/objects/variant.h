@@ -47,6 +47,12 @@ public :
 	bool isSingleton();
 	bool isMonomorphic();
 	unsigned int getMAC();
+
+	bool isPrev(variant* m2)
+	{
+		return bp < m2->bp;
+	}
+
 };
 
 #endif

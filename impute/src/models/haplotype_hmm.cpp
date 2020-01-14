@@ -27,7 +27,6 @@ haplotype_hmm::haplotype_hmm(haplotype_set * _H, conditioning_set * _C, probabil
 	P = _P;
 	//P = _P;
 	Emissions = std::vector < float > (2*C->n_vars, 0.0);
-	store_posteriors = false;
 	posterior_threshold = 0.0f;
 	hap=0;
 }
@@ -57,16 +56,12 @@ void haplotype_hmm::init(std::vector < float > & HL) {
 }
 
 void haplotype_hmm::computePosteriors(std::vector < float > & HL, std::vector < float > & HP, int _hap, bool _store_posteriors) {
-	store_posteriors = _store_posteriors;
 	hap = _hap;
 	resize();
-	vrb.bullet("HAP Resize (" + stb.str(tac.rel_time()*1.0, 1) + "ms)");tac.clock();
 	init(HL);
-	vrb.bullet("HAP Init (" + stb.str(tac.rel_time()*1.0, 1) + "ms)");tac.clock();
 	forward();
-	vrb.bullet("HAP Forward (" + stb.str(tac.rel_time()*1.0, 1) + "ms)");tac.clock();
 	backward(HL, HP);
-	vrb.bullet("HAP Backward (" + stb.str(tac.rel_time()*1.0, 1) + "ms)");tac.clock();
+	if (_store_posteriors) applyThreshold();
 }
 
 void haplotype_hmm::forward() {
@@ -148,8 +143,6 @@ void haplotype_hmm::backward(std::vector < float > & HL, std::vector < float > &
 		betaSumCurr = betaSumTmp[0]*Emissions[2*l + 0] + betaSumTmp[1]*Emissions[2*l + 1];
 		betaSumNext = betaSumCurr / C->n_states;
 		//loglik += log (betaSumPrev);
-
-		if (store_posteriors) applyThreshold(l);
 	}
 	//cout << "B = " << loglik << endl;
 	/*
@@ -169,82 +162,82 @@ void haplotype_hmm::backward(std::vector < float > & HL, std::vector < float > &
 	*/
 }
 
-void haplotype_hmm::applyThreshold(int l)
+void haplotype_hmm::applyThreshold()
 {
-	if (P==nullptr) return;
-
-	std::vector<int> newids;
-	std::vector<float> newpL;
-	std::vector<float> newpR;
-
-	std::vector<int>& oldids = P->reference_haps[hap][l];
-	std::vector<float>& oldpL = P->prob_stateL[hap][l];
-	std::vector<float>& oldpR = P->prob_stateR[hap][l];
-
-	//posterior_threshold
+	int i = 0, k = 0, lP1;
 	double thrL, thrR, sumProbL, sumProbR,sumL, sumR;
 
-    int lP1 = (l < C->n_sites-1) ? (l + 1) : l;
+	for (int l = 0 ; l < C->n_sites ; l ++)
+	{
+		std::vector<int> newids;
+		std::vector<float> newpL;
+		std::vector<float> newpR;
 
-	thrL = posterior_threshold*AlphaSum[l];
-	thrR = posterior_threshold*AlphaSum[lP1];
-	sumL = AlphaSum[l];
-	sumR = AlphaSum[lP1];
+		std::vector<int>& oldids = P->reference_haps[hap][l];
+		std::vector<float>& oldpL = P->prob_stateL[hap][l];
+		std::vector<float>& oldpR = P->prob_stateR[hap][l];
 
-    int i = 0, k = 0;
+		i = 0;
+		k = 0;
+		lP1 = (l < C->n_sites-1) ? (l + 1) : l;
+		thrL = posterior_threshold*AlphaSum[l];
+		thrR = posterior_threshold*AlphaSum[lP1];
+		sumL = AlphaSum[l];
+		sumR = AlphaSum[lP1];
 
-    // Traverse both array
-    while (i<oldids.size() && k < C->n_states)
-    {
-        if (oldids[i] < C->idxH[k])
-        {
+		// Traverse both array
+		while (i<oldids.size() && k < C->n_states)
+		{
+			if (oldids[i] < C->idxH[k])
+			{
+				newids.push_back(oldids[i]);
+				newpL.push_back(oldpL[i]);
+				newpR.push_back(oldpL[i]);
+				i++;
+			}
+			else if (oldids[i] == C->idxH[k])
+			{
+				newids.push_back(oldids[i]);
+				newpL.push_back(oldpL[i]+Alpha[l*C->n_states+k]/sumL);
+				newpR.push_back(oldpR[i]+Alpha[lP1*C->n_states+k]/sumR);
+				i++;
+				k++;
+			}
+			else
+			{
+				if (thrL < Alpha[l*C->n_states+k] || thrR < Alpha[lP1*C->n_states+k])
+				{
+					newids.push_back(C->idxH[k]);
+					newpL.push_back(Alpha[l*C->n_states+k]/sumL);
+					newpR.push_back(Alpha[lP1*C->n_states+k]/sumR);
+				}
+				k++;
+			}
+		}
+
+		// Store remaining elements of first array
+		while (i<oldids.size())
+		{
 			newids.push_back(oldids[i]);
 			newpL.push_back(oldpL[i]);
 			newpR.push_back(oldpL[i]);
 			i++;
 		}
-        else if (oldids[i] == C->idxH[k])
+
+		// Store remaining elements of second array
+		while (k < C->n_states)
 		{
-			newids.push_back(oldids[i]);
-			newpL.push_back(oldpL[i]+Alpha[l*C->n_states+k]/sumL);
-			newpR.push_back(oldpR[i]+Alpha[lP1*C->n_states+k]/sumR);
-			i++;
+			if (thrL < Alpha[l*C->n_states+k] || thrR < Alpha[lP1*C->n_states+k])
+			{
+				newids.push_back(C->idxH[k]);
+				newpL.push_back(Alpha[l*C->n_states+k]/sumL);
+				newpR.push_back(Alpha[lP1*C->n_states+k]/sumR);
+			}
 			k++;
 		}
-        else
-        {
-            if (thrL < Alpha[l*C->n_states+k] || thrR < Alpha[lP1*C->n_states+k])
-            {
-         		newids.push_back(C->idxH[k]);
-    			newpL.push_back(Alpha[l*C->n_states+k]/sumL);
-    			newpR.push_back(Alpha[lP1*C->n_states+k]/sumR);
-            }
-            k++;
-        }
-    }
-
-    // Store remaining elements of first array
-    while (i<oldids.size())
-    {
-    	newids.push_back(oldids[i]);
-		newpL.push_back(oldpL[i]);
-		newpR.push_back(oldpL[i]);
-		i++;
-    }
-
-    // Store remaining elements of second array
-    while (k < C->n_states)
-    {
-    	if (thrL < Alpha[l*C->n_states+k] || thrR < Alpha[lP1*C->n_states+k])
-		{
-			newids.push_back(C->idxH[k]);
-			newpL.push_back(Alpha[l*C->n_states+k]/sumL);
-			newpR.push_back(Alpha[lP1*C->n_states+k]/sumR);
-		}
-    	k++;
-    }
-    // swap vectors
-	P->reference_haps[hap][l].swap(newids);
-	P->prob_stateL[hap][l].swap(newpL);
-	P->prob_stateR[hap][l].swap(newpR);
+		// swap vectors
+		P->reference_haps[hap][l].swap(newids);
+		P->prob_stateL[hap][l].swap(newpL);
+		P->prob_stateR[hap][l].swap(newpR);
+	}
 }

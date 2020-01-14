@@ -13,7 +13,8 @@ genotype_stream::genotype_stream(std::string _region, float _maf_common, unsigne
 	is_open = false;
 	sr = nullptr;
 	i_variant = 0;
-	i_common = -1;
+	i_next_common_variant = 0;
+	i_common_variant = -1;
 	is_common_variant = false;
 	nset = 0;
 	ngl_main = 0;
@@ -42,8 +43,8 @@ void genotype_stream::openStream(std::string funphased, std::string freference) 
 	bcf_sr_add_reader (sr, funphased.c_str());
 	bcf_sr_add_reader (sr, freference.c_str());
 
-	ref_haps = std::vector<bool> (2*n_ref_samples);
-	curr_GL = std::vector<double> (3*n_main_samples,1.0);
+	ref_haps.allocate(2*n_ref_samples);
+	curr_GL = std::vector<double> (3*n_main_samples,flat_gl);
 
 	is_open = true;
 }
@@ -62,10 +63,10 @@ bool genotype_stream::readMarker()
 				maf_ref_variant = std::min(af_ptr[0],1.0f -af_ptr[0]);
 				if (maf_common <= maf_ref_variant)
 				{
-					i_common ++;
 					is_common_variant = true;
-					//curr_variant = *V.vec_pos[i_common];
-					i_variant ++;
+					i_common_variant = i_next_common_variant;
+					i_next_common_variant ++;
+					i_variant++;
 					break;
 				}
 
@@ -83,8 +84,8 @@ bool genotype_stream::readMarker()
 				for(int i = 0 ; i < 2 * n_ref_samples ; i += 2) {
 					bool a0 = (bcf_gt_allele(gt_arr_ref[i+0])==1);
 					bool a1 = (bcf_gt_allele(gt_arr_ref[i+1])==1);
-					ref_haps[i+0] = a0;
-					ref_haps[i+1] = a1;
+					ref_haps.set(i+0, a0);
+					ref_haps.set(i+1, a1);
 					a0?calt++:cref++;
 					a1?calt++:cref++;
 				}

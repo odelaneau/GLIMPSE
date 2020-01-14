@@ -25,6 +25,8 @@
 #define OFILE_VCFC	1
 #define OFILE_BCFC	2
 
+auto compLB =  [](auto const& m1, auto const& m2) { return m1->bp < m2; };
+
 genotype_writer::genotype_writer(haplotype_set & _H, genotype_set & _G, variant_map & _V, std::vector < probability_set * >& _P, gmap_reader & _readerGM, std::string _region, float _maf_common): H(_H), G(_G), V(_V), P(_P), readerGM(_readerGM), region(_region), maf_common(_maf_common)
 {
 	//COUNTS
@@ -32,6 +34,9 @@ genotype_writer::genotype_writer(haplotype_set & _H, genotype_set & _G, variant_
 	n_main_samples = H.n_targ/2;
 	n_ref_samples = H.n_ref/2;
 	count_alt = 0;
+	e2sum = 0.0;
+	fsum = 0.0;
+	esum=0.0;
 
 	genotypes = (int*)malloc(n_main_samples*2*sizeof(int));
 	dosages = (float*)malloc(n_main_samples*1*sizeof(float));
@@ -43,93 +48,6 @@ genotype_writer::~genotype_writer()
 	free(genotypes);
 	free(dosages);
 	free(posteriors);
-}
-
-void genotype_writer::writeGenotypes(std::string fname, int start, int stop) {
-	// Init
-	tac.clock();
-	std::string file_format = "w";
-	unsigned int file_type = OFILE_VCFU;
-	if (fname.size() > 6 && fname.substr(fname.size()-6) == "vcf.gz") { file_format = "wz"; file_type = OFILE_VCFC; }
-	if (fname.size() > 3 && fname.substr(fname.size()-3) == "bcf") { file_format = "wb"; file_type = OFILE_BCFC; }
-	htsFile * fp = hts_open(fname.c_str(),file_format.c_str());
-	bcf_hdr_t * hdr = bcf_hdr_init("w");
-	bcf1_t *rec = bcf_init1();
-
-	// Create VCF header
-	bcf_hdr_append(hdr, std::string("##fileDate="+tac.date()).c_str());
-	bcf_hdr_append(hdr, "##source=LCCv2.0");
-	bcf_hdr_append(hdr, std::string("##contig=<ID="+ V.vec_pos[0]->chr + ">").c_str());
-	bcf_hdr_append(hdr, "##INFO=<ID=AFref,Number=A,Type=Float,Description=\"Allele Frequency\">");
-	bcf_hdr_append(hdr, "##INFO=<ID=AFmain,Number=A,Type=Float,Description=\"Allele Frequency\">");
-	bcf_hdr_append(hdr, "##INFO=<ID=AFfull,Number=A,Type=Float,Description=\"Allele Frequency\">");
-	bcf_hdr_append(hdr, "##INFO=<ID=CM,Number=A,Type=Float,Description=\"Interpolated cM position\">");
-	bcf_hdr_append(hdr, "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Phased genotypes\">");
-	bcf_hdr_append(hdr, "##FORMAT=<ID=DS,Number=1,Type=Float,Description=\"Genotype dosage\">");
-	bcf_hdr_append(hdr, "##FORMAT=<ID=GP,Number=3,Type=Float,Description=\"Genotype posteriors\">");
-
-	//Add samples
-	for (int i = 0 ; i < G.n_ind ; i ++) bcf_hdr_add_sample(hdr, G.vecG[i]->name.c_str());
-	bcf_hdr_add_sample(hdr, NULL);      // to update internal structures
-	static_cast<void>(bcf_hdr_write(fp, hdr));
-
-	for (int l = 0 ; l < V.size() ; l ++) {
-		int current_position = V.vec_pos[l]->bp;
-		if (current_position >= start && current_position < stop) {
-			bcf_clear1(rec);
-			rec->rid = bcf_hdr_name2id(hdr, V.vec_pos[l]->chr.c_str());
-			rec->pos = current_position - 1;
-			bcf_update_id(hdr, rec, V.vec_pos[l]->id.c_str());
-			std::string alleles = V.vec_pos[l]->ref + "," + V.vec_pos[l]->alt;
-			bcf_update_alleles_str(hdr, rec, alleles.c_str());
-			count_alt = 0;
-			float count_alt_ref = V.vec_pos[l]->calt;
-			for (int i = 0 ; i < G.n_ind ; i++) {
-				bool a0 = G.vecG[i]->H0[l];
-				bool a1 = G.vecG[i]->H1[l];
-				genotypes[2*i+0] = bcf_gt_phased(a0);
-				genotypes[2*i+1] = bcf_gt_phased(a1);
-				float gp0 = G.vecG[i]->GP[2*l+0];
-				float gp1 = G.vecG[i]->GP[2*l+1];
-				float gp2 = abs(1.0 - gp0 - gp1);
-				float ds = gp1 + 2 * gp2;
-				count_alt += ds;
-				gp0 = roundf(gp0 * 1000.0) / 1000.0;
-				gp1 = roundf(gp1 * 1000.0) / 1000.0;
-				gp2 = roundf(gp2 * 1000.0) / 1000.0;
-				dosages[i] = roundf(ds * 1000.0) / 1000.0;
-				posteriors[3*i+0] = gp0;
-				posteriors[3*i+1] = gp1;
-				posteriors[3*i+2] = gp2;
-			}
-			float freq_alt_refp = count_alt_ref / (V.vec_pos[l]->calt + V.vec_pos[l]->cref);
-			float freq_alt_main = count_alt / (2 * G.n_ind);
-			float freq_alt_full = (count_alt + count_alt_ref) / (2 * G.n_ind + V.vec_pos[l]->calt + V.vec_pos[l]->cref);
-
-			bcf_update_info_float(hdr, rec, "AFref", &freq_alt_refp, 1);
-			bcf_update_info_float(hdr, rec, "AFmain", &freq_alt_main, 1);
-			bcf_update_info_float(hdr, rec, "AFfull", &freq_alt_full, 1);
-
-			if (V.vec_pos[l]->cm >= 0) {
-				float val = (float)V.vec_pos[l]->cm;
-				bcf_update_info_float(hdr, rec, "CM", &val, 1);
-			}
-			bcf_update_genotypes(hdr, rec, genotypes, bcf_hdr_nsamples(hdr)*2);
-			bcf_update_format_float(hdr, rec, "DS", dosages, bcf_hdr_nsamples(hdr)*1);
-			bcf_update_format_float(hdr, rec, "GP", posteriors, bcf_hdr_nsamples(hdr)*3);
-			static_cast<void>(bcf_write1(fp, hdr, rec));
-		}
-		vrb.progress("  * VCF writing", (l+1)*1.0/V.size());
-	}
-
-	bcf_destroy1(rec);
-	bcf_hdr_destroy(hdr);
-	if (hts_close(fp)) vrb.error("Non zero status when closing VCF/BCF file descriptor");
-	switch (file_type) {
-	case OFILE_VCFU: vrb.bullet("VCF writing [Uncompressed / N=" + stb.str(G.n_ind) + " / L=" + stb.str(V.size()) + "] (" + stb.str(tac.rel_time()*0.001, 2) + "s)"); break;
-	case OFILE_VCFC: vrb.bullet("VCF writing [Compressed / N=" + stb.str(G.n_ind) + " / L=" + stb.str(V.size()) + "] (" + stb.str(tac.rel_time()*0.001, 2) + "s)"); break;
-	case OFILE_BCFC: vrb.bullet("BCF writing [Compressed / N=" + stb.str(G.n_ind) + " / L=" + stb.str(V.size()) + "] (" + stb.str(tac.rel_time()*0.001, 2) + "s)"); break;
-	}
 }
 
 void genotype_writer::writeGenotypesAndImpute(std::string funphased, std::string freference, std::string fname, int start, int stop) {
@@ -148,12 +66,9 @@ void genotype_writer::writeGenotypesAndImpute(std::string funphased, std::string
 
 	// Create VCF header
 	bcf_hdr_append(hdr, std::string("##fileDate="+tac.date()).c_str());
-	bcf_hdr_append(hdr, "##source=LCCv2.0");
+	bcf_hdr_append(hdr, "##source=LCC impute");
 	bcf_hdr_append(hdr, std::string("##contig=<ID="+ V.vec_pos[0]->chr + ">").c_str());
-	bcf_hdr_append(hdr, "##INFO=<ID=AFref,Number=A,Type=Float,Description=\"Allele Frequency\">");
-	bcf_hdr_append(hdr, "##INFO=<ID=AFmain,Number=A,Type=Float,Description=\"Allele Frequency\">");
-	bcf_hdr_append(hdr, "##INFO=<ID=AFfull,Number=A,Type=Float,Description=\"Allele Frequency\">");
-	bcf_hdr_append(hdr, "##INFO=<ID=CM,Number=A,Type=Float,Description=\"Interpolated cM position\">");
+	bcf_hdr_append(hdr, "##INFO=<ID=INFO,Number=1,Type=Float,Description=\"IMPUTE2 info score, AF from expected genotype dosage\">");
 	bcf_hdr_append(hdr, "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Phased genotypes\">");
 	bcf_hdr_append(hdr, "##FORMAT=<ID=DS,Number=1,Type=Float,Description=\"Genotype dosage\">");
 	bcf_hdr_append(hdr, "##FORMAT=<ID=GP,Number=3,Type=Float,Description=\"Genotype posteriors\">");
@@ -162,27 +77,38 @@ void genotype_writer::writeGenotypesAndImpute(std::string funphased, std::string
 	for (int i = 0 ; i < G.n_ind ; i ++) bcf_hdr_add_sample(hdr, G.vecG[i]->name.c_str());
 	bcf_hdr_add_sample(hdr, NULL);      // to update internal structures
 	static_cast<void>(bcf_hdr_write(fp, hdr));
+	int32_t tmpi = bcf_hdr_id2int(hdr, BCF_DT_ID, "PASS");
+	double counter_limit = 1.0/V.size();
 
-	variant curr_variant;
+	variant& curr_variant = *V.vec_pos[0];
+	auto it_minPosW = std::lower_bound(V.vec_pos.begin(), V.vec_pos.end(), start, compLB);
+
+	//no values <minPosW
+	if (it_minPosW == V.vec_pos.end())
+	{
+		vrb.error("Error finding position.");
+	}
+	input_stream.i_next_common_variant = std::distance(V.vec_pos.begin(),it_minPosW);
+	input_stream.i_common_variant =  input_stream.i_next_common_variant-1;
+
 	int current_position;
+	double est_af;
+	float info;
+	double n_main_haps_d = 2*(double)n_main_samples;
 
 	while (input_stream.readMarker())
 	{
-		const int l = input_stream.i_common;
+		const int l = input_stream.i_common_variant;
 		if (input_stream.is_common_variant)
-			curr_variant = *V.vec_pos[l];
+			curr_variant = *V.vec_pos[l];//COPY, maybe a reference is enough
 		else curr_variant = input_stream.curr_variant;
 
 		current_position = curr_variant.bp;
-
 		if (current_position >= start && current_position < stop)
 		{
 			bcf_clear1(rec);
-			rec->rid = bcf_hdr_name2id(hdr, curr_variant.chr.c_str());
-			rec->pos = current_position - 1;
-			bcf_update_id(hdr, rec, curr_variant.id.c_str());
-			std::string alleles = curr_variant.ref + "," + curr_variant.alt;
-			bcf_update_alleles_str(hdr, rec, alleles.c_str());
+
+			esum=0.0;e2sum=0.0;fsum=0.0;
 			count_alt = 0;
 			float count_alt_ref = curr_variant.calt;
 
@@ -205,49 +131,36 @@ void genotype_writer::writeGenotypesAndImpute(std::string funphased, std::string
 					posteriors[3*i+0] = gp0;
 					posteriors[3*i+1] = gp1;
 					posteriors[3*i+2] = gp2;
+
+					esum+= posteriors[3*i + 1] + 2.0*posteriors[3*i + 2];
+					e2sum+= (posteriors[3*i + 1] + 2.0*posteriors[3*i + 2]) * (posteriors[3*i + 1] + 2.0*posteriors[3*i + 2]);
+					fsum+= posteriors[3*i + 1] + 4.0*posteriors[3*i + 2];
 				}
 			}
 			else
 			{
-				float w =.5;
-				if (l < 0 || l >= n_variants-1) impute_marker_border(std::max(l,0), input_stream, input_stream.i_common<0);
-				else
-				{
-					float genpos_a = V.vec_pos[l]->cm;
-					float genpos_b = V.vec_pos[l+1]->cm;
-					float genpos_x = V.getCentiMorganPos(readerGM,current_position)-V.baseline;
-
-
-					float genpos_ba = abs(genpos_b - genpos_a);
-					float genpos_bx = abs(genpos_b - genpos_x);
-
-					//need to be a bit careful about genpos to avoid nan values
-					if (genpos_ba < 1e-7) genpos_ba = 1e-7;
-					if (genpos_bx > genpos_ba) genpos_bx = genpos_ba;
-
-					w = genpos_bx / genpos_ba;
-					impute_marker(l, w, input_stream);
-				}
+				if (input_stream.i_common_variant<0) impute_marker_border(0, input_stream, true);
+				else impute_marker(l, get_linear_interp_weight(l, current_position), input_stream);
 			}
 
-			float freq_alt_refp = count_alt_ref / (curr_variant.calt + curr_variant.cref);
-			float freq_alt_main = count_alt / (2 * G.n_ind);
-			float freq_alt_full = (count_alt + count_alt_ref) / (2 * G.n_ind + curr_variant.calt + curr_variant.cref);
+			//est_af = (esum + (double)count_alt_ref) / (2 * (double)(n_main_samples+n_ref_samples)); //AF in main + ref
+			est_af = esum / n_main_haps_d; //AF in main - Original INFO score
+			//info can be negative
+			info = (est_af>0.0 && est_af<1.0) ? (float)(1.0 - (fsum - e2sum) / (n_main_haps_d * est_af * (1.0 - est_af))) : 1;
 
-			bcf_update_info_float(hdr, rec, "AFref", &freq_alt_refp, 1);
-			bcf_update_info_float(hdr, rec, "AFmain", &freq_alt_main, 1);
-			bcf_update_info_float(hdr, rec, "AFfull", &freq_alt_full, 1);
+			rec->rid = bcf_hdr_name2id(hdr, curr_variant.chr.c_str());
+			rec->pos = current_position - 1;
+			bcf_update_id(hdr, rec, curr_variant.id.c_str());
+			bcf_update_alleles_str(hdr, rec, std::string(curr_variant.ref + "," + curr_variant.alt).c_str());
 
-			if (curr_variant.cm >= 0) {
-				float val = (float)curr_variant.cm;
-				bcf_update_info_float(hdr, rec, "CM", &val, 1);
-			}
+			bcf_update_filter(hdr,rec,&tmpi,1);
+		    bcf_update_info_float(hdr, rec, "INFO", &info, 1);
 			bcf_update_genotypes(hdr, rec, genotypes, bcf_hdr_nsamples(hdr)*2);
 			bcf_update_format_float(hdr, rec, "DS", dosages, bcf_hdr_nsamples(hdr)*1);
 			bcf_update_format_float(hdr, rec, "GP", posteriors, bcf_hdr_nsamples(hdr)*3);
 			static_cast<void>(bcf_write1(fp, hdr, rec));
 		}
-		vrb.progress("  * VCF writing", (input_stream.i_common+1)*1.0/V.size());
+		vrb.progress("  * VCF writing", (input_stream.i_common_variant+1)*counter_limit);
 	}
 
 	bcf_destroy1(rec);
@@ -287,7 +200,7 @@ void genotype_writer::impute_marker(const int l, const float w,  const genotype_
 			const size_t num_states = pS.size();
 
 			for (size_t j =0; j<num_states; ++j)
-				if (input_stream.ref_haps[pS[j]])
+				if (input_stream.ref_haps.get(pS[j]))
 				{
 					p1hL[h]+=pL[j];
 					p1hR[h]+=pR[j];
@@ -330,6 +243,10 @@ void genotype_writer::impute_marker(const int l, const float w,  const genotype_
 		posteriors[3*i + 1] = roundf(post1 * 1000.0) / 1000.0;
 		posteriors[3*i + 2] = roundf(post2 * 1000.0) / 1000.0;
 
+		esum+= posteriors[3*i + 1] + 2.0*posteriors[3*i + 2];
+		e2sum+= (posteriors[3*i + 1] + 2.0*posteriors[3*i + 2]) * (posteriors[3*i + 1] + 2.0*posteriors[3*i + 2]);
+		fsum+= posteriors[3*i + 1] + 4.0*posteriors[3*i + 2];
+
 		dosages[i] = roundf((posteriors[3*i + 1] + 2 * posteriors[3*i + 2]) * 1000.0) / 1000.0;
 		count_alt += dosages[i];
 	}
@@ -356,7 +273,7 @@ void genotype_writer::impute_marker_border(const int l, const genotype_stream& i
 			const std::vector<float>& pLR = left ? P[i]->prob_stateL[h][l] : P[i]->prob_stateR[h][l];
 			const size_t num_states = pS.size();
 
-			for (size_t j =0; j<num_states; ++j) if (input_stream.ref_haps[pS[j]]) p1h[h]+=pLR[j];
+			for (size_t j =0; j<num_states; ++j) if (input_stream.ref_haps.get(pS[j])) p1h[h]+=pLR[j];
 		}
 
 		p1h0Comb = 0.9999 * p1h[0] + 0.0001 * abs(1.0f - p1h[0]);
@@ -394,9 +311,30 @@ void genotype_writer::impute_marker_border(const int l, const genotype_stream& i
 		posteriors[3*i + 1] = roundf(post1 * 1000.0) / 1000.0;
 		posteriors[3*i + 2] = roundf(post2 * 1000.0) / 1000.0;
 
+		esum+= posteriors[3*i + 1] + 2.0*posteriors[3*i + 2];
+		e2sum+= (posteriors[3*i + 1] + 2.0*posteriors[3*i + 2]) * (posteriors[3*i + 1] + 2.0*posteriors[3*i + 2]);
+		fsum+= posteriors[3*i + 1] + 4.0*posteriors[3*i + 2];
+
 		dosages[i] = roundf((posteriors[3*i + 1] + 2 * posteriors[3*i + 2]) * 1000.0) / 1000.0;
 		count_alt += dosages[i];
 	}
+}
+
+float genotype_writer::get_linear_interp_weight(const int l, const int current_position)
+{
+	float genpos_a = V.vec_pos[l]->cm;
+	float genpos_b = V.vec_pos[l+1]->cm;
+	float genpos_x = V.getCentiMorganPos(readerGM,current_position)-V.baseline;
+
+
+	float genpos_ba = abs(genpos_b - genpos_a);
+	float genpos_bx = abs(genpos_b - genpos_x);
+
+	//need to be a bit careful about genpos to avoid nan values
+	if (genpos_ba < 1e-7) genpos_ba = 1e-7;
+	if (genpos_bx > genpos_ba) genpos_bx = genpos_ba;
+
+	return (genpos_bx / genpos_ba);
 }
 
 int genotype_writer::max3gt(const float& a,const float& b, const float& c) const

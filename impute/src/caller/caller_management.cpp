@@ -63,8 +63,9 @@ void caller::buildCoordinates() {
 		if (input_start < 0) input_start = 0;
 		if (input_start >= input_stop) vrb.error("Genomic region incorrectly specified (case 3)");
 		gregion = chrid + ":" + stb.str(input_start) + "-" + stb.str(input_stop);
+		gregion_nobuff = chrid + ":" + stb.str(output_start) + "-" + stb.str(output_stop);
 		vrb.bullet("Input region  [" + gregion + "]");
-		vrb.bullet("Output region [" + options["region"].as < std::string > () + "]");
+		vrb.bullet("Output region [" + gregion_nobuff + "]");
 	} else if (ret1 == 1) {
 		chrid = t1[0];
 		input_start = 0;
@@ -72,7 +73,8 @@ void caller::buildCoordinates() {
 		output_start = 0;
 		output_stop = 1000000000;
 		gregion = chrid;
+		gregion_nobuff = chrid;
 		vrb.bullet("Input region  [" + gregion + "]");
-		vrb.bullet("Output region [" + gregion + "]");
+		vrb.bullet("Output region [" + gregion_nobuff + "]");
 	} else vrb.error("Genomic region incorrectly specified (case 4)");
 }

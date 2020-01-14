@@ -22,15 +22,16 @@ public:
 
 	// streaming obj
 	variant curr_variant;
-	std::vector<bool> ref_haps;
+	bitset ref_haps;
 	std::vector<double> curr_GL;
 
 	const float flat_gl;
 
 	//reader
 	bcf_srs_t * sr;
-	unsigned int i_variant;
-	int i_common;
+	int i_variant;
+	int i_next_common_variant;
+	int i_common_variant;
 	bool is_common_variant;
 	unsigned int nset;
 	int ngl_main;

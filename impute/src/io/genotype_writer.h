@@ -50,6 +50,11 @@ public:
 	std::string region;
 	const float maf_common;
 
+	//for info score
+	double esum;
+	double e2sum;
+	double fsum;
+
 	//COUNTS
 	unsigned long n_variants;
 	unsigned long n_main_samples;
@@ -59,14 +64,12 @@ public:
 	genotype_writer(haplotype_set &, genotype_set &, variant_map &, std::vector < probability_set * >&, gmap_reader & readerGM, std::string regions, float _maf_common);
 	~genotype_writer();
 
-	//IO
-	void writeGenotypes(std::string foutput, int, int);
-
 	void writeGenotypesAndImpute(std::string funphased, std::string freference, std::string fname, int start, int stop);
 
 	void impute_marker(const int l, const float w,  const genotype_stream& input_stream);
 	void impute_marker_border(const int l, const genotype_stream& input_stream, const bool left);
 
+	float get_linear_interp_weight(const int l, const int current_position);
 	int max3gt(const float& a,const float& b, const float& c) const;
 
 };

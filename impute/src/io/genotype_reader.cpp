@@ -103,6 +103,7 @@ void genotype_reader::readGenotypes(std::string funphased, std::string freferenc
 	float *af_ptr=NULL;///read MAF
 	int nval = 0;
 	bcf1_t * line_main, * line_ref;
+
 	while ((nset = bcf_sr_next_line (sr))) {
 		if (nset == 2) {
 			line_main =  bcf_sr_get_line(sr, 0);
@@ -142,7 +143,6 @@ void genotype_reader::readGenotypes(std::string funphased, std::string freferenc
 							G.vecG[i/3]->GL[3*i_variant+0] = (unsigned char)gl_arr_main[i+0];
 							G.vecG[i/3]->GL[3*i_variant+1] = (unsigned char)gl_arr_main[i+1];
 							G.vecG[i/3]->GL[3*i_variant+2] = (unsigned char)gl_arr_main[i+2];
-							//cout << (unsigned int)gl_arr_main[i+0] << " " << (unsigned int)gl_arr_main[i+1] << " " << (unsigned int)gl_arr_main[i+2]<<  endl;
 						}
 					}
 				}
