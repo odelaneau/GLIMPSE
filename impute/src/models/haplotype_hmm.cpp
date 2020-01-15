@@ -40,8 +40,8 @@ haplotype_hmm::~haplotype_hmm() {
 void haplotype_hmm::resize() {
 	AlphaSum.resize(C->n_sites);
 	Alpha.resize(C->n_sites * C->n_states);
-	//posterior_threshold = std::min(0.005f, (float) 0.9999/C->n_states);
-	posterior_threshold = 0.0f;
+	posterior_threshold = std::min(0.005f, (float) 0.9999/C->n_states);
+	//posterior_threshold = 0.0f;
 }
 
 void haplotype_hmm::init(std::vector < float > & HL) {

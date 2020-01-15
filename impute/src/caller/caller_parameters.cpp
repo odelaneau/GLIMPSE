@@ -34,7 +34,6 @@ void caller::declare_options() {
 	opt_input.add_options()
 			("input,I", bpo::value < std::string >(), "Genotypes to be phased in VCF/BCF format")
 			("reference,H", bpo::value < std::string >(), "Reference panel of haplotypes in VCF/BCF format")
-			("validation,V", bpo::value < std::string >(), "Validation data in VCF/BCF format")
 			("map,M", bpo::value < std::string >(), "Genetic map")
 			("region,R", bpo::value < std::string >(), "Target region")
 			("buffer", bpo::value < int >()->default_value(200), "Size of the buffer on each side in kilobases (200kb by default)");
@@ -46,7 +45,7 @@ void caller::declare_options() {
 			("pbwt-depth", bpo::value<int>()->default_value(2), "Number of neighbors to store")
 			("pbwt-modulo", bpo::value<int>()->default_value(8), "Number of neighbors to store")
 			("init-states", bpo::value<int>()->default_value(1000), "Number of neighbors to store")
-			("maf-filter", bpo::value<float>()->default_value(0.001f), "MAF filter of variants in the reference panel (requires INFO/AF field)");
+			("maf-filter", bpo::value<float>()->default_value(0.001f), "MAF filter of variants in the reference panel (requires INFO/AC field)");
 
 
 	bpo::options_description opt_output ("Output files");
