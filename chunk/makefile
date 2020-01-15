@@ -9,7 +9,7 @@ LDFLAG=-O3
 DYN_LIBS=-lz -lbz2 -lm -lpthread -llzma
 
 #LCC_phase
-BFILE=bin/chunk
+BFILE=bin/LCC_chunk
 HFILE=$(shell find src -name *.h)
 CFILE=$(shell find src -name *.cpp)
 OFILE=$(shell for file in `find src -name *.cpp`; do echo obj/$$(basename $$file .cpp).o; done)
@@ -23,8 +23,6 @@ desktop: BOOST_LIB_IO=/usr/lib/x86_64-linux-gnu/libboost_iostreams.a
 desktop: BOOST_LIB_PO=/usr/lib/x86_64-linux-gnu/libboost_program_options.a
 desktop: $(BFILE)
 
-cluster: module load Bioinformatics/Software/vital-it
-cluster: module load module add Development/gcc/9.2.1
 cluster: HTSLIB_INC=/software/UHTS/Analysis/samtools/1.4/include
 cluster: HTSLIB_LIB=/software/UHTS/Analysis/samtools/1.4/lib64/libhts.a
 cluster: BOOST_INC=/software/include
@@ -43,3 +41,4 @@ obj/%.o: %.cpp $(HFILE)
 
 clean: 
 	rm -f obj/*.o $(BFILE)
+

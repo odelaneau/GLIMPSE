@@ -9,7 +9,7 @@ LDFLAG=-O3
 DYN_LIBS=-lz -lbz2 -lm -lpthread -llzma
 
 #LCC_phase
-BFILE=bin/concordance
+BFILE=bin/LCC_concordance
 HFILE=$(shell find src -name *.h)
 CFILE=$(shell find src -name *.cpp)
 OFILE=$(shell for file in `find src -name *.cpp`; do echo obj/$$(basename $$file .cpp).o; done)
@@ -23,23 +23,12 @@ desktop: BOOST_LIB_IO=/usr/lib/x86_64-linux-gnu/libboost_iostreams.a
 desktop: BOOST_LIB_PO=/usr/lib/x86_64-linux-gnu/libboost_program_options.a
 desktop: $(BFILE)
 
-axiom: module load Bioinformatics/Software/vital-it
-axiom: module load module add Development/gcc/9.2.1
-axiom: HTSLIB_INC=/software/UHTS/Analysis/samtools/1.4/include
-axiom: HTSLIB_LIB=/software/UHTS/Analysis/samtools/1.4/lib64/libhts.a
-axiom: BOOST_INC=/software/include
-axiom: BOOST_LIB_IO=/software/lib64/libboost_iostreams.a
-axiom: BOOST_LIB_PO=/software/lib64/libboost_program_options.a
-axiom: $(BFILE)
-
-jura: module load Bioinformatics/Software/vital-it
-jura: module load module add Development/gcc/9.2.1
-jura: HTSLIB_INC=/software/UHTS/Analysis/samtools/1.4/include
-jura: HTSLIB_LIB=/software/UHTS/Analysis/samtools/1.4/lib64/libhts.a
-jura: BOOST_INC=/software/include
-jura: BOOST_LIB_IO=/software/lib64/libboost_iostreams.a
-jura: BOOST_LIB_PO=/software/lib64/libboost_program_options.a
-jura: $(BFILE)
+cluster: HTSLIB_INC=/software/UHTS/Analysis/samtools/1.4/include
+cluster: HTSLIB_LIB=/software/UHTS/Analysis/samtools/1.4/lib64/libhts.a
+cluster: BOOST_INC=/software/include
+cluster: BOOST_LIB_IO=/software/lib64/libboost_iostreams.a
+cluster: BOOST_LIB_PO=/software/lib64/libboost_program_options.a
+cluster: $(BFILE)
 
 #COMPILATION RULES
 all: desktop
@@ -52,3 +41,4 @@ obj/%.o: %.cpp $(HFILE)
 
 clean: 
 	rm -f obj/*.o $(BFILE)
+

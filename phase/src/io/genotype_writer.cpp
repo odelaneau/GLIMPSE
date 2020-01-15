@@ -48,9 +48,9 @@ void genotype_writer::writeGenotypes(string fname, int output_start, int output_
 	bcf_hdr_append(hdr, string("##fileDate="+tac.date()).c_str());
 	bcf_hdr_append(hdr, string("##source=LCC_phase v" + string(VERSION)).c_str());
 	bcf_hdr_append(hdr, string("##contig=<ID="+ V.vec_pos[0]->chr + ">").c_str());
-	bcf_hdr_append(hdr, "##INFO=<ID=AFref,Number=A,Type=Float,Description=\"Allele Frequency\">");
-	bcf_hdr_append(hdr, "##INFO=<ID=AFmain,Number=A,Type=Float,Description=\"Allele Frequency\">");
-	bcf_hdr_append(hdr, "##INFO=<ID=AFfull,Number=A,Type=Float,Description=\"Allele Frequency\">");
+	bcf_hdr_append(hdr, "##INFO=<ID=RAF,Number=A,Type=Float,Description=\"ALT allele frequency in the reference panel\">");
+	bcf_hdr_append(hdr, "##INFO=<ID=AF,Number=A,Type=Float,Description=\"ALT allele frequency computed from DS/GP field across target samples\">");
+	bcf_hdr_append(hdr, "##INFO=<ID=INFO,Number=A,Type=Float,Description=\"Imputation information or quality score\">");
 	bcf_hdr_append(hdr, "##INFO=<ID=CM,Number=A,Type=Float,Description=\"Interpolated cM position\">");
 	bcf_hdr_append(hdr, "##INFO=<ID=BUF,Number=A,Type=Integer,Description=\"Is it a buffer specific variant site? (0=no/1=yes)\">");
 	bcf_hdr_append(hdr, "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Phased genotypes\">");
@@ -79,7 +79,7 @@ void genotype_writer::writeGenotypes(string fname, int output_start, int output_
 		bcf_update_id(hdr, rec, V.vec_pos[l]->id.c_str());
 		string alleles = V.vec_pos[l]->ref + "," + V.vec_pos[l]->alt;
 		bcf_update_alleles_str(hdr, rec, alleles.c_str());
-		float count_alt = 0, count_alt_ref = V.vec_pos[l]->calt;
+		float count_alt_ref = V.vec_pos[l]->calt, esum=0.0, e2sum=0.0, fsum=0.0;
 		for (int i = 0 ; i < G.n_ind ; i++) {
 			bool a0 = G.vecG[i]->H0[l];
 			bool a1 = G.vecG[i]->H1[l];
@@ -89,7 +89,7 @@ void genotype_writer::writeGenotypes(string fname, int output_start, int output_
 			float gp1 = G.vecG[i]->GP[2*l+1];
 			float gp2 = abs(1.0 - gp0 - gp1);
 			float ds = gp1 + 2 * gp2;
-			count_alt += ds;
+			esum += ds;
 			gp0 = roundf(gp0 * 1000.0) / 1000.0;
 			gp1 = roundf(gp1 * 1000.0) / 1000.0;
 			gp2 = roundf(gp2 * 1000.0) / 1000.0;
@@ -98,19 +98,21 @@ void genotype_writer::writeGenotypes(string fname, int output_start, int output_
 			posteriors[3*i+1] = gp1;
 			posteriors[3*i+2] = gp2;
 			haplotypes[i] = G.vecG[i]->HAP[l];
+			e2sum += ds * ds;
+			fsum += gp1 + 4.0*gp2;
 		}
 		//INFOs
 		float freq_alt_refp = count_alt_ref / (V.vec_pos[l]->calt + V.vec_pos[l]->cref);
-		float freq_alt_main = count_alt / (2 * G.n_ind);
-		float freq_alt_full = (count_alt + count_alt_ref) / (2 * G.n_ind + V.vec_pos[l]->calt + V.vec_pos[l]->cref);
-		bcf_update_info_float(hdr, rec, "AFmain", &freq_alt_main, 1);
-		bcf_update_info_float(hdr, rec, "AFref", &freq_alt_refp, 1);
-		bcf_update_info_float(hdr, rec, "AFfull", &freq_alt_full, 1);
+		float freq_alt_main = esum / (2 * G.n_ind);
+		float val = (float)V.vec_pos[l]->cm;
+		float infoscore = (freq_alt_main>0.0 && freq_alt_main<1.0) ? (float)(1.0 - (fsum - e2sum) / (2 * G.n_ind * freq_alt_main * (1.0 - freq_alt_main))) : 1;
+		bcf_update_info_float(hdr, rec, "RAF", &freq_alt_refp, 1);
+		bcf_update_info_float(hdr, rec, "AF", &freq_alt_main, 1);
+		bcf_update_info_float(hdr, rec, "INFO", &infoscore, 1);
+		bcf_update_info_float(hdr, rec, "CM", &val, 1);
 		bcf_update_info_int32(hdr, rec, "BUF", &buffer, 1);
 
 		//FORMATs
-		float val = (float)V.vec_pos[l]->cm;
-		bcf_update_info_float(hdr, rec, "CM", &val, 1);
 		bcf_update_genotypes(hdr, rec, genotypes, bcf_hdr_nsamples(hdr)*2);
 		bcf_update_format_float(hdr, rec, "DS", dosages, bcf_hdr_nsamples(hdr)*1);
 		bcf_update_format_float(hdr, rec, "GP", posteriors, bcf_hdr_nsamples(hdr)*3);

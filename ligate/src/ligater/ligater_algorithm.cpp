@@ -89,6 +89,7 @@ void ligater::write_record(htsFile *fd, bcf_hdr_t * hdr, bcf1_t *r_body) {
 	assert(nhs == nsamples && n_body_hs_fields == nsamples);
 	updateHS(body_hs_fields);
 	bcf_update_format_int32(hdr, r_body, "HS", body_hs_fields, nsamples);
+	bcf_update_info(hdr, r_body, "BUF", NULL, 0, BCF_HT_INT);  // the type does not matter with n=0 / This removes INFO/BUF field
 	bcf_write1(fd, hdr, r_body);
 }
 
@@ -140,6 +141,7 @@ void ligater::ligate() {
 	if (fname.size() > 3 && fname.substr(fname.size()-3) == "bcf") { file_format = "wb"; file_type = OFILE_BCFC; }
 	htsFile * fp = hts_open(fname.c_str(),file_format.c_str());
 	bcf_hdr_t * hdr = bcf_hdr_dup(sr->readers[0].header);
+	bcf_hdr_write(fp, hdr);
 
 	//Main loop
 	int n_variants = 0;
