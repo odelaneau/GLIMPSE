@@ -83,8 +83,8 @@ void genotype_writer::writeGenotypes(string fname, int output_start, int output_
 		for (int i = 0 ; i < G.n_ind ; i++) {
 			bool a0 = G.vecG[i]->H0[l];
 			bool a1 = G.vecG[i]->H1[l];
-			genotypes[2*i+0] = bcf_gt_phased(a0);
-			genotypes[2*i+1] = bcf_gt_phased(a1);
+			genotypes[2*i+0] = bcf_gt_unphased(a0);
+			genotypes[2*i+1] = bcf_gt_unphased(a1);
 			float gp0 = G.vecG[i]->GP[2*l+0];
 			float gp1 = G.vecG[i]->GP[2*l+1];
 			float gp2 = abs(1.0 - gp0 - gp1);
