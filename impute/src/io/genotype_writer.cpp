@@ -309,19 +309,24 @@ void genotype_writer::impute_marker_border(const int l, const genotype_stream& i
 
 float genotype_writer::get_linear_interp_weight(const int l, const int current_position)
 {
-	float genpos_a = V.vec_pos[l]->cm;
-	float genpos_b = V.vec_pos[l+1]->cm;
-	float genpos_x = V.getCentiMorganPos(readerGM,current_position)-V.baseline;
+	if (l <  V.vec_pos.size() -1)
+	{
+		float genpos_a = V.vec_pos[l]->cm;
+		float genpos_b = V.vec_pos[l+1]->cm;
+		float genpos_x = V.getCentiMorganPos(readerGM,current_position)-V.baseline;
 
 
-	float genpos_ba = abs(genpos_b - genpos_a);
-	float genpos_bx = abs(genpos_b - genpos_x);
+		float genpos_ba = abs(genpos_b - genpos_a);
+		float genpos_bx = abs(genpos_b - genpos_x);
 
-	//need to be a bit careful about genpos to avoid nan values
-	if (genpos_ba < 1e-7) genpos_ba = 1e-7;
-	if (genpos_bx > genpos_ba) genpos_bx = genpos_ba;
+		//need to be a bit careful about genpos to avoid nan values
+		if (genpos_ba < 1e-7) genpos_ba = 1e-7;
+		if (genpos_bx > genpos_ba) genpos_bx = genpos_ba;
 
-	return (genpos_bx / genpos_ba);
+		return (genpos_bx / genpos_ba);
+	}
+	return 0.0f;
+
 }
 
 int genotype_writer::max3gt(const float& a,const float& b, const float& c) const
