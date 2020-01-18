@@ -25,10 +25,10 @@
 #define OFILE_VCFC	1
 #define OFILE_BCFC	2
 
-#define GET(n,i)	((n >> i) & 1U)
-#define TOG(n,i)	(n ^= 1UL << i)
+#define GET(n,i)	(((n)>>(i))&1U)
+#define TOG(n,i)	((n)^=(1UL<<(i)))
 
-int ligater::updateHS(int * values) {
+void ligater::updateHS(int * values) {
 	for (int i = 0 ; i < nsamples ; i++) {
 		for (int m = 0 ; m < nmain ; m ++) {
 			if (switching[i * nmain + m] && (GET(values[i], 2*m+0) != GET(values[i], 2*m+1))) {
@@ -39,7 +39,7 @@ int ligater::updateHS(int * values) {
 	}
 }
 
-int ligater::update_switching() {
+void ligater::update_switching() {
 	assert(switching.size() * 2 == distances.size());
 	int n_changes = 0;
 	for (int d = 0 ; d < distances.size() ; d += 2) {
