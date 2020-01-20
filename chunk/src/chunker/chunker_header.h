@@ -32,19 +32,21 @@ public:
 	bpo::variables_map options;
 
 	//INTERNAL DATA
-	vector < string > C;
-	vector < vector < int > > V;
+	string chrID;
+	vector < int > positions;
 
 	//PARAMETERS
-	int chunk_size;
+	int window_size;
+	int window_count;
 	int buffer_size;
+	int buffer_count;
 
 	//CONSTRUCTOR
 	chunker();
 	~chunker();
 
 	//METHODS
-	void readData(vector < string > & fmain, vector < string > & fref);
+	void readData(string fmain, string fref, string region);
 
 	//PARAMETERS
 	void declare_options();
@@ -54,7 +56,7 @@ public:
 	void verbose_files();
 
 	//FILE I/O
-	void split(output_file &, int &, string &, vector < int > &);
+	void split(output_file &, int &, string &, int, int);
 	void chunk();
 	void chunk(vector < string > &);
 };

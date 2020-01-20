@@ -30,19 +30,20 @@ void chunker::declare_options() {
 
 	bpo::options_description opt_input ("Input files");
 	opt_input.add_options()
-			("input", bpo::value< string >(), "Main GL data")
-			("reference", bpo::value< string >(), "Reference haplotype data")
-			("chr", bpo::value< string >(), "Chromosome to be splitted");
+			("input,I", bpo::value< string >(), "Main GL data")
+			("reference,R", bpo::value< string >(), "Reference haplotype data")
+			("region", bpo::value< string >(), "Chromosome or region to be splitted");
 
 	bpo::options_description opt_algo ("Parameters");
 	opt_algo.add_options()
-			("window", bpo::value<int>()->default_value(1000000), "Minimal window size")
-			("buffer-size", bpo::value<int>()->default_value(200000), "Minimal Buffer Size in bp")
-			("buffer-count", bpo::value<int>()->default_value(200), "Minimal Buffer Size in #variants");
+			("window-size", bpo::value<int>()->default_value(1000000), "Minimal Window size in bp")
+			("window-count", bpo::value<int>()->default_value(1000), "Minimal window size in #variants")
+			("buffer-size", bpo::value<int>()->default_value(200000), "Minimal buffer size in bp")
+			("buffer-count", bpo::value<int>()->default_value(100), "Minimal buffer size in #variants");
 
 	bpo::options_description opt_output ("Output files");
 	opt_output.add_options()
-			("output,O", bpo::value< string >(), "Coordinate files for driving LCC runs")
+			("output,O", bpo::value< string >(), "Coordinate files for driving LCC impute/phase runs")
 			("log", bpo::value< string >(), "Log file");
 
 	descriptions.add(opt_base).add(opt_input).add(opt_algo).add(opt_output);
@@ -73,6 +74,9 @@ void chunker::check_options() {
 	if (!options.count("reference"))
 		vrb.error("You must use a reference panel using --reference");
 
+	if (!options.count("region"))
+		vrb.error("You must specify a region to be split using --region (ideally a chromosome)");
+
 	if (!options.count("output"))
 		vrb.error("You must specify a phased output file with --output");
 
@@ -82,10 +86,9 @@ void chunker::check_options() {
 
 void chunker::verbose_files() {
 	vrb.title("Files:");
-	vector < string > tmp = options["input"].as < vector < string > > ();
-	for (int t = 0 ; t < tmp.size() ; t ++) vrb.bullet("Input VCF      : [" + tmp[t] + "]");
-	tmp = options["reference"].as < vector < string > > ();
-	for (int t = 0 ; t < tmp.size() ; t ++) vrb.bullet("Reference VCF  : [" + tmp[t] + "]");
+	vrb.bullet("Input VCF      : [" + options["input"].as < string > () + "]");
+	vrb.bullet("Chromosome     : [" + options["region"].as < string > () + "]");
+	vrb.bullet("Reference VCF  : [" + options["reference"].as < string > () + "]");
 	vrb.bullet("Output file    : [" + options["output"].as < string > () + "]");
 	if (options.count("log")) vrb.bullet("Output LOG    : [" + options["log"].as < string > () + "]");
 }
@@ -93,6 +96,6 @@ void chunker::verbose_files() {
 void chunker::verbose_options() {
 	vrb.title("Parameters:");
 	vrb.bullet("Seed             : " + stb.str(options["seed"].as < int > ()));
-	vrb.bullet("Min. Window size : " + stb.str(options["window"].as < int > ()) + "bp");
+	vrb.bullet("Min. Window size : " + stb.str(options["window-size"].as < int > ()) + "bp / " + stb.str(options["window-count"].as < int > ()) + " variants");
 	vrb.bullet("Min. Buffer size : " + stb.str(options["buffer-size"].as < int > ()) + "bp / " + stb.str(options["buffer-count"].as < int > ()) + " variants");
 }

@@ -22,6 +22,10 @@
 #include <chunker/chunker_header.h>
 
 chunker::chunker() {
+	window_size = 0;
+	window_count = 0;
+	buffer_size = 0;
+	buffer_count = 0;
 }
 
 chunker::~chunker() {

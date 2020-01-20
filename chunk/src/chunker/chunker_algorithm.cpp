@@ -21,25 +21,50 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include <chunker/chunker_header.h>
 
-void chunker::split(output_file & fd, int & cidx, string & chr, vector < int > & vec) {
-	int midpoint = vec.size() / 2;
-	vector < int > vec1 = vector < int > (vec.begin() , vec.begin() + midpoint);
-	vector < int > vec2 = vector < int > (vec.begin() + midpoint, vec.end());
+void chunker::split(output_file & fd, int & cidx, string & chr, int start_idx, int stop_idx) {
+	// Compute current window properties
+	int curr_window_count = stop_idx - start_idx + 1;
+	int curr_window_size = positions[stop_idx] - positions[start_idx]+1;
 
-	int size1 = vec1.back() - vec1[0];
-	int size2 = vec2.back() - vec2[0];
+	// Check if we can further split
+	int mid_idx = start_idx + curr_window_count / 2;
+	int next0_window_count = mid_idx - start_idx + 1;
+	int next0_window_size = positions[mid_idx] - positions[start_idx]+1;
+	int next1_window_count = stop_idx - mid_idx + 1;
+	int next1_window_size = positions[stop_idx] - positions[mid_idx + 1]+1;
+	int next0_window_okay = (next0_window_count >= window_count && next0_window_size >= window_size);
+	int next1_window_okay = (next1_window_count >= window_count && next1_window_size >= window_size);
 
-	if (size1 < chunk_size || size2 < chunk_size) {
-		int output_start = vec[0];
-		int output_stop = vec.back();
-		int input_start = output_start - buffer_size;
-		if (input_start < 0) input_start = 0;
-		int input_stop = output_stop + buffer_size;
-		fd << chr << ":"<< input_start << "-" << input_stop << "\t" << chr << ":"<< output_start << "-" << output_stop << "\t" << input_stop - input_start << "\t" << output_stop - output_start << "\t" << vec.size() << "\t" << cidx << endl;
-		cidx ++;
+	// If we can further split, recursion!
+	if (next0_window_okay && next1_window_okay) {
+		vrb.bullet("Internal window [" + chr + ":" + stb.str(positions[start_idx]) + "-" + stb.str(positions[stop_idx]) + "] / L=" + stb.str(curr_window_size) + "bp / C=" + stb.str(curr_window_count));
+		split (fd, cidx, chr, start_idx, mid_idx);
+		split (fd, cidx, chr, mid_idx+1, stop_idx);
 	} else {
-		split (fd, cidx, chr, vec1);
-		split (fd, cidx, chr, vec2);
+		//Get left buffer
+		int left_idx = -1, left_size = -1, left_count = -1;
+		if (start_idx > buffer_count) {
+			left_idx = start_idx - buffer_count;
+			do {
+				left_idx --;
+				left_count = start_idx - left_idx + 1;
+				left_size = positions[start_idx] - positions[left_idx] + 1;
+			} while ((left_idx > 0) && (left_count < buffer_count) || (left_size < buffer_size));
+		} else { left_idx = 0; }
+		//Get right buffer
+		int right_idx = -1, right_size = -1, right_count = -1;
+		if (stop_idx < (positions.size() - buffer_count)) {
+			right_idx = stop_idx + buffer_count - 1;
+			do {
+				right_idx ++;
+				right_count = right_idx - stop_idx + 1;
+				right_size = positions[right_idx] - positions[stop_idx] + 1;
+			} while ((right_idx < (positions.size() - 1)) && (right_count < buffer_count) || (right_size < buffer_size));
+		} else { right_idx = positions.size() - 1; }
+		//Process window
+		vrb.bullet("Terminal window [" + stb.str(cidx) + "] -buffer:[" + chr + ":" + stb.str(positions[start_idx]) + "-" + stb.str(positions[stop_idx]) + "] / +buffer:[" + chr +  ":" + stb.str(positions[left_idx]) + "-" + stb.str(positions[right_idx]) + "] / L=" + stb.str(curr_window_size) + "bp / C=" + stb.str(curr_window_count));
+		fd << cidx << "\t" << chr << ":"<< positions[left_idx] << "-" << positions[right_idx] << "\t" << chr << ":" << positions[start_idx] << "-" << positions[stop_idx] << "\t" << curr_window_size << "\t" << curr_window_count << endl;
+		cidx ++;
 	}
 }
 
@@ -48,21 +73,19 @@ void chunker::split(output_file & fd, int & cidx, string & chr, vector < int > &
 void chunker::chunk() {
 	//Initialize
 	rng.setSeed(options["seed"].as < int > ());
-	chunk_size = options["window"].as < int > ();
-	buffer_size = options["buffer"].as < int > ();
+	window_size = options["window-size"].as < int > ();
+	buffer_size = options["buffer-size"].as < int > ();
+	window_count = options["window-count"].as < int > ();
+	buffer_count = options["buffer-count"].as < int > ();
 
-	vector < string > tmp0 = options["input"].as < vector < string > > ();
-	vector < string > tmp1 = options["reference"].as < vector < string > > ();
-	readData(tmp0, tmp1);
+	//Read input data (overlapping coordinates)
+	readData(options["input"].as < string > (), options["reference"].as < string > (), options["region"].as < string > ());
 
-
-	//
+	// Perform chunking!
 	int cidx = 0;
+	vrb.title("Splitting data into chunks and writting to [" + options["output"].as < string > () + "]");
 	output_file fd(options["output"].as < string > ());
-	vrb.title("Splitting data into chunks");
-	for (int c = 0 ; c < C.size() ; c++) {
-		split(fd, cidx, C[c], V[c]);
-	}
+	split(fd, cidx, chrID, 0, positions.size() - 1);
 	vrb.bullet("#chunks = " + stb.str(cidx));
 	fd.close();
 
