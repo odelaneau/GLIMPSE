@@ -28,6 +28,27 @@
 #define GET(n,i)	(((n)>>(i))&1U)
 #define TOG(n,i)	((n)^=(1UL<<(i)))
 
+bool phaseHet(int nmain, int curr_hs, int prev_hs, bool prev_a0, bool prev_a1) {
+	int phase0 = 0, phase1 = 0;
+	for (int s = 0 ; s < nmain ; s ++) {
+		bool prev_s0 = GET(prev_hs, 2*s+0);
+		bool prev_s1 = GET(prev_hs, 2*s+1);
+		bool curr_s0 = GET(curr_hs, 2*s+0);
+		bool curr_s1 = GET(curr_hs, 2*s+1);
+		if (prev_s0 == prev_a0 && prev_s1 == prev_a1) {
+			phase0 += ((!curr_s0)&&curr_s1);
+			phase1 += (curr_s1&&(!curr_s0));
+		}
+		if (prev_s0 == prev_a0 && prev_s1 == prev_a1 && curr_s0 != curr_s1) {
+			phase0 += (curr_s1&&(!curr_s0));
+			phase1 += ((!curr_s0)&&curr_s1);
+		}
+	}
+	if (phase0>phase1) return false;
+	else if (phase0<phase1) return false;
+	else return rng.flipCoin();
+}
+
 void sampler::sample() {
 	tac.clock();
 	string filename = options["input"].as < string > ();
@@ -51,12 +72,11 @@ void sampler::sample() {
 	if (nmain <1 || nmain > 16) vrb.error("NMAIN out of bounds : " + stb.str(nmain));
 	vrb.bullet("#main_iterations = " + stb.str(nmain));
 
-
 	//Generating task data
 	bool first_het = true;
 	bool maximize = !options.count("sample");
 	vector < int > sampled_conf = vector < int > (nsamples, -1);
-	vector < int > prev_HS = vector < int > (nsamples, 0);
+	vector < int > prev_conf = vector < int > (nsamples, -1);
 	vector < bool > prev_haps = vector < bool > (2*nsamples, false);
 	if (!maximize)  {
 		for (int i = 0 ; i < nsamples ; i ++)
@@ -98,9 +118,29 @@ void sampler::sample() {
 				bool a0 = (bcf_gt_allele(gt_fields[2*i+0])==1);
 				bool a1 = (bcf_gt_allele(gt_fields[2*i+1])==1);
 				if (a0 != a1) {
-
-
+					int curr_hs = hs_fields[i];
+					int prev_hs = prev_conf[i];
+					bool prev_a0 = prev_haps[2*i+0];
+					bool prev_a1 = prev_haps[2*i+1];
+					if (prev_hs < 0) {
+						a0 = false; a1 = true;
+						prev_haps[2*i+0] = a0;
+						prev_haps[2*i+1] = a1;
+						prev_conf[i] = curr_hs;
+					} else if (phaseHet(nmain, curr_hs, prev_hs, prev_a0, prev_a1)) {
+						a0 = true; a1 = false;
+						prev_haps[2*i+0] = a0;
+						prev_haps[2*i+1] = a1;
+						prev_conf[i] = curr_hs;
+					} else {
+						a0 = false; a1 = true;
+						prev_haps[2*i+0] = a0;
+						prev_haps[2*i+1] = a1;
+						prev_conf[i] = curr_hs;
+					}
 				}
+				gt_fields[2*i+0] = bcf_gt_phased(a0);
+				gt_fields[2*i+1] = bcf_gt_phased(a1);
 			}
 		} else {
 			for (int i = 0 ; i  < nsamples ; i ++) {
