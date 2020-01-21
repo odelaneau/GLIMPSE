@@ -63,7 +63,7 @@ void chunker::split(output_file & fd, int & cidx, string & chr, int start_idx, i
 		} else { right_idx = positions.size() - 1; }
 		//Process window
 		vrb.bullet("Terminal window [" + stb.str(cidx) + "] -buffer:[" + chr + ":" + stb.str(positions[start_idx]) + "-" + stb.str(positions[stop_idx]) + "] / +buffer:[" + chr +  ":" + stb.str(positions[left_idx]) + "-" + stb.str(positions[right_idx]) + "] / L=" + stb.str(curr_window_size) + "bp / C=" + stb.str(curr_window_count));
-		fd << cidx << "\t" << chr << ":"<< positions[left_idx] << "-" << positions[right_idx] << "\t" << chr << ":" << positions[start_idx] << "-" << positions[stop_idx] << "\t" << curr_window_size << "\t" << curr_window_count << endl;
+		fd << cidx << "\t" << chr << "\t" << chr << ":"<< positions[left_idx] << "-" << positions[right_idx] << "\t" << chr << ":" << positions[start_idx] << "-" << positions[stop_idx] << "\t" << curr_window_size << "\t" << curr_window_count << endl;
 		cidx ++;
 	}
 }

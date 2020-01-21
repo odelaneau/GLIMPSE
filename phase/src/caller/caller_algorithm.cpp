@@ -30,7 +30,7 @@ void * phase_callback(void * ptr) {
 	for(;;) {
 		pthread_mutex_lock(&S->mutex_workers);
 		id_job = S->i_jobs ++;
-		//if (id_job <= S->G.n_ind) vrb.progress("  * HMM imputation", id_job*1.0/S->G.n_ind);
+		if (id_job <= S->G.n_ind) vrb.progress("  * HMM imputation", id_job*1.0/S->G.n_ind);
 		pthread_mutex_unlock(&S->mutex_workers);
 		if (id_job < S->G.n_ind) S->phase_individual(id_worker, id_job);
 		else pthread_exit(NULL);
