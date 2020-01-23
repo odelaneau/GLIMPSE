@@ -51,7 +51,8 @@ void caller::read_files_and_initialise() {
 		gmap_reader readerGM;
 		readerGM.readGeneticMapFile(options["map"].as < string > ());
 		V.setGeneticMap(readerGM);
-	}
+	} else V.setGeneticMap();
+	vrb.bullet("Region spans " + stb.str(V.length()) + " bp and " + stb.str(V.lengthcM(), 2) + " cM");
 
 	//step4
 	HP0 = vector < vector < float > > (options["thread"].as < int > (), vector < float > (H.n_site * 2, 0.0));
