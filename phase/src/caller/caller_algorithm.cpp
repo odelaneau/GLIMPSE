@@ -42,7 +42,7 @@ void caller::phase_individual(int id_worker, int id_job) {
 		H.selectRandom(options["init-states"].as < int > (), COND[id_worker]);
 		G.vecG[id_job]->initHaplotypeLikelihoods(HLC[id_worker]);
 	} else {
-		H.selectPositionalBurrowWheelerTransform(id_job, COND[id_worker]);
+		H.selectPositionalBurrowWheelerTransform(id_job, 2*options["init-states"].as < int > (), COND[id_worker]);
 		DMM[id_worker]->rephaseHaplotypes(G.vecG[id_job]->H0, G.vecG[id_job]->H1);
 		if (current_stage == STAGE_MAIN) G.vecG[id_job]->storeSampledHaplotypes();
 		G.vecG[id_job]->makeHaplotypeLikelihoods(HLC[id_worker], true);

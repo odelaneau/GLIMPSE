@@ -59,7 +59,7 @@ public:
 
 	//STATE SELECTION
 	void selectRandom(int, conditioning_set *);
-	void selectPositionalBurrowWheelerTransform(int, conditioning_set *);
+	void selectPositionalBurrowWheelerTransform(int, int, conditioning_set *);
 };
 
 #endif

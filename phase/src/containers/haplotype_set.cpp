@@ -97,7 +97,7 @@ void haplotype_set::selectRandom(int K, conditioning_set * C) {
 	C->updateTransitions();
 }
 
-void haplotype_set::selectPositionalBurrowWheelerTransform(int ind, conditioning_set * C) {
+void haplotype_set::selectPositionalBurrowWheelerTransform(int ind, int maxK, conditioning_set * C) {
 	vector < bool > hapFlag = vector < bool > (n_hap, false);
 	for (int l = 0, idx_store = 0 ; l < n_site ; l += pbwt_modulo, idx_store++) {
 		for (int p = 0 ; p < 2 ; p ++) {
@@ -135,6 +135,12 @@ void haplotype_set::selectPositionalBurrowWheelerTransform(int ind, conditioning
 	}
 	vector < int > idxH;
 	for (int h = 0 ; h < n_hap ; h ++) if (hapFlag[h]) idxH.push_back(h);
+
+	if (idxH.size() > maxK) {
+		random_shuffle(idxH.begin(), idxH.end());
+		idxH.erase(idxH.begin() + maxK, idxH.end());
+		sort(idxH.begin(), idxH.end());
+	}
 
 	C->clear();
 	C->n_states = idxH.size();
