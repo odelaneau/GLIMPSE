@@ -104,6 +104,7 @@ void genotype_writer::writeGenotypes(string fname, int output_start, int output_
 		float freq_alt_refp = count_alt_ref / (V.vec_pos[l]->calt + V.vec_pos[l]->cref);
 		float freq_alt_main = esum / (2 * G.n_ind);
 		float infoscore = (freq_alt_main>0.0 && freq_alt_main<1.0) ? (float)(1.0 - (fsum - e2sum) / (2 * G.n_ind * freq_alt_main * (1.0 - freq_alt_main))) : 1;
+		infoscore = (infoscore<0)?0.0:infoscore;
 		infoscore = roundf(infoscore * 1000.0) / 1000.0;
 		bcf_update_info_float(hdr, rec, "RAF", &freq_alt_refp, 1);
 		bcf_update_info_float(hdr, rec, "AF", &freq_alt_main, 1);
