@@ -39,7 +39,7 @@ void ligater::updateHS(int * values) {
 	}
 }
 
-void ligater::update_switching() {
+int ligater::update_switching() {
 	assert(switching.size() * 2 == distances.size());
 	int n_changes = 0;
 	for (int d = 0 ; d < distances.size() ; d += 2) {
