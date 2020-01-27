@@ -27,12 +27,13 @@ void checker::read_files_and_initialise() {
 	//step0: Initialize seed and multi-threading
 	rng.setSeed(options["seed"].as < int > ());
 
+	//step1: process bins
+
 	//step2: Read input files
 	string buffer;
 	vector < string > tokens;
 	vector < string > vec_regi, vec_true, vec_esti, vec_freq;
 	input_file fd (options["input"].as < string > ());
-
 	while (getline(fd, buffer, '\n')) {
 		if (stb.split(buffer, tokens) == 4) {
 			vec_regi.push_back(tokens[0]);

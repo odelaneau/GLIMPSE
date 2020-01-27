@@ -34,7 +34,6 @@ void checker::declare_options() {
 
 	bpo::options_description opt_algo ("Parameters");
 	opt_algo.add_options()
-			("minDP", bpo::value<int>(), "Minimum depth of coverage in validation data")
 			("minPROB", bpo::value<double>(), "Minimum posterior probability P(G|R) in validation data")
 			("bins", bpo::value< vector < double > >()->multitoken(), "Frequency bins used for Rsquare computations");
 
@@ -71,8 +70,8 @@ void checker::check_options() {
 	if (!options.count("output"))
 		vrb.error("You must specify --output");
 
-	if ((options.count("minDP") + options.count("minPROB")) < 1)
-		vrb.error("You must specify --minDP and/or --minPROB");
+	if (!options.count("minPROB"))
+		vrb.error("You must specify --minPROB");
 }
 
 void checker::verbose_files() {
@@ -83,8 +82,7 @@ void checker::verbose_files() {
 void checker::verbose_options() {
 	vrb.title("Parameters:");
 	vrb.bullet("Seed    : " + stb.str(options["seed"].as < int > ()));
-	if (options.count("minDP")) vrb.bullet("MinDP   : " + stb.str(options["minDP"].as < int > ()) + "x");
-	if (options.count("minPROB")) vrb.bullet("MinPROB : " + stb.str(options["minPROB"].as < double > ()));
+	vrb.bullet("MinPROB : " + stb.str(options["minPROB"].as < double > ()));
 
 	vector < double > tmp = options["bins"].as < vector < double > > ();
 	vrb.bullet("#bins   : " + stb.str(tmp.size()));

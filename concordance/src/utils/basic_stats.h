@@ -24,16 +24,87 @@
 
 #include <vector>
 
-class basic_stats {
+// Code taken from there: https://www.johndcook.com/blog/standard_deviation/ and there: https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
+
+class 2D_stats {
 protected:
-	uint32_t m_n;
+	unsigned long int m_n;
+	double m_oldMx, m_newMx;
+	double m_oldSx, m_newSx;
+	double m_oldMy, m_newMy;
+	double m_oldSy, m_newSy;
+	double m_oldC, n_newC;
+
+	2D_stats() {
+		m_n = 0;
+		m_oldMx = 0; m_newMx = 0;
+		m_oldMy = 0; m_newMy = 0;
+		m_oldSx = 0; m_newSx = 0;
+		m_oldSy = 0; m_newSy = 0;
+		m_oldC = 0; m_newC = 0;
+	}
+
+	void clear() {
+		m_n = 0;
+		m_oldMx = 0; m_newMx = 0;
+		m_oldMy = 0; m_newMy = 0;
+		m_oldSx = 0; m_newSx = 0;
+		m_oldSy = 0; m_newSy = 0;
+		m_oldC = 0; m_newC = 0
+	}
+
+	template <class T>
+	void push(T x, T y) {
+		m_n++;
+		if (m_n == 1) {
+			m_oldMx = m_newMx = x;
+			m_oldMy = m_newMy = y;
+			m_oldSx = m_oldSy = 0.0;
+			m_oldC = m_newC = 0.0;
+		} else {
+			// Updating Cov(x,y)
+			m_newC = m_oldC + (x - m_oldMx) * (y - m_oldMy);
+			m_oldC = m_newC;
+			// Updating  Mean and Var of x
+			m_newMx = m_oldMx + (x - m_oldMx)/m_n;
+            m_newSx = m_oldSx + (x - m_oldMx)*(x - m_newMx);
+            m_oldMx = m_newMx;
+            m_oldSx = m_newSx;
+            // Updating  Mean and Var of y
+			m_newMy = m_oldMy + (y - m_oldMy)/m_n;
+            m_newSy = m_oldSy + (y - m_oldMy)*(x - m_newMy);
+            m_oldMy = m_newMy;
+            m_oldSy = m_newSy;
+		}
+	}
+
+	int size() const { return m_n; }
+
+	double meanX() const { return (m_n > 0) ? m_newMx : 0.0; }
+	double meanY() const { return (m_n > 0) ? m_newMy : 0.0; }
+
+	double varX() const { return ( (m_n > 1) ? m_newSx/(m_n-1) : 0.0 ); }
+	double varY() const { return ( (m_n > 1) ? m_newSy/(m_n-1) : 0.0 ); }
+
+	double sdX() const { return sqrt( varX() ); }
+	double sdY() const { return sqrt( varY() ); }
+
+	double corrXY const () { return ( (m_n > 0) ? ((m_newC/M_n)/(sdX()*sdY())) : 0.0 ); }
+};
+
+
+class 1D_stats {
+protected:
+	unsigned long int m_n;
 	double m_oldM;
 	double m_newM;
 	double m_oldS;
 	double m_newS;
 
+
+
 public:
-	basic_stats() {
+	1D_stats() {
 		m_n = 0;
 		m_oldM = 0;
 		m_newM = 0;
@@ -42,7 +113,7 @@ public:
 	}
 
 	template <class T>
-	basic_stats(std::vector < T > & X) {
+	1D_stats(std::vector < T > & X) {
 		m_n = 0;
 		m_oldM = 0;
 		m_newM = 0;
