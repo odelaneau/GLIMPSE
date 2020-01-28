@@ -30,7 +30,8 @@ void checker::declare_options() {
 
 	bpo::options_description opt_input ("Input files");
 	opt_input.add_options()
-			("input", bpo::value< string >(), "File listing True, Imputed, Frequencies and Regions");
+			("input", bpo::value< string >(), "File listing True, Imputed, Frequencies and Regions")
+			("sample", bpo::value< string >(), "Samples to process, separated by commas");					//To be written!!!
 
 	bpo::options_description opt_algo ("Parameters");
 	opt_algo.add_options()

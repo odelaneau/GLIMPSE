@@ -88,7 +88,7 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 					// Meta data for variant
 					float af = ac_arr_f[0] * 1.0f / an_arr_f[0];
 					bool flip = (af > 0.5);
-					bool maf = min(af, 1.0f - af);
+					float maf = min(af, 1.0f - af);
 					int frq_bin = getFrequencyBin(maf);
 
 					// Read Truth
@@ -135,16 +135,16 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 
 								// [2] Update concordance per bin
 								switch (true_genotype) {
-								case 0:	genotype_bin_errors[3*frq_bin+0] += (esti_genotype != 0); genotype_bin_totals[3*i+0]++; break;
-								case 1:	genotype_bin_errors[3*frq_bin+1] += (esti_genotype != 1); genotype_bin_totals[3*i+1]++; break;
-								case 2:	genotype_bin_errors[3*frq_bin+2] += (esti_genotype != 2); genotype_bin_totals[3*i+2]++; break;
+								case 0:	genotype_bin_errors[3*frq_bin+0] += (esti_genotype != 0); genotype_bin_totals[3*frq_bin+0]++; break;
+								case 1:	genotype_bin_errors[3*frq_bin+1] += (esti_genotype != 1); genotype_bin_totals[3*frq_bin+1]++; break;
+								case 2:	genotype_bin_errors[3*frq_bin+2] += (esti_genotype != 2); genotype_bin_totals[3*frq_bin+2]++; break;
 								}
 
 								// [3] Update concordance per calibration bin
 								switch (true_genotype) {
-								case 0:	genotype_cal_errors[3*cal_bin+0] += (esti_genotype != 0); genotype_cal_totals[3*i+0]++; break;
-								case 1:	genotype_cal_errors[3*cal_bin+1] += (esti_genotype != 1); genotype_cal_totals[3*i+1]++; break;
-								case 2:	genotype_cal_errors[3*cal_bin+2] += (esti_genotype != 2); genotype_cal_totals[3*i+2]++; break;
+								case 0:	genotype_cal_errors[3*cal_bin+0] += (esti_genotype != 0); genotype_cal_totals[3*cal_bin+0]++; break;
+								case 1:	genotype_cal_errors[3*cal_bin+1] += (esti_genotype != 1); genotype_cal_totals[3*cal_bin+1]++; break;
+								case 2:	genotype_cal_errors[3*cal_bin+2] += (esti_genotype != 2); genotype_cal_totals[3*cal_bin+2]++; break;
 								}
 
 								// [4] Update Rsquare per bin
