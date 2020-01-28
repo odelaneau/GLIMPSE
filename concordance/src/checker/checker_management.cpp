@@ -34,6 +34,5 @@ void checker::check(vector < string > & args) {
 	verbose_files();
 	verbose_options();
 	read_files_and_initialise();
-	check();
 	write_files_and_finalise();
 }

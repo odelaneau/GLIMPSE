@@ -24,6 +24,9 @@
 void checker::write_files_and_finalise() {
 	vrb.title("Finalization:");
 
+	//step1: writting output
+	//D.writeData(options["output"].as < string > ());
+
 	//step2: Measure overall running time
 	vrb.bullet("Total running time = " + stb.str(tac.abs_time()) + " seconds");
 }

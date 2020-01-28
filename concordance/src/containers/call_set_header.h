@@ -1,3 +1,6 @@
+#ifndef _CALLSET_H
+#define _CALLSET_H
+
 #include <utils/otools.h>
 
 #define N_BIN_CAL 100
@@ -9,7 +12,7 @@ public:
 	// Sample IDs [N] & Bins [L]
 	int N, L, T;
 	vector < string > samples;
-	vector < float > bins;
+	vector < double > bins;
 
 	// Per sample concordance [3xN]
 	vector < int > genotype_spl_errors;
@@ -24,22 +27,22 @@ public:
 	vector < int > genotype_cal_totals;
 
 	// R2 per bin
-	vector < 2D_stats > rsquared_bin;
-	vector < 1D_stats > frequency_bin;
+	vector < stats2D > rsquared_bin;
+	vector < stats1D > frequency_bin;
 
 	// R2 per sample
-	vector < 2D_stats > rsquared_spl;
+	vector < stats2D > rsquared_spl;
 
 	// R2 per bin x sample
-	vector < 2D_stats > rsquared_binspl;
-	vector < 1D_stats > frequency_binspl;
+	vector < stats2D > rsquared_binspl;
+	vector < stats1D > frequency_binspl;
 
 	//
 	call_set ();
 	~call_set();
 
 	//
-	void initialize(int, vector < double >, double);
+	void initialize(vector < double >, double);
 	int getTruth(unsigned char, unsigned char, unsigned char);
 	int getFrequencyBin(float);
 	int getMostLikely(float , float , float );
@@ -94,8 +97,8 @@ int call_set::getTruth(unsigned char pl0, unsigned char pl1, unsigned char pl2) 
 
 inline
 int call_set::getFrequencyBin(float prob) {
-	for (int b = 1 ; b < BIN.size() ; b ++) {
-		if (f > BIN[b-1] && f <= BIN[b]) return b-1;
+	for (int b = 1 ; b < bins.size() ; b ++) {
+		if (prob > bins[b-1] && prob <= bins[b]) return b-1;
 	}
 	return -1;
 }

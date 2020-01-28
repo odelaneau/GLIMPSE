@@ -27,7 +27,8 @@ void checker::read_files_and_initialise() {
 	//step0: Initialize seed and multi-threading
 	rng.setSeed(options["seed"].as < int > ());
 
-	//step1: process bins
+	//step1: process bins & parameters
+	D.initialize(options["bins"].as < vector < double > > (), options["minPROB"].as < double > ());
 
 	//step2: Read input files
 	string buffer;

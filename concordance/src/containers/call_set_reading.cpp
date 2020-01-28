@@ -1,34 +1,9 @@
 #include "call_set_header.h"
 
-	int N, L, T;
-	vector < string > samples;
-	vector < float > bins;
-
-	// Per sample concordance [3xN]
-	vector < int > genotype_spl_errors;
-	vector < int > genotype_spl_totals;
-
-	// Per bin concordance [3xL]
-	vector < int > genotype_bin_errors;
-	vector < int > genotype_bin_totals;
-
-	// Concordance for calibration [100]
-	vector < int > genotype_bin_errors;
-	vector < int > genotype_bin_totals;
-
-	// R2 per bin
-	vector < 2D_stats > rsquared_bin;
-
-	// R2 per bin
-	vector < 2D_stats > rsquared_spl;
-
-	// R2 per bin x sample
-	vector < 2D_stats > rsquared_binspl;
-
-
 void call_set::readData(vector < string > & ftruth, vector < string > & festimated, vector < string > & ffrequencies, vector < string > & region) {
 	tac.clock();
 	int n_true_samples, n_esti_samples;
+	unsigned long int n_variants_all_chromosomes = 0;
 	vector < int > mappingT, mappingE;
 	for (int f = 0 ; f < ftruth.size() ; f ++) {
 		vrb.title("Reading set of input files [" + stb.str(f+1) + "/" + stb.str(ftruth.size()) + "]");
@@ -58,8 +33,8 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 					string ts = string(sr->readers[0].header->samples[i]);
 					string es = string(sr->readers[1].header->samples[j]);
 					if (ts == es) {
-						mappingT[i] = cpt_overlap;
-						mappingE[j] = cpt_overlap;
+						mappingT[i] = N;
+						mappingE[j] = N;
 						samples.push_back(ts);
 						N ++;
 					}
@@ -73,11 +48,11 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 			genotype_bin_totals = vector < int > (3 * L, 0);
 			genotype_cal_errors = vector < int > (3 * N_BIN_CAL, 0);
 			genotype_cal_totals = vector < int > (3 * N_BIN_CAL, 0);
-			rsquared_bin = vector < 2D_stats > (L);
-			rsquared_spl = vector < 2D_stats > (N);
-			rsquared_binspl = vector < 2D_stats > (N*L);
-			frequency_bin = vector < 1D_stats > (L);
-			frequency_binspl = vector < 1D_stats > (N*L);
+			rsquared_bin = vector < stats2D > (L);
+			rsquared_spl = vector < stats2D > (N);
+			rsquared_binspl = vector < stats2D > (N*L);
+			frequency_bin = vector < stats1D > (L);
+			frequency_binspl = vector < stats1D > (N*L);
 			vrb.bullet("#overlapping samples = " + stb.str(N));
 		}
 
@@ -201,10 +176,11 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 		free(ds_arr_e);
 		free(gp_arr_e);
 		bcf_sr_destroy(sr);
+		n_variants_all_chromosomes += nvariantval;
 		vrb.bullet("#variants in the overlap = " + stb.str(nvarianttot));
 		vrb.bullet("#variants with validation data = " + stb.str(nvariantval));
 		vrb.bullet("#genotypes used in validation = " + stb.str(ngenoval));
 		vrb.bullet("%error rate in this file = " + stb.str(n_errors * 100.0f / ngenoval));
 	}
-	vrb.bullet("Total #variants = " + stb.str(positions.size()));
+	vrb.bullet("Total #variants = " + stb.str(n_variants_all_chromosomes));
 }

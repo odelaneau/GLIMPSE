@@ -39,9 +39,6 @@ public:
 	checker();
 	~checker();
 
-	//METHODS
-	void check();
-
 	//PARAMETERS
 	void declare_options();
 	void parse_command_line(vector < string > &);

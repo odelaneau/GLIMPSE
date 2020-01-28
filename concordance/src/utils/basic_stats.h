@@ -26,16 +26,18 @@
 
 // Code taken from there: https://www.johndcook.com/blog/standard_deviation/ and there: https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
 
-class 2D_stats {
+class stats2D {
 protected:
 	unsigned long int m_n;
 	double m_oldMx, m_newMx;
 	double m_oldSx, m_newSx;
 	double m_oldMy, m_newMy;
 	double m_oldSy, m_newSy;
-	double m_oldC, n_newC;
+	double m_oldC, m_newC;
 
-	2D_stats() {
+public:
+
+	stats2D() {
 		m_n = 0;
 		m_oldMx = 0; m_newMx = 0;
 		m_oldMy = 0; m_newMy = 0;
@@ -50,7 +52,7 @@ protected:
 		m_oldMy = 0; m_newMy = 0;
 		m_oldSx = 0; m_newSx = 0;
 		m_oldSy = 0; m_newSy = 0;
-		m_oldC = 0; m_newC = 0
+		m_oldC = 0; m_newC = 0;
 	}
 
 	template <class T>
@@ -78,22 +80,41 @@ protected:
 		}
 	}
 
-	int size() const { return m_n; }
+	int size() const {
+		return m_n;
+	}
 
-	double meanX() const { return (m_n > 0) ? m_newMx : 0.0; }
-	double meanY() const { return (m_n > 0) ? m_newMy : 0.0; }
+	double meanX() const {
+		return (m_n > 0) ? m_newMx : 0.0;
+	}
 
-	double varX() const { return ( (m_n > 1) ? m_newSx/(m_n-1) : 0.0 ); }
-	double varY() const { return ( (m_n > 1) ? m_newSy/(m_n-1) : 0.0 ); }
+	double meanY() const {
+		return (m_n > 0) ? m_newMy : 0.0;
+	}
 
-	double sdX() const { return sqrt( varX() ); }
-	double sdY() const { return sqrt( varY() ); }
+	double varX() const {
+		return ( (m_n > 1) ? m_newSx/(m_n-1) : 0.0 );
+	}
 
-	double corrXY const () { return ( (m_n > 0) ? ((m_newC/M_n)/(sdX()*sdY())) : 0.0 ); }
+	double varY() const {
+		return ( (m_n > 1) ? m_newSy/(m_n-1) : 0.0 );
+	}
+
+	double sdX() const {
+		return sqrt( varX() );
+	}
+
+	double sdY() const {
+		return sqrt( varY() );
+	}
+
+	double corrXY() const {
+		return ( (m_n > 0) ? ((m_newC/m_n)/(sdX()*sdY())) : 0.0 );
+	}
 };
 
 
-class 1D_stats {
+class stats1D {
 protected:
 	unsigned long int m_n;
 	double m_oldM;
@@ -101,10 +122,8 @@ protected:
 	double m_oldS;
 	double m_newS;
 
-
-
 public:
-	1D_stats() {
+	stats1D() {
 		m_n = 0;
 		m_oldM = 0;
 		m_newM = 0;
@@ -113,7 +132,7 @@ public:
 	}
 
 	template <class T>
-	1D_stats(std::vector < T > & X) {
+	stats1D(std::vector < T > & X) {
 		m_n = 0;
 		m_oldM = 0;
 		m_newM = 0;
