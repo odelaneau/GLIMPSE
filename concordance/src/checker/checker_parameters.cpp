@@ -72,10 +72,13 @@ void checker::check_options() {
 
 	if (!options.count("minPROB"))
 		vrb.error("You must specify --minPROB");
+
+	if (!options.count("bins"))
+		vrb.error("You must specify --bins");
 }
 
 void checker::verbose_files() {
-	vrb.title("Files are listed in [:" + options["input"].as < string > () + "]");
+	vrb.title("Files are listed in [" + options["input"].as < string > () + "]");
 	if (options.count("log")) vrb.bullet("Output LOG    : [" + options["log"].as < string > () + "]");
 }
 

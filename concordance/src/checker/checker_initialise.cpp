@@ -31,6 +31,7 @@ void checker::read_files_and_initialise() {
 	D.initialize(options["bins"].as < vector < double > > (), options["minPROB"].as < double > ());
 
 	//step2: Read input files
+	vrb.title("Reading list of input files int [" + options["input"].as < string > () + "]");
 	string buffer;
 	vector < string > tokens;
 	vector < string > vec_regi, vec_true, vec_esti, vec_freq;
@@ -43,5 +44,6 @@ void checker::read_files_and_initialise() {
 			vec_esti.push_back(tokens[3]);
 		}
 	}
+	vrb.bullet(stb.str(vec_esti.size()) + " sets of files detected");
 	D.readData(vec_true, vec_esti, vec_freq, vec_regi);
 }

@@ -33,10 +33,6 @@ public:
 	// R2 per sample
 	vector < stats2D > rsquared_spl;
 
-	// R2 per bin x sample
-	vector < stats2D > rsquared_binspl;
-	vector < stats1D > frequency_binspl;
-
 	//
 	call_set ();
 	~call_set();
@@ -50,6 +46,7 @@ public:
 
 	//
 	void readData(vector < string > &, vector < string > &, vector < string > &, vector < string > &);
+	void writeData(string);
 
 	//
 	void computeRsquaredPerBin(string output);

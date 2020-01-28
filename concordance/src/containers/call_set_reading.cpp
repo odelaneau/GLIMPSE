@@ -50,22 +50,20 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 			genotype_cal_totals = vector < int > (3 * N_BIN_CAL, 0);
 			rsquared_bin = vector < stats2D > (L);
 			rsquared_spl = vector < stats2D > (N);
-			rsquared_binspl = vector < stats2D > (N*L);
 			frequency_bin = vector < stats1D > (L);
-			frequency_binspl = vector < stats1D > (N*L);
 			vrb.bullet("#overlapping samples = " + stb.str(N));
 		}
 
 		unsigned long nvarianttot = 0, nvariantval = 0, nset = 0, ngenoval = 0, n_errors = 0;
-		int ngl_t, ngl_arr_t = 0, *gl_arr_t = NULL, int_swap;
-		float *af_arr_f = NULL, *ds_arr_e = NULL, *gp_arr_e = NULL, float_swap;
+		int ngl_t, ngl_arr_t = 0, *gl_arr_t = NULL, *an_arr_f = NULL, *ac_arr_f = NULL, int_swap;
+		float *ds_arr_e = NULL, *gp_arr_e = NULL, float_swap;
 		int nds_e, nds_arr_e = 0;
-		int naf_f, naf_arr_f = 0;
+		int nan_f, nan_arr_f = 0;
+		int nac_f, nac_arr_f = 0;
 		int ngp_e, ngp_arr_e = 0;
 		vector < unsigned char > PLs = vector < unsigned char > (3*N, 0);
 		vector < float > DSs = vector < float > (N, 0.0f);
 		vector < float > GPs = vector < float > (3*N, 0.0f);
-
 
 		bcf1_t * line_t, * line_e, * line_f;
 		while ((nset = bcf_sr_next_line (sr))) {
@@ -76,19 +74,21 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 				if (line_t->n_allele == 2 && line_e->n_allele == 2 && line_f->n_allele == 2) {
 					bcf_unpack(line_t, BCF_UN_STR);
 
-					naf_f = bcf_get_info_float(sr->readers[2].header,line_f,"AF",&af_arr_f, &naf_arr_f);
+					nac_f = bcf_get_info_int32(sr->readers[2].header,line_f,"AC",&ac_arr_f, &nac_arr_f);
+					nan_f = bcf_get_info_int32(sr->readers[2].header,line_f,"AN",&an_arr_f, &nan_arr_f);
 					ngl_t = bcf_get_format_int32(sr->readers[0].header, line_t, "PL", &gl_arr_t, &ngl_arr_t);
 					nds_e = bcf_get_format_float(sr->readers[1].header, line_e, "DS", &ds_arr_e, &nds_arr_e);
 					ngp_e = bcf_get_format_float(sr->readers[1].header, line_e, "GP", &gp_arr_e, &ngp_arr_e);
 
-					assert(naf_f == 1);
+					assert(nan_f == 1);assert(nac_f == 1);
 					assert(ngl_t == 3*n_true_samples);
 					assert(nds_e == n_esti_samples);
 					assert(ngp_e == 3*n_esti_samples);
 
 					// Meta data for variant
-					bool flip = (af_arr_f[0] > 0.5);
-					bool maf = min(af_arr_f[0], 1.0f - af_arr_f[0]);
+					float af = ac_arr_f[0] * 1.0f / an_arr_f[0];
+					bool flip = (af > 0.5);
+					bool maf = min(af, 1.0f - af);
 					int frq_bin = getFrequencyBin(maf);
 
 					// Read Truth
@@ -154,10 +154,6 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 								// [5] Update Rsquare per sample
 								rsquared_spl[i].push(DSs[i], (float)true_genotype);
 
-								// [6] Update Rsquare per bin x sample
-								rsquared_binspl[frq_bin * N + i].push(DSs[i], (float)true_genotype);
-								frequency_binspl[frq_bin * N + i].push(maf);
-
 								// Increment counts
 								has_validation = true;
 								ngenoval ++;
@@ -171,7 +167,8 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 				}
 			}
 		}
-		free(af_arr_f);
+		free(ac_arr_f);
+		free(an_arr_f);
 		free(gl_arr_t);
 		free(ds_arr_e);
 		free(gp_arr_e);
