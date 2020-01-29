@@ -16,16 +16,16 @@ public:
 	vector < double > bins;
 
 	// Per sample concordance [3xN]
-	vector < int > genotype_spl_errors;
-	vector < int > genotype_spl_totals;
+	vector < unsigned long int > genotype_spl_errors;
+	vector < unsigned long int > genotype_spl_totals;
 
 	// Per bin concordance [3xL]
-	vector < int > genotype_bin_errors;
-	vector < int > genotype_bin_totals;
+	vector < unsigned long int > genotype_bin_errors;
+	vector < unsigned long int > genotype_bin_totals;
 
 	// Concordance for calibration [100]
-	vector < int > genotype_cal_errors;
-	vector < int > genotype_cal_totals;
+	vector < unsigned long int > genotype_cal_errors;
+	vector < unsigned long int > genotype_cal_totals;
 
 	// R2 per bin
 	vector < stats2D > rsquared_bin;

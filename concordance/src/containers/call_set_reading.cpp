@@ -42,12 +42,12 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 			}
 
 			// Allocating data structures
-			genotype_spl_errors = vector < int > (3 * N, 0);
-			genotype_spl_totals = vector < int > (3 * N, 0);
-			genotype_bin_errors = vector < int > (3 * L, 0);
-			genotype_bin_totals = vector < int > (3 * L, 0);
-			genotype_cal_errors = vector < int > (3 * N_BIN_CAL, 0);
-			genotype_cal_totals = vector < int > (3 * N_BIN_CAL, 0);
+			genotype_spl_errors = vector < unsigned long int > (3 * N, 0);
+			genotype_spl_totals = vector < unsigned long int > (3 * N, 0);
+			genotype_bin_errors = vector < unsigned long int > (3 * L, 0);
+			genotype_bin_totals = vector < unsigned long int > (3 * L, 0);
+			genotype_cal_errors = vector < unsigned long int > (3 * N_BIN_CAL, 0);
+			genotype_cal_totals = vector < unsigned long int > (3 * N_BIN_CAL, 0);
 			rsquared_bin = vector < stats2D > (L);
 			rsquared_spl = vector < stats2D > (N);
 			frequency_bin = vector < stats1D > (L);
