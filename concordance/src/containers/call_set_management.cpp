@@ -4,12 +4,12 @@ call_set::call_set () {
 }
 
 void call_set::initialize(vector < double > _bins, double _T) {
-	vrb.title("Initializing concordance engine");
+	vrb.title("Initializing concordance engine:");
 	T = _T;
 	bins = _bins;
 	L = bins.size() - 1;
 	vrb.bullet("Threshold = " + stb.str(T));
-	vrb.bullet("#bins = " + stb.str(L));
+	vrb.bullet("#intervals in binnin = " + stb.str(L));
 	vrb.bullet("bins [" + stb.str(bins) + "]");
 }
 

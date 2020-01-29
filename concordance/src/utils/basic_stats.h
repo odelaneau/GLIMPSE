@@ -64,17 +64,15 @@ public:
 			m_oldSx = m_oldSy = 0.0;
 			m_oldC = m_newC = 0.0;
 		} else {
-			// Updating Cov(x,y)
-			m_newC = m_oldC + (x - m_oldMx) * (y - m_oldMy);
-			m_oldC = m_newC;
-			// Updating  Mean and Var of x
-			m_newMx = m_oldMx + (x - m_oldMx)/m_n;
-            m_newSx = m_oldSx + (x - m_oldMx)*(x - m_newMx);
-            m_oldMx = m_newMx;
-            m_oldSx = m_newSx;
-            // Updating  Mean and Var of y
 			m_newMy = m_oldMy + (y - m_oldMy)/m_n;
-            m_newSy = m_oldSy + (y - m_oldMy)*(x - m_newMy);
+			m_newC = m_oldC + (x - m_oldMx) * (y - m_newMy);
+			m_newMx = m_oldMx + (x - m_oldMx)/m_n;
+			m_newSx = m_oldSx + (x - m_oldMx)*(x - m_newMx);
+			m_newSy = m_oldSy + (y - m_oldMy)*(x - m_newMy);
+
+			m_oldC = m_newC;
+			m_oldMx = m_newMx;
+            m_oldSx = m_newSx;
             m_oldMy = m_newMy;
             m_oldSy = m_newSy;
 		}
@@ -109,7 +107,7 @@ public:
 	}
 
 	double corrXY() const {
-		return ( (m_n > 0) ? ((m_newC/m_n)/(sdX()*sdY())) : 0.0 );
+		return ( (m_n > 0) ? ((m_newC/m_n-1)/(sdX()*sdY())) : 0.0 );
 	}
 };
 

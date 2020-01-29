@@ -22,8 +22,6 @@
 #include <checker/checker_header.h>
 
 void checker::read_files_and_initialise() {
-	vrb.title("Initialization:");
-
 	//step0: Initialize seed and multi-threading
 	rng.setSeed(options["seed"].as < int > ());
 

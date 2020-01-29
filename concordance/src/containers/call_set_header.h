@@ -10,7 +10,8 @@ const float unphred[256] = { 1.000000e+00, 7.943282e-01, 6.309573e-01, 5.011872e
 class call_set {
 public:
 	// Sample IDs [N] & Bins [L]
-	int N, L, T;
+	int N, L;
+	double T;
 	vector < string > samples;
 	vector < double > bins;
 
