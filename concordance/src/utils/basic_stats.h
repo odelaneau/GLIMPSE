@@ -24,8 +24,6 @@
 
 #include <vector>
 
-// Code taken from there: https://www.johndcook.com/blog/standard_deviation/ and there: https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
-
 class stats2D {
 protected:
 	unsigned long int m_n;
@@ -68,7 +66,7 @@ public:
 			m_newC = m_oldC + (x - m_oldMx) * (y - m_newMy);
 			m_newMx = m_oldMx + (x - m_oldMx)/m_n;
 			m_newSx = m_oldSx + (x - m_oldMx)*(x - m_newMx);
-			m_newSy = m_oldSy + (y - m_oldMy)*(x - m_newMy);
+			m_newSy = m_oldSy + (y - m_oldMy)*(y - m_newMy);
 
 			m_oldC = m_newC;
 			m_oldMx = m_newMx;
@@ -107,11 +105,11 @@ public:
 	}
 
 	double corrXY() const {
-		return ( (m_n > 0) ? ((m_newC/m_n-1)/(sdX()*sdY())) : 0.0 );
+		return ( (m_n > 0) ? (m_newC/((m_n-1)*sdX()*sdY())) : 0.0 );
 	}
 };
 
-
+// Code taken from there: https://www.johndcook.com/blog/standard_deviation/ and there: https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
 class stats1D {
 protected:
 	unsigned long int m_n;

@@ -148,11 +148,11 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 								}
 
 								// [4] Update Rsquare per bin
-								rsquared_bin[frq_bin].push(DSs[i], (float)true_genotype);
+								rsquared_bin[frq_bin].push(DSs[i], true_genotype*1.0f);
 								frequency_bin[frq_bin].push(maf);
 
 								// [5] Update Rsquare per sample
-								rsquared_spl[i].push(DSs[i], (float)true_genotype);
+								rsquared_spl[i].push(DSs[i], true_genotype*1.0f);
 
 								// Increment counts
 								has_validation = true;
