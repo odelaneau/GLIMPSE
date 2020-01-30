@@ -55,13 +55,13 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 		}
 
 		unsigned long nvarianttot = 0, nvariantval = 0, nset = 0, ngenoval = 0, n_errors = 0;
-		int ngl_t, ngl_arr_t = 0, *gl_arr_t = NULL, *an_arr_f = NULL, *ac_arr_f = NULL, int_swap;
+		int ngl_t, ngl_arr_t = 0, *gl_arr_t = NULL, *an_arr_f = NULL, *ac_arr_f = NULL;
 		float *ds_arr_e = NULL, *gp_arr_e = NULL, float_swap;
 		int nds_e, nds_arr_e = 0;
 		int nan_f, nan_arr_f = 0;
 		int nac_f, nac_arr_f = 0;
 		int ngp_e, ngp_arr_e = 0;
-		vector < unsigned char > PLs = vector < unsigned char > (3*N, 0);
+		vector < double > PLs = vector < double > (3*N, 0.0f);
 		vector < float > DSs = vector < float > (N, 0.0f);
 		vector < float > GPs = vector < float > (3*N, 0.0f);
 
@@ -95,10 +95,12 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 					for(int i = 0 ; i < n_true_samples ; i ++) {
 						int idx = mappingT[i];
 						if (idx >= 0) {
-							PLs[3*idx+0] = gl_arr_t[3*i+0];
-							PLs[3*idx+1] = gl_arr_t[3*i+1];
-							PLs[3*idx+2] = gl_arr_t[3*i+2];
-							if (flip) { int_swap = PLs[3*idx+2]; PLs[3*idx+2] = PLs[3*idx+0]; PLs[3*idx+0] = int_swap; }
+							if (gl_arr_t[3*i+0] != bcf_float_missing && gl_arr_t[3*i+1] != bcf_float_missing && gl_arr_t[3*i+2] != bcf_float_missing) {
+								PLs[3*idx+0] = unphred(gl_arr_t[3*i+0]);
+								PLs[3*idx+1] = unphred(gl_arr_t[3*i+1]);
+								PLs[3*idx+2] = unphred(gl_arr_t[3*i+2]);
+								if (flip) { float_swap = PLs[3*idx+2]; PLs[3*idx+2] = PLs[3*idx+0]; PLs[3*idx+0] = float_swap; }
+							} else { PLs[3*idx+0] = -1.0f; PLs[3*idx+1] = -1.0f; PLs[3*idx+2] = -1.0f; }
 						}
 					}
 

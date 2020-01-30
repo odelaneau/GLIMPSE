@@ -51,7 +51,7 @@ public:
 	double ee;
 
 	//CONSTRUCTOR/DESTRUCTOR/INITIALIZATION
-	conditioning_set(variant_map & _mapG, unsigned int _n_haps, unsigned int _n_effective) : mapG(_mapG) {
+	conditioning_set(variant_map & _mapG, unsigned int _n_haps, unsigned int _n_effective, double mismatch_rate) : mapG(_mapG) {
 		Hmono.clear();
 		Hpoly.clear();
 		Vmono.clear();
@@ -63,8 +63,12 @@ public:
 		n_haps = _n_haps;
 		n_vars = mapG.size();
 		n_effective= _n_effective;
+		/*
 		ed = 0.00001;
 		ee = 0.99999;
+		*/
+		ed = mismatch_rate;
+		ee = 1.0-mismatch_rate;
 	}
 
 	~conditioning_set() {

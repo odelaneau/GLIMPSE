@@ -40,7 +40,7 @@ public:
 
 	//
 	void initialize(vector < double >, double);
-	int getTruth(unsigned char, unsigned char, unsigned char);
+	int getTruth(double, double, double);
 	int getFrequencyBin(float);
 	int getMostLikely(float , float , float );
 	int getCalibrationBin(float , float , float );
@@ -78,12 +78,12 @@ int call_set::getCalibrationBin(float gp0, float gp1, float gp2) {
 }
 
 inline
-int call_set::getTruth(unsigned char pl0, unsigned char pl1, unsigned char pl2) {
-	double p0 = unphred[pl0];
-	double p1 = unphred[pl1];
-	double p2 = unphred[pl2];
-	double sc = 1.0 / (p0 + p1 + p2);
-	p0 *= sc; p1 *= sc; p2 *= sc;
+int call_set::getTruth(double pl0, double pl1, double pl2) {
+	if (pl0 < 0.0f || pl1 < 0.0f || pl2 < 0.0f) return -1;
+	double sc = 1.0 / (pl0 + pl1 + pl2);
+	double p0 = pl0 * sc;
+	double p1 = pl1 * sc;
+	double p2 = pl2 * sc;
 	// Not certain enough about truth:
 	if (p0 < T && p1 < T && p2 < T) return -1;
 	// Certain enough about it:
