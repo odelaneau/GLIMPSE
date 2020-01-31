@@ -79,86 +79,84 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 					ngl_t = bcf_get_format_int32(sr->readers[0].header, line_t, "PL", &gl_arr_t, &ngl_arr_t);
 					nds_e = bcf_get_format_float(sr->readers[1].header, line_e, "DS", &ds_arr_e, &nds_arr_e);
 					ngp_e = bcf_get_format_float(sr->readers[1].header, line_e, "GP", &gp_arr_e, &ngp_arr_e);
+					
+					if ((nan_f==1)&&(nac_f==1)&&(ngl_t==3*n_true_samples)&&(nds_e==n_esti_samples)&&(ngp_e==3*n_esti_samples)) {
 
-					assert(nan_f == 1);assert(nac_f == 1);
-					assert(ngl_t == 3*n_true_samples);
-					assert(nds_e == n_esti_samples);
-					assert(ngp_e == 3*n_esti_samples);
+						// Meta data for variant
+						float af = ac_arr_f[0] * 1.0f / an_arr_f[0];
+						bool flip = (af > 0.5);
+						float maf = min(af, 1.0f - af);
+						int frq_bin = getFrequencyBin(maf);
 
-					// Meta data for variant
-					float af = ac_arr_f[0] * 1.0f / an_arr_f[0];
-					bool flip = (af > 0.5);
-					float maf = min(af, 1.0f - af);
-					int frq_bin = getFrequencyBin(maf);
-
-					// Read Truth
-					for(int i = 0 ; i < n_true_samples ; i ++) {
-						int idx = mappingT[i];
-						if (idx >= 0) {
-							if (gl_arr_t[3*i+0] != bcf_float_missing && gl_arr_t[3*i+1] != bcf_float_missing && gl_arr_t[3*i+2] != bcf_float_missing) {
-								PLs[3*idx+0] = unphred(gl_arr_t[3*i+0]);
-								PLs[3*idx+1] = unphred(gl_arr_t[3*i+1]);
-								PLs[3*idx+2] = unphred(gl_arr_t[3*i+2]);
-								if (flip) { float_swap = PLs[3*idx+2]; PLs[3*idx+2] = PLs[3*idx+0]; PLs[3*idx+0] = float_swap; }
-							} else { PLs[3*idx+0] = -1.0f; PLs[3*idx+1] = -1.0f; PLs[3*idx+2] = -1.0f; }
+						// Read Truth
+						for(int i = 0 ; i < n_true_samples ; i ++) {
+							int idx = mappingT[i];
+							if (idx >= 0) {
+								if (gl_arr_t[3*i+0] != bcf_int32_missing && gl_arr_t[3*i+1] != bcf_int32_missing && gl_arr_t[3*i+2] != bcf_int32_missing) {
+									PLs[3*idx+0] = unphred(gl_arr_t[3*i+0]);
+									PLs[3*idx+1] = unphred(gl_arr_t[3*i+1]);
+									PLs[3*idx+2] = unphred(gl_arr_t[3*i+2]);
+									if (flip) { float_swap = PLs[3*idx+2]; PLs[3*idx+2] = PLs[3*idx+0]; PLs[3*idx+0] = float_swap; }
+								} else { PLs[3*idx+0] = -1.0f; PLs[3*idx+1] = -1.0f; PLs[3*idx+2] = -1.0f; }
+							}
 						}
-					}
 
-					// Read Estimates
-					for(int i = 0 ; i < n_esti_samples ; i ++) {
-						int idx = mappingE[i];
-						if (idx >= 0) {
-							DSs[idx] = ds_arr_e[i];
-							GPs[3*idx+0] = gp_arr_e[3*i+0];
-							GPs[3*idx+1] = gp_arr_e[3*i+1];
-							GPs[3*idx+2] = gp_arr_e[3*i+2];
-							if (flip) { float_swap = GPs[3*idx+2]; GPs[3*idx+2] = GPs[3*idx+0]; GPs[3*idx+0] = float_swap; DSs[idx] = 2.0f - DSs[idx]; }
+						// Read Estimates
+						for(int i = 0 ; i < n_esti_samples ; i ++) {
+							int idx = mappingE[i];
+							if (idx >= 0) {
+								DSs[idx] = ds_arr_e[i];
+								GPs[3*idx+0] = gp_arr_e[3*i+0];
+								GPs[3*idx+1] = gp_arr_e[3*i+1];
+								GPs[3*idx+2] = gp_arr_e[3*i+2];
+								if (flip) { float_swap = GPs[3*idx+2]; GPs[3*idx+2] = GPs[3*idx+0]; GPs[3*idx+0] = float_swap; DSs[idx] = 2.0f - DSs[idx]; }
+							}
 						}
-					}
 
-					// Process variant
-					bool has_validation = false;
-					for (int i = 0 ; i < N ; i ++) {
-						if (frq_bin >= 0) {	// Do this variant fall within a given frequency bin?
-							int true_genotype = getTruth(PLs[3*i+0], PLs[3*i+1], PLs[3*i+2]);
-							if (true_genotype >= 0) {
-								int esti_genotype = getMostLikely(GPs[3*i+0], GPs[3*i+1], GPs[3*i+2]);
-								int cal_bin = getCalibrationBin(GPs[3*i+0], GPs[3*i+1], GPs[3*i+2]);
+						// Process variant
+						bool has_validation = false;
+						for (int i = 0 ; i < N ; i ++) {
+							if (frq_bin >= 0) {	// Do this variant fall within a given frequency bin?
+								int true_genotype = getTruth(PLs[3*i+0], PLs[3*i+1], PLs[3*i+2]);
+								if (true_genotype >= 0) {
+									int esti_genotype = getMostLikely(GPs[3*i+0], GPs[3*i+1], GPs[3*i+2]);
+									int cal_bin = getCalibrationBin(GPs[3*i+0], GPs[3*i+1], GPs[3*i+2]);
 
-								// [0] Overall concordance for verbose
-								n_errors += (true_genotype != esti_genotype);
+									// [0] Overall concordance for verbose
+									n_errors += (true_genotype != esti_genotype);
 
-								// [1] Update concordance per sample
-								switch (true_genotype) {
-								case 0: genotype_spl_errors[3*i+0] += (esti_genotype != 0); genotype_spl_totals[3*i+0]++; break;
-								case 1: genotype_spl_errors[3*i+1] += (esti_genotype != 1); genotype_spl_totals[3*i+1]++; break;
-								case 2: genotype_spl_errors[3*i+2] += (esti_genotype != 2); genotype_spl_totals[3*i+2]++; break;
+									// [1] Update concordance per sample
+									switch (true_genotype) {
+									case 0: genotype_spl_errors[3*i+0] += (esti_genotype != 0); genotype_spl_totals[3*i+0]++; break;
+									case 1: genotype_spl_errors[3*i+1] += (esti_genotype != 1); genotype_spl_totals[3*i+1]++; break;
+									case 2: genotype_spl_errors[3*i+2] += (esti_genotype != 2); genotype_spl_totals[3*i+2]++; break;
+									}
+
+									// [2] Update concordance per bin
+									switch (true_genotype) {
+									case 0:	genotype_bin_errors[3*frq_bin+0] += (esti_genotype != 0); genotype_bin_totals[3*frq_bin+0]++; break;
+									case 1:	genotype_bin_errors[3*frq_bin+1] += (esti_genotype != 1); genotype_bin_totals[3*frq_bin+1]++; break;
+									case 2:	genotype_bin_errors[3*frq_bin+2] += (esti_genotype != 2); genotype_bin_totals[3*frq_bin+2]++; break;
+									}
+
+									// [3] Update concordance per calibration bin
+									switch (true_genotype) {
+									case 0:	genotype_cal_errors[3*cal_bin+0] += (esti_genotype != 0); genotype_cal_totals[3*cal_bin+0]++; break;
+									case 1:	genotype_cal_errors[3*cal_bin+1] += (esti_genotype != 1); genotype_cal_totals[3*cal_bin+1]++; break;
+									case 2:	genotype_cal_errors[3*cal_bin+2] += (esti_genotype != 2); genotype_cal_totals[3*cal_bin+2]++; break;
+									}
+
+									// [4] Update Rsquare per bin
+									rsquared_bin[frq_bin].push(DSs[i], true_genotype*1.0f);
+									frequency_bin[frq_bin].push(maf);
+
+									// [5] Update Rsquare per sample
+									rsquared_spl[i].push(DSs[i], true_genotype*1.0f);
+
+									// Increment counts
+									has_validation = true;
+									ngenoval ++;
 								}
-
-								// [2] Update concordance per bin
-								switch (true_genotype) {
-								case 0:	genotype_bin_errors[3*frq_bin+0] += (esti_genotype != 0); genotype_bin_totals[3*frq_bin+0]++; break;
-								case 1:	genotype_bin_errors[3*frq_bin+1] += (esti_genotype != 1); genotype_bin_totals[3*frq_bin+1]++; break;
-								case 2:	genotype_bin_errors[3*frq_bin+2] += (esti_genotype != 2); genotype_bin_totals[3*frq_bin+2]++; break;
-								}
-
-								// [3] Update concordance per calibration bin
-								switch (true_genotype) {
-								case 0:	genotype_cal_errors[3*cal_bin+0] += (esti_genotype != 0); genotype_cal_totals[3*cal_bin+0]++; break;
-								case 1:	genotype_cal_errors[3*cal_bin+1] += (esti_genotype != 1); genotype_cal_totals[3*cal_bin+1]++; break;
-								case 2:	genotype_cal_errors[3*cal_bin+2] += (esti_genotype != 2); genotype_cal_totals[3*cal_bin+2]++; break;
-								}
-
-								// [4] Update Rsquare per bin
-								rsquared_bin[frq_bin].push(DSs[i], true_genotype*1.0f);
-								frequency_bin[frq_bin].push(maf);
-
-								// [5] Update Rsquare per sample
-								rsquared_spl[i].push(DSs[i], true_genotype*1.0f);
-
-								// Increment counts
-								has_validation = true;
-								ngenoval ++;
 							}
 						}
 					}
