@@ -76,7 +76,7 @@ public:
 		}
 	}
 
-	int size() const {
+	unsigned long int size() const {
 		return m_n;
 	}
 
@@ -159,7 +159,7 @@ public:
 		}
 	}
 
-	int size() const {
+	unsigned long int size() const {
 		return m_n;
 	}
 
