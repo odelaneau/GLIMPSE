@@ -3,9 +3,10 @@
 call_set::call_set () {
 }
 
-void call_set::initialize(vector < double > _bins, double _T) {
+void call_set::initialize(vector < double > _bins, double _T, int _D) {
 	vrb.title("Initializing concordance engine:");
 	T = _T;
+	D = _D;
 	bins = _bins;
 	L = bins.size() - 1;
 	vrb.bullet("Threshold = " + stb.str(T));

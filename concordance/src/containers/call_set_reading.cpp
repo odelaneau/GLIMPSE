@@ -55,7 +55,7 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 		}
 
 		unsigned long nvarianttot = 0, nvariantval = 0, nset = 0, ngenoval = 0, n_errors = 0;
-		int ngl_t, ngl_arr_t = 0, *gl_arr_t = NULL, *an_arr_f = NULL, *ac_arr_f = NULL;
+		int ngl_t, ndp_t, ngl_arr_t = 0, ndp_arr_t = 0, *gl_arr_t = NULL, *dp_arr_t = NULL, *an_arr_f = NULL, *ac_arr_f = NULL;
 		float *ds_arr_e = NULL, *gp_arr_e = NULL, float_swap;
 		int nds_e, nds_arr_e = 0;
 		int nan_f, nan_arr_f = 0;
@@ -64,6 +64,7 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 		vector < double > PLs = vector < double > (3*N, 0.0f);
 		vector < float > DSs = vector < float > (N, 0.0f);
 		vector < float > GPs = vector < float > (3*N, 0.0f);
+		vector < int > DPs = vector < int > (N, 0);
 
 		bcf1_t * line_t, * line_e, * line_f;
 		while ((nset = bcf_sr_next_line (sr))) {
@@ -77,10 +78,12 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 					nac_f = bcf_get_info_int32(sr->readers[2].header,line_f,"AC",&ac_arr_f, &nac_arr_f);
 					nan_f = bcf_get_info_int32(sr->readers[2].header,line_f,"AN",&an_arr_f, &nan_arr_f);
 					ngl_t = bcf_get_format_int32(sr->readers[0].header, line_t, "PL", &gl_arr_t, &ngl_arr_t);
+					ndp_t = bcf_get_format_int32(sr->readers[0].header, line_t, "DP", &dp_arr_t, &ndp_arr_t);
 					nds_e = bcf_get_format_float(sr->readers[1].header, line_e, "DS", &ds_arr_e, &nds_arr_e);
 					ngp_e = bcf_get_format_float(sr->readers[1].header, line_e, "GP", &gp_arr_e, &ngp_arr_e);
 					
-					if ((nan_f==1)&&(nac_f==1)&&(ngl_t==3*n_true_samples)&&(nds_e==n_esti_samples)&&(ngp_e==3*n_esti_samples)) {
+					bool has_validation = false;
+					if ((nan_f==1)&&(nac_f==1)&&(ngl_t==3*n_true_samples)&&(nds_e==n_esti_samples)&&(ngp_e==3*n_esti_samples)&&(ndp_t==n_true_samples)) {
 
 						// Meta data for variant
 						float af = ac_arr_f[0] * 1.0f / an_arr_f[0];
@@ -93,9 +96,10 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 							int idx = mappingT[i];
 							if (idx >= 0) {
 								if (gl_arr_t[3*i+0] != bcf_int32_missing && gl_arr_t[3*i+1] != bcf_int32_missing && gl_arr_t[3*i+2] != bcf_int32_missing) {
-									PLs[3*idx+0] = unphred(gl_arr_t[3*i+0]);
-									PLs[3*idx+1] = unphred(gl_arr_t[3*i+1]);
-									PLs[3*idx+2] = unphred(gl_arr_t[3*i+2]);
+									PLs[3*idx+0] = unphred[gl_arr_t[3*i+0]];
+									PLs[3*idx+1] = unphred[gl_arr_t[3*i+1]];
+									PLs[3*idx+2] = unphred[gl_arr_t[3*i+2]];
+									DPs[idx] = dp_arr_t[i];
 									if (flip) { float_swap = PLs[3*idx+2]; PLs[3*idx+2] = PLs[3*idx+0]; PLs[3*idx+0] = float_swap; }
 								} else { PLs[3*idx+0] = -1.0f; PLs[3*idx+1] = -1.0f; PLs[3*idx+2] = -1.0f; }
 							}
@@ -114,10 +118,9 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 						}
 
 						// Process variant
-						bool has_validation = false;
 						for (int i = 0 ; i < N ; i ++) {
 							if (frq_bin >= 0) {	// Do this variant fall within a given frequency bin?
-								int true_genotype = getTruth(PLs[3*i+0], PLs[3*i+1], PLs[3*i+2]);
+								int true_genotype = getTruth(PLs[3*i+0], PLs[3*i+1], PLs[3*i+2], DPs[i]);
 								if (true_genotype >= 0) {
 									int esti_genotype = getMostLikely(GPs[3*i+0], GPs[3*i+1], GPs[3*i+2]);
 									int cal_bin = getCalibrationBin(GPs[3*i+0], GPs[3*i+1], GPs[3*i+2]);

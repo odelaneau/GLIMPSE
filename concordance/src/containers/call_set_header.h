@@ -10,7 +10,7 @@ const float unphred[256] = { 1.000000e+00, 7.943282e-01, 6.309573e-01, 5.011872e
 class call_set {
 public:
 	// Sample IDs [N] & Bins [L]
-	int N, L;
+	int N, L, D;
 	double T;
 	vector < string > samples;
 	vector < double > bins;
@@ -39,8 +39,8 @@ public:
 	~call_set();
 
 	//
-	void initialize(vector < double >, double);
-	int getTruth(double, double, double);
+	void initialize(vector < double >, double, int);
+	int getTruth(double, double, double, int);
 	int getFrequencyBin(float);
 	int getMostLikely(float , float , float );
 	int getCalibrationBin(float , float , float );
@@ -78,7 +78,8 @@ int call_set::getCalibrationBin(float gp0, float gp1, float gp2) {
 }
 
 inline
-int call_set::getTruth(double pl0, double pl1, double pl2) {
+int call_set::getTruth(double pl0, double pl1, double pl2, int dp) {
+	if (dp < D) return -1;
 	if (pl0 < 0.0f || pl1 < 0.0f || pl2 < 0.0f) return -1;
 	double sc = 1.0 / (pl0 + pl1 + pl2);
 	double p0 = pl0 * sc;

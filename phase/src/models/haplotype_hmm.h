@@ -42,8 +42,8 @@ public:
 	void resize();
 	void init(vector < float > &);
 	void forward();
-	void backward(vector < float > &, vector < float > &);
-	void computePosteriors(vector < float > &, vector < float > &);
+	void backward(vector < float > &, vector < float > &, vector < float > &);
+	void computePosteriors(vector < float > &, vector < float > &, vector < float > &);
 
 };
 

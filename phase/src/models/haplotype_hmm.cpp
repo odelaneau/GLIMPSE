@@ -42,30 +42,20 @@ void haplotype_hmm::init(vector < float > & HL) {
 	for (int l = 0 ; l < C->n_vars ; l ++) {
 		p0 = HL[2*l+0] * C->ee + HL[2*l+1] * C->ed;
 		p1 = HL[2*l+0] * C->ed + HL[2*l+1] * C->ee;
-
 		Emissions[2*l+0] = p0 / (p0+p1);
 		Emissions[2*l+1] = p1 / (p0+p1);
-		//Emissions[2*l+0] = 1.0;
-		//Emissions[2*l+1] = (p1/(p0+p1))*((p0+p1)/p0);
-
 	}
 }
 
 void haplotype_hmm::computePosteriors(vector < float > & HL, vector < float > & HP) {
 	resize();
-	//vrb.bullet("HAP Resize (" + stb.str(tac.rel_time()*1.0, 1) + "ms)");tac.clock();
 	init(HL);
-	//vrb.bullet("HAP Init (" + stb.str(tac.rel_time()*1.0, 1) + "ms)");tac.clock();
 	forward();
-	//vrb.bullet("HAP Forward (" + stb.str(tac.rel_time()*1.0, 1) + "ms)");tac.clock();
 	backward(HL, HP);
-	//vrb.bullet("HAP Backward (" + stb.str(tac.rel_time()*1.0, 1) + "ms)");tac.clock();
 }
 
 void haplotype_hmm::forward() {
-	//double loglik = 0.0, fact1, fact2;
 	double fact1, fact2;
-
 	for (int l = 0 ; l < C->n_sites ; l ++) {
 		AlphaSum[l] = 0.0;
 		if (l == 0) {
@@ -77,15 +67,6 @@ void haplotype_hmm::forward() {
 		} else {
 			fact1 = C->t[l-1] / C->n_states;
 			fact2 = C->nt[l-1] / AlphaSum[l-1];
-
-			/*
-			 * To accelerate it:
-			 * 		For closeby variants , assume zero recombination rates, so that fact2=1.0 and fact1=0
-			 * 		Then, rescale likelihoods so that P(G=0) = 1.0
-			 * 		So you just have to iterate over non-zero alleles and multiply alpha values by P(G=1)
-			 * 		This should greatly speed up things as zeros values are everywhere, especially when the reference panel is large!!!!
-			 */
-
 			for (int k = 0 ; k < C->n_states ; k ++) {
 				Alpha[l*C->n_states+k] = (Alpha[(l-1)*C->n_states+k] * fact2 + fact1) * Emissions[2*C->Vpoly[l]+C->Hpoly[l*C->n_states+k]];
 				AlphaSum[l] += Alpha[l*C->n_states+k];
@@ -93,27 +74,26 @@ void haplotype_hmm::forward() {
 		}
 		//loglik += log (AlphaSum[l]);
 	}
-	//cout << "F = " << loglik << endl;
 }
 
-void haplotype_hmm::backward(vector < float > & HL, vector < float > & HP) {
-	//double loglik = 0.0, fact1, betaSumPrev, betaSumCurr, prob0, prob1;
+void haplotype_hmm::backward(vector < float > & HL, vector < float > & HP, vector < float > & HPnoPL) {
 	double betaSumNext, betaSumCurr;
 	double prob0 = 0.0, prob1 = 0.0;
-
-	double hemit[2][2], pcopy[2], prob[2], betaSumTmp[2];
+	double hemit[2][2], pcopy[2], prob[2], betaSumTmp[2], nemit[2][2];
 	vector < float > beta = vector < float > (C->n_states, 1.0);
 	for (int l = C->n_sites-1 ; l >= 0 ; l --) {
-		//Set up values
-		//prob0 = 0.0; prob1 = 0.0;
+		// Initilialization
 		prob[0]=0.0;prob[1]=0.0;
 		betaSumTmp[0]=0.0;betaSumTmp[1]=0.0;
 		hemit[0][0] = C->ee * HL[2*C->Vpoly[l]+0] / Emissions[2*C->Vpoly[l] + 0];
 		hemit[0][1] = C->ed * HL[2*C->Vpoly[l]+0] / Emissions[2*C->Vpoly[l] + 1];
 		hemit[1][0] = C->ed * HL[2*C->Vpoly[l]+1] / Emissions[2*C->Vpoly[l] + 0];
 		hemit[1][1] = C->ee * HL[2*C->Vpoly[l]+1] / Emissions[2*C->Vpoly[l] + 1];
-
-		// Backward pass
+		nemit[0][0] = C->ee / Emissions[2*C->Vpoly[l] + 0];
+		nemit[0][1] = C->ed / Emissions[2*C->Vpoly[l] + 1];
+		nemit[1][0] = C->ed / Emissions[2*C->Vpoly[l] + 0];
+		nemit[1][1] = C->ee / Emissions[2*C->Vpoly[l] + 1];
+		// Backward
 		betaSumCurr = 0.0;
 		if (l == C->n_sites - 1) {
 			for (int k = 0 ; k < C->n_states ; k ++) {
@@ -130,16 +110,20 @@ void haplotype_hmm::backward(vector < float > & HL, vector < float > & HP) {
 				betaSumTmp[C->Hpoly[l*C->n_states+k]]+=beta[k];
 			}
 		}
-
+		// Expectation
 		prob0 = prob[0]*hemit[0][0] + prob[1]*hemit[0][1];
 		prob1 = prob[0]*hemit[1][0] + prob[1]*hemit[1][1];
 		HP[2*C->Vpoly[l]+0] = prob0 / (prob0 + prob1);
 		HP[2*C->Vpoly[l]+1] = prob1 / (prob0 + prob1);
+		prob0 = prob[0]*nemit[0][0] + prob[1]*nemit[0][1];
+		prob1 = prob[0]*nemit[1][0] + prob[1]*nemit[1][1];
+		HPnoPL[2*C->Vpoly[l]+0] = prob0 / (prob0 + prob1);
+		HPnoPL[2*C->Vpoly[l]+1] = prob1 / (prob0 + prob1);
 		betaSumCurr = betaSumTmp[0]*Emissions[2*C->Vpoly[l] + 0] + betaSumTmp[1]*Emissions[2*C->Vpoly[l] + 1];
 		betaSumNext = betaSumCurr / C->n_states;
 		//loglik += log (betaSumPrev);
 	}
-	//cout << "B = " << loglik << endl;
+	// Monomorphic sites
 	for (int l = 0 ; l < C->Vmono.size() ; l ++) {
 		prob0 = 0.0; prob1 = 0.0;
 		if (!C->Hmono[C->Vmono[l]]) {
@@ -149,13 +133,10 @@ void haplotype_hmm::backward(vector < float > & HL, vector < float > & HP) {
 			prob0 = C->ed * HL[2*C->Vmono[l]+0];
 			prob1 = C->ee * HL[2*C->Vmono[l]+1];
 		}
-		//cout << prob0 / (prob0+prob1) << " " << prob1 / (prob0+prob1) << endl;
 		HP[2*C->Vmono[l]+0] = prob0 / (prob0 + prob1);
 		HP[2*C->Vmono[l]+1] = prob1 / (prob0 + prob1);
 	}
 }
-
-
 
 /*
 void haplotype_hmm::forward() {

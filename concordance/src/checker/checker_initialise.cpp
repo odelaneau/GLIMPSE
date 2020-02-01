@@ -26,7 +26,7 @@ void checker::read_files_and_initialise() {
 	rng.setSeed(options["seed"].as < int > ());
 
 	//step1: process bins & parameters
-	D.initialize(options["bins"].as < vector < double > > (), options["minPROB"].as < double > ());
+	D.initialize(options["bins"].as < vector < double > > (), options["minPROB"].as < double > (), options["minDP"].as < int > ());
 
 	//step2: Read input files
 	vrb.title("Reading list of input files int [" + options["input"].as < string > () + "]");
