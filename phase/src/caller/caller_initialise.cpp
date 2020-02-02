@@ -57,6 +57,9 @@ void caller::read_files_and_initialise() {
 	//step4
 	HP0 = vector < vector < float > > (options["thread"].as < int > (), vector < float > (H.n_site * 2, 0.0));
 	HP1 = vector < vector < float > > (options["thread"].as < int > (), vector < float > (H.n_site * 2, 0.0));
+	//HP0noPL = vector < vector < float > > (options["thread"].as < int > (), vector < float > (H.n_site * 2, 0.0));
+	//HP1noPL = vector < vector < float > > (options["thread"].as < int > (), vector < float > (H.n_site * 2, 0.0));
+	//MISMATCH = vector < float > (H.n_site, 0.0f);
 	HLC = vector < vector < float > > (options["thread"].as < int > (), vector < float > (H.n_site * 2, 0.0));
 	HMM = vector < haplotype_hmm * > (options["thread"].as < int > (), NULL);
 	DMM = vector < diplotype_hmm * > (options["thread"].as < int > (), NULL);

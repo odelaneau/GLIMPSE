@@ -99,7 +99,8 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 									PLs[3*idx+0] = unphred[gl_arr_t[3*i+0]];
 									PLs[3*idx+1] = unphred[gl_arr_t[3*i+1]];
 									PLs[3*idx+2] = unphred[gl_arr_t[3*i+2]];
-									DPs[idx] = dp_arr_t[i];
+									if (dp_arr_t[i]!= bcf_int32_missing) DPs[idx] = dp_arr_t[i];
+									else DPs[idx] = 0;
 									if (flip) { float_swap = PLs[3*idx+2]; PLs[3*idx+2] = PLs[3*idx+0]; PLs[3*idx+0] = float_swap; }
 								} else { PLs[3*idx+0] = -1.0f; PLs[3*idx+1] = -1.0f; PLs[3*idx+2] = -1.0f; }
 							}

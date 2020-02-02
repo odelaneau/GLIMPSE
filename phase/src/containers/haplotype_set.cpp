@@ -146,10 +146,8 @@ void haplotype_set::selectPositionalBurrowWheelerTransform(int ind, int maxK, co
 	C->n_states = idxH.size();
 	for (int l = 0 ; l < n_site ; l ++) {
 		unsigned int ac = H_opt_var.get(l, 2*ind + n_ref + 0) + H_opt_var.get(l, 2*ind + n_ref + 1);
-		unsigned int ac2 = H_opt_var.get(l, 2*ind + n_ref + 0) + H_opt_var.get(l, 2*ind + n_ref + 1);
 		C->Hmono.push_back(H_opt_var.get(l,idxH[0]));
-		for (int k = 0 ; k < idxH.size() ; k ++) ac2 += H_opt_var.get(l,idxH[k]);
-		ac += ac2;
+		for (int k = 0 ; k < idxH.size() ; k ++) ac += H_opt_var.get(l,idxH[k]);
 		if (ac > 0 && ac < (idxH.size()+2)) {
 			C->Vpoly.push_back(l);
 			for (int k = 0 ; k < idxH.size() ; k ++) C->Hpoly.push_back(H_opt_var.get(l,idxH[k]));

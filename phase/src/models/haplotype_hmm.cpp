@@ -47,10 +47,12 @@ void haplotype_hmm::init(vector < float > & HL) {
 	}
 }
 
+//void haplotype_hmm::computePosteriors(vector < float > & HL, vector < float > & HP, vector < float > & HPnoPL) {
 void haplotype_hmm::computePosteriors(vector < float > & HL, vector < float > & HP) {
 	resize();
 	init(HL);
 	forward();
+	//backward(HL, HP, HPnoPL);
 	backward(HL, HP);
 }
 
@@ -76,10 +78,12 @@ void haplotype_hmm::forward() {
 	}
 }
 
-void haplotype_hmm::backward(vector < float > & HL, vector < float > & HP, vector < float > & HPnoPL) {
+//void haplotype_hmm::backward(vector < float > & HL, vector < float > & HP, vector < float > & HPnoPL) {
+void haplotype_hmm::backward(vector < float > & HL, vector < float > & HP) {
 	double betaSumNext, betaSumCurr;
 	double prob0 = 0.0, prob1 = 0.0;
-	double hemit[2][2], pcopy[2], prob[2], betaSumTmp[2], nemit[2][2];
+	//double hemit[2][2], pcopy[2], prob[2], betaSumTmp[2], nemit[2][2];
+	double hemit[2][2], pcopy[2], prob[2], betaSumTmp[2];
 	vector < float > beta = vector < float > (C->n_states, 1.0);
 	for (int l = C->n_sites-1 ; l >= 0 ; l --) {
 		// Initilialization
@@ -89,10 +93,10 @@ void haplotype_hmm::backward(vector < float > & HL, vector < float > & HP, vecto
 		hemit[0][1] = C->ed * HL[2*C->Vpoly[l]+0] / Emissions[2*C->Vpoly[l] + 1];
 		hemit[1][0] = C->ed * HL[2*C->Vpoly[l]+1] / Emissions[2*C->Vpoly[l] + 0];
 		hemit[1][1] = C->ee * HL[2*C->Vpoly[l]+1] / Emissions[2*C->Vpoly[l] + 1];
-		nemit[0][0] = C->ee / Emissions[2*C->Vpoly[l] + 0];
-		nemit[0][1] = C->ed / Emissions[2*C->Vpoly[l] + 1];
-		nemit[1][0] = C->ed / Emissions[2*C->Vpoly[l] + 0];
-		nemit[1][1] = C->ee / Emissions[2*C->Vpoly[l] + 1];
+		//nemit[0][0] = C->ee / Emissions[2*C->Vpoly[l] + 0];
+		//nemit[0][1] = C->ed / Emissions[2*C->Vpoly[l] + 1];
+		//nemit[1][0] = C->ed / Emissions[2*C->Vpoly[l] + 0];
+		//nemit[1][1] = C->ee / Emissions[2*C->Vpoly[l] + 1];
 		// Backward
 		betaSumCurr = 0.0;
 		if (l == C->n_sites - 1) {
@@ -115,27 +119,32 @@ void haplotype_hmm::backward(vector < float > & HL, vector < float > & HP, vecto
 		prob1 = prob[0]*hemit[1][0] + prob[1]*hemit[1][1];
 		HP[2*C->Vpoly[l]+0] = prob0 / (prob0 + prob1);
 		HP[2*C->Vpoly[l]+1] = prob1 / (prob0 + prob1);
-		prob0 = prob[0]*nemit[0][0] + prob[1]*nemit[0][1];
-		prob1 = prob[0]*nemit[1][0] + prob[1]*nemit[1][1];
-		HPnoPL[2*C->Vpoly[l]+0] = prob0 / (prob0 + prob1);
-		HPnoPL[2*C->Vpoly[l]+1] = prob1 / (prob0 + prob1);
+		//prob0 = prob[0]*nemit[0][0] + prob[1]*nemit[0][1];
+		//prob1 = prob[0]*nemit[1][0] + prob[1]*nemit[1][1];
+		//HPnoPL[2*C->Vpoly[l]+0] = prob0 / (prob0 + prob1);
+		//HPnoPL[2*C->Vpoly[l]+1] = prob1 / (prob0 + prob1);
 		betaSumCurr = betaSumTmp[0]*Emissions[2*C->Vpoly[l] + 0] + betaSumTmp[1]*Emissions[2*C->Vpoly[l] + 1];
 		betaSumNext = betaSumCurr / C->n_states;
 		//loglik += log (betaSumPrev);
 	}
 	// Monomorphic sites
-	for (int l = 0 ; l < C->Vmono.size() ; l ++) {
-		prob0 = 0.0; prob1 = 0.0;
-		if (!C->Hmono[C->Vmono[l]]) {
-			prob0 = C->ee * HL[2*C->Vmono[l]+0];
-			prob1 = C->ed * HL[2*C->Vmono[l]+1];
-		} else {
-			prob0 = C->ed * HL[2*C->Vmono[l]+0];
-			prob1 = C->ee * HL[2*C->Vmono[l]+1];
-		}
-		HP[2*C->Vmono[l]+0] = prob0 / (prob0 + prob1);
-		HP[2*C->Vmono[l]+1] = prob1 / (prob0 + prob1);
-	}
+	 for (int l = 0 ; l < C->Vmono.size() ; l ++) {
+		 prob0 = 0.0f; prob1 = 0.0f;
+		 //double t0 = 0.0f, t1 = 0.0f;
+		 if (!C->Hmono[C->Vmono[l]]) {
+			 prob0 = C->ee * HL[2*C->Vmono[l]+0];
+	         prob1 = C->ed * HL[2*C->Vmono[l]+1];
+	         //t0 = C->ee;t1=C->ed;
+		 } else {
+			 prob0 = C->ed * HL[2*C->Vmono[l]+0];
+	         prob1 = C->ee * HL[2*C->Vmono[l]+1];
+	         //t0 = C->ed;t1=C->ee;
+		 }
+		 HP[2*C->Vmono[l]+0] = prob0 / (prob0 + prob1);
+	     HP[2*C->Vmono[l]+1] = prob1 / (prob0 + prob1);
+	     //HPnoPL[2*C->Vmono[l]+0] = t0/(t0+t1);
+	     //HPnoPL[2*C->Vmono[l]+1] = t1/(t0+t1);
+	 }
 }
 
 /*

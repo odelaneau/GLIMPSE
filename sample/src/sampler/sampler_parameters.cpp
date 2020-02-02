@@ -88,6 +88,6 @@ void sampler::verbose_files() {
 void sampler::verbose_options() {
 	vrb.title("Parameters:");
 	vrb.bullet("Seed       : " + stb.str(options["seed"].as < int > ()));
-	if (options.count("sample")) vrb.bullet("Mode       : Get the most likely haplotype pair for each sample");
-	else vrb.bullet("Mode       : Sample a likely haplotype pair for each sample");
+	if (options.count("sample")) vrb.bullet("Mode       : Sample a likely haplotype pair for each sample");
+	else vrb.bullet("Mode       : Get the most likely haplotype pair for each sample");
 }

@@ -35,17 +35,17 @@ bool phaseHet(int nmain, int curr_hs, int prev_hs, bool prev_a0, bool prev_a1) {
 		bool prev_s1 = GET(prev_hs, 2*s+1);
 		bool curr_s0 = GET(curr_hs, 2*s+0);
 		bool curr_s1 = GET(curr_hs, 2*s+1);
-		if (prev_s0 == prev_a0 && prev_s1 == prev_a1) {
-			phase0 += ((!curr_s0)&&curr_s1);
-			phase1 += (curr_s1&&(!curr_s0));
-		}
 		if (prev_s0 == prev_a0 && prev_s1 == prev_a1 && curr_s0 != curr_s1) {
-			phase0 += (curr_s1&&(!curr_s0));
-			phase1 += ((!curr_s0)&&curr_s1);
+			phase0 += !curr_s0;
+			phase1 += curr_s0;
+		}
+		if (prev_s0 == prev_a1 && prev_s1 == prev_a0 && curr_s0 != curr_s1) {
+			phase0 += curr_s0;
+			phase1 += !curr_s0;
 		}
 	}
 	if (phase0>phase1) return false;
-	else if (phase0<phase1) return false;
+	else if (phase0<phase1) return true;
 	else return rng.flipCoin();
 }
 

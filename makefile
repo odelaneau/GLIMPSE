@@ -1,4 +1,4 @@
-projects = chunk impute ligate concordance
+projects = chunk impute ligate concordance sample
 
 .PHONY: all $(projects)
 
