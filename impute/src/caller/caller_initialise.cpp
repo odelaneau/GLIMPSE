@@ -32,43 +32,48 @@ void caller::read_files_and_initialise() {
 	rng.setSeed(options["seed"].as < int > ());
 	if (options["thread"].as < int > () > 1) {
 		i_workers = 0; i_jobs = 0;
-		id_workers = std::vector < pthread_t > (options["thread"].as < int > ());
+		id_workers = vector < pthread_t > (options["thread"].as < int > ());
 		pthread_mutex_init(&mutex_workers, NULL);
 	}
 
-	//step1: Parsing region std::string
+	//step1: Parsing region string
 	buildCoordinates();
 
 	//step2: Read input files
-	genotype_reader readerG(H, G, V, gregion, options["maf-filter"].as< float > ());
-	readerG.scanGenotypes(options["input"].as < std::string > (), options["reference"].as < std::string > ());
+	genotype_reader readerG(H, G, V, input_gregion);
+	if (options.count("init-pool")) readerG.readInitializingSamples(options["init-pool"].as < string > ());
+	readerG.scanGenotypes(options["input"].as < string > (), options["reference"].as < string > ());
 	readerG.allocateGenotypes();
-	readerG.readGenotypes(options["input"].as < std::string > (), options["reference"].as < std::string > ());
-
-	TPROB = std::vector < probability_set * > (readerG.n_main_samples);
-	for (int t = 0 ; t < readerG.n_main_samples ; t ++) {
-		TPROB[t] = new probability_set (readerG.n_variants);
-	}
+	readerG.readGenotypes(options["input"].as < string > (), options["reference"].as < string > ());
 
 	//step3: Read and initialise genetic map
-	//gmap_reader readerGM;
-	readerGM.readGeneticMapFile(options["map"].as < std::string > ());
-	V.setGeneticMap(readerGM);
+	if (options.count("map")) {
+		gmap_reader readerGM;
+		readerGM.readGeneticMapFile(options["map"].as < string > ());
+		V.setGeneticMap(readerGM);
+	} else V.setGeneticMap();
+	vrb.bullet("Region spans " + stb.str(V.length()) + " bp and " + stb.str(V.lengthcM(), 2) + " cM");
 
 	//step4
-	HP0 = std::vector < std::vector < float > > (options["thread"].as < int > (), std::vector < float > (H.n_site * 2, 0.0));
-	HP1 = std::vector < std::vector < float > > (options["thread"].as < int > (), std::vector < float > (H.n_site * 2, 0.0));
-	HLC = std::vector < std::vector < float > > (options["thread"].as < int > (), std::vector < float > (H.n_site * 2, 0.0));
-	HMM = std::vector < haplotype_hmm * > (options["thread"].as < int > (), NULL);
-	DMM = std::vector < diplotype_hmm * > (options["thread"].as < int > (), NULL);
-	COND = std::vector < conditioning_set * > (options["thread"].as < int > (), NULL);
+	HP0 = vector < vector < float > > (options["thread"].as < int > (), vector < float > (H.n_site * 2, 0.0));
+	HP1 = vector < vector < float > > (options["thread"].as < int > (), vector < float > (H.n_site * 2, 0.0));
+	//HP0noPL = vector < vector < float > > (options["thread"].as < int > (), vector < float > (H.n_site * 2, 0.0));
+	//HP1noPL = vector < vector < float > > (options["thread"].as < int > (), vector < float > (H.n_site * 2, 0.0));
+	//MISMATCH = vector < float > (H.n_site, 0.0f);
+	HLC = vector < vector < float > > (options["thread"].as < int > (), vector < float > (H.n_site * 2, 0.0));
+	HMM = vector < haplotype_hmm * > (options["thread"].as < int > (), NULL);
+	DMM = vector < diplotype_hmm * > (options["thread"].as < int > (), NULL);
+	//FMM = vector < switchandflipphasing * > (options["thread"].as < int > (), NULL);
+	//SMM = vector < switchphasing * > (options["thread"].as < int > (), NULL);
+	COND = vector < conditioning_set * > (options["thread"].as < int > (), NULL);
 	for (int t = 0 ; t < HMM.size() ; t ++) {
 		COND[t] = new conditioning_set(V, (readerG.n_ref_samples+readerG.n_main_samples)*2, 20000);
-		HMM[t] = new haplotype_hmm(&H,COND[t],TPROB[t]);
-		DMM[t] = new diplotype_hmm(&H,COND[t]);
+		HMM[t] = new haplotype_hmm(COND[t]);
+		DMM[t] = new diplotype_hmm(COND[t]);
+		//FMM[t] = new switchandflipphasing (COND[t]);
+		//SMM[t] = new switchphasing (COND[t]);
 	}
 
 	//step5
-	H.refonly_pbwt = options.count("refonly-select");
 	H.initPositionalBurrowWheelerTransform(options["pbwt-depth"].as < int > (), options["pbwt-modulo"].as < int > ());
 }

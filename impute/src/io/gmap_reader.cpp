@@ -26,21 +26,21 @@ gmap_reader::gmap_reader() {
 }
 
 gmap_reader::~gmap_reader() {
-	std::vector < int > ().swap(pos_bp);
-	std::vector < double > ().swap(pos_cm);
+	vector < int > ().swap(pos_bp);
+	vector < double > ().swap(pos_cm);
 }
 
-void gmap_reader::readGeneticMapFile(std::string fmap) {
+void gmap_reader::readGeneticMapFile(string fmap) {
 	tac.clock();
-	std::string buffer;
-	std::vector < std::string > tokens;
+	string buffer;
+	vector < string > tokens;
 	int line = 0;
 	input_file fd_gmap(fmap);
 	if (fd_gmap.fail()) vrb.error("Cannot open genetic map file");
-	std::getline(fd_gmap, buffer, '\n');
+	getline(fd_gmap, buffer, '\n');
 	int prev_bp = 0;
 	double prev_cm = 0;
-	while (std::getline(fd_gmap, buffer, '\n')) {
+	while (getline(fd_gmap, buffer, '\n')) {
 		if (stb.split(buffer, tokens) == 3) {
 			int curr_bp = atoi(tokens[0].c_str());
 			double curr_cm = atof(tokens[2].c_str());

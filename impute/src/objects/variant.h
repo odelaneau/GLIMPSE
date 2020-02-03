@@ -27,11 +27,11 @@
 class variant {
 public :
 	//DATA
-	std::string chr;
+	string chr;
 	int bp;
-	std::string id;
-	std::string ref;
-	std::string alt;
+	string id;
+	string ref;
+	string alt;
 	double cm;
 	int idx;
 	unsigned int cref;
@@ -40,19 +40,12 @@ public :
 	unsigned int fbin;
 
 	//CONSTRUCTOR/DESTRUCTOR
-	variant();
-	variant(std::string & chr, int bp, std::string & id, std::string & ref, std::string & alt, int idx);
+	variant(string & chr, int bp, string & id, string & ref, string & alt, int idx);
 	~variant();
 
 	bool isSingleton();
 	bool isMonomorphic();
 	unsigned int getMAC();
-
-	bool isPrev(variant* m2)
-	{
-		return bp < m2->bp;
-	}
-
 };
 
 #endif

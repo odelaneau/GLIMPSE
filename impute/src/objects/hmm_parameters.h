@@ -30,9 +30,9 @@
 class hmm_parameters {
 public :
 	//DATA
-	std::vector < double > t;
-	std::vector < double > tfreq;
-	std::vector < double > nt;
+	vector < double > t;
+	vector < double > tfreq;
+	vector < double > nt;
 	double ee;
 	double ed;
 	double efreq;

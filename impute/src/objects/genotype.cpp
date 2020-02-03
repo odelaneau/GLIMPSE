@@ -28,6 +28,7 @@ genotype::genotype(int _index, int _n_variants) {
 	name = "";
 	index = _index;
 	n_variants = _n_variants;
+	nHAPstored = 0;
 }
 
 genotype::~genotype() {
@@ -45,14 +46,14 @@ void genotype::free() {
 }
 
 void genotype::allocate() {
-	GL = std::vector < unsigned char > (3 * n_variants, 0);
-	GP = std::vector < float > (2 * n_variants, 0.0);
-	H0 = std::vector < bool > (n_variants, false);
-	H1 = std::vector < bool > (n_variants, false);
+	GL = vector < unsigned char > (3 * n_variants, 0);
+	GP = vector < float > (2 * n_variants, 0.0);
+	H0 = vector < bool > (n_variants, false);
+	H1 = vector < bool > (n_variants, false);
+	HAP = vector < int > (n_variants, 0);
 }
 
-void genotype::initHaplotypeLikelihoods(std::vector < float > & HL) {
-	//double sum, ph0, ph1, lh0, lh1, lg0, lg1, lg2;
+void genotype::initHaplotypeLikelihoods(vector < float > & HL) {
 	double sum, lg0, lg1, lg2;
 	for (int l = 0 ; l < n_variants ; l ++) {
 		lg0 = unphred[GL[3*l+0]];
@@ -64,19 +65,10 @@ void genotype::initHaplotypeLikelihoods(std::vector < float > & HL) {
 		lg2 /= sum;
 		HL[2*l+0] = lg0 + 0.5 * lg1;
 		HL[2*l+1] = lg2 + 0.5 * lg1;
-		/*
-		lh0 = lg0 + 0.5 * lg1;
-		lh1 = lg2 + 0.5 * lg1;
-		ph0 = ee * lh0 + ed * lh1;
-		ph1 = ed * lh0 + ee * lh1;
-		HL[2*l+0] = ph0 / (ph0 + ph1);
-		HL[2*l+1] = ph1 / (ph0 + ph1);
-		*/
 	}
 }
 
-void genotype::makeHaplotypeLikelihoods(std::vector < float > & HL, bool first) {
-	//double sum, ph0, ph1, lh0, lh1, lg0, lg1, lg2;
+void genotype::makeHaplotypeLikelihoods(vector < float > & HL, bool first) {
 	double sum, lg0, lg1, lg2;
 	for (int l = 0 ; l < n_variants ; l ++) {
 		bool condAllele = first?H1[l]:H0[l];
@@ -94,38 +86,24 @@ void genotype::makeHaplotypeLikelihoods(std::vector < float > & HL, bool first) 
 			HL[2*l+0] = lg0 / (lg0 + lg1);
 			HL[2*l+1] = lg1 / (lg0 + lg1);
 		}
-
-		/*
-		if (condAllele) {
-			lh0 = lg1 / (lg1 + lg2);
-			lh1 = lg2 / (lg1 + lg2);
-		} else {
-			lh0 = lg0 / (lg0 + lg1);
-			lh1 = lg1 / (lg0 + lg1);
-		}
-		ph0 = ee * lh0 + ed * lh1;
-		ph1 = ed * lh0 + ee * lh1;
-		HL[2*l+0] = ph0 / (ph0 + ph1);
-		HL[2*l+1] = ph1 / (ph0 + ph1);
-		*/
 	}
 }
 
-void genotype::sampleHaplotypeH0(std::vector < float > & HP0) {
+void genotype::sampleHaplotypeH0(vector < float > & HP0) {
 	for (int l = 0 ; l < n_variants ; l ++) {
 		if (rng.getDouble() < HP0[2*l+0]) H0[l] = false;
 		else H0[l] = true;
 	}
 }
 
-void genotype::sampleHaplotypeH1(std::vector < float > & HP1) {
+void genotype::sampleHaplotypeH1(vector < float > & HP1) {
 	for (int l = 0 ; l < n_variants ; l ++) {
 		if (rng.getDouble() < HP1[2*l+0]) H1[l] = false;
 		else H1[l] = true;
 	}
 }
 
-void genotype::storeGenotypePosteriors(std::vector < float > & HP0, std::vector < float > & HP1) {
+void genotype::storeGenotypePosteriors(vector < float > & HP0, vector < float > & HP1) {
 	for (int l = 0 ; l < n_variants ; l ++) {
 		double p0 = HP0[2*l+0] * HP1[2*l+0];
 		double p1 = HP0[2*l+0] * HP1[2*l+1] + HP0[2*l+1] * HP1[2*l+0];
@@ -133,6 +111,14 @@ void genotype::storeGenotypePosteriors(std::vector < float > & HP0, std::vector 
 		GP[2*l+0] += p0 / (p0 + p1 + p2);
 		GP[2*l+1] += p1 / (p0 + p1 + p2);
 	}
+}
+
+void genotype::storeSampledHaplotypes() {
+	for (int l = 0 ; l < n_variants ; l ++) {
+		H0[l]?SET(HAP[l],nHAPstored+0):CLR(HAP[l],nHAPstored+0);
+		H1[l]?SET(HAP[l],nHAPstored+1):CLR(HAP[l],nHAPstored+1);
+	}
+	nHAPstored += 2;
 }
 
 void genotype::normGenotypePosteriors(int nStorages) {

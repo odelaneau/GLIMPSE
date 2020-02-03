@@ -1,7 +1,6 @@
 #include <models/diplotype_hmm.h>
 
-diplotype_hmm::diplotype_hmm(haplotype_set * _H, conditioning_set * _C) {
-	H = _H;
+diplotype_hmm::diplotype_hmm(conditioning_set * _C) {
 	C = _C;
 
 	//INIT EMIT0
@@ -25,9 +24,9 @@ diplotype_hmm::diplotype_hmm(haplotype_set * _H, conditioning_set * _C) {
 	EMIT1[0][7] = C->ed; EMIT1[1][7] = C->ed; EMIT1[2][7] = C->ed;
 
 	//
-	BetaSum = std::vector < float > (HAP_NUMBER, 0.0);
-	probSumH1 = std::vector < float > (HAP_NUMBER, 1.0);
-	probSumH2 = std::vector < float > (HAP_NUMBER, 1.0);
+	BetaSum = vector < float > (HAP_NUMBER, 0.0);
+	probSumH1 = vector < float > (HAP_NUMBER, 1.0);
+	probSumH2 = vector < float > (HAP_NUMBER, 1.0);
 	probSumT1 = 1.0;
 	probSumT2 = 1.0;
 }
@@ -35,24 +34,24 @@ diplotype_hmm::diplotype_hmm(haplotype_set * _H, conditioning_set * _C) {
 diplotype_hmm::~diplotype_hmm() {
 }
 
-void diplotype_hmm::reallocate(std::vector < bool > & H0, std::vector < bool > & H1) {
+void diplotype_hmm::reallocate(vector < bool > & H0, vector < bool > & H1) {
 	//SET HET AND ALT
-	HET = std::vector < char > (C->n_sites, -1);
-	ALT = std::vector < bool > (C->n_sites, false);
+	HET = vector < char > (C->n_sites, -1);
+	ALT = vector < bool > (C->n_sites, false);
 	for (int l = 0, n_het = 0 ; l < C->n_sites ; l ++) {
-		if (H0[l] != H1[l]) {
+		if (H0[C->Vpoly[l]] != H1[C->Vpoly[l]]) {
 			HET[l] = (char)(n_het % 3);
 			ALT[l] = false;
 			n_het ++;
 		} else {
 			HET[l] = -1;
-			ALT[l] = H0[l];
+			ALT[l] = H0[C->Vpoly[l]];
 		}
 	}
 
 	//COMPUTE SEGMENTATION
 	int nv = 0;
-	segments = std::vector < int > ();
+	segments = vector < int > ();
 	for (int l = 0, n_hets = 0 ; l < C->n_sites ;) {
 		n_hets += (HET[l] >= 0);
 		if (n_hets == 4) {
@@ -131,17 +130,13 @@ void diplotype_hmm::backward() {
 	}
 }
 
-void diplotype_hmm::rephaseHaplotypes(std::vector < bool > & H0, std::vector < bool > & H1) {
-	tac.clock();
+void diplotype_hmm::rephaseHaplotypes(vector < bool > & H0, vector < bool > & H1) {
 	reallocate(H0, H1);
-	//vrb.bullet("DIP Resize (" + stb.str(tac.rel_time()*1.0, 1) + "ms)");
 	forward();
-	//vrb.bullet("DIP Forward (" + stb.str(tac.rel_time()*1.0, 1) + "ms)");tac.clock();
 	backward();
-	//vrb.bullet("DIP Backward (" + stb.str(tac.rel_time()*1.0, 1) + "ms)");tac.clock();
 
-	std::vector < int > dip_sampled = std::vector < int > (n_segs, -1);
-	std::vector < double > dip_probs = std::vector < double > (HAP_NUMBER, 0.0);
+	vector < int > dip_sampled = vector < int > (n_segs, -1);
+	vector < double > dip_probs = vector < double > (HAP_NUMBER, 0.0);
 	for (curr_segment_index = 0, curr_locus = 0 ; curr_segment_index < n_segs ; curr_segment_index ++) {
 		float sumHap = 0.0, sumDip = 0.0;
 		if (curr_segment_index == 0) {
@@ -170,8 +165,8 @@ void diplotype_hmm::rephaseHaplotypes(std::vector < bool > & H0, std::vector < b
 			int idx_h1 = HAP_NUMBER - dip_sampled[curr_segment_index] - 1;
 			bool a0 = ALLELE(HAP_NUMBER - idx_h0 - 1, 2 - HET[curr_locus]);
 			bool a1 = ALLELE(HAP_NUMBER - idx_h1 - 1, 2 - HET[curr_locus]);
-			H0[curr_locus] = a0;
-			H1[curr_locus] = a1;
+			H0[C->Vpoly[curr_locus]] = a0;
+			H1[C->Vpoly[curr_locus]] = a1;
 		}
 		curr_segment_locus ++;
 		if (curr_segment_locus >= segments[curr_segment_index]) {
@@ -179,5 +174,4 @@ void diplotype_hmm::rephaseHaplotypes(std::vector < bool > & H0, std::vector < b
 			curr_segment_locus = 0;
 		}
 	}
-	vrb.bullet("DIP Phasing meth1 (" + stb.str(tac.rel_time()*1.0, 1) + "ms)");tac.clock();
 }

@@ -32,54 +32,57 @@ void caller::declare_options() {
 
 	bpo::options_description opt_input ("Input files");
 	opt_input.add_options()
-			("input,I", bpo::value < std::string >(), "Genotypes to be phased in VCF/BCF format")
-			("reference,H", bpo::value < std::string >(), "Reference panel of haplotypes in VCF/BCF format")
-			("map,M", bpo::value < std::string >(), "Genetic map")
-			("region,R", bpo::value < std::string >(), "Target region")
-			("buffer", bpo::value < int >()->default_value(200), "Size of the buffer on each side in kilobases (200kb by default)");
+			("input,I", bpo::value < string >(), "Genotypes to be phased in VCF/BCF format")
+			("input-region", bpo::value < string >(), "Whole genomic region to be phased (including left/right buffers)")
+			("reference,H", bpo::value < string >(), "Reference panel of haplotypes in VCF/BCF format")
+			("map,M", bpo::value < string >(), "Genetic map");
 
 	bpo::options_description opt_algo ("Parameters");
 	opt_algo.add_options()
-			("burnin", bpo::value<int>()->default_value(10), "Burn-in passes")
-			("main", bpo::value<int>()->default_value(10), "Main passes")
+			("burnin", bpo::value<int>()->default_value(10), "Number of Burn-in iterations")
+			("main", bpo::value<int>()->default_value(10), "Number of Main iterations")
 			("pbwt-depth", bpo::value<int>()->default_value(2), "Number of neighbors to store")
-			("pbwt-modulo", bpo::value<int>()->default_value(8), "Number of neighbors to store")
-			("init-states", bpo::value<int>()->default_value(1000), "Number of neighbors to store")
-			("maf-filter", bpo::value<float>()->default_value(0.001f), "MAF filter of variants in the reference panel (requires INFO/AC field)");
+			("pbwt-modulo", bpo::value<int>()->default_value(8), "Frequency of PBWT storage")
+			("init-states", bpo::value<int>()->default_value(1000), "Number of states used for initialization")
+			("init-pool", bpo::value< string >(), "Pool of samples from which initializing haplotypes should be chosen");
 
 
 	bpo::options_description opt_output ("Output files");
 	opt_output.add_options()
-			("output,O", bpo::value< std::string >(), "Phased haplotypes in VCF/BCF format")
-			("log", bpo::value< std::string >(), "Log file");
+			("output,O", bpo::value< string >(), "Phased haplotypes in VCF/BCF format")
+			("output-region", bpo::value < string >(), "Phased genomic region to output")
+			("log", bpo::value< string >(), "Log file");
 
 	descriptions.add(opt_base).add(opt_input).add(opt_algo).add(opt_output);
 }
 
-void caller::parse_command_line(std::vector < std::string > & args) {
+void caller::parse_command_line(vector < string > & args) {
 	try {
 		bpo::store(bpo::command_line_parser(args).options(descriptions).run(), options);
 		bpo::notify(options);
-	} catch ( const boost::program_options::error& e ) { std::cerr << "Error parsing command line arguments: " << std::string(e.what()) << std::endl; exit(0); }
+	} catch ( const boost::program_options::error& e ) { cerr << "Error parsing command line arguments: " << string(e.what()) << endl; exit(0); }
 
-	if (options.count("help")) { std::cout << descriptions << std::endl; exit(0); }
-
-	if (options.count("log") && !vrb.open_log(options["log"].as < std::string > ()))
-		vrb.error("Impossible to create log file [" + options["log"].as < std::string > () +"]");
+	if (options.count("log") && !vrb.open_log(options["log"].as < string > ()))
+		vrb.error("Impossible to create log file [" + options["log"].as < string > () +"]");
 
 	vrb.title("LCC_impute");
 	vrb.bullet("Author        : Simone RUBINACCI & Olivier DELANEAU, University of Lausanne");
 	vrb.bullet("Contact       : simone.rubinacci@unil.ch & olivier.delaneau@unil.ch");
-	vrb.bullet("Version       : " + std::string(VERSION));
+	vrb.bullet("Version       : " + string(VERSION));
 	vrb.bullet("Run date      : " + tac.date());
+
+	if (options.count("help")) { cout << descriptions << endl; exit(0); }
 }
 
 void caller::check_options() {
 	if (!options.count("input"))
 		vrb.error("You must specify one input file using --input");
 
-	if (!options.count("region"))
-		vrb.error("You must specify a region or chromosome to phase using --region");
+	if (!options.count("input-region"))
+		vrb.error("You must specify a region to phase using --input-region (this is given by LCC_chunk)");
+
+	if (!options.count("output-region"))
+		vrb.error("You must specify a region to output using --output-region (this is given by LCC_chunk)");
 
 	if (!options.count("output"))
 		vrb.error("You must specify a phased output file with --output");
@@ -89,23 +92,17 @@ void caller::check_options() {
 
 	if (options.count("seed") && options["seed"].as < int > () < 0)
 		vrb.error("Random number generator needs a positive seed value");
-
-	if (options.count("maf-filter") && (options["maf-filter"].as < float > () > 0.5 || options["maf-filter"].as < float > () <= 0.0))
-		vrb.error("maf-filter parameter needs a value in the interval: (0, 0.5].");
-
-	if (!options.count("map"))
-		vrb.error("You must specify a fine-scale recombination map.");
-
 }
 
 void caller::verbose_files() {
 	vrb.title("Files:");
-	vrb.bullet("Input VCF     : [" + options["input"].as < std::string > () + "]");
-	vrb.bullet("Reference VCF : [" + options["reference"].as < std::string > () + "]");
-	vrb.bullet("Genetic Map   : [" + options["map"].as < std::string > () + "]");
-	vrb.bullet("Output VCF    : [" + options["output"].as < std::string > () + "]");
-	vrb.bullet("Genomic region: [" + options["region"].as < std::string > () + "]");
-	if (options.count("log")) vrb.bullet("Output LOG    : [" + options["log"].as < std::string > () + "]");
+	vrb.bullet("Input VCF     : [" + options["input"].as < string > () + "]");
+	vrb.bullet("Reference VCF : [" + options["reference"].as < string > () + "]");
+	if (options.count("map")) vrb.bullet("Genetic Map   : [" + options["map"].as < string > () + "]");
+	vrb.bullet("Output VCF    : [" + options["output"].as < string > () + "]");
+	vrb.bullet("Input region  : [" + options["input-region"].as < string > () + "]");
+	vrb.bullet("Output region : [" + options["output-region"].as < string > () + "]");
+	if (options.count("log")) vrb.bullet("Output LOG    : [" + options["log"].as < string > () + "]");
 }
 
 void caller::verbose_options() {
@@ -117,5 +114,4 @@ void caller::verbose_options() {
 	vrb.bullet("PBWT depth : " + stb.str(options["pbwt-depth"].as < int > ()));
 	vrb.bullet("PBWT modulo: " + stb.str(options["pbwt-modulo"].as < int > ()));
 	vrb.bullet("Init K     : " + stb.str(options["init-states"].as < int > ()));
-	vrb.bullet("maf-filter : " + stb.str(options["maf-filter"].as < float > ()));
 }

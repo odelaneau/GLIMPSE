@@ -23,8 +23,9 @@
 #include <caller/caller_header.h>
 
 int main(int argc, char ** argv) {
-	std::vector < std::string > args;
-	for (int a = 1 ; a < argc ; a ++) args.push_back(std::string(argv[a]));
+	vector < string > args;
+	for (int a = 1 ; a < argc ; a ++) args.push_back(string(argv[a]));
 	caller().phase(args);
 	return 0;
 }
+

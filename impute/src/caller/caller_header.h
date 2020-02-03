@@ -28,7 +28,6 @@
 
 #include <containers/genotype_set.h>
 #include <containers/haplotype_set.h>
-#include <containers/probability_set.h>
 #include <containers/variant_map.h>
 
 #include <models/haplotype_hmm.h>
@@ -48,33 +47,36 @@ public:
 	haplotype_set H;
 	genotype_set G;
 	variant_map V;
-	gmap_reader readerGM;
 
 	//GENOMIC REGION
-	std::string chrid;
+	string chrid;
 	int input_start;
 	int input_stop;
 	int output_start;
 	int output_stop;
-	std::string gregion;
-	std::string gregion_nobuff;
+	string input_gregion;
+	string output_gregion;
 
 	//MULTI-THREADING
 	int i_workers, i_jobs;
-	std::vector < pthread_t > id_workers;
+	vector < pthread_t > id_workers;
 	pthread_mutex_t mutex_workers;
 
 	//COMPUTE DATA
 	int current_stage;
 	basic_stats statH;
-	//basic_stats statC;
-	std::vector < std::vector < float > > HP0;			// Haplotype posteriors 0
-	std::vector < std::vector < float > > HP1;			// Haplotype posteriors 1
-	std::vector < std::vector < float > > HLC;			// Conditional haplotype likelihoods
-	std::vector < conditioning_set * > COND;		// Conditionning states
-	std::vector < probability_set * > TPROB;		// Thresholded posterior probabilities
-	std::vector < haplotype_hmm * > HMM;
-	std::vector < diplotype_hmm * > DMM;
+	basic_stats statC;
+	vector < vector < float > > HP0;			// Haplotype posteriors 0
+	vector < vector < float > > HP1;			// Haplotype posteriors 1
+	//vector < vector < float > > HP0noPL;		// Haplotype posteriors 0 without using PL
+	//vector < vector < float > > HP1noPL;		// Haplotype posteriors 1 without using PL
+	vector < vector < float > > HLC;			// Conditional haplotype likelihoods
+	vector < float > MISMATCH;
+	vector < conditioning_set * > COND;			// Conditionning states
+	vector < haplotype_hmm * > HMM;
+	vector < diplotype_hmm * > DMM;
+	//vector < switchandflipphasing * > FMM;
+	//vector < switchphasing * > SMM;
 
 	//CONSTRUCTOR
 	caller();
@@ -87,14 +89,14 @@ public:
 
 	//PARAMETERS
 	void declare_options();
-	void parse_command_line(std::vector < std::string > &);
+	void parse_command_line(vector < string > &);
 	void check_options();
 	void verbose_options();
 	void verbose_files();
 
 	//FILE I/O
 	void read_files_and_initialise();
-	void phase(std::vector < std::string > &);
+	void phase(vector < string > &);
 	void write_files_and_finalise();
 
 	//REGION

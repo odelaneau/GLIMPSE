@@ -24,35 +24,29 @@
 
 #include <utils/otools.h>
 #include <containers/conditioning_set.h>
-#include <containers/haplotype_set.h>
-#include <containers/probability_set.h>
 
 class haplotype_hmm {
 private:
-	haplotype_set * H;
 	conditioning_set * C;
-	probability_set * P;
-
-	int hap;
 
 	//DYNAMIC ARRAYS
-	std::vector < float > Emissions;
-	std::vector < float > Alpha;
-	std::vector < float > AlphaSum;
-
-	float posterior_threshold;
+	vector < float > Emissions;
+	vector < float > Alpha;
+	vector < float > AlphaSum;
 
 public:
 	//CONSTRUCTOR/DESTRUCTOR
-	haplotype_hmm(haplotype_set * H,conditioning_set *, probability_set *);
+	haplotype_hmm(conditioning_set *);
 	~haplotype_hmm();
 
 	void resize();
-	void init(std::vector < float > &);
+	void init(vector < float > &);
 	void forward();
-	void backward(std::vector < float > &, std::vector < float > &);
-	void computePosteriors(std::vector < float > &, std::vector < float > &, int, bool);
-	void applyThreshold();
+	//void backward(vector < float > &, vector < float > &, vector < float > &);
+	//void computePosteriors(vector < float > &, vector < float > &, vector < float > &);
+	void backward(vector < float > &, vector < float > &);
+	void computePosteriors(vector < float > &, vector < float > &);
+
 };
 
 #endif

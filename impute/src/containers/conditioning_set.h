@@ -34,18 +34,17 @@ public:
 	unsigned int n_vars;
 	unsigned int n_effective;
 
-	//DYNAMIC DATA
-	//std::vector < bool > Hpoly;
-	//std::vector < bool > Hmono;
-	//std::vector < unsigned int > Vpoly;
-	//std::vector < unsigned int > Vmono;
-	std::vector < int > idxH;
+	//CONDITIONING STATES
+	vector < bool > Hpoly;
+	vector < bool > Hmono;
+	vector < unsigned int > Vpoly;
+	vector < unsigned int > Vmono;
 	unsigned int n_states;
 	unsigned int n_sites;
 
-	//TRANSITIONS
-	std::vector < double > t;
-	std::vector < double > nt;
+	//TRANSITION PRBABILITIES
+	vector < double > t;
+	vector < double > nt;
 
 	//EMISSION
 	double ed;
@@ -53,60 +52,56 @@ public:
 
 	//CONSTRUCTOR/DESTRUCTOR/INITIALIZATION
 	conditioning_set(variant_map & _mapG, unsigned int _n_haps, unsigned int _n_effective) : mapG(_mapG) {
-		//Hmono.clear();
-		//Hpoly.clear();
-		//Vmono.clear();
-		//Vpoly.clear();
+		Hmono.clear();
+		Hpoly.clear();
+		Vmono.clear();
+		Vpoly.clear();
 		t.clear();
 		nt.clear();
 		n_states = 0;
-		n_sites = mapG.vec_pos.size();
+		n_sites = 0;
 		n_haps = _n_haps;
 		n_vars = mapG.size();
 		n_effective= _n_effective;
-		ed = 0.00001;
-		ee = 0.99999;
-		updateTransitions();
+		ed = 0.0001;
+		ee = 0.9999;
 	}
 
 	~conditioning_set() {
-		//Hmono.clear();
-		//Hpoly.clear();
-		//Vmono.clear();
-		//Vpoly.clear();
-		//t.clear();
-		//nt.clear();
+		Hmono.clear();
+		Hpoly.clear();
+		Vmono.clear();
+		Vpoly.clear();
+		t.clear();
+		nt.clear();
 		n_states = 0;
-		//n_sites = 0;
+		n_sites = 0;
 	}
 
 	void clear() {
-		//Hmono.clear();
-		//Hpoly.clear();
-		//Vmono.clear();
-		//Vpoly.clear();
-		//t.clear();
-		//nt.clear();
+		Hmono.clear();
+		Hpoly.clear();
+		Vmono.clear();
+		Vpoly.clear();
+		t.clear();
+		nt.clear();
 		n_states = 0;
-		//n_sites = 0;
+		n_sites = 0;
 	}
 
 	void verbose() {
-		std::cout << /*"\t\tCOND: " << Hmono.size() << " " << Hpoly.size() << " " << Vmono.size() << " " << Vpoly.size() << " " <<*/ t.size() << " " << nt.size() << " " << n_states << " " << n_sites << std::endl;
+		cout << "\t\tCOND: " << Hmono.size() << " " << Hpoly.size() << " " << Vmono.size() << " " << Vpoly.size() << " " << t.size() << " " << nt.size() << " " << n_states << " " << n_sites << endl;
 	}
 
 	void updateTransitions() {
-		t = std::vector < double > (n_sites - 1, 0.0);
-		nt = std::vector < double > (n_sites - 1, 0.0);
-		//output_file fd("test.txt");
-		for (int l = 1 ; l < n_sites ; l ++) {
-			double rho = 0.04 * n_effective * (mapG.vec_pos[l]->cm - mapG.vec_pos[l-1]->cm);
+		t = vector < double > (Vpoly.size() - 1, 0.0);
+		nt = vector < double > (Vpoly.size() - 1, 0.0);
+		for (int l = 1 ; l < Vpoly.size() ; l ++) {
+			double rho = 0.04 * n_effective * (mapG.vec_pos[Vpoly[l]]->cm - mapG.vec_pos[Vpoly[l-1]]->cm);
 			if (rho == 0.0) rho = 0.00001;
 			t[l-1] = -1.0 * expm1(-1.0 * rho / n_haps);
 			nt[l-1] = 1-t[l-1];
-			//fd << l-1 << " " << t[l-1] << " " << nt[l-1] << std::endl;
 		}
-		//fd.close();
 	}
 };
 

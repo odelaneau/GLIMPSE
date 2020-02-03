@@ -22,11 +22,7 @@
 #define _GLOBAL
 #include <objects/variant.h>
 
-variant::variant()
-{
-}
-
-variant::variant(std::string & chr, int bp, std::string & id, std::string & ref, std::string & alt, int idx) {
+variant::variant(string & chr, int bp, string & id, string & ref, string & alt, int idx) {
 	this->chr = chr;
 	this->bp = bp;
 	this->id = id;
@@ -44,7 +40,7 @@ variant::~variant() {
 }
 
 unsigned int variant::getMAC() {
-	return std::min(cref, calt);
+	return min(cref, calt);
 }
 
 bool variant::isSingleton() {

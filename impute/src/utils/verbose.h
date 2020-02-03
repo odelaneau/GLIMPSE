@@ -42,9 +42,11 @@
 #include <fstream>
 #include <cmath>
 
+using namespace std;
+
 class verbose {
 protected:
-	std::ofstream log;
+	ofstream log;
 	bool verbose_on_screen;
 	bool verbose_on_log;
 	int prev_percent;
@@ -60,7 +62,7 @@ public:
 		close_log();
 	}
 
-	bool open_log(std::string fname) {
+	bool open_log(string fname) {
 		log.open(fname.c_str());
 		if (log.fail()) return false;
 		else return (verbose_on_log = true);
@@ -74,63 +76,63 @@ public:
 		verbose_on_screen = false;
 	}
 
-	void print(std::string s) {
-		if (verbose_on_screen) std::cout << s << std::endl;
-		if (verbose_on_log) log << s << std::endl;
+	void print(string s) {
+		if (verbose_on_screen) cout << s << endl;
+		if (verbose_on_log) log << s << endl;
 	}
 
-	void ctitle(std::string s) {
-		if (verbose_on_screen) std::cout << std::endl << "\x1B[32m" << s <<  "\033[0m" << std::endl;
-		if (verbose_on_log) log << std::endl << s << std::endl;
+	void ctitle(string s) {
+		if (verbose_on_screen) cout << endl << "\x1B[32m" << s <<  "\033[0m" << endl;
+		if (verbose_on_log) log << endl << s << endl;
 	}
 
-	void title(std::string s) {
-		if (verbose_on_screen) std::cout << std::endl << s << std::endl;
-		if (verbose_on_log) log << std::endl << s << std::endl;
+	void title(string s) {
+		if (verbose_on_screen) cout << endl << s << endl;
+		if (verbose_on_log) log << endl << s << endl;
 	}
 
-	void bullet(std::string s) {
-		if (verbose_on_screen) std::cout << "  * " << s << std::endl;
-		if (verbose_on_log) log << "  * " << s << std::endl;
+	void bullet(string s) {
+		if (verbose_on_screen) cout << "  * " << s << endl;
+		if (verbose_on_log) log << "  * " << s << endl;
 	}
 
-	void warning(std::string s) {
-		if (verbose_on_screen) std::cout << std::endl << "\x1B[33m" << "WARNING: " <<  "\033[0m" << s << std::endl;
-		if (verbose_on_log) log << std::endl << "WARNING: " << s << std::endl;
+	void warning(string s) {
+		if (verbose_on_screen) cout << endl << "\x1B[33m" << "WARNING: " <<  "\033[0m" << s << endl;
+		if (verbose_on_log) log << endl << "WARNING: " << s << endl;
 	}
 
-	void leave(std::string s) {
-		if (verbose_on_screen) std::cout << std::endl << "\x1B[33m" << "EXITED: " <<  "\033[0m" << s << std::endl;
-		if (verbose_on_log) log << std::endl << "EXITED: " << s << std::endl;
+	void leave(string s) {
+		if (verbose_on_screen) cout << endl << "\x1B[33m" << "EXITED: " <<  "\033[0m" << s << endl;
+		if (verbose_on_log) log << endl << "EXITED: " << s << endl;
 		exit(EXIT_SUCCESS);
 	}
 
-	void error(std::string s) {
-		if (verbose_on_screen) std::cout << std::endl << "\x1B[31m" << "ERROR: " <<  "\033[0m" << s << std::endl;
-		if (verbose_on_log) log << std::endl << "ERROR: " << s << std::endl;
+	void error(string s) {
+		if (verbose_on_screen) cout << endl << "\x1B[31m" << "ERROR: " <<  "\033[0m" << s << endl;
+		if (verbose_on_log) log << endl << "ERROR: " << s << endl;
 		exit(EXIT_FAILURE);
 	}
 
-	void done(std::string s) {
-		if (verbose_on_screen) std::cout << std::endl << "\x1B[32m" << "DONE: " <<  "\033[0m" << s << std::endl;
-		if (verbose_on_log) log << std::endl << "DONE: " << s << std::endl;
+	void done(string s) {
+		if (verbose_on_screen) cout << endl << "\x1B[32m" << "DONE: " <<  "\033[0m" << s << endl;
+		if (verbose_on_log) log << endl << "DONE: " << s << endl;
 		exit(EXIT_SUCCESS);
 	}
 
-	void wait(std::string s) {
+	void wait(string s) {
 		if (verbose_on_screen) {
-			std::cout << s << " ...\r";
-			std::cout.flush();
+			cout << s << " ...\r";
+			cout.flush();
 		}
 	}
 
-	void progress(std::string prefix, float percent) {
+	void progress(string prefix, float percent) {
 		if (verbose_on_screen) {
 			int curr_percent = int(percent * 100.0);
 			if (prev_percent > curr_percent) prev_percent = -1;
 			if (curr_percent > prev_percent) {
-				std::cout << prefix << " [" << curr_percent << "%]\r";
-				std::cout.flush();
+				cout << prefix << " [" << curr_percent << "%]\r";
+				cout.flush();
 				prev_percent = curr_percent;
 			}
 		}

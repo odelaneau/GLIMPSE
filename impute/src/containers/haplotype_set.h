@@ -33,21 +33,20 @@ class haplotype_set {
 public:
 	//DATA
 	unsigned long n_site;							// #variants
-	unsigned long n_hap;							// #haplotypes
-	unsigned long n_targ;							// #haplotypes
-	unsigned long n_ref;							// #reference haplotypes
-	unsigned long n_haps_pbwt;
+	unsigned long n_hap;							// #reference+sample haplotypes
+	unsigned long n_ref_haps;							// #reference haplotypes
+	unsigned long n_main_haps;							// #sample haplotypes
+
 	bitmatrix H_opt_var;							// Bit matrix of haplotypes (variant first)
+	vector < bool > initializing_haps;
+
+
 
 	//PBWT
-	bool refonly_pbwt;
-	bool pbwt_built;
 	int pbwt_depth;
 	int pbwt_modulo;
-	std::vector < std::vector < int > > pbwt_arrays;
-	std::vector < std::vector < int > > pbwt_indexes;
-
-	int n_iterations_main;
+	vector < vector < int > > pbwt_arrays;
+	vector < vector < int > > pbwt_indexes;
 
 	//CONSTRUCTOR/DESTRUCTOR/INITIALIZATION
 	haplotype_set();
@@ -61,16 +60,8 @@ public:
 	void updatePositionalBurrowWheelerTransform();
 
 	//STATE SELECTION
-	void selectPositionalBurrowWheelerTransform(int, conditioning_set *);
-	void selectRandomRefOnly(const int, conditioning_set *);
-	void selectFmIndexRefOnly(const int ind, std::vector< int >& idxH);
-	void selectStandardFull(const int ind, std::vector< int >& idxH);
-
-	//HS iteration records
-	void recordHS(genotype_set & G, int iter);
-
-	//UTILITY
-	int getC_bounded(const int l) const;
+	void selectRandom(int, conditioning_set *);
+	void selectPositionalBurrowWheelerTransform(int, int, conditioning_set *);
 };
 
 #endif

@@ -34,9 +34,9 @@ hmm_parameters::~hmm_parameters() {
 }
 
 void hmm_parameters::initialise(variant_map & mapG, int Neff, int Nhap, int Nstate, bool gmap) {
-	t = std::vector < double > (mapG.size() - 1, 0.0);
-	nt = std::vector < double > (mapG.size() - 1, 0.0);
-	tfreq = std::vector < double > (mapG.size() - 1, 0.0);
+	t = vector < double > (mapG.size() - 1, 0.0);
+	nt = vector < double > (mapG.size() - 1, 0.0);
+	tfreq = vector < double > (mapG.size() - 1, 0.0);
 	tac.clock();
 	for (int l = 1 ; l < mapG.size() ; l ++) {
 		double rho;

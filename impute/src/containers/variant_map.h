@@ -29,9 +29,8 @@
 class variant_map {
 public :
 	//DATA
-	std::vector < variant * > vec_pos;			//vector of variants ordered by position in bp
-	std::multimap < int, variant * > map_pos;	//associative container of variant with position in bp
-	double baseline;
+	vector < variant * > vec_pos;			//vector of variants ordered by position in bp
+	multimap < int, variant * > map_pos;	//associative container of variant with position in bp
 
 	//CONSTRUCTOR/DESTRUCTOR
 	variant_map();
@@ -39,16 +38,16 @@ public :
 
 	//METHODS
 	int size();
-	std::vector < variant * > getByPos(int);
-	std::vector < variant * > getByRef(int, std::string &, std::string &);
+	vector < variant * > getByPos(int);
+	vector < variant * > getByRef(int, string &, string &);
 	variant * getByIndex(int);
 	void push(variant *);
 	void setGeneticMap(gmap_reader&);
 	void setGeneticMap();
-	int setCentiMorgan(std::vector < int > & pos_bp, std::vector < double > & pos_cM);
-	double getCentiMorganPos(gmap_reader & readerGM, int pos_bp);
-	int interpolateCentiMorgan(std::vector < int > & pos_bp, std::vector < double > & pos_cM);
+	int setCentiMorgan(vector < int > & pos_bp, vector < double > & pos_cM);
+	int interpolateCentiMorgan(vector < int > & pos_bp, vector < double > & pos_cM);
 	unsigned int length();
+	double lengthcM();
 };
 
 #endif

@@ -28,9 +28,10 @@ void caller::write_files_and_finalise() {
 
 	//step0: multi-threading
 	if (options["thread"].as < int > () > 1) pthread_mutex_destroy(&mutex_workers);
+
 	//step1: writing best guess haplotypes in VCF/BCF file
-	genotype_writer(H, G, V, TPROB, readerGM, gregion_nobuff, options["maf-filter"].as< float >()).writeGenotypesAndImpute(options["input"].as < std::string > (), options["reference"].as < std::string > (),options["output"].as < std::string > (), output_start, output_stop);
-//	genotype_writer(H, G, V, TPROB, readerGM, gregion, options["maf-filter"].as< float >()).writeGenotypes(options["output"].as < std::string > (), output_start, output_stop);
+	genotype_writer(H, G, V).writeGenotypes(options["output"].as < string > (), output_start, output_stop, options["main"].as < int > ());
+
 
 	//step2: Measure overall running time
 	vrb.bullet("Total running time = " + stb.str(tac.abs_time()) + " seconds");

@@ -31,7 +31,7 @@ class genotype_set {
 public:
 	//DATA
 	int n_site, n_ind;					//Number of variants, number of individuals
-	std::vector < genotype * > vecG;			//Vector of genotypes
+	vector < genotype * > vecG;			//Vector of genotypes
 
 	//CONSTRUCTOR/DESTRUCTOR
 	genotype_set();

@@ -33,8 +33,8 @@ public:
 	haplotype_set & H;
 	genotype_set & G;
 	variant_map & V;
-	std::string region;
-	const float maf_common;
+	string region;
+	set < string > initializing_samples;
 
 	//COUNTS
 	unsigned long n_variants;
@@ -42,13 +42,14 @@ public:
 	unsigned long n_ref_samples;
 
 	//CONSTRUCTORS/DESCTRUCTORS
-	genotype_reader(haplotype_set &, genotype_set &, variant_map &, std::string regions, float _maf_common);
+	genotype_reader(haplotype_set &, genotype_set &, variant_map &, string regions);
 	~genotype_reader();
 	void allocateGenotypes();
 
 	//IO
-	void scanGenotypes(std::string funphased, std::string fphased);
-	void readGenotypes(std::string funphased, std::string fphased);
+	void readInitializingSamples(string);
+	void scanGenotypes(string funphased, string fphased);
+	void readGenotypes(string funphased, string fphased);
 };
 
 #endif

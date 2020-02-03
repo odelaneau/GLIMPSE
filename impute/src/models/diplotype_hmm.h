@@ -2,7 +2,6 @@
 #define _DIPLOTYPE_HMM_H
 
 #include <utils/otools.h>
-#include <containers/haplotype_set.h>
 #include <containers/conditioning_set.h>
 
 #define HAP_NUMBER 8
@@ -12,18 +11,18 @@
 
 class diplotype_hmm {
 private:
-	haplotype_set * H;
+
 	conditioning_set * C;
 
 	//EXTERNAL DATA
-	std::vector < char > HET;
-	std::vector < bool > ALT;
+	vector < char > HET;
+	vector < bool > ALT;
 
 	//COORDINATES & CONSTANTS
 	unsigned int n_segs;
 
 	//SEGMENTATION
-	std::vector < int > segments;
+	vector < int > segments;
 
 	//CURSORS
 	int curr_locus;
@@ -33,16 +32,16 @@ private:
 	//DYNAMIC ARRAYS
 	float probSumT1;
 	float probSumT2;
-	std::vector < float > prob1;
-	std::vector < float > prob2;
-	std::vector < float > probSumK1;
-	std::vector < float > probSumK2;
-	std::vector < float > probSumH1;
-	std::vector < float > probSumH2;
-	std::vector < float > Alpha;
-	std::vector < float > Beta;
-	std::vector < float > AlphaSum;
-	std::vector < float > BetaSum;
+	vector < float > prob1;
+	vector < float > prob2;
+	vector < float > probSumK1;
+	vector < float > probSumK2;
+	vector < float > probSumH1;
+	vector < float > probSumH2;
+	vector < float > Alpha;
+	vector < float > Beta;
+	vector < float > AlphaSum;
+	vector < float > BetaSum;
 
 	//STATIC ARRAYS
 	float EMIT0[3][HAP_NUMBER];
@@ -65,14 +64,14 @@ private:
 
 public:
 	//CONSTRUCTOR/DESTRUCTOR
-	diplotype_hmm(haplotype_set * H, conditioning_set * C);
+	diplotype_hmm(conditioning_set * C);
 
 	~diplotype_hmm();
 
-	void reallocate(std::vector < bool > &, std::vector < bool > &);
+	void reallocate(vector < bool > &, vector < bool > &);
 	void forward();
 	void backward();
-	void rephaseHaplotypes(std::vector < bool > &, std::vector < bool > &);
+	void rephaseHaplotypes(vector < bool > &, vector < bool > &);
 };
 
 inline
@@ -80,15 +79,15 @@ void diplotype_hmm::INIT2() {
 	if (HET[curr_locus] == -1) {
 		bool ag = ALT[curr_locus];
 		for(int k = 0, i = 0 ; k != C->n_states ; ++k, i += HAP_NUMBER) {
-			bool ah = H->H_opt_var.get(curr_locus,C->idxH[k]);
+			bool ah = C->Hpoly[curr_locus*C->n_states+k];
 			if (ag != ah) fill(prob2.begin() + i, prob2.begin() + i + HAP_NUMBER, C->ed);
 			else fill(prob2.begin() + i, prob2.begin() + i + HAP_NUMBER, C->ee);
 		}
 	} else {
 		for(int k = 0, i = 0 ; k != C->n_states ; ++k, i += HAP_NUMBER) {
-			bool ah = H->H_opt_var.get(curr_locus,C->idxH[k]);
-			if (ah) std::memcpy(&prob2[i], &(EMIT1[HET[curr_locus]][0]), HAP_NUMBER*sizeof(float));
-			else std::memcpy(&prob2[i], &(EMIT0[HET[curr_locus]][0]), HAP_NUMBER*sizeof(float));
+			bool ah = C->Hpoly[curr_locus*C->n_states+k];
+			if (ah) memcpy(&prob2[i], &(EMIT1[HET[curr_locus]][0]), HAP_NUMBER*sizeof(float));
+			else memcpy(&prob2[i], &(EMIT0[HET[curr_locus]][0]), HAP_NUMBER*sizeof(float));
 		}
 	}
 }
@@ -98,15 +97,15 @@ void diplotype_hmm::INIT1() {
 	if (HET[curr_locus] == -1) {
 		bool ag = ALT[curr_locus];
 		for(int k = 0, i = 0 ; k != C->n_states ; ++k, i += HAP_NUMBER) {
-			bool ah = H->H_opt_var.get(curr_locus,C->idxH[k]);
+			bool ah = C->Hpoly[curr_locus*C->n_states+k];
 			if (ag != ah) fill(prob1.begin() + i, prob1.begin() + i + HAP_NUMBER, C->ed);
 			else fill(prob1.begin() + i, prob1.begin() + i + HAP_NUMBER, C->ee);
 		}
 	} else {
 		for(int k = 0, i = 0 ; k != C->n_states ; ++k, i += HAP_NUMBER) {
-			bool ah = H->H_opt_var.get(curr_locus,C->idxH[k]);
-			if (ah) std::memcpy(&prob1[i], &(EMIT1[HET[curr_locus]][0]), HAP_NUMBER*sizeof(float));
-			else std::memcpy(&prob1[i], &(EMIT0[HET[curr_locus]][0]), HAP_NUMBER*sizeof(float));
+			bool ah = C->Hpoly[curr_locus*C->n_states+k];
+			if (ah) memcpy(&prob1[i], &(EMIT1[HET[curr_locus]][0]), HAP_NUMBER*sizeof(float));
+			else memcpy(&prob1[i], &(EMIT0[HET[curr_locus]][0]), HAP_NUMBER*sizeof(float));
 		}
 	}
 }
@@ -284,7 +283,7 @@ bool diplotype_hmm::TRANSH() {
 		HPROBS[h1*HAP_NUMBER+7] = sum7;
 		sumHProbs += sum0 + sum1 + sum2 + sum3 + sum4 + sum5 + sum6 + sum7;
 	}
-	return (std::isnan(sumHProbs) || sumHProbs < std::numeric_limits<float>::min());
+	return (isnan(sumHProbs) || sumHProbs < numeric_limits<float>::min());
 }
 
 #endif

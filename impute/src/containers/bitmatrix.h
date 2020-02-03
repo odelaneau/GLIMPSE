@@ -45,7 +45,7 @@ public:
 		n_cols = ncol + ((ncol%8)?(8-(ncol%8)):0);
 		n_bytes = (n_cols/8) * (unsigned long)n_rows;
 		bytes = (unsigned char*)malloc(n_bytes*sizeof(unsigned char));
-		std::memset(bytes, 0, n_bytes);
+		memset(bytes, 0, n_bytes);
 	}
 
 	~bitmatrix() {
@@ -102,65 +102,6 @@ unsigned char bitmatrix::get(unsigned int row, unsigned int col) {
 	unsigned long targetAddr = ((unsigned long)row) * (n_cols/8) +  col/8;
 	unsigned char result = (this->bytes[targetAddr] >> (7 - bitcol)) & 1;
 	return result;
-}
-
-
-
-class bitset {
-public:
-	uint64_t n_bytes, n_cols;
-	unsigned char * bytes;
-
-	bitset() {
-		n_cols = 0;
-		n_bytes = 0;
-		bytes = nullptr;
-	}
-
-	void allocate(uint32_t ncol) {
-		n_cols = ncol + ((ncol%8)?(8-(ncol%8)):0);
-		n_bytes = (n_cols/8);
-		bytes = (unsigned char*)malloc(n_bytes*sizeof(unsigned char));
-		memset(bytes, 0, n_bytes);
-	}
-
-	~bitset() {
-		n_bytes = 0;
-		if (bytes != nullptr) free(bytes);
-	}
-
-	void set_all(unsigned char bit) {
-		memset(bytes, bit, n_bytes);
-	}
-	void set(uint32_t col, unsigned char bit);
-	unsigned char get(uint32_t col) const;
-	bool getBool(uint32_t col) const;
-
-};
-
-inline
-void bitset::set(uint32_t col, unsigned char bit) {
-	uint32_t bitcol = col % 8;
-	unsigned long targetAddr = col/8;
-	unsigned char mask = ~(1 << (7 - bitcol));
-	this->bytes[targetAddr] &= mask;
-	this->bytes[targetAddr] |= (bit << (7 - bitcol));
-}
-
-inline
-unsigned char bitset::get(uint32_t col) const {
-	uint32_t bitcol = col  % 8;
-	unsigned long targetAddr = col/8;
-	unsigned char result = (this->bytes[targetAddr] >> (7 - bitcol)) & 1;
-	return result;
-}
-
-inline
-bool bitset::getBool(uint32_t col) const {
-	uint32_t bitcol = col  % 8;
-	unsigned long targetAddr = (n_cols/8) +  col/8;
-	unsigned char result = (this->bytes[targetAddr] >> (7 - bitcol)) & 1;
-	return result != 0;
 }
 
 #endif
