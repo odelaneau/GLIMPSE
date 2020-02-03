@@ -48,7 +48,7 @@ void haplotype_set::updateHaplotypes(genotype_set & G) {
 void haplotype_set::initPositionalBurrowWheelerTransform(int _pbwt_depth, int _pbwt_modulo) {
 	pbwt_depth = _pbwt_depth;
 	pbwt_modulo = _pbwt_modulo;
-	cond_states = vector < vector < int > > ((n_hap - n_ref)*2);		// Storage for #target_haps times pbwt_depth times 2
+	cond_states = vector < vector < int > > (n_hap - n_ref);		// Storage for #target_haps times pbwt_depth times 2
 	pbwt_array = vector < int > (n_hap, 0);
 	pbwt_indexes = vector < int > (n_hap, 0);
 }
@@ -86,8 +86,8 @@ void haplotype_set::updatePositionalBurrowWheelerTransform() {
 	            	ac = H_opt_var.get(l,hc);
 	            	if (ac != a) break;
 	            	if (ht/2 != hc/2) {
-	            		if (last_selected[htr * 2 * pbwt_depth + c - 1] != hc) {
-	            			last_selected[htr * 2 * pbwt_depth + c - 1] = hc;
+	            		if (last_selected[htr * 2 * pbwt_depth + c] != hc) {
+	            			last_selected[htr * 2 * pbwt_depth + c] = hc;
 	            			cond_states[htr].push_back(hc);
 	            		}
 	            		c++;
@@ -104,8 +104,8 @@ void haplotype_set::updatePositionalBurrowWheelerTransform() {
 	            	ac = H_opt_var.get(l,hc);
 	            	if (ac != a) break;
 	            	if (ht/2 != hc/2) {
-	            		if (last_selected[htr * 2 * pbwt_depth + pbwt_depth + c - 1] != hc) {
-	            			last_selected[htr * 2 * pbwt_depth + pbwt_depth + c - 1] = hc;
+	            		if (last_selected[htr * 2 * pbwt_depth + pbwt_depth + c] != hc) {
+	            			last_selected[htr * 2 * pbwt_depth + pbwt_depth + c] = hc;
 	            			cond_states[htr].push_back(hc);
 	            		}
 	            		c++;
