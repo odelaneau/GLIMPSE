@@ -48,7 +48,7 @@ void haplotype_set::updateHaplotypes(genotype_set & G) {
 void haplotype_set::initPositionalBurrowWheelerTransform(int _pbwt_depth, int _pbwt_modulo) {
 	pbwt_depth = _pbwt_depth;
 	pbwt_modulo = _pbwt_modulo;
-	cond_states = vector < vector < int > > (n_hap - n_ref);		// Storage for #target_haps times pbwt_depth times 2
+	cond_states = vector < vector < int > > (n_hap - n_ref);		// Storage of states for each target_hap
 	pbwt_array = vector < int > (n_hap, 0);
 	pbwt_indexes = vector < int > (n_hap, 0);
 }
@@ -69,6 +69,8 @@ void haplotype_set::updatePositionalBurrowWheelerTransform() {
 		std::copy(A.begin(), A.begin()+v, pbwt_array.begin()+u);
 
 		// Selecting using PBWT array
+		// It might be better here to iterate over indexes as sorted in pbwt_arrays and to test is we hit a target haplotype.
+		// Instead of iterating over target haplotypes (I guess it depends on the ratio #target/#reference).
 		if ((l%pbwt_modulo) == 0) {
 			// Build reverse indexing
 			for (int h = 0 ; h < n_hap ; h ++) pbwt_indexes[pbwt_array[h]] = h;
@@ -78,38 +80,38 @@ void haplotype_set::updatePositionalBurrowWheelerTransform() {
 				int ac, o, c, hc = 0, a = H_opt_var.get(l,ht);
 				int pbwt_idx = pbwt_indexes[ht];
 
-				//Haplotypes that are BEFORE in PBWT array
+				//Haplotypes that are *BEFORE* in PBWT array
 				o = 1; c = 0;
 	            for (;;) {
-	            	if (pbwt_idx-o >= 0) hc = pbwt_array[pbwt_idx-o];
+	            	if (pbwt_idx-o >= 0) hc = pbwt_array[pbwt_idx-o];	// Check if we hit boundaries
 	            	else break;
 	            	ac = H_opt_var.get(l,hc);
-	            	if (ac != a) break;
+	            	if (ac != a) break;		//exit if alleles are different
 	            	if (ht/2 != hc/2) {
-	            		if (last_selected[htr * 2 * pbwt_depth + c] != hc) {
-	            			last_selected[htr * 2 * pbwt_depth + c] = hc;
-	            			cond_states[htr].push_back(hc);
+	            		if (last_selected[htr * 2 * pbwt_depth + c] != hc) {	// Storage happens only when the new conditioning hap is different of the previously selected for this depth
+	            			last_selected[htr * 2 * pbwt_depth + c] = hc;		// Update last found
+	            			cond_states[htr].push_back(hc);						// Store new guess
 	            		}
 	            		c++;
-	            		if (c >= pbwt_depth) break;
+	            		if (c >= pbwt_depth) break; 	// Check if we found enough states
 	            	}
 	            	o++;
 	            }
 
-	            //Haplotypes that are AFTER in PBWT array
+	            //Haplotypes that are *AFTER* in PBWT array
 	            o = 1; c = 0;
 	            for (;;) {
-	            	if (pbwt_idx+o < n_hap) hc = pbwt_array[pbwt_idx+o];
+	            	if (pbwt_idx+o < n_hap) hc = pbwt_array[pbwt_idx+o];	// Check if we hit boundaries
 	            	else break;
 	            	ac = H_opt_var.get(l,hc);
-	            	if (ac != a) break;
+	            	if (ac != a) break;		//exit if alleles are different
 	            	if (ht/2 != hc/2) {
-	            		if (last_selected[htr * 2 * pbwt_depth + pbwt_depth + c] != hc) {
-	            			last_selected[htr * 2 * pbwt_depth + pbwt_depth + c] = hc;
-	            			cond_states[htr].push_back(hc);
+	            		if (last_selected[htr * 2 * pbwt_depth + pbwt_depth + c] != hc) { 	// Storage happens only when the new conditioning hap is different of the previously selected for this depth
+	            			last_selected[htr * 2 * pbwt_depth + pbwt_depth + c] = hc;		// Update last found (saved after those seen before in the PBWT array, i.e. index+pbwt_depth)
+	            			cond_states[htr].push_back(hc);									// Store new guess
 	            		}
 	            		c++;
-	            		if (c >= pbwt_depth) break;
+	            		if (c >= pbwt_depth) break; 	// Check if we found enough states
 	            	}
 	            	o++;
 	            }
