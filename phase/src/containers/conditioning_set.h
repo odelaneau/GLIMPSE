@@ -24,17 +24,23 @@
 
 #include <utils/otools.h>
 #include <containers/variant_map.h>
+#include <containers/haplotype_set.h>
 
+/*
+ * Do not ask me why i did not put all this in a cpp file! Lazyness ...
+ */
 
 class conditioning_set {
 public:
 	//FIXED DATA
 	variant_map & mapG;
+	haplotype_set & H;
 	unsigned int n_haps;
 	unsigned int n_vars;
 	unsigned int n_effective;
 
 	//CONDITIONING STATES
+	vector < int > idxH;
 	vector < bool > Hpoly;
 	vector < bool > Hmono;
 	vector < unsigned int > Vpoly;
@@ -42,7 +48,7 @@ public:
 	unsigned int n_states;
 	unsigned int n_sites;
 
-	//TRANSITION PRBABILITIES
+	//TRANSITION PROBABILITIES
 	vector < double > t;
 	vector < double > nt;
 
@@ -51,7 +57,7 @@ public:
 	double ee;
 
 	//CONSTRUCTOR/DESTRUCTOR/INITIALIZATION
-	conditioning_set(variant_map & _mapG, unsigned int _n_haps, unsigned int _n_effective) : mapG(_mapG) {
+	conditioning_set(variant_map & _mapG, haplotype_set & _H, unsigned int _n_haps, unsigned int _n_effective) : mapG(_mapG), H(_H) {
 		Hmono.clear();
 		Hpoly.clear();
 		Vmono.clear();
@@ -89,10 +95,6 @@ public:
 		n_sites = 0;
 	}
 
-	void verbose() {
-		cout << "\t\tCOND: " << Hmono.size() << " " << Hpoly.size() << " " << Vmono.size() << " " << Vpoly.size() << " " << t.size() << " " << nt.size() << " " << n_states << " " << n_sites << endl;
-	}
-
 	void updateTransitions() {
 		t = vector < double > (Vpoly.size() - 1, 0.0);
 		nt = vector < double > (Vpoly.size() - 1, 0.0);
@@ -102,6 +104,54 @@ public:
 			t[l-1] = -1.0 * expm1(-1.0 * rho / n_haps);
 			nt[l-1] = 1-t[l-1];
 		}
+	}
+
+	void compact(int ind) {
+		clear();
+		n_states = idxH.size();
+		for (int l = 0 ; l < n_vars ; l ++) {
+			unsigned int ac = H.H_opt_var.get(l, 2*ind + H.n_ref + 0) + H.H_opt_var.get(l, 2*ind + H.n_ref + 1);
+			Hmono.push_back(H.H_opt_var.get(l,idxH[0]));
+			for (int k = 0 ; k < idxH.size() ; k ++) ac += H.H_opt_var.get(l,idxH[k]);
+			if (ac > 0 && ac < (idxH.size()+2)) {
+				Vpoly.push_back(l);
+				for (int k = 0 ; k < idxH.size() ; k ++) Hpoly.push_back(H.H_opt_var.get(l,idxH[k]));
+			} else Vmono.push_back(l);
+		}
+		n_sites = Vpoly.size();
+	}
+
+	void selectRandom(int ind, int K) {
+		//Selection
+		idxH.clear();
+		for (int h = 0 ; h < H.n_ref ; h ++) if (H.initializing_haps[h]) idxH.push_back(h);
+		if (H.n_ref > K) {
+			random_shuffle(idxH.begin(), idxH.end());
+			idxH.erase(idxH.begin() + K, idxH.end());
+			sort(idxH.begin(), idxH.end());
+		}
+		//Compact it!
+		compact(ind);
+		// Update HMM parameters
+		updateTransitions();
+	}
+
+	void selectPBWT(int ind, int K) {
+		//Selection
+		idxH.clear();
+		for (int h0 = 0 ; h0 < H.cond_states[2*ind+0].size() ; h0++) idxH.push_back(H.cond_states[2*ind+0][h0]);
+		for (int h1 = 0 ; h1 < H.cond_states[2*ind+1].size() ; h1++) idxH.push_back(H.cond_states[2*ind+1][h1]);
+		sort(idxH.begin(), idxH.end());
+		idxH.erase(unique(idxH.begin(), idxH.end()), idxH.end());
+		if (idxH.size() > K) {
+			random_shuffle(idxH.begin(), idxH.end());
+			idxH.erase(idxH.begin() + K, idxH.end());
+			sort(idxH.begin(), idxH.end());
+		}
+		//Compact it!
+		compact(ind);
+		// Update HMM parameters
+		updateTransitions();
 	}
 };
 

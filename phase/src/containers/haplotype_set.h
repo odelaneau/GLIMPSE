@@ -26,8 +26,6 @@
 
 #include <containers/bitmatrix.h>
 #include <containers/genotype_set.h>
-#include <containers/conditioning_set.h>
-
 
 class haplotype_set {
 public:
@@ -36,15 +34,13 @@ public:
 	unsigned long n_hap;							// #haplotypes
 	unsigned long n_ref;							// #reference haplotypes
 	bitmatrix H_opt_var;							// Bit matrix of haplotypes (variant first)
-	vector < bool > initializing_haps;
-
-
+	vector < bool > initializing_haps;				// Reference haplotype pool (subset) used for initializing iteration
 
 	//PBWT
-	int pbwt_depth;
-	int pbwt_modulo;
-	vector < vector < int > > pbwt_arrays;
-	vector < vector < int > > pbwt_indexes;
+	int pbwt_depth, pbwt_modulo;
+	vector < int > pbwt_array;
+	vector < int > pbwt_indexes;
+	vector < vector < int > > cond_states;
 
 	//CONSTRUCTOR/DESTRUCTOR/INITIALIZATION
 	haplotype_set();
@@ -56,10 +52,6 @@ public:
 	//PBWT ROUTINES
 	void initPositionalBurrowWheelerTransform(int, int);
 	void updatePositionalBurrowWheelerTransform();
-
-	//STATE SELECTION
-	void selectRandom(int, conditioning_set *);
-	void selectPositionalBurrowWheelerTransform(int, int, conditioning_set *);
 };
 
 #endif

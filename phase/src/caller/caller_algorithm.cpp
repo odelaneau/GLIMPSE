@@ -39,10 +39,12 @@ void * phase_callback(void * ptr) {
 
 void caller::phase_individual(int id_worker, int id_job) {
 	if (current_stage == STAGE_INIT) {
-		H.selectRandom(options["init-states"].as < int > (), COND[id_worker]);
+		//H.selectRandom(options["init-states"].as < int > (), COND[id_worker]);
+		COND[id_worker]->selectRandom(id_job, options["init-states"].as < int > ());
 		G.vecG[id_job]->initHaplotypeLikelihoods(HLC[id_worker]);
 	} else {
-		H.selectPositionalBurrowWheelerTransform(id_job, 2*options["init-states"].as < int > (), COND[id_worker]);
+		//H.selectPositionalBurrowWheelerTransform(id_job, 2*options["init-states"].as < int > (), COND[id_worker]);
+		COND[id_worker]->selectPBWT(id_job, options["init-states"].as < int > ());
 		DMM[id_worker]->rephaseHaplotypes(G.vecG[id_job]->H0, G.vecG[id_job]->H1);
 		if (current_stage == STAGE_MAIN) G.vecG[id_job]->storeSampledHaplotypes();
 		G.vecG[id_job]->makeHaplotypeLikelihoods(HLC[id_worker], true);
@@ -83,7 +85,7 @@ void caller::phase_iteration() {
 	tac.clock();
 	int n_thread = options["thread"].as < int > ();
 	//
-	fill(MISMATCH.begin(), MISMATCH.end(), 0.0f);
+	//fill(MISMATCH.begin(), MISMATCH.end(), 0.0f);
 	//
 	i_workers = 0; i_jobs = 0;
 	statH.clear();
