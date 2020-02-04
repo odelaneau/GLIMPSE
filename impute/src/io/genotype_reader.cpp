@@ -53,11 +53,10 @@ void genotype_reader::allocateGenotypes() {
 	G.n_ind = n_main_samples;
 	G.n_site = n_variants;
 	//Haplotypes
-	H.initializing_haps = vector < bool > (2*n_ref_samples, false);
-	H.n_ref_haps = 2 * n_ref_samples;
 	H.n_hap = 2 * (n_ref_samples + n_main_samples);
-	H.n_main_haps = 2 * n_main_samples;
-	H.n_site = n_variants;
+	H.initializing_haps = vector < bool > (2*n_ref_samples, false);
+	H.n_ref = 2 * n_ref_samples;
+	H.n_main_haps = 2 * n_main_samples;	H.n_site = n_variants;
 	H.H_opt_var.allocate(H.n_site, H.n_hap);
 }
 
