@@ -71,7 +71,7 @@ public:
 	//vector < vector < float > > HP0noPL;		// Haplotype posteriors 0 without using PL
 	//vector < vector < float > > HP1noPL;		// Haplotype posteriors 1 without using PL
 	vector < vector < float > > HLC;			// Conditional haplotype likelihoods
-	vector < float > MISMATCH;
+	//vector < float > MISMATCH;
 	vector < conditioning_set * > COND;			// Conditionning states
 	vector < haplotype_hmm * > HMM;
 	vector < diplotype_hmm * > DMM;

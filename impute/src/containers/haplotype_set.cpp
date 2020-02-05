@@ -24,10 +24,10 @@
 haplotype_set::haplotype_set() {
 	n_site = 0;
 	n_hap = 0;
-	n_ref_haps = 0;
+	n_ref = 0;
 	n_main_haps = 0;
-	pbwt_modulo =1;
-	pbwt_depth =1;
+	pbwt_modulo = 1;
+	pbwt_depth = 1;
 }
 
 haplotype_set::~haplotype_set() {
@@ -41,8 +41,8 @@ void haplotype_set::updateHaplotypes(genotype_set & G) {
 		for (int v = 0 ; v < n_site ; v ++) {
 			bool a0 = G.vecG[i]->H0[v];
 			bool a1 = G.vecG[i]->H1[v];
-			H_opt_var.set(v, n_ref_haps+2*i+0, a0);
-			H_opt_var.set(v, n_ref_haps+2*i+1, a1);
+			H_opt_var.set(v, n_ref+2*i+0, a0);
+			H_opt_var.set(v, n_ref+2*i+1, a1);
 		}
 	}
 	vrb.bullet("HAP update (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
@@ -52,78 +52,106 @@ void haplotype_set::updateHaplotypes(genotype_set & G) {
 void haplotype_set::initPositionalBurrowWheelerTransform(int _pbwt_depth, int _pbwt_modulo) {
 	pbwt_depth = _pbwt_depth;
 	pbwt_modulo = _pbwt_modulo;
-	pbwt_arrays = vector < vector < int > > ((n_site/pbwt_modulo) + 1, vector < int > (n_ref_haps, 0));
-	pbwt_indexes = vector < vector < int > > ((n_site/pbwt_modulo) + 1, vector < int > (n_main_haps, 0));
+	cond_states = vector < vector < int > > (n_hap - n_ref);		// Storage of states for each target_hap
+	pbwt_array = vector < int > (n_hap, 0);
+	pbwt_array_ref = vector < int > (n_ref, 0);
+	pbwt_indexes = vector < int > (n_main_haps, 0);
 }
 
 void haplotype_set::updatePositionalBurrowWheelerTransform() {
 	tac.clock();
-	vector < int > A_all(n_hap, 0);
-	vector < int > B_all(n_hap, 0);
-	vector < int > A_ref(n_ref_haps, 0);
-	vector < int > B_ref(n_ref_haps, 0);
-	vector < int > idx(n_main_haps, 0);
+	vector < int > A(n_hap, 0);
+	vector < int > A_ref(n_ref, 0);
 	vector < bool > update_idx(n_main_haps, false);
-
-	for (int l = 0, idx_store = 0 ; l < n_site ; l ++) {
+	vector < int > last_selected(n_main_haps*pbwt_depth*2, -1);	//to kept track of the last ones that were recently push_backed into cond_states
+	for (int e = 0 ; e < cond_states.size() ; e ++) cond_states[e].clear();
+	for (int l = 0 ; l < n_site ; l ++) {
+		// Building PBWT arrays
 		int u = 0, v = 0;
 		int us = 0, vs = 0;
 		bool is_copy_site = (l%pbwt_modulo) == 0;
 		for (int h = 0 ; h < n_hap ; h ++) {
-			int alookup = l?A_all[h]:h;
+			int alookup = l?pbwt_array[h]:h;
 			if (!H_opt_var.get(l,alookup))
 			{
-				A_all[u++] = alookup;
+				pbwt_array[u++] = alookup;
 				if (is_copy_site)
 				{
-					if (alookup < n_ref_haps) A_ref[us++] = alookup;
+					if (alookup < n_ref) pbwt_array_ref[us++] = alookup;
 					else
 					{
-						idx[alookup-n_ref_haps] = us;
-						update_idx[alookup-n_ref_haps] = false;
+						pbwt_indexes[alookup-n_ref] = us;
+						update_idx[alookup-n_ref] = false;
 					}
 				}
 			}
 			else
 			{
-				B_all[v++] = alookup;
+				A[v++] = alookup;
 				if (is_copy_site)
 				{
-					if (alookup < n_ref_haps) B_ref[vs++] = alookup;
+					if (alookup < n_ref) A_ref[vs++] = alookup;
 					else
 					{
-						idx[alookup-n_ref_haps] = vs;
-						update_idx[alookup-n_ref_haps] = true;
+						pbwt_indexes[alookup-n_ref] = vs;
+						update_idx[alookup-n_ref] = true;
 					}
 				}
 			}
-
-
 		}
-		std::copy(B_all.begin(), B_all.begin()+v, A_all.begin()+u);
+		std::copy(A.begin(), A.begin()+v, pbwt_array.begin()+u);
 
+		// Selecting using PBWT array
+		// It might be better here to iterate over indexes as sorted in pbwt_arrays and to test is we hit a target haplotype.
+		// Instead of iterating over target haplotypes (I guess it depends on the ratio #target/#reference).
 		if (is_copy_site) {
-			//std::copy(B_ref.begin(), B_ref.begin()+vs, A_ref.begin()+us);
-			//std::copy(A_ref.begin(), A_ref.end(), pbwt_arrays[idx_store].begin());
-			std::copy(A_ref.begin(), A_ref.begin() +us, pbwt_arrays[idx_store].begin());
-			std::copy(B_ref.begin(), B_ref.begin() +vs, pbwt_arrays[idx_store].begin()+us);
-			//for (int h = 0 ; h < n_hap ; h ++) pbwt_indexes[idx_store][A[h]] = h;
-			//std::copy(idx.begin(), idx.end(), pbwt_arrays[idx_store].begin());
-			for (int h = 0 ; h < n_main_haps ; h ++) pbwt_indexes[idx_store][h] = update_idx[h] ? idx[h] + u : idx[h];
-			idx_store++;
+			// Build reverse indexing
+			std::copy(A_ref.begin(), A_ref.begin() +vs, pbwt_array_ref.begin()+us);
+			for (int h = 0 ; h < n_main_haps ; h ++) if (update_idx[h]) pbwt_indexes[h] += us;
+
+			// Selecting conditioning haplotypes
+			for (int htr = 0 ; htr < n_main_haps ; htr ++) {
+				int ac, o, c, hc = 0, a = H_opt_var.get(l,n_ref + htr);
+				int pbwt_idx = pbwt_indexes[htr];
+
+				//Haplotypes that are *BEFORE* in PBWT array
+				o = 1; c = 0;
+	            for (;;) {
+	            	if (pbwt_idx-o >= 0) hc = pbwt_array_ref[pbwt_idx-o];	// Check if we hit boundaries
+	            	else break;
+	            	ac = H_opt_var.get(l,hc);
+	            	if (ac != a) break;		//exit if alleles are different
+					if (last_selected[htr * 2 * pbwt_depth + c] != hc) {	// Storage happens only when the new conditioning hap is different of the previously selected for this depth
+						last_selected[htr * 2 * pbwt_depth + c] = hc;		// Update last found
+						cond_states[htr].push_back(hc);						// Store new guess
+					}
+					c++;
+					if (c >= pbwt_depth) break; 	// Check if we found enough states
+	            	o++;
+	            }
+
+	            //Haplotypes that are *AFTER* in PBWT array
+	            o = 0; c = 0;
+	            for (;;) {
+	            	if (pbwt_idx+o < n_ref) hc = pbwt_array_ref[pbwt_idx+o];	// Check if we hit boundaries
+	            	else break;
+	            	ac = H_opt_var.get(l,hc);
+	            	if (ac != a) break;		//exit if alleles are different
+					if (last_selected[htr * 2 * pbwt_depth + pbwt_depth + c] != hc) { 	// Storage happens only when the new conditioning hap is different of the previously selected for this depth
+						last_selected[htr * 2 * pbwt_depth + pbwt_depth + c] = hc;		// Update last found (saved after those seen before in the PBWT array, i.e. index+pbwt_depth)
+						cond_states[htr].push_back(hc);									// Store new guess
+					}
+					c++;
+					if (c >= pbwt_depth) break; 	// Check if we found enough states
+	            	o++;
+	            }
+			}
 		}
 	}
-	vrb.bullet("PBWT building (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
+	vrb.bullet("PBWT building & selection (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
 }
 
-void haplotype_set::selectRandom(int K, conditioning_set * C) {
-	vector < int > idxH;
-	for (int h = 0 ; h < n_ref_haps ; h ++) if (initializing_haps[h]) idxH.push_back(h);
-	if (n_ref_haps > K) {
-		random_shuffle(idxH.begin(), idxH.end());
-		idxH.erase(idxH.begin() + K, idxH.end());
-		sort(idxH.begin(), idxH.end());
-	}
+/*
 
 	C->clear();
 	C->n_states = idxH.size();
@@ -141,15 +169,15 @@ void haplotype_set::selectRandom(int K, conditioning_set * C) {
 }
 
 void haplotype_set::selectPositionalBurrowWheelerTransform(int ind, int maxK, conditioning_set * C) {
-	vector < bool > hapFlag = vector < bool > (n_ref_haps, false);
+	vector < bool > hapFlag = vector < bool > (n_hap, false);
 	for (int l = 0, idx_store = 0 ; l < n_site ; l += pbwt_modulo, idx_store++) {
 		for (int p = 0 ; p < 2 ; p ++) {
-			int h = 2*ind + p + n_ref_haps;
-			int i = pbwt_indexes[idx_store][2*ind + p];
+			int h = 2*ind + p + n_ref;
+			int i = pbwt_indexes[idx_store][h];
 
 			//Backward
 			bool ac;
-            int o = 0, c = 0, hc = 0;
+            int o = 1, c = 0, hc = 0;
             bool a = H_opt_var.get(l,h);
             for (;;) {
             	if (i-o >= 0) hc = pbwt_arrays[idx_store][i-o];
@@ -158,14 +186,14 @@ void haplotype_set::selectPositionalBurrowWheelerTransform(int ind, int maxK, co
             	if (ac != a) break;
             	hapFlag[hc] = (hc/2 != h/2);
             	c += (hc/2 != h/2);
-            	if (c >= pbwt_depth-1) break;
+            	if (c >= pbwt_depth) break;
             	o++;
             }
 
             //Forward
             o = 1; c = 0;
             for (;;) {
-            	if (i+o < n_ref_haps) hc = pbwt_arrays[idx_store][i+o];
+            	if (i+o < n_hap) hc = pbwt_arrays[idx_store][i+o];
             	else break;
             	ac = H_opt_var.get(l,hc);
             	if (ac != a) break;
@@ -177,7 +205,7 @@ void haplotype_set::selectPositionalBurrowWheelerTransform(int ind, int maxK, co
 		}
 	}
 	vector < int > idxH;
-	for (int h = 0 ; h < n_ref_haps ; h ++) if (hapFlag[h]) idxH.push_back(h);
+	for (int h = 0 ; h < n_hap ; h ++) if (hapFlag[h]) idxH.push_back(h);
 
 	if (idxH.size() > maxK) {
 		random_shuffle(idxH.begin(), idxH.end());
@@ -188,7 +216,7 @@ void haplotype_set::selectPositionalBurrowWheelerTransform(int ind, int maxK, co
 	C->clear();
 	C->n_states = idxH.size();
 	for (int l = 0 ; l < n_site ; l ++) {
-		unsigned int ac = H_opt_var.get(l, 2*ind + n_ref_haps + 0) + H_opt_var.get(l, 2*ind + n_ref_haps + 1);
+		unsigned int ac = H_opt_var.get(l, 2*ind + n_ref + 0) + H_opt_var.get(l, 2*ind + n_ref + 1);
 		C->Hmono.push_back(H_opt_var.get(l,idxH[0]));
 		for (int k = 0 ; k < idxH.size() ; k ++) ac += H_opt_var.get(l,idxH[k]);
 		if (ac > 0 && ac < (idxH.size()+2)) {
@@ -199,3 +227,4 @@ void haplotype_set::selectPositionalBurrowWheelerTransform(int ind, int maxK, co
 	C->n_sites = C->Vpoly.size();
 	C->updateTransitions();
 }
+*/
