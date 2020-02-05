@@ -42,6 +42,7 @@ void caller::phase_individual(int id_worker, int id_job) {
 		COND[id_worker]->selectRandom(id_job, options["init-states"].as < int > ());
 		G.vecG[id_job]->initHaplotypeLikelihoods(HLC[id_worker]);
 	} else {
+		DMM[id_worker]->rephaseHaplotypes(G.vecG[id_job]->H0, G.vecG[id_job]->H1);
 		COND[id_worker]->selectPBWT(id_job, options["init-states"].as < int > () * 2);
 		G.vecG[id_job]->makeHaplotypeLikelihoods(HLC[id_worker], true);
 	}
@@ -50,7 +51,6 @@ void caller::phase_individual(int id_worker, int id_job) {
 	G.vecG[id_job]->makeHaplotypeLikelihoods(HLC[id_worker], false);
 	HMM[id_worker]->computePosteriors(HLC[id_worker], HP1[id_worker]);
 	G.vecG[id_job]->sampleHaplotypeH1(HP1[id_worker]);
-	DMM[id_worker]->rephaseHaplotypes(G.vecG[id_job]->H0, G.vecG[id_job]->H1);
 	if (current_stage == STAGE_MAIN) G.vecG[id_job]->storeGenotypePosteriorsAndHaplotypes(HP0[id_worker], HP1[id_worker]);
 	if (options["thread"].as < int > () > 1) pthread_mutex_lock(&mutex_workers);
 	statH.push(COND[id_worker]->n_states*1.0);
