@@ -24,10 +24,29 @@
 
 #include <utils/otools.h>
 
-
 #define SET(n,i)	(n |= 1UL << i)
 #define CLR(n,i)	(n &= ~(1UL << i));
 #define GET(n,i)	((n >> i) & 1U);
+
+// 5 bytes per genotype, but sparse!
+struct inferred_genotype {
+	float gp0, gp1, gp2;
+	int hs, idx;
+
+	inferred_genotype(int _idx, float _gp0, float _gp1, float _gp2, int _hs) : idx(_idx), gp0(_gp0), gp1(_gp1), gp2(_gp2), hs(_hs) {
+	}
+
+	bool operator<(const inferred_genotype & g) const {
+		return idx < g.idx;
+	}
+
+	int infer() {
+		if (gp0 >= gp1 && gp0 >= gp2) return 0;
+		if (gp1 >= gp0 && gp1 >= gp2) return 1;
+		if (gp2 >= gp0 && gp2 >= gp1) return 2;
+		return 0;
+	}
+};
 
 class genotype {
 public:
@@ -37,19 +56,12 @@ public:
 	unsigned int n_variants;			// Number of variants	(to iterate over Variants)
 
 	// This is using lot of memory.
-	// Solution:	Let's only store non-zero values (almost 33% memory reduction).
-	//				Use a vector < bool > to flag zeros and non-zeros
+	// Solution:	Use a dictionnary given that GL triplets are highly repetitive.
 	vector < unsigned char > GL;		// Original Genotype Likelihoods
 
-	// These are using lot of memory.
-	// Solution:	We can greatly compress these using sparse representation (massive memory reduction)
-	// 				GP is mostly filled with triplets (1.0,0.0,0.0) and HAP with 0s (= all sampled haps are hom REF).
-	// 				I propose to have a vector < bool > that flag sites at which storage is done.
-	//				The big issue is that when a new site requires storage, this involves a memory block shift of all the next ones (we may use burnin-in iterations to spot these in advance)...
-	//				In addition, we only have to store HAP at sites that are not GP=(1.0,0.0,0.0), as it's only zeros in this case.
-	vector < float > GP;				// Output Genotype posteriors
-	vector < int > HAP;					// Storing haplotypes
-	int nHAPstored;
+	// Sparse storage for GPs and HSs
+	vector < inferred_genotype > stored_data;
+	int stored_cnt;
 
 	// This should be removed as it is already stored in haplotype_set
 	vector < bool > H0;					// First haplotype
@@ -67,11 +79,8 @@ public:
 	void sampleHaplotypeH0(vector < float > &);
 	void sampleHaplotypeH1(vector < float > &);
 	void makeHaplotypeLikelihoods(vector < float > &, bool);
-	void storeGenotypePosteriors(vector < float > &, vector < float > &);
-	void storeSampledHaplotypes();
-
-	void normGenotypePosteriors(int);
-	void inferGenotypes();
+	void storeGenotypePosteriorsAndHaplotypes(vector < float > &, vector < float > &);
+	void sortAndNormAndInferGenotype();
 };
 
 #endif

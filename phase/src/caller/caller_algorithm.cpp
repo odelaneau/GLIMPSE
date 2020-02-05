@@ -39,54 +39,28 @@ void * phase_callback(void * ptr) {
 
 void caller::phase_individual(int id_worker, int id_job) {
 	if (current_stage == STAGE_INIT) {
-		//H.selectRandom(options["init-states"].as < int > (), COND[id_worker]);
 		COND[id_worker]->selectRandom(id_job, options["init-states"].as < int > ());
 		G.vecG[id_job]->initHaplotypeLikelihoods(HLC[id_worker]);
 	} else {
-		//H.selectPositionalBurrowWheelerTransform(id_job, 2*options["init-states"].as < int > (), COND[id_worker]);
 		COND[id_worker]->selectPBWT(id_job, options["init-states"].as < int > () * 2);
-		DMM[id_worker]->rephaseHaplotypes(G.vecG[id_job]->H0, G.vecG[id_job]->H1);
-		if (current_stage == STAGE_MAIN) G.vecG[id_job]->storeSampledHaplotypes();
 		G.vecG[id_job]->makeHaplotypeLikelihoods(HLC[id_worker], true);
 	}
-	//HMM[id_worker]->computePosteriors(HLC[id_worker], HP0[id_worker], HP0noPL[id_worker]);
 	HMM[id_worker]->computePosteriors(HLC[id_worker], HP0[id_worker]);
 	G.vecG[id_job]->sampleHaplotypeH0(HP0[id_worker]);
 	G.vecG[id_job]->makeHaplotypeLikelihoods(HLC[id_worker], false);
-	//HMM[id_worker]->computePosteriors(HLC[id_worker], HP1[id_worker], HP1noPL[id_worker]);
 	HMM[id_worker]->computePosteriors(HLC[id_worker], HP1[id_worker]);
 	G.vecG[id_job]->sampleHaplotypeH1(HP1[id_worker]);
-	if (current_stage == STAGE_MAIN) G.vecG[id_job]->storeGenotypePosteriors(HP0[id_worker], HP1[id_worker]);
-
+	DMM[id_worker]->rephaseHaplotypes(G.vecG[id_job]->H0, G.vecG[id_job]->H1);
+	if (current_stage == STAGE_MAIN) G.vecG[id_job]->storeGenotypePosteriorsAndHaplotypes(HP0[id_worker], HP1[id_worker]);
 	if (options["thread"].as < int > () > 1) pthread_mutex_lock(&mutex_workers);
 	statH.push(COND[id_worker]->n_states*1.0);
 	statC.push(COND[id_worker]->n_sites * 100.0/COND[id_worker]->Hmono.size());
-	// Update expected mismatch counts
-	/*
-	for (int l  = 0 ; l < H.n_site ; l ++) {
-		double a0 = HP0[id_worker][2*l+0] * HP1[id_worker][2*l+0];
-		double a1 = HP0[id_worker][2*l+0] * HP1[id_worker][2*l+1] + HP0[id_worker][2*l+1] * HP1[id_worker][2*l+0];
-		double a2 = HP0[id_worker][2*l+1] * HP1[id_worker][2*l+1];
-		double as = 1.0f/(a0+a1+a2);
-		double b0 = HP0noPL[id_worker][2*l+0] * HP1noPL[id_worker][2*l+0];
-		double b1 = HP0noPL[id_worker][2*l+0] * HP1noPL[id_worker][2*l+1] + HP0noPL[id_worker][2*l+1] * HP1noPL[id_worker][2*l+0];
-		double b2 = HP0noPL[id_worker][2*l+1] * HP1noPL[id_worker][2*l+1];
-		double bs = 1.0f/(b0+b1+b2);
-		double ad = a1*as + 2*a2*as;
-		double bd = b1*as + 2*b2*bs;
-		MISMATCH[l] += abs(ad-bd);
-	}
-	*/
-	//
 	if (options["thread"].as < int > () > 1) pthread_mutex_unlock(&mutex_workers);
 }
 
 void caller::phase_iteration() {
 	tac.clock();
 	int n_thread = options["thread"].as < int > ();
-	//
-	//fill(MISMATCH.begin(), MISMATCH.end(), 0.0f);
-	//
 	i_workers = 0; i_jobs = 0;
 	statH.clear();
 	statC.clear();
@@ -97,12 +71,6 @@ void caller::phase_iteration() {
 		phase_individual(0, i);
 		vrb.progress("  * HMM imputation", (i+1)*1.0/G.n_ind);
 	}
-	/*
-	for (int l  = 0 ; l < H.n_site ; l ++) {
-		MISMATCH[l] /= 2*G.n_ind;
-		cout << l << " " << MISMATCH[l] << endl;
-	}
-	*/
 	vrb.bullet("HMM imputation [K=" + stb.str(statH.mean(), 1) + " / C=" + stb.str(statC.mean(), 1) + "%] (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
 }
 
@@ -134,9 +102,6 @@ void caller::phase_loop() {
 
 	//Finalization
 	vrb.title("Finalization");
-	for (int i = 0 ; i < G.vecG.size() ; i ++) {
-		G.vecG[i]->normGenotypePosteriors(nMain);
-		G.vecG[i]->inferGenotypes();
-	}
+	for (int i = 0 ; i < G.vecG.size() ; i ++) G.vecG[i]->sortAndNormAndInferGenotype();
 	vrb.bullet("done");
 }

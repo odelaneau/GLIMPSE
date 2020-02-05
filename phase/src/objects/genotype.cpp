@@ -28,7 +28,7 @@ genotype::genotype(int _index, int _n_variants) {
 	name = "";
 	index = _index;
 	n_variants = _n_variants;
-	nHAPstored = 0;
+	stored_cnt = 0;
 }
 
 genotype::~genotype() {
@@ -40,17 +40,15 @@ genotype::~genotype() {
 
 void genotype::free() {
 	GL.clear();
-	GP.clear();
+	stored_data.clear();
 	H0.clear();
 	H1.clear();
 }
 
 void genotype::allocate() {
 	GL = vector < unsigned char > (3 * n_variants, 0);
-	GP = vector < float > (2 * n_variants, 0.0);
 	H0 = vector < bool > (n_variants, false);
 	H1 = vector < bool > (n_variants, false);
-	HAP = vector < int > (n_variants, 0);
 }
 
 void genotype::initHaplotypeLikelihoods(vector < float > & HL) {
@@ -103,38 +101,72 @@ void genotype::sampleHaplotypeH1(vector < float > & HP1) {
 	}
 }
 
-void genotype::storeGenotypePosteriors(vector < float > & HP0, vector < float > & HP1) {
+void genotype::storeGenotypePosteriorsAndHaplotypes(vector < float > & HP0, vector < float > & HP1) {
+	vector < bool > flag = vector < bool > (n_variants, false);
+	// Push already variants at which storage already occured in previous iterations
+	for (int e = 0 ; e < stored_data.size() ; e ++) {
+		int var_idx = stored_data[e].idx;
+		float p0 = HP0[2*var_idx+0] * HP1[2*var_idx+0];
+		float p1 = HP0[2*var_idx+0] * HP1[2*var_idx+1] + HP0[2*var_idx+1] * HP1[2*var_idx+0];
+		float p2 = HP0[2*var_idx+1] * HP1[2*var_idx+1];
+		float sc = 1.0f/(p0+p1+p2);
+		// Store GP
+		stored_data[e].gp0 += p0*sc;
+		stored_data[e].gp1 += p1*sc;
+		stored_data[e].gp2 += p2*sc;
+		// Store HS
+		H0[var_idx]?SET(stored_data[e].hs,2*stored_cnt+0):CLR(stored_data[e].hs,2*stored_cnt+0);
+		H1[var_idx]?SET(stored_data[e].hs,2*stored_cnt+1):CLR(stored_data[e].hs,2*stored_cnt+1);
+		//Flag variant as already stored GP/HS
+		flag[var_idx] = true;
+	}
+	// Push variants that have never been pushed in previous iterations
 	for (int l = 0 ; l < n_variants ; l ++) {
-		double p0 = HP0[2*l+0] * HP1[2*l+0];
-		double p1 = HP0[2*l+0] * HP1[2*l+1] + HP0[2*l+1] * HP1[2*l+0];
-		double p2 = HP0[2*l+1] * HP1[2*l+1];
-		GP[2*l+0] += p0 / (p0 + p1 + p2);
-		GP[2*l+1] += p1 / (p0 + p1 + p2);
+		if (!flag[l]) {
+			float p0 = HP0[2*l+0] * HP1[2*l+0];
+			float p1 = HP0[2*l+0] * HP1[2*l+1] + HP0[2*l+1] * HP1[2*l+0];
+			float p2 = HP0[2*l+1] * HP1[2*l+1];
+			float sc = 1.0f/(p0+p1+p2);
+
+			// Trigger storage
+			if (p0*sc < 0.99999f) {
+				int new_hs = 0;
+				H0[l]?SET(new_hs,2*stored_cnt+0):CLR(new_hs,2*stored_cnt+0);
+				H1[l]?SET(new_hs,2*stored_cnt+1):CLR(new_hs,2*stored_cnt+1);
+				stored_data.emplace_back(l, p0*sc + stored_cnt*1.0f, p1*sc, p2*sc, new_hs);
+			}
+		}
+	}
+	stored_cnt ++;
+}
+
+void genotype::sortAndNormAndInferGenotype() {
+	float scale = 1.0f / stored_cnt;
+
+	// Sorting by variant index
+	sort(stored_data.begin(), stored_data.end());
+
+	// Normalizing
+	for (int e = 0 ; e < stored_data.size() ; e ++) {
+		stored_data[e].gp0 *= scale;
+		stored_data[e].gp1 *= scale;
+		stored_data[e].gp2 *= scale;
+	}
+
+	// Infer most likely genotypes
+	for (int l = 0, e = 0 ; l < n_variants ;) {
+		if ((e==stored_data.size()) || (stored_data[e].idx>l)) {		// No storage happened there => GP=(1.0,0.0,0.0)
+			H0[l] = false;
+			H1[l] = false;
+			l++;
+		} else {														// Storage happened there => GP !=(1.0, 0.0,0.0)
+			switch (stored_data[e].infer()) {
+			case 1: 	H0[l] = false; H1[l] = true; break;
+			case 2:		H0[l] = true; H1[l] = true; break;
+			default: 	H0[l] = false; H1[l] = false; break;
+			}
+			l++; e++;
+		}
 	}
 }
 
-void genotype::storeSampledHaplotypes() {
-	for (int l = 0 ; l < n_variants ; l ++) {
-		H0[l]?SET(HAP[l],nHAPstored+0):CLR(HAP[l],nHAPstored+0);
-		H1[l]?SET(HAP[l],nHAPstored+1):CLR(HAP[l],nHAPstored+1);
-	}
-	nHAPstored += 2;
-}
-
-void genotype::normGenotypePosteriors(int nStorages) {
-	for (int l = 0 ; l < n_variants ; l ++) {
-		GP[2*l+0] /= nStorages;
-		GP[2*l+1] /= nStorages;
-	}
-}
-
-void genotype::inferGenotypes() {
-	for (int l = 0 ; l < n_variants ; l ++) {
-		float gp0 = GP[2*l+0];
-		float gp1 = GP[2*l+1];
-		float gp2 = 1.0 - gp0 - gp1;
-		if (gp0 >= gp1 && gp0 >= gp2) { H0[l] = false; H1[l] = false; }
-		if (gp1 >= gp0 && gp1 >= gp2) { H0[l] = false; H1[l] = true; }
-		if (gp2 >= gp0 && gp2 >= gp1) { H0[l] = true; H1[l] = true; }
-	}
-}
