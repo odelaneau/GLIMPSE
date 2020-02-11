@@ -113,7 +113,8 @@ void haplotype_set::updatePositionalBurrowWheelerTransform() {
 			// Selecting conditioning haplotypes
 			for (int htr = 0 ; htr < n_main_haps ; htr ++) {
 				int ac, o, c, hc = 0, a = H_opt_var.get(l,n_ref + htr);
-				int pbwt_idx = pbwt_indexes[htr] + update_idx[htr]? us : 0;
+				int pbwt_idx = pbwt_indexes[htr];
+				if (update_idx[htr]) pbwt_idx+=us;
 
 				//Haplotypes that are *BEFORE* in PBWT array
 				o = 1; c = 0;
