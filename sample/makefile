@@ -15,7 +15,7 @@ CFILE=$(shell find src -name *.cpp)
 OFILE=$(shell for file in `find src -name *.cpp`; do echo obj/$$(basename $$file .cpp).o; done)
 VPATH=$(shell for file in `find src -name *.cpp`; do echo $$(dirname $$file); done)
 
-#CONDITIONAL PATH DEFINITON
+#CONDITIONAL PATH DEFINITON [PATHS TO BE SET UP DEPNDING ON YOUR ENV.]
 desktop: HTSLIB_INC=$(HOME)/Tools/htslib-1.9
 desktop: HTSLIB_LIB=$(HOME)/Tools/htslib-1.9/libhts.a
 desktop: BOOST_INC=/usr/include

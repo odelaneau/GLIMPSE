@@ -43,7 +43,7 @@ void caller::phase_individual(int id_worker, int id_job) {
 		G.vecG[id_job]->initHaplotypeLikelihoods(HLC[id_worker]);
 	} else {
 		DMM[id_worker]->rephaseHaplotypes(G.vecG[id_job]->H0, G.vecG[id_job]->H1);
-		COND[id_worker]->selectPBWT(id_job, options["init-states"].as < int > () * 2);
+		COND[id_worker]->selectPBWT(id_job, options["init-states"].as < int > ());
 		G.vecG[id_job]->makeHaplotypeLikelihoods(HLC[id_worker], true);
 	}
 	HMM[id_worker]->computePosteriors(HLC[id_worker], HP0[id_worker]);
@@ -71,7 +71,7 @@ void caller::phase_iteration() {
 		phase_individual(0, i);
 		vrb.progress("  * HMM imputation", (i+1)*1.0/G.n_ind);
 	}
-	vrb.bullet("HMM imputation [K=" + stb.str(statH.mean(), 1) + " / C=" + stb.str(statC.mean(), 1) + "%] (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
+	vrb.bullet("HMM imputation [#states=" + stb.str(statH.mean(), 1) + " / %poly=" + stb.str(statC.mean(), 1) + "%] (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
 }
 
 void caller::phase_loop() {
