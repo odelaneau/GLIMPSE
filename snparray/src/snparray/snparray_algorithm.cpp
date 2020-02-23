@@ -26,7 +26,7 @@ void snparray::process() {
 	rng.setSeed(options["seed"].as < int > ());
 	minPROB = options["minPROB"].as < double > ();
 	minDP = options["minDP"].as < int > ();
-	minMISS = options["minMISS"].as < double > ();
+	minMISS = options["minMIS"].as < double > ();
 
 	readSites(options["sites"].as < string > ());
 	readAndWriteData(options["input"].as < string > (), options["output"].as < string > (), options["region"].as < string > ());

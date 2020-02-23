@@ -19,31 +19,27 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  ******************************************************************************/
-//$Id: hmm_parameters.h 597 2012-07-18 14:00:06Z koskos $
+#ifndef _BASIC_ALGOS_H
+#define _BASIC_ALGOS_H
 
-#ifndef _HMM_PARAMETERS_H
-#define _HMM_PARAMETERS_H
+#include <vector>
 
-#include <utils/otools.h>
-#include <containers/variant_map.h>
+class basic_algos {
+public:
+	basic_algos () {};
+	~basic_algos () {};
 
-class hmm_parameters {
-public :
-	//DATA
-	vector < double > t;
-	vector < double > tfreq;
-	vector < double > nt;
-	double ee;
-	double ed;
-	double efreq;
-	double dfreq;
-
-	//CONSTRUCTOR/DESTRUCTOR
-	hmm_parameters();
-	~hmm_parameters();
-
-	//METHODS
-	void initialise(variant_map &, int, int, int, bool);
+	template < class T >
+	unsigned int imax(std::vector < T > & vec) {
+		T maxValue = vec[0];
+		int maxIndex = 0;
+		for (unsigned int i = 1; i < vec.size() ; i ++) if (vec[i] > maxValue) {
+			maxValue = vec[i];
+			maxIndex = i;
+		}
+		return maxIndex;
+	}
 };
 
 #endif
+

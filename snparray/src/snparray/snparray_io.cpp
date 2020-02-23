@@ -71,7 +71,7 @@ void snparray::readAndWriteData(string finput, string foutput, string region) {
 				// Get data for the variant
 				ngl_t = bcf_get_format_int32(sr->readers[0].header, line, "PL", &gl_arr_t, &ngl_arr_t);
 				ngt_t = bcf_get_genotypes(sr->readers[0].header, line, &gt_arr_t, &ngt_arr_t);
-				ndp_t = bcf_get_genotypes(sr->readers[0].header, line, &dp_arr_t, &ndp_arr_t);
+				ndp_t = bcf_get_format_int32(sr->readers[0].header, line, "DP", &dp_arr_t, &ndp_arr_t);
 
 				// Remove PL & DP from variant
 				bcf_update_format(hdr, line, "PL", NULL, 0, BCF_HT_INT);
@@ -99,7 +99,7 @@ void snparray::readAndWriteData(string finput, string foutput, string region) {
 					case 2:	gt_arr_t[2*i+0] = bcf_gt_unphased(true); gt_arr_t[2*i+1] = bcf_gt_unphased(true); break;
 					default: gt_arr_t[2*i+0] = bcf_gt_missing; gt_arr_t[2*i+1] = bcf_gt_missing; break;
 					}
-					n_missing += (genotype>=0);
+					n_missing += (genotype<0);
 				}
 
 				// Write updated record if enough data
@@ -118,6 +118,7 @@ void snparray::readAndWriteData(string finput, string foutput, string region) {
 	if (hts_close(fp)) vrb.error("Non zero status when closing VCF/BCF file descriptor");
 	free(gt_arr_t);
 	free(gl_arr_t);
+	free(dp_arr_t);
 	bcf_hdr_destroy(hdr);
 	bcf_sr_destroy(sr);
 	vrb.bullet("#processed = " + stb.str(nfound+nunfound) + " / #found = " + stb.str(nfound) + " / # unfound = " + stb.str(nunfound) + " / rate = " + stb.str(nfound*100.0/(nfound+nunfound)) + "%");

@@ -19,31 +19,58 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  ******************************************************************************/
-//$Id: hmm_parameters.h 597 2012-07-18 14:00:06Z koskos $
-
-#ifndef _HMM_PARAMETERS_H
-#define _HMM_PARAMETERS_H
+#ifndef _HAPLOTYPE_SET_H
+#define _HAPLOTYPE_SET_H
 
 #include <utils/otools.h>
-#include <containers/variant_map.h>
 
-class hmm_parameters {
-public :
+#include <containers/bitmatrix.h>
+#include <containers/genotype_set.h>
+
+struct rare_het {
+	unsigned int ind_idx;
+	unsigned int var_idx;
+	float prob;
+	bool original_a0;
+	bool sampled_a0;
+
+	rare_het(unsigned int ii, unsigned int vi, bool a0) {
+		ind_idx = ii;
+		var_idx = vi;
+		prob = 0.0f;
+		original_a0 = a0;
+		sampled_a0 = a0;
+	}
+};
+
+class haplotype_set {
+public:
 	//DATA
-	vector < double > t;
-	vector < double > tfreq;
-	vector < double > nt;
-	double ee;
-	double ed;
-	double efreq;
-	double dfreq;
+	unsigned long n_site;							// #variants
+	unsigned long n_hap;							// #haplotypes
+	bitmatrix H_opt_var;							// Bit matrix of haplotypes (variant first)
 
-	//CONSTRUCTOR/DESTRUCTOR
-	hmm_parameters();
-	~hmm_parameters();
+	//PBbWT
+	int pbwt_depth, pbwt_modulo;
+	vector < int > pbwt_array;
+	vector < int > pbwt_indexes;
+	vector < vector < int > > cond_states;
 
-	//METHODS
-	void initialise(variant_map &, int, int, int, bool);
+	//RARE HETS REPHASING
+	vector < rare_het > RH;
+	vector < bool > RHflag;
+
+	//CONSTRUCTOR/DESTRUCTOR/INITIALIZATION
+	haplotype_set();
+	~haplotype_set();
+
+	//PBWT ROUTINES
+	void initPositionalBurrowWheelerTransform(int, int);
+	void updatePositionalBurrowWheelerTransform();
+
+	//RARE HETS ROUTINES
+	void mapRareHets(float max_maf);
+	void updateapsGivenRareHets();
 };
 
 #endif

@@ -102,5 +102,5 @@ void snparray::verbose_options() {
 	vrb.bullet("Seed    : " + stb.str(options["seed"].as < int > ()));
 	vrb.bullet("MinPROB : " + stb.str(options["minPROB"].as < double > ()));
 	vrb.bullet("MinDP   : " + stb.str(options["minDP"].as < int > ()));
-	vrb.bullet("MinMISS : " + stb.str(options["minMISS"].as < double > ()));
+	vrb.bullet("MinMISS : " + stb.str(options["minMIS"].as < double > ()));
 }
