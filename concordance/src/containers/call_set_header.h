@@ -29,7 +29,11 @@ public:
 
 	// R2 per bin
 	vector < stats2D > rsquared_bin;
+	vector < string > rsquared_str;
 	vector < stats1D > frequency_bin;
+
+	// R2 per group
+	map < string, pair < int, bool > > site2grp;
 
 	// R2 per sample
 	vector < stats2D > rsquared_spl;
@@ -40,6 +44,7 @@ public:
 
 	//
 	void initialize(vector < double >, double, int);
+	void initialize(string, double, int);
 	int getTruth(double, double, double, int);
 	int getFrequencyBin(float);
 	int getMostLikely(float , float , float );

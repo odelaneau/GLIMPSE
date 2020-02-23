@@ -37,7 +37,8 @@ void checker::declare_options() {
 	opt_algo.add_options()
 			("minPROB", bpo::value<double>(), "Minimum posterior probability P(G|R) in validation data")
 			("minDP", bpo::value<int>(), "Minimum coverage in validation data")
-			("bins", bpo::value< vector < double > >()->multitoken(), "Frequency bins used for Rsquare computations");
+			("bins", bpo::value< vector < double > >()->multitoken(), "Frequency bins used for Rsquare computations")
+			("groups", bpo::value< string >(), "Alternative to frequency bins: bins are user defined");
 
 	bpo::options_description opt_output ("Output files");
 	opt_output.add_options()
@@ -78,13 +79,16 @@ void checker::check_options() {
 	if (!options.count("minDP"))
 		vrb.error("You must specify --minDP");
 
-	if (!options.count("bins"))
-		vrb.error("You must specify --bins");
+	if ((options.count("bins")+options.count("groups")) != 1)
+		vrb.error("You must specify --bins or --groups");
 }
 
 void checker::verbose_files() {
 	vrb.title("Files are listed in [" + options["input"].as < string > () + "]");
 	if (options.count("log")) vrb.bullet("Output LOG    : [" + options["log"].as < string > () + "]");
+	if (options.count("groups")) {
+		vrb.bullet("Groups        : [" + options["groups"].as < string > () + "]");
+	}
 }
 
 void checker::verbose_options() {
@@ -92,7 +96,10 @@ void checker::verbose_options() {
 	vrb.bullet("Seed    : " + stb.str(options["seed"].as < int > ()));
 	vrb.bullet("MinPROB : " + stb.str(options["minPROB"].as < double > ()));
 	vrb.bullet("MinDP   : " + stb.str(options["minDP"].as < int > ()));
-
-	vector < double > tmp = options["bins"].as < vector < double > > ();
-	vrb.bullet("#bins   : " + stb.str(tmp.size()));
+	if (options.count("bins")) {
+		vector < double > tmp = options["bins"].as < vector < double > > ();
+		vrb.bullet("#bins   : " + stb.str(tmp.size()));
+	} else {
+		vrb.bullet("#groups : User defined");
+	}
 }

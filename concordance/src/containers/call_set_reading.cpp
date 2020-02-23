@@ -44,13 +44,21 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 			// Allocating data structures
 			genotype_spl_errors = vector < unsigned long int > (3 * N, 0);
 			genotype_spl_totals = vector < unsigned long int > (3 * N, 0);
-			genotype_bin_errors = vector < unsigned long int > (3 * L, 0);
-			genotype_bin_totals = vector < unsigned long int > (3 * L, 0);
 			genotype_cal_errors = vector < unsigned long int > (3 * N_BIN_CAL, 0);
 			genotype_cal_totals = vector < unsigned long int > (3 * N_BIN_CAL, 0);
-			rsquared_bin = vector < stats2D > (L);
 			rsquared_spl = vector < stats2D > (N);
-			frequency_bin = vector < stats1D > (L);
+
+			if (L > 0) {
+				genotype_bin_errors = vector < unsigned long int > (3 * L, 0);
+				genotype_bin_totals = vector < unsigned long int > (3 * L, 0);
+				rsquared_bin = vector < stats2D > (L);
+				frequency_bin = vector < stats1D > (L);
+			} else {
+				genotype_bin_errors = vector < unsigned long int > (3 * rsquared_str.size(), 0);
+				genotype_bin_totals = vector < unsigned long int > (3 * rsquared_str.size(), 0);
+				rsquared_bin = vector < stats2D > (rsquared_str.size());
+				frequency_bin = vector < stats1D > (rsquared_str.size());
+			}
 			vrb.bullet("#overlapping samples = " + stb.str(N));
 		}
 
@@ -66,6 +74,7 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 		vector < float > GPs = vector < float > (3*N, 0.0f);
 		vector < int > DPs = vector < int > (N, 0);
 
+		map < string, pair < int, bool > > :: iterator itG;
 		bcf1_t * line_t, * line_e, * line_f;
 		while ((nset = bcf_sr_next_line (sr))) {
 			if (nset == 3) {
@@ -89,7 +98,18 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 						float af = ac_arr_f[0] * 1.0f / an_arr_f[0];
 						bool flip = (af > 0.5);
 						float maf = min(af, 1.0f - af);
-						int frq_bin = getFrequencyBin(maf);
+						int grp_bin = -1;
+						if (L>0) grp_bin = getFrequencyBin(maf);
+						else {
+							string chr = bcf_hdr_id2name(sr->readers[0].header, line_t->rid);
+							int pos = line_t->pos + 1;
+							string uuid = chr + "_" + stb.str(pos);
+							itG = site2grp.find(uuid);
+							if (itG != site2grp.end()) {
+								grp_bin = itG->second.first;
+								itG->second.second = true;
+							}
+						}
 
 						// Read Truth
 						for(int i = 0 ; i < n_true_samples ; i ++) {
@@ -120,7 +140,7 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 
 						// Process variant
 						for (int i = 0 ; i < N ; i ++) {
-							if (frq_bin >= 0) {	// Do this variant fall within a given frequency bin?
+							if (grp_bin >= 0) {	// Do this variant fall within a given frequency bin?
 								int true_genotype = getTruth(PLs[3*i+0], PLs[3*i+1], PLs[3*i+2], DPs[i]);
 								if (true_genotype >= 0) {
 									int esti_genotype = getMostLikely(GPs[3*i+0], GPs[3*i+1], GPs[3*i+2]);
@@ -138,9 +158,9 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 
 									// [2] Update concordance per bin
 									switch (true_genotype) {
-									case 0:	genotype_bin_errors[3*frq_bin+0] += (esti_genotype != 0); genotype_bin_totals[3*frq_bin+0]++; break;
-									case 1:	genotype_bin_errors[3*frq_bin+1] += (esti_genotype != 1); genotype_bin_totals[3*frq_bin+1]++; break;
-									case 2:	genotype_bin_errors[3*frq_bin+2] += (esti_genotype != 2); genotype_bin_totals[3*frq_bin+2]++; break;
+									case 0:	genotype_bin_errors[3*grp_bin+0] += (esti_genotype != 0); genotype_bin_totals[3*grp_bin+0]++; break;
+									case 1:	genotype_bin_errors[3*grp_bin+1] += (esti_genotype != 1); genotype_bin_totals[3*grp_bin+1]++; break;
+									case 2:	genotype_bin_errors[3*grp_bin+2] += (esti_genotype != 2); genotype_bin_totals[3*grp_bin+2]++; break;
 									}
 
 									// [3] Update concordance per calibration bin
@@ -151,8 +171,8 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 									}
 
 									// [4] Update Rsquare per bin
-									rsquared_bin[frq_bin].push(DSs[i], true_genotype*1.0f);
-									frequency_bin[frq_bin].push(maf);
+									rsquared_bin[grp_bin].push(DSs[i], true_genotype*1.0f);
+									frequency_bin[grp_bin].push(maf);
 
 									// [5] Update Rsquare per sample
 									rsquared_spl[i].push(DSs[i], true_genotype*1.0f);
@@ -184,4 +204,10 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 		vrb.bullet("%error rate in this file = " + stb.str(n_errors * 100.0f / ngenoval));
 	}
 	vrb.bullet("Total #variants = " + stb.str(n_variants_all_chromosomes));
+
+	if (L == 0) {
+		unsigned int n_found_groups = 0;
+		for (map < string, pair < int, bool > > :: iterator itG = site2grp.begin() ; itG != site2grp.end() ; ++ itG) n_found_groups += itG->second.second;
+		vrb.bullet("Total #variants in groups found = " + stb.str(n_found_groups));
+	}
 }

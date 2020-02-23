@@ -25,8 +25,12 @@ void checker::read_files_and_initialise() {
 	//step0: Initialize seed and multi-threading
 	rng.setSeed(options["seed"].as < int > ());
 
-	//step1: process bins & parameters
-	D.initialize(options["bins"].as < vector < double > > (), options["minPROB"].as < double > (), options["minDP"].as < int > ());
+	//step1: process bins/groups & parameters
+	if (options.count("bins")) {
+		D.initialize(options["bins"].as < vector < double > > (), options["minPROB"].as < double > (), options["minDP"].as < int > ());
+	} else {
+		D.initialize(options["groups"].as < string > (), options["minPROB"].as < double > (), options["minDP"].as < int > ());
+	}
 
 	//step2: Read input files
 	vrb.title("Reading list of input files int [" + options["input"].as < string > () + "]");
