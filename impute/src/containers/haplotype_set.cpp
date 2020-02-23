@@ -52,7 +52,7 @@ void haplotype_set::updateHaplotypes(genotype_set & G) {
 void haplotype_set::initPositionalBurrowWheelerTransform(int _pbwt_depth, int _pbwt_modulo) {
 	pbwt_depth = _pbwt_depth;
 	pbwt_modulo = _pbwt_modulo;
-	cond_states = vector < vector < int > > (n_hap - n_ref);		// Storage of states for each target_hap
+	cond_states = vector < vector < int > > (n_main_haps);		// Storage of states for each target_hap
 	pbwt_array = vector < int > (n_hap, 0);
 	pbwt_array_ref = vector < int > (n_ref, 0);
 	pbwt_indexes = vector < int > (n_main_haps, 0);
@@ -65,6 +65,7 @@ void haplotype_set::updatePositionalBurrowWheelerTransform() {
 	vector < bool > update_idx(n_main_haps, false);
 	vector < int > last_selected(n_main_haps*pbwt_depth*2, -1);	//to kept track of the last ones that were recently push_backed into cond_states
 	for (int e = 0 ; e < cond_states.size() ; e ++) cond_states[e].clear();
+
 	for (int l = 0 ; l < n_site ; l ++) {
 		// Building PBWT arrays
 		int u = 0, v = 0;
@@ -107,12 +108,13 @@ void haplotype_set::updatePositionalBurrowWheelerTransform() {
 		if (is_copy_site) {
 			// Build reverse indexing
 			std::copy(A_ref.begin(), A_ref.begin() +vs, pbwt_array_ref.begin()+us);
-			for (int h = 0 ; h < n_main_haps ; h ++) if (update_idx[h]) pbwt_indexes[h] += us;
+			//for (int h = 0 ; h < n_main_haps ; h ++) if (update_idx[h]) pbwt_indexes[h] += us;
 
 			// Selecting conditioning haplotypes
 			for (int htr = 0 ; htr < n_main_haps ; htr ++) {
 				int ac, o, c, hc = 0, a = H_opt_var.get(l,n_ref + htr);
 				int pbwt_idx = pbwt_indexes[htr];
+				if (update_idx[htr]) pbwt_idx+=us;
 
 				//Haplotypes that are *BEFORE* in PBWT array
 				o = 1; c = 0;
