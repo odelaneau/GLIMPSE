@@ -24,7 +24,6 @@
 #define _CALLER_H
 
 #include <utils/otools.h>
-#include <objects/hmm_parameters.h>
 
 #include <containers/genotype_set.h>
 #include <containers/haplotype_set.h>
