@@ -39,7 +39,7 @@ void genotype_reader::readInitializingSamples(string ftext) {
 	string buffer;
 	input_file fd (ftext);
 	while (getline(fd, buffer)) initializing_samples.insert(buffer);
-	vrb.wait("Subset of "+stb.str(initializing_samples.size()) + " samples used for initialization");
+	vrb.bullet("Subset of "+stb.str(initializing_samples.size()) + " samples used for initialization");
 	fd.close();
 }
 
