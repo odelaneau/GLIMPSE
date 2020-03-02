@@ -1,6 +1,6 @@
 #include "call_set_header.h"
 
-void call_set::readData(vector < string > & ftruth, vector < string > & festimated, vector < string > & ffrequencies, vector < string > & region) {
+void call_set::readData(vector < string > & ftruth, vector < string > & festimated, vector < string > & ffrequencies, vector < string > & region, string info_af) {
 	tac.clock();
 	int n_true_samples, n_esti_samples;
 	unsigned long int n_variants_all_chromosomes = 0;
@@ -63,12 +63,11 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 		}
 
 		unsigned long nvarianttot = 0, nvariantval = 0, nset = 0, ngenoval = 0, n_errors = 0;
-		int ngl_t, ndp_t, ngl_arr_t = 0, ndp_arr_t = 0, *gl_arr_t = NULL, *dp_arr_t = NULL, *an_arr_f = NULL, *ac_arr_f = NULL;
-		float *ds_arr_e = NULL, *gp_arr_e = NULL, float_swap;
+		int ngl_t, ndp_t, ngl_arr_t = 0, ndp_arr_t = 0, *gl_arr_t = NULL, *dp_arr_t = NULL;
+		float *af_ptr=NULL,*ds_arr_e = NULL, *gp_arr_e = NULL, float_swap;
 		int nds_e, nds_arr_e = 0;
-		int nan_f, nan_arr_f = 0;
-		int nac_f, nac_arr_f = 0;
-		int ngp_e, ngp_arr_e = 0;
+		float naf_f;
+		int naf_arr_f=0, ngp_e, ngp_arr_e = 0;
 		vector < double > PLs = vector < double > (3*N, 0.0f);
 		vector < float > DSs = vector < float > (N, 0.0f);
 		vector < float > GPs = vector < float > (3*N, 0.0f);
@@ -84,18 +83,17 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 				if (line_t->n_allele == 2 && line_e->n_allele == 2 && line_f->n_allele == 2) {
 					bcf_unpack(line_t, BCF_UN_STR);
 
-					nac_f = bcf_get_info_int32(sr->readers[2].header,line_f,"AC",&ac_arr_f, &nac_arr_f);
-					nan_f = bcf_get_info_int32(sr->readers[2].header,line_f,"AN",&an_arr_f, &nan_arr_f);
+				    naf_f = bcf_get_info_float(sr->readers[2].header, line_f, info_af.c_str(), &af_ptr, &naf_arr_f);
 					ngl_t = bcf_get_format_int32(sr->readers[0].header, line_t, "PL", &gl_arr_t, &ngl_arr_t);
 					ndp_t = bcf_get_format_int32(sr->readers[0].header, line_t, "DP", &dp_arr_t, &ndp_arr_t);
 					nds_e = bcf_get_format_float(sr->readers[1].header, line_e, "DS", &ds_arr_e, &nds_arr_e);
 					ngp_e = bcf_get_format_float(sr->readers[1].header, line_e, "GP", &gp_arr_e, &ngp_arr_e);
 					
 					bool has_validation = false;
-					if ((nan_f==1)&&(nac_f==1)&&(ngl_t==3*n_true_samples)&&(nds_e==n_esti_samples)&&(ngp_e==3*n_esti_samples)&&(ndp_t==n_true_samples)) {
+					if ((naf_f==1)&&(ngl_t==3*n_true_samples)&&(nds_e==n_esti_samples)&&(ngp_e==3*n_esti_samples)&&(ndp_t==n_true_samples)) {
 
 						// Meta data for variant
-						float af = ac_arr_f[0] * 1.0f / an_arr_f[0];
+						float af =  af_ptr[0];
 						bool flip = (af > 0.5);
 						float maf = min(af, 1.0f - af);
 						int grp_bin = -1;
@@ -191,8 +189,7 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 				}
 			}
 		}
-		free(ac_arr_f);
-		free(an_arr_f);
+		free(af_ptr);
 		free(gl_arr_t);
 		free(ds_arr_e);
 		free(gp_arr_e);

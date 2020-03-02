@@ -51,7 +51,7 @@ public:
 	int getCalibrationBin(float , float , float );
 
 	//
-	void readData(vector < string > &, vector < string > &, vector < string > &, vector < string > &);
+	void readData(vector < string > &, vector < string > &, vector < string > &, vector < string > &, string info_af);
 	void writeData(string);
 
 	//
