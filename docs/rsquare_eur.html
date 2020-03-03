@@ -156,7 +156,7 @@
 				        	return "";
 				      	},
 				      	label: function(item, data) {
-				        	var dataX = item.xLabel;
+				        	var dataX = Math.floor(item.xLabel*10000)/10000;
 				        	var dataY = item.yLabel;
 				        	return "MAF=" + dataX + "% : r2=" + dataY;
 				      	}
