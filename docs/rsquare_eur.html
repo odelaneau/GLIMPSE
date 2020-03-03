@@ -113,6 +113,9 @@
 							min: 0.007,
 							max: 50,
 							fontSize: 16,
+							autoSkip: false,
+		                    maxRotation: 0,
+		                    minRotation: 0,
 							userCallback: function(tick) {
 								var remain = tick / (Math.pow(10, Math.floor(Chart.helpers.log10(tick))));
 								if (remain === 1 || remain === 2 || remain === 5) {
@@ -137,6 +140,9 @@
 							min: 0.0,
 							max: 1.0,
 							fontSize: 16,
+							autoSkip: false,
+		                    maxRotation: 0,
+		                    minRotation: 0,
 							beginAtZero: true,
 						},
 						gridLines: {
