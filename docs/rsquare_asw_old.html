@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+		
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Low Coverage Caller</title>
+    
+    <!-- Bootstrap core CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap theme -->
+    <link href="css/bootstrap-theme.min.css" rel="stylesheet">
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <link href="css/ie10-viewport-bug-workaround.css" rel="stylesheet">
+    <!-- JQuery -->
+    <script type="text/javascript" src="script/jquery-1.12.4.min.js"></script>
+    <script type="text/javascript" src="script/bootstrap.min.js"></script>
+    <script type="text/javascript" src="script/docs.min.js"></script>
+    <!-- CanvasJS -->
+    <script type="text/javascript" src="script/canvasjs.min.js"></script>
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <script type="text/javascript" src="script/ie10-viewport-bug-workaround.js"></script>
+	<!-- Custom styles for this template -->
+    <link href="css/theme.css" rel="stylesheet">
+   
+    <script type="text/javascript">
+	window.onload = function () {
+		var data = [];
+		var axisLabels = [0.01,0.02,0.05,0.10,0.20,0.50,1.00,2.00,5.00,10.0,20.0,30.0,40.0,50.0], stripLines = [];
+		var chart = new CanvasJS.Chart("chartContainer", {
+			axisX: {
+				title:"Minor Allele frequency (%)",
+				titleFontSize: 20,
+				logarithmic: true,
+				labelFormatter: function(e) { return ""; },
+				stripLines: stripLines,
+				tickThickness: 0
+			},
+
+			axisY:{
+				title: "Imputation Performance (rsquared with truth)",
+				titleFontSize: 20,
+				gridColor: "lightgrey",
+				gridDashType: "dash",
+				labelFontSize: 15,
+				minimum: 0,
+				maximum: 1
+			},
+
+			data: data
+		});
+
+		//Function to update the chart on changing the checkbox status
+		var updateChart = function(url, name, checked, colo) {
+			var index = -1;
+			for (var i = 0; i < data.length; i++) {
+				if (data[i].name === name) {
+					index = i;
+					break;
+				}
+			}
+
+			if (checked) {
+				if (index === -1) {
+					$.getJSON(url, function(result) {
+						//
+						data.push({
+							type: "line",
+							dataPoints: result,
+							name: name,
+							visible: true,
+							color:colo
+						});
+						//
+						chart.render();
+					});
+				} else data[index].visible = true;
+			} else data[index].visible = false;
+			chart.render();
+		};
+
+		//---------CheckBox change events for LCC impute -------------
+		$('input[name=lccimpute01]').change(function() { updateChart("data/rsquare/ASW.impute.default.cov0.1.rsquare.grp.json", "lccimpute01", document.getElementById("lccimpute01").checked,  " #DCF0F8 "); });
+		$('input[name=lccimpute02]').change(function() { updateChart("data/rsquare/ASW.impute.default.cov0.2.rsquare.grp.json", "lccimpute02", document.getElementById("lccimpute02").checked, " #D1E9F5 "); });
+		$('input[name=lccimpute03]').change(function() { updateChart("data/rsquare/ASW.impute.default.cov0.3.rsquare.grp.json", "lccimpute03", document.getElementById("lccimpute03").checked, " #C6E3F2 "); });
+		$('input[name=lccimpute04]').change(function() { updateChart("data/rsquare/ASW.impute.default.cov0.4.rsquare.grp.json", "lccimpute04", document.getElementById("lccimpute04").checked, " #BCDDEF "); });
+		$('input[name=lccimpute05]').change(function() { updateChart("data/rsquare/ASW.impute.default.cov0.5.rsquare.grp.json", "lccimpute05", document.getElementById("lccimpute05").checked, " #B1D7EC "); });
+		$('input[name=lccimpute06]').change(function() { updateChart("data/rsquare/ASW.impute.default.cov0.6.rsquare.grp.json", "lccimpute06", document.getElementById("lccimpute06").checked, " #A7D0E9 "); });
+		$('input[name=lccimpute08]').change(function() { updateChart("data/rsquare/ASW.impute.default.cov0.8.rsquare.grp.json", "lccimpute08", document.getElementById("lccimpute08").checked, " #9CCAE6 "); });
+		$('input[name=lccimpute10]').change(function() { updateChart("data/rsquare/ASW.impute.default.cov1.0.rsquare.grp.json", "lccimpute10", document.getElementById("lccimpute10").checked, " #92C4E3 "); });
+		$('input[name=lccimpute20]').change(function() { updateChart("data/rsquare/ASW.impute.default.cov2.0.rsquare.grp.json", "lccimpute20", document.getElementById("lccimpute20").checked, " #87BEE0 "); });
+		$('input[name=lccimpute30]').change(function() { updateChart("data/rsquare/ASW.impute.default.cov3.0.rsquare.grp.json", "lccimpute30", document.getElementById("lccimpute30").checked, " #79B5DC "); });
+		$('input[name=lccimpute40]').change(function() { updateChart("data/rsquare/ASW.impute.default.cov4.0.rsquare.grp.json", "lccimpute40", document.getElementById("lccimpute40").checked, " #6BADD8 "); });
+		$('input[name=lccimpute80]').change(function() { updateChart("data/rsquare/ASW.impute.default.cov8.0.rsquare.grp.json", "lccimpute80", document.getElementById("lccimpute80").checked, " #5CA4D4 "); });
+	
+		//---------CheckBox change events for SNP arrays TBD -------------
+
+		// affymetrix
+		$('input[name=Axiom_UKB_WCSGna34annot]').change(function() { updateChart("data/rsquare/ASW.beagle5.Axiom_UKB_WCSG.na34.annot-b38.rsquare.grp.json", "Axiom_UKB_WCSGna34annot", document.getElementById("Axiom_UKB_WCSGna34annot").checked, " #C7E0B9 "); });
+		$('input[name=GenomeWideSNP_5na32annot]').change(function() { updateChart("data/rsquare/ASW.beagle5.GenomeWideSNP_5.na32.annot-b38.rsquare.grp.json", "GenomeWideSNP_5na32annot", document.getElementById("GenomeWideSNP_5na32annot").checked, " #B4D7A7 "); });
+		$('input[name=GenomeWideSNP_6na33annot]').change(function() { updateChart("data/rsquare/ASW.beagle5.GenomeWideSNP_6.na33.annot-b38.rsquare.grp.json", "GenomeWideSNP_6na33annot", document.getElementById("GenomeWideSNP_6na33annot").checked, " #A2CE95 "); });
+
+
+		// low density
+		$('input[name=immuno_beadchip_11419691_b]').change(function() { updateChart("data/rsquare/ASW.beagle5.immuno_beadchip_11419691_b-b38.rsquare.grp.json", "immuno_beadchip_11419691_b", document.getElementById("immuno_beadchip_11419691_b").checked, " #B6EFB6 "); });
+		$('input[name=HumanExome-12v1-2_A]').change(function() { updateChart("data/rsquare/ASW.beagle5.HumanExome-12v1-2_A-b38.rsquare.grp.json", "HumanExome-12v1-2_A", document.getElementById("HumanExome-12v1-2_A").checked, " #A8E1B1 "); });
+		$('input[name=InfiniumImmunoArray-24v2-0_A]').change(function() { updateChart("data/rsquare/ASW.beagle5.InfiniumImmunoArray-24v2-0_A-b38.rsquare.grp.json", "InfiniumImmunoArray-24v2-0_A", document.getElementById("InfiniumImmunoArray-24v2-0_A").checked, " #9AD3AD "); });
+		$('input[name=humancytosnp-12v2-1_l]').change(function() { updateChart("data/rsquare/ASW.beagle5.humancytosnp-12v2-1_l-b38.source.rsquare.grp.json", "humancytosnp-12v2-1_l", document.getElementById("humancytosnp-12v2-1_l").checked, " #8DC6A9 "); });
+		$('input[name=HumanCore-12-v1-0-B]').change(function() { updateChart("data/rsquare/ASW.beagle5.HumanCore-12-v1-0-B-b38.rsquare.grp.json", "HumanCore-12-v1-0-B", document.getElementById("HumanCore-12-v1-0-B").checked, " #7EB7A4 "); });
+		$('input[name=HumanHap300v2_A]').change(function() { updateChart("data/rsquare/ASW.beagle5.HumanHap300v2_A-b38.rsquare.grp.json", "HumanHap300v2_A", document.getElementById("HumanHap300v2_A").checked, " #6CA49E "); });
+		$('input[name=HumanCNV370-Quadv3_C]').change(function() { updateChart("data/rsquare/ASW.beagle5.HumanCNV370-Quadv3_C-b38.rsquare.grp.json", "HumanCNV370-Quadv3_C", document.getElementById("HumanCNV370-Quadv3_C").checked, " #5A9298 "); });
+		$('input[name=OncoArray-500K-C]').change(function() { updateChart("data/rsquare/ASW.beagle5.OncoArray-500K-C-b38.rsquare.grp.json", "OncoArray-500K-C", document.getElementById("OncoArray-500K-C").checked, " #42708A "); });
+
+
+
+		// Medium density
+		$('input[name=HumanCoreExome-12-v1-1-C]').change(function() { updateChart("data/rsquare/ASW.beagle5.HumanCoreExome-12-v1-1-C-b38.rsquare.grp.json", "HumanCoreExome-12-v1-1-C", document.getElementById("HumanCoreExome-12-v1-1-C").checked, " #FFE1CC "); });
+		$('input[name=HumanCoreExome-24v1-0_A]').change(function() { updateChart("data/rsquare/ASW.beagle5.HumanCoreExome-24v1-0_A-b38.rsquare.grp.json", "HumanCoreExome-24v1-0_A", document.getElementById("HumanCoreExome-24v1-0_A").checked, " #FFD9BF "); });
+		$('input[name=InfiniumCoreExome-24v1-3_A1]').change(function() { updateChart("data/rsquare/ASW.beagle5.InfiniumCoreExome-24v1-3_A1-b38.rsquare.grp.json", "InfiniumCoreExome-24v1-3_A1", document.getElementById("InfiniumCoreExome-24v1-3_A1").checked, " #FFD1B2 "); });
+		$('input[name=HumanHap550v3_A]').change(function() { updateChart("data/rsquare/ASW.beagle5.HumanHap550v3_A-b38.rsquare.grp.json", "HumanHap550v3_A", document.getElementById("HumanHap550v3_A").checked, " #FFC9A5 "); });
+		$('input[name=PsychArray-B]').change(function() { updateChart("data/rsquare/ASW.beagle5.PsychArray-B-b38.rsquare.grp.json", "PsychArray-B", document.getElementById("PsychArray-B").checked, " #FFC198 "); });
+		$('input[name=InfiniumPsychArray-24v1-3_A1]').change(function() { updateChart("data/rsquare/ASW.beagle5.InfiniumPsychArray-24v1-3_A1-b38.rsquare.grp.json", "InfiniumPsychArray-24v1-3_A1", document.getElementById("InfiniumPsychArray-24v1-3_A1").checked, " #FFB98B "); });
+		$('input[name=human610-quadv1_h]').change(function() { updateChart("data/rsquare/ASW.beagle5.human610-quadv1_h-b38.rsquare.grp.json", "human610-quadv1_h", document.getElementById("human610-quadv1_h").checked, " #FFB17E "); });
+		$('input[name=GSA-24v2-0_A1]').change(function() { updateChart("data/rsquare/ASW.beagle5.GSA-24v2-0_A1-b38.rsquare.grp.json", "GSA-24v2-0_A1", document.getElementById("GSA-24v2-0_A1").checked, " #FFA971 "); });
+		$('input[name=human660w-quad_v1_h]').change(function() { updateChart("data/rsquare/ASW.beagle5.human660w-quad_v1_h-b38.rsquare.grp.json", "human660w-quad_v1_h", document.getElementById("human660w-quad_v1_h").checked, " #FFA164 "); });
+		$('input[name=Human670-QuadCustom_v1_A]').change(function() { updateChart("data/rsquare/ASW.beagle5.Human670-QuadCustom_v1_A-b38.rsquare.grp.json", "Human670-QuadCustom_v1_A", document.getElementById("Human670-QuadCustom_v1_A").checked, " #FF9752 "); });
+		$('input[name=HumanHap650Yv3_A]').change(function() { updateChart("data/rsquare/ASW.beagle5.HumanHap650Yv3_A-b38.rsquare.grp.json", "HumanHap650Yv3_A", document.getElementById("HumanHap650Yv3_A").checked, " #FF8D41 "); });
+		$('input[name=InfiniumOmniExpress-24v1-2_A1]').change(function() { updateChart("data/rsquare/ASW.beagle5.InfiniumOmniExpress-24v1-2_A1-b38.rsquare.grp.json", "InfiniumOmniExpress-24v1-2_A1", document.getElementById("InfiniumOmniExpress-24v1-2_A1").checked, " #FF832F "); });
+		$('input[name=HumanOmniExpress-12v1_J]').change(function() { updateChart("data/rsquare/ASW.beagle5.HumanOmniExpress-12v1_J-b38.rsquare.grp.json", "HumanOmniExpress-12v1_J", document.getElementById("HumanOmniExpress-12v1_J").checked, " #FF781E "); });
+		$('input[name=OmniExpressExome-8v1-1_B]').change(function() { updateChart("data/rsquare/ASW.beagle5.OmniExpressExome-8v1-1_B-b38.rsquare.grp.json", "OmniExpressExome-8v1-1_B", document.getElementById("OmniExpressExome-8v1-1_B").checked, " #FF6E0C "); });
+		$('input[name=InfiniumOmniExpressExome-8v1-6_A1]').change(function() { updateChart("data/rsquare/ASW.beagle5.InfiniumOmniExpressExome-8v1-6_A1-b38.rsquare.grp.json", "InfiniumOmniExpressExome-8v1-6_A1",  document.getElementById("InfiniumOmniExpressExome-8v1-6_A1").checked, " #F56300 "); });
+		$('input[name=HumanOmniExpressExome-8-v1-2-B]').change(function() { updateChart("data/rsquare/ASW.beagle5.HumanOmniExpressExome-8-v1-2-B-b38.rsquare.grp.json", "HumanOmniExpressExome-8-v1-2-B", document.getElementById("HumanOmniExpressExome-8-v1-2-B").checked, " #D05400 "); });
+		$('input[name=humanomni1-quad_v1-0-multi_h]').change(function() { updateChart("data/rsquare/ASW.beagle5.humanomni1-quad_v1-0-multi_h-b38.rsquare.grp.json", "humanomni1-quad_v1-0-multi_h", document.getElementById("humanomni1-quad_v1-0-multi_h").checked, ' #AB4500 ' ); });
+		$('input[name=HumanOmni1S-8v1_H]').change(function() { updateChart("data/rsquare/ASW.beagle5.HumanOmni1S-8v1_H-b38.rsquare.grp.json", "HumanOmni1S-8v1_H", document.getElementById("HumanOmni1S-8v1_H").checked, ' #863600 '); });
+		$('input[name=Human1-2M-DuoCustom_v1_A]').change(function() { updateChart("data/rsquare/ASW.beagle5.Human1-2M-DuoCustom_v1_A-b38.rsquare.grp.json", "Human1-2M-DuoCustom_v1_A", document.getElementById("Human1-2M-DuoCustom_v1_A").checked, ' #612700 '); });
+
+
+		// High density
+		$('input[name=Multi-EthnicGlobal_A1]').change(function() { updateChart("data/rsquare/ASW.beagle5.Multi-EthnicGlobal_A1-b38.rsquare.grp.json", "Multi-EthnicGlobal_A1", document.getElementById("Multi-EthnicGlobal_A1").checked, " #FFC6F5 "); });
+		$('input[name=InfiniumOmni2-5-8v1-3_A1]').change(function() { updateChart("data/rsquare/ASW.beagle5.InfiniumOmni2-5-8v1-3_A1-b38.rsquare.grp.json", "InfiniumOmni2-5-8v1-3_A1", document.getElementById("InfiniumOmni2-5-8v1-3_A1").checked, " #FFABEE "); });
+		$('input[name=InfiniumOmni2-5-8v1-4_A1]').change(function() { updateChart("data/rsquare/ASW.beagle5.InfiniumOmni2-5-8v1-4_A1-b38.rsquare.grp.json", "InfiniumOmni2-5-8v1-4_A1", document.getElementById("InfiniumOmni2-5-8v1-4_A1").checked, " #FF91E7 "); });
+		$('input[name=InfiniumOmni2-5Exome-8v1-3_A1]').change(function() { updateChart("data/rsquare/ASW.beagle5.InfiniumOmni2-5Exome-8v1-3_A1-b38.rsquare.grp.json", "InfiniumOmni2-5Exome-8v1-3_A1", document.getElementById("InfiniumOmni2-5Exome-8v1-3_A1").checked, " #FF76E0 "); });
+		$('input[name=InfiniumOmni5-4v1-2_A1]').change(function() { updateChart("data/rsquare/ASW.beagle5.InfiniumOmni5-4v1-2_A1-b38.rsquare.grp.json", "InfiniumOmni5-4v1-2_A1", document.getElementById("InfiniumOmni5-4v1-2_A1").checked, " #FF59D9 "); });
+		$('input[name=InfiniumOmni5Exome-4v1-3_A1]').change(function() { updateChart("data/rsquare/ASW.beagle5.InfiniumOmni5Exome-4v1-3_A1-b38.rsquare.grp.json", "InfiniumOmni5Exome-4v1-3_A1", document.getElementById("InfiniumOmni5Exome-4v1-3_A1").checked, " #FF35D0 "); });
+	
+		// DEFAULT CHECKS
+		for(var i = 0; i < axisLabels.length; i++) {
+			stripLines.push({
+				value: axisLabels[i],
+				label: axisLabels[i],
+				thickness: 1,
+				lineDashType: "dash",
+				labelPlacement: "outside",
+				labelFontColor: "black",
+				labelFontSize: 15,
+				color: "lightgrey",
+				labelBackgroundColor: "transparent"
+			});              
+		}
+		updateChart("data/rsquare/ASW.impute.default.cov1.0.rsquare.grp.json", "lccimpute10", document.getElementById("lccimpute10").checked, " #92C4E3 ");							//1x
+		updateChart("data/rsquare/ASW.beagle5.Axiom_UKB_WCSG.na34.annot-b38.rsquare.grp.json", "Axiom_UKB_WCSGna34annot", document.getElementById("Axiom_UKB_WCSGna34annot").checked, '#C7E0B9');		//UKB
+		updateChart("data/rsquare/ASW.beagle5.GSA-24v2-0_A1-b38.rsquare.grp.json", "GSA-24v2-0_A1", document.getElementById("GSA-24v2-0_A1").checked, '#FFA971');						//GSA
+		updateChart("data/rsquare/ASW.beagle5.InfiniumOmni2-5-8v1-4_A1-b38.rsquare.grp.json", "InfiniumOmni2-5-8v1-4_A1", document.getElementById("InfiniumOmni2-5-8v1-4_A1").checked, ' #FF91E7 ');		//OMNI2.5
+	
+		chart.render();
+	}
+	</script>
+    
+</head>
+
+<body>
+
+	<!-- NAVBAR -->
+	<nav class="navbar navbar-inverse navbar-fixed-top">
+	<div class="container">
+		<div class="navbar-header">
+			<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+				<span class="sr-only">Toggle navigation</span>
+				<span class="icon-bar"></span>
+				<span class="icon-bar"></span>
+				<span class="icon-bar"></span>
+			</button>
+			<a class="navbar-brand" href="index.html">LCC</a>
+		</div>
+		
+		<div id="navbar" class="navbar-collapse collapse">
+			<ul class="nav navbar-nav">
+				<li><a href="index.html">Home</a></li>
+				<li class="dropdown">
+              		<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Documentation<span class="caret"></span></a>
+              		<ul class="dropdown-menu">
+              			<li><a href="installation.html">LCC installation</a></li>
+                		<li><a href="overview.html">LCC overview</a></li>
+                		<li role="separator" class="divider"></li>
+                		<li class="dropdown-header">LCC modes</li>
+                		<li><a href="chunk.html">Split the genome into chunks</a></li>
+                		<li><a href="impute.html">Impute/Phase a given chunk</a></li>
+                		<li><a href="ligate.html">Ligate chunks together</a></li>
+                		<li><a href="sample.html">Sample haplotypes</a></li>
+              		</ul>
+            	</li>
+            	<li class="dropdown">
+              		<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Benchmark<span class="caret"></span></a>
+              		<ul class="dropdown-menu">
+                		<li><a href="rsquare_eur.html">Rsquare EUR</a></li>
+                		<li><a href="rsquare_asw.html">Rsquare ASW</a></li>
+              		</ul>
+            	</li>
+            	<li><a href="template.html">Template</a></li>
+          	</ul>
+        </div><!--/.nav-collapse -->
+	</div>
+    </nav>
+
+ 
+    <div class="container theme-showcase" role="main">
+    
+	    <div class="page-header">
+	    	<h1>Benckmark on 61 African-American samples</h1>
+		</div>
+		
+		
+		<!-- PLOTTING area -->
+		<div id="chartContainer" style="height: 500px; width: 1000px;"></div>
+		<br>
+	
+		<!-- CONTROL panel -->
+		<div style="width: 1000px;">
+			<div class="col-md-2 col-xs-12">
+				<fieldset>
+					<legend>Low coverage imputation (LCC)</legend>
+					<input type="checkbox" name="lccimpute01" id="lccimpute01" style="box-shadow: 0 0 0 3px  #DCF0F8 " ><label><span style="margin-right:0.5em; margin-left:0.5em" />0.1x coverage</label><br>
+					<input type="checkbox" name="lccimpute02" id="lccimpute02" style="box-shadow: 0 0 0 3px  #D1E9F5 "><label><span style="margin-right:0.5em; margin-left:0.5em" />0.2x coverage</label><br>
+					<input type="checkbox" name="lccimpute03" id="lccimpute03" style="box-shadow: 0 0 0 3px  #C6E3F2 "><label><span style="margin-right:0.5em; margin-left:0.5em" />0.3x coverage</label><br>
+					<input type="checkbox" name="lccimpute04" id="lccimpute04" style="box-shadow: 0 0 0 3px  #BCDDEF "><label><span style="margin-right:0.5em; margin-left:0.5em" />0.4x coverage</label><br>
+					<input type="checkbox" name="lccimpute05" id="lccimpute05" style="box-shadow: 0 0 0 3px  #B1D7EC "><label><span style="margin-right:0.5em; margin-left:0.5em" />0.5x coverage</label><br>
+					<input type="checkbox" name="lccimpute06" id="lccimpute06" style="box-shadow: 0 0 0 3px  #A7D0E9 "><label><span style="margin-right:0.5em; margin-left:0.5em" />0.6x coverage</label><br>
+					<input type="checkbox" name="lccimpute08" id="lccimpute08" style="box-shadow: 0 0 0 3px  #9CCAE6 "><label><span style="margin-right:0.5em; margin-left:0.5em" />0.8x coverage</label><br>
+					<input type="checkbox" name="lccimpute10" id="lccimpute10"  style="box-shadow: 0 0 0 3px  #92C4E3 " checked><label><span style="margin-right:0.5em; margin-left:0.5em" />1x coverage</label><br>
+					<input type="checkbox" name="lccimpute20" id="lccimpute20" style="box-shadow: 0 0 0 3px  #87BEE0 "><label><span style="margin-right:0.5em; margin-left:0.5em" />2x coverage</label><br>
+					<input type="checkbox" name="lccimpute30" id="lccimpute30" style="box-shadow: 0 0 0 3px  #79B5DC "><label><span style="margin-right:0.5em; margin-left:0.5em" />3x coverage</label><br>
+					<input type="checkbox" name="lccimpute40" id="lccimpute40" style="box-shadow: 0 0 0 3px  #6BADD8 "><label><span style="margin-right:0.5em; margin-left:0.5em" />4x coverage</label><br>
+					<input type="checkbox" name="lccimpute80" id="lccimpute80" style="box-shadow: 0 0 0 3px  #5CA4D4 "><label><span style="margin-right:0.5em; margin-left:0.5em" />8x coverage</label><br>
+				</fieldset>
+			</div>
+			<div class="col-md-5 col-xs-12">
+				<fieldset>
+					<legend>Illumina medium density arrays (500K &lt; N &lt; 1.5M)</legend>
+					<input type="checkbox" name="HumanCoreExome-12-v1-1-C" id="HumanCoreExome-12-v1-1-C" style="box-shadow: 0 0 0 3px  #FFE1CC " ><label><span style="margin-right:0.5em; margin-left:0.5em" />Human Core Exome v1.1 [527K]</label><br>
+					<input type="checkbox" name="HumanCoreExome-24v1-0_A" id="HumanCoreExome-24v1-0_A" style="box-shadow: 0 0 0 3px  #FFD9BF " ><label><span style="margin-right:0.5em; margin-left:0.5em" />Human Code Exome v1.0 [532K]</label><br>
+					<input type="checkbox" name="InfiniumCoreExome-24v1-3_A1" id="InfiniumCoreExome-24v1-3_A1" style="box-shadow: 0 0 0 3px  #FFD1B2 " ><label><span style="margin-right:0.5em; margin-left:0.5em" />Infinium Core Exome v1.3 [535K]</label><br>
+					<input type="checkbox" name="HumanHap550v3_A" id="HumanHap550v3_A" style="box-shadow: 0 0 0 3px  #FFC9A5 " ><label><span style="margin-right:0.5em; margin-left:0.5em" />Human Hap 550 v3 [547K]</label><br>
+					<input type="checkbox" name="PsychArray-B" id="PsychArray-B" style="box-shadow: 0 0 0 3px  #FFC198 " ><label><span style="margin-right:0.5em; margin-left:0.5em" />Psych Array [556K]</label><br>
+					<input type="checkbox" name="InfiniumPsychArray-24v1-3_A1" id="InfiniumPsychArray-24v1-3_A1" style="box-shadow: 0 0 0 3px  #FFB98B " ><label><span style="margin-right:0.5em; margin-left:0.5em" />Infinium Psych Array v1.3 [578K]</label><br>
+					<input type="checkbox" name="human610-quadv1_h" id="human610-quadv1_h" style="box-shadow: 0 0 0 3px  #FFB17E " ><label><span style="margin-right:0.5em; margin-left:0.5em" />Human 610 - Quad v1 [596K]</label><br>
+					<input type="checkbox" name="GSA-24v2-0_A1" id="GSA-24v2-0_A1" checked style="box-shadow: 0 0 0 3px  #FFA971 " ><label><span style="margin-right:0.5em; margin-left:0.5em" />GSA v2.0 [630K]</label><br>
+					<input type="checkbox" name="human660w-quad_v1_h" id="human660w-quad_v1_h" style="box-shadow: 0 0 0 3px  #FFA164 " ><label><span style="margin-right:0.5em; margin-left:0.5em" />Human 660W - Quad v1 [638K]</label><br>
+					<input type="checkbox" name="Human670-QuadCustom_v1_A" id="Human670-QuadCustom_v1_A" style="box-shadow: 0 0 0 3px  #FF9752 " ><label><span style="margin-right:0.5em; margin-left:0.5em" />Human 670 - Quad Custom v1 [643K]</label><br>
+					<input type="checkbox" name="HumanHap650Yv3_A" id="HumanHap650Yv3_A" style="box-shadow: 0 0 0 3px  #FF8D41 " ><label><span style="margin-right:0.5em; margin-left:0.5em" />Human Hap 650Y v3 [644K]</label><br>
+					<input type="checkbox" name="InfiniumOmniExpress-24v1-2_A1" id="InfiniumOmniExpress-24v1-2_A1" style="box-shadow: 0 0 0 3px  #FF832F " ><label><span style="margin-right:0.5em; margin-left:0.5em" />Infinium Omni Express v1.2 [694K]</label><br>
+					<input type="checkbox" name="HumanOmniExpress-12v1_J" id="HumanOmniExpress-12v1_J" style="box-shadow: 0 0 0 3px  #FF781E " ><label><span style="margin-right:0.5em; margin-left:0.5em" />Human Omni Express v1 [710K]</label><br>
+					<input type="checkbox" name="OmniExpressExome-8v1-1_B" id="OmniExpressExome-8v1-1_B" style="box-shadow: 0 0 0 3px   #FF6E0C" ><label><span style="margin-right:0.5em; margin-left:0.5em" />Omni Express Exome v1.1 [933K]</label><br>
+					<input type="checkbox" name="InfiniumOmniExpressExome-8v1-6_A1" id="InfiniumOmniExpressExome-8v1-6_A1" style="box-shadow: 0 0 0 3px   #F56300" ><label><span style="margin-right:0.5em; margin-left:0.5em" />Infinium Omni Express Exome v1.6 [937K]</label><br>
+					<input type="checkbox" name="HumanOmniExpressExome-8-v1-2-B" id="HumanOmniExpressExome-8-v1-2-B" style="box-shadow: 0 0 0 3px  #D05400 " ><label><span style="margin-right:0.5em; margin-left:0.5em" />Human Omni Express Exome v1.2 [939K]</label><br>
+					<input type="checkbox" name="humanomni1-quad_v1-0-multi_h" id="humanomni1-quad_v1-0-multi_h" style="box-shadow: 0 0 0 3px   #AB4500" ><label><span style="margin-right:0.5em; margin-left:0.5em" />Human Omni1 - Quad v1 [1,072K]</label><br>
+					<input type="checkbox" name="HumanOmni1S-8v1_H" id="HumanOmni1S-8v1_H" style="box-shadow: 0 0 0 3px   #863600" ><label><span style="margin-right:0.5em; margin-left:0.5em" />Human Omni 1S v1 [1,159K]</label><br>
+					<input type="checkbox" name="Human1-2M-DuoCustom_v1_A" id="Human1-2M-DuoCustom_v1_A" style="box-shadow: 0 0 0 3px  #612700 " ><label><span style="margin-right:0.5em; margin-left:0.5em" />Human 1.2M - Duo Custom v1 [1,191K]</label><br>
+	
+				</fieldset>
+			</div>
+			<div class="col-md-5 col-xs-12">
+				<fieldset>
+					<legend>Illumina low density arrays (N &lt; 500K)</legend>
+					<input type="checkbox" name="immuno_beadchip_11419691_b" id="immuno_beadchip_11419691_b" style="box-shadow: 0 0 0 3px  #B6EFB6 "><label><span style="margin-right:0.5em; margin-left:0.5em" />Immuno Beadchip [192K]</label><br>
+					<input type="checkbox" name="HumanExome-12v1-2_A" id="HumanExome-12v1-2_A" style="box-shadow: 0 0 0 3px  #A8E1B1 "> <label><span style="margin-right:0.5em; margin-left:0.5em" />Human Exome v1.2 [239K]</label><br>
+					<input type="checkbox" name="InfiniumImmunoArray-24v2-0_A" id="InfiniumImmunoArray-24v2-0_A" style="box-shadow: 0 0 0 3px  #9AD3AD "> <label><span style="margin-right:0.5em; margin-left:0.5em" />Infinium Immuno Array v2 [250K]</label><br>
+					<input type="checkbox" name="humancytosnp-12v2-1_l" id="humancytosnp-12v2-1_l" style="box-shadow: 0 0 0 3px  #8DC6A9 "> <label><span style="margin-right:0.5em; margin-left:0.5em" />Human Cyto SNP [276K]</label><br>
+					<input type="checkbox" name="HumanCore-12-v1-0-B" id="HumanCore-12-v1-0-B" style="box-shadow: 0 0 0 3px  #7EB7A4 "><label><span style="margin-right:0.5em; margin-left:0.5em" />Human Core v1 [289K]</label><br>
+					<input type="checkbox" name="HumanHap300v2_A" id="HumanHap300v2_A" style="box-shadow: 0 0 0 3px  #6CA49E "> <label><span style="margin-right:0.5em; margin-left:0.5em" />Human Hap 300 v2 [309K]</label><br>
+					<input type="checkbox" name="HumanCNV370-Quadv3_C" id="HumanCNV370-Quadv3_C" style="box-shadow: 0 0 0 3px  #5A9298 "> <label><span style="margin-right:0.5em; margin-left:0.5em" />Human CNV 370 - Quad v3 [358K]</label><br>
+					<input type="checkbox" name="OncoArray-500K-C" id="OncoArray-500K-C" style="box-shadow: 0 0 0 3px  #42708A "><label><span style="margin-right:0.5em; margin-left:0.5em" />Onco Array - 500K [484K]</label><br>
+				</fieldset>
+				<fieldset>
+					<legend>Illumina high density arrays (1.5M &lt; N)</legend>
+					<input type="checkbox" name="Multi-EthnicGlobal_A1" id="Multi-EthnicGlobal_A1" style="box-shadow: 0 0 0 3px  #FFC6F5 "><label><span style="margin-right:0.5em; margin-left:0.5em" />Multi-Ethnic Global [1,719K]</label><br>
+					<input type="checkbox" name="InfiniumOmni2-5-8v1-3_A1" id="InfiniumOmni2-5-8v1-3_A1" style="box-shadow: 0 0 0 3px  #FFABEE "><label><span style="margin-right:0.5em; margin-left:0.5em" />Infinium Omni2.5 v1.3 [2,315K]</label><br>
+					<input type="checkbox" name="InfiniumOmni2-5-8v1-4_A1" id="InfiniumOmni2-5-8v1-4_A1" checked style="box-shadow: 0 0 0 3px  #FF91E7 "><label><span style="margin-right:0.5em; margin-left:0.5em" />Infinium Omni2.5 v1.4 [2,315K]</label><br>
+					<input type="checkbox" name="InfiniumOmni2-5Exome-8v1-3_A1" id="InfiniumOmni2-5Exome-8v1-3_A1" style="box-shadow: 0 0 0 3px  #FF76E0 "><label><span style="margin-right:0.5em; margin-left:0.5em" />Infinium Omni2.5 Exome v1.3 [2,549K]</label><br>
+					<input type="checkbox" name="InfiniumOmni5-4v1-2_A1" id="InfiniumOmni5-4v1-2_A1" style="box-shadow: 0 0 0 3px  #FF59D9 "><label><span style="margin-right:0.5em; margin-left:0.5em" />Infinium Omni5 v1.2 [4,204K]</label><br>
+					<input type="checkbox" name="InfiniumOmni5Exome-4v1-3_A1" id="InfiniumOmni5Exome-4v1-3_A1" style="box-shadow: 0 0 0 3px  #FF35D0 "><label><span style="margin-right:0.5em; margin-left:0.5em" />Infinium Omni5 Exome v1.3 [4,432K]</label><br>
+				</fieldset>
+				<fieldset>
+					<legend>Affymetrix arrays</legend>
+					<input type="checkbox" name="Axiom_UKB_WCSGna34annot" id="Axiom_UKB_WCSGna34annot" checked style="box-shadow: 0 0 0 3px  #C7E0B9 "><label><span style="margin-right:0.5em; margin-left:0.5em" />UK Biobank Axiom [823K]</label><br>
+					<input type="checkbox" name="GenomeWideSNP_5na32annot" id="GenomeWideSNP_5na32annot" style="box-shadow: 0 0 0 3px  #B4D7A7 "> <label><span style="margin-right:0.5em; margin-left:0.5em" />Genome-Wide SNP v5 [431K]</label><br>
+					<input type="checkbox" name="GenomeWideSNP_6na33annot" id="GenomeWideSNP_6na33annot" style="box-shadow: 0 0 0 3px  #A2CE95 "> <label><span style="margin-right:0.5em; margin-left:0.5em" />Genome-Wide SNP v6 [889K]</label><br>
+				</fieldset>
+			</div>
+		</div>
+
+    </div> <!-- /container -->
+    
+ 	<footer class="footer">
+    	<div class="container">
+        	<span class="text-muted">Copyright © 2020 Olivier Delaneau, University of Lausanne | All Rights Reserved</span>
+      	</div>
+	</footer>
+</body>
+    
