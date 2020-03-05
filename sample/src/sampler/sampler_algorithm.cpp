@@ -142,6 +142,7 @@ void sampler::sample() {
 				gt_fields[2*i+0] = bcf_gt_phased(a0);
 				gt_fields[2*i+1] = bcf_gt_phased(a1);
 			}
+			bcf_update_genotypes(hdr, line, gt_fields, nsamples*2);
 		} else {
 			for (int i = 0 ; i  < nsamples ; i ++) {
 				bool a0 = GET(hs_fields[i], 2*sampled_conf[i]+0);
