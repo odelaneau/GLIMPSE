@@ -114,9 +114,9 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 							int idx = mappingT[i];
 							if (idx >= 0) {
 								if (gl_arr_t[3*i+0] != bcf_int32_missing && gl_arr_t[3*i+1] != bcf_int32_missing && gl_arr_t[3*i+2] != bcf_int32_missing) {
-									PLs[3*idx+0] = unphred[gl_arr_t[3*i+0]];
-									PLs[3*idx+1] = unphred[gl_arr_t[3*i+1]];
-									PLs[3*idx+2] = unphred[gl_arr_t[3*i+2]];
+									PLs[3*idx+0] = unphred[min(gl_arr_t[3*i+0], 255)];
+									PLs[3*idx+1] = unphred[min(gl_arr_t[3*i+1], 255)];
+									PLs[3*idx+2] = unphred[min(gl_arr_t[3*i+2], 255)];
 									if (dp_arr_t[i]!= bcf_int32_missing) DPs[idx] = dp_arr_t[i];
 									else DPs[idx] = 0;
 									if (flip) { float_swap = PLs[3*idx+2]; PLs[3*idx+2] = PLs[3*idx+0]; PLs[3*idx+0] = float_swap; }

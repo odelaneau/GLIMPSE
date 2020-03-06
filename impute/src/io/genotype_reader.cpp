@@ -136,9 +136,9 @@ void genotype_reader::readGenotypes(string funphased, string freference) {
 				if (ngl_main == 3 * n_main_samples) {
 					for(int i = 0 ; i < 3 * n_main_samples ; i += 3) {
 						if (gl_arr_main[i+0] != bcf_int32_missing && gl_arr_main[i+1] != bcf_int32_missing && gl_arr_main[i+2] != bcf_int32_missing) {
-							G.vecG[i/3]->GL[3*i_variant+0] = (unsigned char)gl_arr_main[i+0];
-							G.vecG[i/3]->GL[3*i_variant+1] = (unsigned char)gl_arr_main[i+1];
-							G.vecG[i/3]->GL[3*i_variant+2] = (unsigned char)gl_arr_main[i+2];
+							G.vecG[i/3]->GL[3*i_variant+0] = (unsigned char)min(gl_arr_main[i+0], 255);
+							G.vecG[i/3]->GL[3*i_variant+1] = (unsigned char)min(gl_arr_main[i+1], 255);
+							G.vecG[i/3]->GL[3*i_variant+2] = (unsigned char)min(gl_arr_main[i+2], 255);
 						}
 					}
 				}
