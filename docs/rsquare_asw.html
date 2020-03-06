@@ -43,9 +43,9 @@
 		}
 
 		//---------CheckBox change events for SNP arrays -------------
-		$('input[name=Axiom_UKB_WCSGna34annot]').change(function() { updateData("data/rsquare/ASW.beagle5.Axiom_UKB_WCSG.na34.annot-b38.rsquare.grp.json","Axiom_UKB_WCSGna34annot", document.getElementById("Axiom_UKB_WCSGna34annot").checked,"#C7E0B9"); });
-		$('input[name=GenomeWideSNP_5na32annot]').change(function() { updateData("data/rsquare/ASW.beagle5.GenomeWideSNP_5.na32.annot-b38.rsquare.grp.json","GenomeWideSNP_5na32annot", document.getElementById("GenomeWideSNP_5na32annot").checked,"#B4D7A7"); });
-		$('input[name=GenomeWideSNP_6na33annot]').change(function() { updateData("data/rsquare/ASW.beagle5.GenomeWideSNP_6.na33.annot-b38.rsquare.grp.json","GenomeWideSNP_6na33annot", document.getElementById("GenomeWideSNP_6na33annot").checked,"#A2CE95"); });
+		$('input[name=Axiom_UKB_WCSGna34annot]').change(function() { updateData("data/rsquare/ASW.beagle5.Axiom_UKB_WCSG.na34.annot-b38.rsquare.grp.json","Axiom_UKB_WCSGna34annot", document.getElementById("Axiom_UKB_WCSGna34annot").checked,"#e6e600"); });
+		$('input[name=GenomeWideSNP_5na32annot]').change(function() { updateData("data/rsquare/ASW.beagle5.GenomeWideSNP_5.na32.annot-b38.rsquare.grp.json","GenomeWideSNP_5na32annot", document.getElementById("GenomeWideSNP_5na32annot").checked,"#b3b300"); });
+		$('input[name=GenomeWideSNP_6na33annot]').change(function() { updateData("data/rsquare/ASW.beagle5.GenomeWideSNP_6.na33.annot-b38.rsquare.grp.json","GenomeWideSNP_6na33annot", document.getElementById("GenomeWideSNP_6na33annot").checked,"#808000"); });
 		$('input[name=immuno_beadchip_11419691_b]').change(function() { updateData("data/rsquare/ASW.beagle5.immuno_beadchip_11419691_b-b38.rsquare.grp.json","immuno_beadchip_11419691_b", document.getElementById("immuno_beadchip_11419691_b").checked,"#B6EFB6"); });
 		$('input[name=HumanExome-12v1-2_A]').change(function() { updateData("data/rsquare/ASW.beagle5.HumanExome-12v1-2_A-b38.rsquare.grp.json","HumanExome-12v1-2_A", document.getElementById("HumanExome-12v1-2_A").checked,"#A8E1B1"); });
 		$('input[name=InfiniumImmunoArray-24v2-0_A]').change(function() { updateData("data/rsquare/ASW.beagle5.InfiniumImmunoArray-24v2-0_A-b38.rsquare.grp.json","InfiniumImmunoArray-24v2-0_A", document.getElementById("InfiniumImmunoArray-24v2-0_A").checked,"#9AD3AD"); });
@@ -292,54 +292,54 @@
 			<div class="col-md-5 col-xs-12">
 				<fieldset>
 					<legend>Illumina medium density arrays (500K &lt; N &lt; 1.5M)</legend>
-					<input type="checkbox" name="HumanCoreExome-12-v1-1-C" id="HumanCoreExome-12-v1-1-C" style="box-shadow: 0 0 0 3px  #FFE1CC " ><label><span style="margin-right:0.5em; margin-left:0.5em" />Human Core Exome v1.1 [527K]</label><br>
-					<input type="checkbox" name="HumanCoreExome-24v1-0_A" id="HumanCoreExome-24v1-0_A" style="box-shadow: 0 0 0 3px  #FFD9BF " ><label><span style="margin-right:0.5em; margin-left:0.5em" />Human Core Exome v1.0 [532K]</label><br>
-					<input type="checkbox" name="InfiniumCoreExome-24v1-3_A1" id="InfiniumCoreExome-24v1-3_A1" style="box-shadow: 0 0 0 3px  #FFD1B2 " ><label><span style="margin-right:0.5em; margin-left:0.5em" />Infinium Core Exome v1.3 [535K]</label><br>
-					<input type="checkbox" name="HumanHap550v3_A" id="HumanHap550v3_A" style="box-shadow: 0 0 0 3px  #FFC9A5 " ><label><span style="margin-right:0.5em; margin-left:0.5em" />Human Hap 550 v3 [547K]</label><br>
-					<input type="checkbox" name="PsychArray-B" id="PsychArray-B" style="box-shadow: 0 0 0 3px  #FFC198 " ><label><span style="margin-right:0.5em; margin-left:0.5em" />Psych Array [556K]</label><br>
-					<input type="checkbox" name="InfiniumPsychArray-24v1-3_A1" id="InfiniumPsychArray-24v1-3_A1" style="box-shadow: 0 0 0 3px  #FFB98B " ><label><span style="margin-right:0.5em; margin-left:0.5em" />Infinium Psych Array v1.3 [578K]</label><br>
-					<input type="checkbox" name="human610-quadv1_h" id="human610-quadv1_h" style="box-shadow: 0 0 0 3px  #FFB17E " ><label><span style="margin-right:0.5em; margin-left:0.5em" />Human 610 - Quad v1 [596K]</label><br>
-					<input type="checkbox" name="GSA-24v2-0_A1" id="GSA-24v2-0_A1" checked style="box-shadow: 0 0 0 3px  #FFA971 " ><label><span style="margin-right:0.5em; margin-left:0.5em" />GSA v2.0 [630K]</label><br>
-					<input type="checkbox" name="human660w-quad_v1_h" id="human660w-quad_v1_h" style="box-shadow: 0 0 0 3px  #FFA164 " ><label><span style="margin-right:0.5em; margin-left:0.5em" />Human 660W - Quad v1 [638K]</label><br>
-					<input type="checkbox" name="Human670-QuadCustom_v1_A" id="Human670-QuadCustom_v1_A" style="box-shadow: 0 0 0 3px  #FF9752 " ><label><span style="margin-right:0.5em; margin-left:0.5em" />Human 670 - Quad Custom v1 [643K]</label><br>
-					<input type="checkbox" name="HumanHap650Yv3_A" id="HumanHap650Yv3_A" style="box-shadow: 0 0 0 3px  #FF8D41 " ><label><span style="margin-right:0.5em; margin-left:0.5em" />Human Hap 650Y v3 [644K]</label><br>
-					<input type="checkbox" name="InfiniumOmniExpress-24v1-2_A1" id="InfiniumOmniExpress-24v1-2_A1" style="box-shadow: 0 0 0 3px  #FF832F " ><label><span style="margin-right:0.5em; margin-left:0.5em" />Infinium Omni Express v1.2 [694K]</label><br>
-					<input type="checkbox" name="HumanOmniExpress-12v1_J" id="HumanOmniExpress-12v1_J" style="box-shadow: 0 0 0 3px  #FF781E " ><label><span style="margin-right:0.5em; margin-left:0.5em" />Human Omni Express v1 [710K]</label><br>
-					<input type="checkbox" name="OmniExpressExome-8v1-1_B" id="OmniExpressExome-8v1-1_B" style="box-shadow: 0 0 0 3px   #FF6E0C" ><label><span style="margin-right:0.5em; margin-left:0.5em" />Omni Express Exome v1.1 [933K]</label><br>
-					<input type="checkbox" name="InfiniumOmniExpressExome-8v1-6_A1" id="InfiniumOmniExpressExome-8v1-6_A1" style="box-shadow: 0 0 0 3px   #F56300" ><label><span style="margin-right:0.5em; margin-left:0.5em" />Infinium Omni Express Exome v1.6 [937K]</label><br>
-					<input type="checkbox" name="HumanOmniExpressExome-8-v1-2-B" id="HumanOmniExpressExome-8-v1-2-B" style="box-shadow: 0 0 0 3px  #D05400 " ><label><span style="margin-right:0.5em; margin-left:0.5em" />Human Omni Express Exome v1.2 [939K]</label><br>
-					<input type="checkbox" name="humanomni1-quad_v1-0-multi_h" id="humanomni1-quad_v1-0-multi_h" style="box-shadow: 0 0 0 3px   #AB4500" ><label><span style="margin-right:0.5em; margin-left:0.5em" />Human Omni1 - Quad v1 [1,072K]</label><br>
-					<input type="checkbox" name="HumanOmni1S-8v1_H" id="HumanOmni1S-8v1_H" style="box-shadow: 0 0 0 3px   #863600" ><label><span style="margin-right:0.5em; margin-left:0.5em" />Human Omni 1S v1 [1,159K]</label><br>
-					<input type="checkbox" name="Human1-2M-DuoCustom_v1_A" id="Human1-2M-DuoCustom_v1_A" style="box-shadow: 0 0 0 3px  #612700 " ><label><span style="margin-right:0.5em; margin-left:0.5em" />Human 1.2M - Duo Custom v1 [1,191K]</label><br>
+					<input type="checkbox" name="HumanCoreExome-12-v1-1-C" id="HumanCoreExome-12-v1-1-C" style="box-shadow: 0 0 0 3px  #FFE1CC " ><label><span style="margin-right:0.5em; margin-left:0.5em" />Human Core Exome 12 v1.1 C [527K]</label><br>
+					<input type="checkbox" name="HumanCoreExome-24v1-0_A" id="HumanCoreExome-24v1-0_A" style="box-shadow: 0 0 0 3px  #FFD9BF " ><label><span style="margin-right:0.5em; margin-left:0.5em" />Human Core Exome 24 v1.0 A [532K]</label><br>
+					<input type="checkbox" name="InfiniumCoreExome-24v1-3_A1" id="InfiniumCoreExome-24v1-3_A1" style="box-shadow: 0 0 0 3px  #FFD1B2 " ><label><span style="margin-right:0.5em; margin-left:0.5em" />Infinium Core Exome 24 v1.3 A1 [535K]</label><br>
+					<input type="checkbox" name="HumanHap550v3_A" id="HumanHap550v3_A" style="box-shadow: 0 0 0 3px  #FFC9A5 " ><label><span style="margin-right:0.5em; margin-left:0.5em" />Human Hap 550 v3 A [547K]</label><br>
+					<input type="checkbox" name="PsychArray-B" id="PsychArray-B" style="box-shadow: 0 0 0 3px  #FFC198 " ><label><span style="margin-right:0.5em; margin-left:0.5em" />Psych Array B [556K]</label><br>
+					<input type="checkbox" name="InfiniumPsychArray-24v1-3_A1" id="InfiniumPsychArray-24v1-3_A1" style="box-shadow: 0 0 0 3px  #FFB98B " ><label><span style="margin-right:0.5em; margin-left:0.5em" />Infinium Psych Array 24 v1.3 A1 [578K]</label><br>
+					<input type="checkbox" name="human610-quadv1_h" id="human610-quadv1_h" style="box-shadow: 0 0 0 3px  #FFB17E " ><label><span style="margin-right:0.5em; margin-left:0.5em" />Human 610 - Quad v1 h [596K]</label><br>
+					<input type="checkbox" name="GSA-24v2-0_A1" id="GSA-24v2-0_A1" checked style="box-shadow: 0 0 0 3px  #FFA971 " ><label><span style="margin-right:0.5em; margin-left:0.5em" />GSA 2 v2.0 A1 [630K]</label><br>
+					<input type="checkbox" name="human660w-quad_v1_h" id="human660w-quad_v1_h" style="box-shadow: 0 0 0 3px  #FFA164 " ><label><span style="margin-right:0.5em; margin-left:0.5em" />Human 660W - Quad v1 h [638K]</label><br>
+					<input type="checkbox" name="Human670-QuadCustom_v1_A" id="Human670-QuadCustom_v1_A" style="box-shadow: 0 0 0 3px  #FF9752 " ><label><span style="margin-right:0.5em; margin-left:0.5em" />Human 670 - Quad Custom v1 A [643K]</label><br>
+					<input type="checkbox" name="HumanHap650Yv3_A" id="HumanHap650Yv3_A" style="box-shadow: 0 0 0 3px  #FF8D41 " ><label><span style="margin-right:0.5em; margin-left:0.5em" />Human Hap 650Y v3 A [644K]</label><br>
+					<input type="checkbox" name="InfiniumOmniExpress-24v1-2_A1" id="InfiniumOmniExpress-24v1-2_A1" style="box-shadow: 0 0 0 3px  #FF832F " ><label><span style="margin-right:0.5em; margin-left:0.5em" />Infinium Omni Express 24 v1.2 A1 [694K]</label><br>
+					<input type="checkbox" name="HumanOmniExpress-12v1_J" id="HumanOmniExpress-12v1_J" style="box-shadow: 0 0 0 3px  #FF781E " ><label><span style="margin-right:0.5em; margin-left:0.5em" />Human Omni Express 12 v1 J [710K]</label><br>
+					<input type="checkbox" name="OmniExpressExome-8v1-1_B" id="OmniExpressExome-8v1-1_B" style="box-shadow: 0 0 0 3px   #FF6E0C" ><label><span style="margin-right:0.5em; margin-left:0.5em" />Omni Express Exome 8 v1.1 B [933K]</label><br>
+					<input type="checkbox" name="InfiniumOmniExpressExome-8v1-6_A1" id="InfiniumOmniExpressExome-8v1-6_A1" style="box-shadow: 0 0 0 3px   #F56300" ><label><span style="margin-right:0.5em; margin-left:0.5em" />Infinium Omni Express Exome 8 v1.6 A1 [937K]</label><br>
+					<input type="checkbox" name="HumanOmniExpressExome-8-v1-2-B" id="HumanOmniExpressExome-8-v1-2-B" style="box-shadow: 0 0 0 3px  #D05400 " ><label><span style="margin-right:0.5em; margin-left:0.5em" />Human Omni Express Exome 8 v1.2 B [939K]</label><br>
+					<input type="checkbox" name="humanomni1-quad_v1-0-multi_h" id="humanomni1-quad_v1-0-multi_h" style="box-shadow: 0 0 0 3px   #AB4500" ><label><span style="margin-right:0.5em; margin-left:0.5em" />Human Omni1 - Quad v1 multi h [1,072K]</label><br>
+					<input type="checkbox" name="HumanOmni1S-8v1_H" id="HumanOmni1S-8v1_H" style="box-shadow: 0 0 0 3px   #863600" ><label><span style="margin-right:0.5em; margin-left:0.5em" />Human Omni 1S 8 v1 h [1,159K]</label><br>
+					<input type="checkbox" name="Human1-2M-DuoCustom_v1_A" id="Human1-2M-DuoCustom_v1_A" style="box-shadow: 0 0 0 3px  #612700 " ><label><span style="margin-right:0.5em; margin-left:0.5em" />Human 1.2M - Duo Custom v1 A [1,191K]</label><br>
 	
 				</fieldset>
 			</div>
 			<div class="col-md-5 col-xs-12">
 				<fieldset>
 					<legend>Illumina low density arrays (N &lt; 500K)</legend>
-					<input type="checkbox" name="immuno_beadchip_11419691_b" id="immuno_beadchip_11419691_b" style="box-shadow: 0 0 0 3px  #B6EFB6 "><label><span style="margin-right:0.5em; margin-left:0.5em" />Immuno Beadchip [192K]</label><br>
-					<input type="checkbox" name="HumanExome-12v1-2_A" id="HumanExome-12v1-2_A" style="box-shadow: 0 0 0 3px  #A8E1B1 "> <label><span style="margin-right:0.5em; margin-left:0.5em" />Human Exome v1.2 [239K]</label><br>
-					<input type="checkbox" name="InfiniumImmunoArray-24v2-0_A" id="InfiniumImmunoArray-24v2-0_A" style="box-shadow: 0 0 0 3px  #9AD3AD "> <label><span style="margin-right:0.5em; margin-left:0.5em" />Infinium Immuno Array v2 [250K]</label><br>
-					<input type="checkbox" name="humancytosnp-12v2-1_l" id="humancytosnp-12v2-1_l" style="box-shadow: 0 0 0 3px  #8DC6A9 "> <label><span style="margin-right:0.5em; margin-left:0.5em" />Human Cyto SNP [276K]</label><br>
-					<input type="checkbox" name="HumanCore-12-v1-0-B" id="HumanCore-12-v1-0-B" style="box-shadow: 0 0 0 3px  #7EB7A4 "><label><span style="margin-right:0.5em; margin-left:0.5em" />Human Core v1 [289K]</label><br>
-					<input type="checkbox" name="HumanHap300v2_A" id="HumanHap300v2_A" style="box-shadow: 0 0 0 3px  #6CA49E "> <label><span style="margin-right:0.5em; margin-left:0.5em" />Human Hap 300 v2 [309K]</label><br>
-					<input type="checkbox" name="HumanCNV370-Quadv3_C" id="HumanCNV370-Quadv3_C" style="box-shadow: 0 0 0 3px  #5A9298 "> <label><span style="margin-right:0.5em; margin-left:0.5em" />Human CNV 370 - Quad v3 [358K]</label><br>
-					<input type="checkbox" name="OncoArray-500K-C" id="OncoArray-500K-C" style="box-shadow: 0 0 0 3px  #42708A "><label><span style="margin-right:0.5em; margin-left:0.5em" />Onco Array - 500K [484K]</label><br>
+					<input type="checkbox" name="immuno_beadchip_11419691_b" id="immuno_beadchip_11419691_b" style="box-shadow: 0 0 0 3px  #B6EFB6 "><label><span style="margin-right:0.5em; margin-left:0.5em" />Immuno Beadchip 11419691 b [192K]</label><br>
+					<input type="checkbox" name="HumanExome-12v1-2_A" id="HumanExome-12v1-2_A" style="box-shadow: 0 0 0 3px  #A8E1B1 "> <label><span style="margin-right:0.5em; margin-left:0.5em" />Human Exome 12 v1.2 A [239K]</label><br>
+					<input type="checkbox" name="InfiniumImmunoArray-24v2-0_A" id="InfiniumImmunoArray-24v2-0_A" style="box-shadow: 0 0 0 3px  #9AD3AD "> <label><span style="margin-right:0.5em; margin-left:0.5em" />Infinium Immuno Array 24 v2 A [250K]</label><br>
+					<input type="checkbox" name="humancytosnp-12v2-1_l" id="humancytosnp-12v2-1_l" style="box-shadow: 0 0 0 3px  #8DC6A9 "> <label><span style="margin-right:0.5em; margin-left:0.5em" />Human Cyto SNP 12 v2.1 [276K]</label><br>
+					<input type="checkbox" name="HumanCore-12-v1-0-B" id="HumanCore-12-v1-0-B" style="box-shadow: 0 0 0 3px  #7EB7A4 "><label><span style="margin-right:0.5em; margin-left:0.5em" />Human Core 12 v1 B [289K]</label><br>
+					<input type="checkbox" name="HumanHap300v2_A" id="HumanHap300v2_A" style="box-shadow: 0 0 0 3px  #6CA49E "> <label><span style="margin-right:0.5em; margin-left:0.5em" />Human Hap 300 v2 A [309K]</label><br>
+					<input type="checkbox" name="HumanCNV370-Quadv3_C" id="HumanCNV370-Quadv3_C" style="box-shadow: 0 0 0 3px  #5A9298 "> <label><span style="margin-right:0.5em; margin-left:0.5em" />Human CNV 370 - Quad v3 C [358K]</label><br>
+					<input type="checkbox" name="OncoArray-500K-C" id="OncoArray-500K-C" style="box-shadow: 0 0 0 3px  #42708A "><label><span style="margin-right:0.5em; margin-left:0.5em" />Onco Array - 500K C [484K]</label><br>
 				</fieldset>
 				<fieldset>
 					<legend>Illumina high density arrays (1.5M &lt; N)</legend>
-					<input type="checkbox" name="Multi-EthnicGlobal_A1" id="Multi-EthnicGlobal_A1" style="box-shadow: 0 0 0 3px  #FFC6F5 "><label><span style="margin-right:0.5em; margin-left:0.5em" />Multi-Ethnic Global [1,719K]</label><br>
-					<input type="checkbox" name="InfiniumOmni2-5-8v1-3_A1" id="InfiniumOmni2-5-8v1-3_A1" style="box-shadow: 0 0 0 3px  #FFABEE "><label><span style="margin-right:0.5em; margin-left:0.5em" />Infinium Omni2.5 v1.3 [2,315K]</label><br>
-					<input type="checkbox" name="InfiniumOmni2-5-8v1-4_A1" id="InfiniumOmni2-5-8v1-4_A1" style="box-shadow: 0 0 0 3px  #FF91E7 "><label><span style="margin-right:0.5em; margin-left:0.5em" />Infinium Omni2.5 v1.4 [2,315K]</label><br>
-					<input type="checkbox" name="InfiniumOmni2-5Exome-8v1-3_A1" id="InfiniumOmni2-5Exome-8v1-3_A1" style="box-shadow: 0 0 0 3px  #FF76E0 "><label><span style="margin-right:0.5em; margin-left:0.5em" />Infinium Omni2.5 Exome v1.3 [2,549K]</label><br>
-					<input type="checkbox" name="InfiniumOmni5-4v1-2_A1" id="InfiniumOmni5-4v1-2_A1" style="box-shadow: 0 0 0 3px  #FF59D9 "><label><span style="margin-right:0.5em; margin-left:0.5em" />Infinium Omni5 v1.2 [4,204K]</label><br>
-					<input type="checkbox" name="InfiniumOmni5Exome-4v1-3_A1" id="InfiniumOmni5Exome-4v1-3_A1" style="box-shadow: 0 0 0 3px  #FF35D0 "><label><span style="margin-right:0.5em; margin-left:0.5em" />Infinium Omni5 Exome v1.3 [4,432K]</label><br>
+					<input type="checkbox" name="Multi-EthnicGlobal_A1" id="Multi-EthnicGlobal_A1" style="box-shadow: 0 0 0 3px  #FFC6F5 "><label><span style="margin-right:0.5em; margin-left:0.5em" />Multi-Ethnic Global A1 [1,719K]</label><br>
+					<input type="checkbox" name="InfiniumOmni2-5-8v1-3_A1" id="InfiniumOmni2-5-8v1-3_A1" style="box-shadow: 0 0 0 3px  #FFABEE "><label><span style="margin-right:0.5em; margin-left:0.5em" />Infinium Omni2.5 8 v1.3 A1 [2,315K]</label><br>
+					<input type="checkbox" name="InfiniumOmni2-5-8v1-4_A1" id="InfiniumOmni2-5-8v1-4_A1" style="box-shadow: 0 0 0 3px  #FF91E7 "><label><span style="margin-right:0.5em; margin-left:0.5em" />Infinium Omni2.5 8 v1.4 A1 [2,324K]</label><br>
+					<input type="checkbox" name="InfiniumOmni2-5Exome-8v1-3_A1" id="InfiniumOmni2-5Exome-8v1-3_A1" style="box-shadow: 0 0 0 3px  #FF76E0 "><label><span style="margin-right:0.5em; margin-left:0.5em" />Infinium Omni2.5 Exome 8 v1.3 A1 [2,549K]</label><br>
+					<input type="checkbox" name="InfiniumOmni5-4v1-2_A1" id="InfiniumOmni5-4v1-2_A1" style="box-shadow: 0 0 0 3px  #FF59D9 "><label><span style="margin-right:0.5em; margin-left:0.5em" />Infinium Omni5 4 v1.2 A1 [4,204K]</label><br>
+					<input type="checkbox" name="InfiniumOmni5Exome-4v1-3_A1" id="InfiniumOmni5Exome-4v1-3_A1" style="box-shadow: 0 0 0 3px  #FF35D0 "><label><span style="margin-right:0.5em; margin-left:0.5em" />Infinium Omni5 Exome 4 v1.3 A1 [4,432K]</label><br>
 				</fieldset>
 				<fieldset>
 					<legend>Affymetrix arrays</legend>
-					<input type="checkbox" name="Axiom_UKB_WCSGna34annot" id="Axiom_UKB_WCSGna34annot" style="box-shadow: 0 0 0 3px  #C7E0B9 "><label><span style="margin-right:0.5em; margin-left:0.5em" />UK Biobank Axiom [823K]</label><br>
-					<input type="checkbox" name="GenomeWideSNP_5na32annot" id="GenomeWideSNP_5na32annot" style="box-shadow: 0 0 0 3px  #B4D7A7 "> <label><span style="margin-right:0.5em; margin-left:0.5em" />Genome-Wide SNP v5 [431K]</label><br>
-					<input type="checkbox" name="GenomeWideSNP_6na33annot" id="GenomeWideSNP_6na33annot" style="box-shadow: 0 0 0 3px  #A2CE95 "> <label><span style="margin-right:0.5em; margin-left:0.5em" />Genome-Wide SNP v6 [889K]</label><br>
+					<input type="checkbox" name="Axiom_UKB_WCSGna34annot" id="Axiom_UKB_WCSGna34annot" style="box-shadow: 0 0 0 3px  #e6e600 "><label><span style="margin-right:0.5em; margin-left:0.5em" />Axiom UKB WCS [823K]</label><br>
+					<input type="checkbox" name="GenomeWideSNP_5na32annot" id="GenomeWideSNP_5na32annot" style="box-shadow: 0 0 0 3px  #b3b300 "> <label><span style="margin-right:0.5em; margin-left:0.5em" />Genome-Wide SNP v5 [431K]</label><br>
+					<input type="checkbox" name="GenomeWideSNP_6na33annot" id="GenomeWideSNP_6na33annot" style="box-shadow: 0 0 0 3px  #808000 "> <label><span style="margin-right:0.5em; margin-left:0.5em" />Genome-Wide SNP v6 [889K]</label><br>
 				</fieldset>
 			</div>
 		</div>
@@ -352,4 +352,3 @@
       	</div>
 	</footer>
 </body>
-    
