@@ -32,7 +32,10 @@ void checker::read_files_and_initialise() {
 		D.initialize(options["groups"].as < string > (), options["minPROB"].as < double > (), options["minDP"].as < int > ());
 	}
 
-	//step2: Read input files
+	//step2: read list of samples
+	if (options.count("samples")) D.setTargets(options["samples"].as < string > ());
+
+	//step3: read input files
 	vrb.title("Reading list of input files int [" + options["input"].as < string > () + "]");
 	string buffer;
 	vector < string > tokens;

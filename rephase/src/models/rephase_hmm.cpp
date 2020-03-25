@@ -44,60 +44,103 @@ void rephase_hmm::updateAndResize(unsigned int _ti) {
 
 	//Update idxV
 	idxV.clear();
-	unsigned int n_scaffolded = 0;
-	for (int l = 0 ; l < H.RHflag.size() ; l++) {
-		bool a0 = H.H_opt_var.get(l, 2*target_ind + 0);
-		bool a1 = H.H_opt_var.get(l, 2*target_ind + 1);
-		if (!H.RHflag[l]) { idxV.push_back(VAR_SCA); n_scaffolded++; }
-		else if (a0 == a1) idxV.push_back(VAR_HOM);
-		else idxV.push_back(VAR_HET);
+	n_scaffolded = 0;
+	typeV = vector < unsigned char > (H.CVflag.size(), VAR_HOM);
+	for (int l = 0 ; l < H.CVflag.size() ; l++) {
+		if (H.CVflag[l]) {
+			typeV[l] = VAR_SCA;
+			n_scaffolded++;
+		} else if (H.RHflag[l][target_ind]) {
+			typeV[l] = VAR_HET;
+		}
 	}
 
 	//Resize memory allocations
-	Alpha0.resize(idxK.size() * n_scaffolded);
-	AlphaSum0.resize(idxV.size());
-	Alpha1.resize(idxK.size() * n_scaffolded);
-	AlphaSum1.resize(idxV.size());
+	Alpha.resize(idxK.size() * n_scaffolded);
+	AlphaSum.resize(n_scaffolded);
+	hapProb = vector < vector < float > > (2, vector < float > (typeV.size(), 0.0f));
 }
 
-void rephase_hmm::forward() {
-	double fact1, fact20, fact21;
-	float emit [2][2];
-	for (int al = 0, rl = 0 ; l < idxV.size() ; l ++) {
+void rephase_hmm::forward(bool second) {
+	double fact1, fact2;
+	float emit [2];
+	for (int al = 0, rl = 0 ; al < typeV.size() ; al ++) {
 		if (idxV[l] == VAR_SCA) {
-			AlphaSum0[rl] = 0.0;AlphaSum1[rl] = 0.0;
-			bool tar_a0 = H.H_opt_var.get(l, 2*target_ind + 0);
-			bool tar_a1 = H.H_opt_var.get(l, 2*target_ind + 1);
-			emit[0][0] = tar_a0?M.ed:M.ee;
-			emit[0][1] = tar_a0?M.ee:M.ed;
-			emit[1][0] = tar_a1?M.ed:M.ee;
-			emit[1][1] = tar_a1?M.ee:M.ed;
+			AlphaSum[rl] = 0.0;
+			bool tar_a = H.H_opt_var.get(al, 2*target_ind + second);
+			emit[0] = tar_a?M.ed:M.ee;
+			emit[1] = tar_a?M.ee:M.ed;
 
 			if (rl == 0) {
 				fact1 = 1.0f / idxK.size();
 				for (int k = 0 ; k < idxK.size() ; k ++) {
 					bool hid_a = H.H_opt_var.get(l, idxK[k]);
-					Alpha0[k] = emit[0][hid_a] * fact1;
-					Alpha1[k] = emit[1][hid_a] * fact1;
-					AlphaSum0[rl] += Alpha0[k];
-					AlphaSum1[rl] += Alpha1[k];
+					Alpha[k] = emit[hid_a] * fact1;
+					AlphaSum[rl] += Alpha[k];
 				}
 			} else {
 				fact1 = C->t[rl-1] / C->n_states;
-				fact20 = C->nt[rl-1] / AlphaSum0[rl-1];
-				fact21 = C->nt[rl-1] / AlphaSum1[rl-1];
+				fact2 = C->nt[rl-1] / AlphaSum[rl-1];
 				for (int k = 0 ; k < C->n_states ; k ++) {
 					bool hid_a = H.H_opt_var.get(al, idxK[k]);
-					Alpha0[rl*idxK.size()+k] = (Alpha0[(rl-1)*idxK.size()+k] * fact20 + fact1) * emit[0][hid_a];
-					Alpha1[rl*idxK.size()+k] = (Alpha1[(rl-1)*idxK.size()+k] * fact21 + fact1) * emit[1][hid_a];
-					AlphaSum0[rl] += Alpha0[rl*idxK.size()+k];
-					AlphaSum1[rl] += Alpha1[rl*idxK.size()+k];
+					Alpha[rl*idxK.size()+k] = (Alpha[(rl-1)*idxK.size()+k] * fact2 + fact1) * emit[hid_a];
+					AlphaSum[rl] += Alpha[rl*idxK.size()+k];
 				}
 			}
 			rl ++;
 		}
 	}
 }
+
+void rephase_hmm::backward(bool second) {
+	double fact1, fact2;
+	float emit [2];
+	vector < float > beta = vector < float > (idxK.size(), 1.0f);
+	float betaSum = idxK.ize();
+	for (int al = typeV.size() - 1 , sl = n_scaffolded - 1 ; al >= 0 ; al --) {
+		if (idxV[al] == VAR_HET) {
+
+		} else if (idxV[al] == VAR_SCA) {
+
+
+			sl --;
+		}
+	}
+}
+
+
+
+		if (idxV[l] == VAR_SCA) {
+			AlphaSum[rl] = 0.0;
+			bool tar_a = H.H_opt_var.get(al, 2*target_ind + second);
+			emit[0] = tar_a?M.ed:M.ee;
+			emit[1] = tar_a?M.ee:M.ed;
+
+			if (rl == 0) {
+				fact1 = 1.0f / idxK.size();
+				for (int k = 0 ; k < idxK.size() ; k ++) {
+					bool hid_a = H.H_opt_var.get(l, idxK[k]);
+					Alpha[k] = emit[hid_a] * fact1;
+					AlphaSum[rl] += Alpha[k];
+				}
+			} else {
+				fact1 = C->t[rl-1] / C->n_states;
+				fact2 = C->nt[rl-1] / AlphaSum[rl-1];
+				for (int k = 0 ; k < C->n_states ; k ++) {
+					bool hid_a = H.H_opt_var.get(al, idxK[k]);
+					Alpha[rl*idxK.size()+k] = (Alpha[(rl-1)*idxK.size()+k] * fact2 + fact1) * emit[hid_a];
+					AlphaSum[rl] += Alpha[rl*idxK.size()+k];
+				}
+			}
+			rl ++;
+		}
+	}
+}
+
+
+
+
+
 
 /*
  * I AM HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!

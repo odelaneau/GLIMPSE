@@ -27,22 +27,6 @@
 #include <containers/bitmatrix.h>
 #include <containers/genotype_set.h>
 
-struct rare_het {
-	unsigned int ind_idx;
-	unsigned int var_idx;
-	float prob;
-	bool original_a0;
-	bool sampled_a0;
-
-	rare_het(unsigned int ii, unsigned int vi, bool a0) {
-		ind_idx = ii;
-		var_idx = vi;
-		prob = 0.0f;
-		original_a0 = a0;
-		sampled_a0 = a0;
-	}
-};
-
 class haplotype_set {
 public:
 	//DATA
@@ -56,9 +40,15 @@ public:
 	vector < int > pbwt_indexes;
 	vector < vector < int > > cond_states;
 
-	//RARE HETS REPHASING
-	vector < rare_het > RH;
-	vector < bool > RHflag;
+	//COMMON VAR
+	vector < bool > CVflag;
+	vector < int > CVidx;
+
+	//RARE HETS
+	vector < vector < bool > > RHflag;
+	vector < vector < bool > > RHorig;
+	vector < vector < float > > RHprob;
+
 
 	//CONSTRUCTOR/DESTRUCTOR/INITIALIZATION
 	haplotype_set();

@@ -12,6 +12,7 @@ public:
 	// Sample IDs [N] & Bins [L]
 	int N, L, D;
 	double T;
+	set < string > subset_samples;
 	vector < string > samples;
 	vector < double > bins;
 
@@ -45,6 +46,7 @@ public:
 	//
 	void initialize(vector < double >, double, int);
 	void initialize(string, double, int);
+	void setTargets(string fsamples);
 	int getTruth(double, double, double, int);
 	int getFrequencyBin(float);
 	int getMostLikely(float , float , float );

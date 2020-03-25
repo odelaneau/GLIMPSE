@@ -36,11 +36,12 @@ private:
 	hmm_parameters & M;
 
 	unsigned int target_ind;
+	unsigned int n_scaffolded;
 	vector < unsigned int > idxK;
 	vector < unsigned char > typeV;
 
-	vector < float > Alpha0, Alpha1;
-	vector < float > AlphaSum0, AlphaSum1;
+	vector < float > Alpha, AlphaSum;
+	vector < vector < float > > hapProb;
 
 public:
 	//CONSTRUCTOR/DESTRUCTOR

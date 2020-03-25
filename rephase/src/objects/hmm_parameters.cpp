@@ -32,18 +32,14 @@ hmm_parameters::~hmm_parameters() {
 	nt.clear();
 }
 
-void hmm_parameters::initialise(variant_map & mapG, int Neff, int Nhap, float max_maf) {
-	//getting scaffold pos
-	vector < int > indexes;
-	for (int l = 0 ; l < mapG.size() ; l ++) if (mapG.vec_pos[l]->getMAF() >= max_maf) indexes.push_back(l);
-
-	t = vector < double > (indexes.size() - 1, 0.0f);
-	nt = vector < double > (indexes.size() - 1, 0.0f);
-	for (int l = 1 ; l < indexes.size() ; l ++) {
-		float dist_cm = (mapG.vec_pos[indexes[l]]->cm - mapG.vec_pos[indexes[l-1]]->cm);
+void hmm_parameters::initialise(variant_map & mapG, haplotype_set & H, int Neff) {
+	t = vector < double > (H.CVidx.size() - 1, 0.0f);
+	nt = vector < double > (H.CVidx.size() - 1, 0.0f);
+	for (int l = 1 ; l < H.CVidx.size() ; l ++) {
+		float dist_cm = (mapG.vec_pos[H.CVidx[l]]->cm - mapG.vec_pos[H.CVidx[l-1]]->cm);
 		if (dist_cm < 1e-7) dist_cm = 1e-7;
 		double rho = 0.04 * Neff * dist_cm;
-		t[l-1] = -1.0 * expm1(-1.0 * rho / Nhap);
+		t[l-1] = -1.0 * expm1(-1.0 * rho / H.n_hap);
 		nt[l-1] = 1-t[l-1];
 	}
 }

@@ -33,15 +33,15 @@ void rephaser::declare_options() {
 	bpo::options_description opt_input ("Input files");
 	opt_input.add_options()
 			("input,I", bpo::value < string >(), "Genotypes to be phased in VCF/BCF format")
-			("region", bpo::value < string >(), "Whole genomic region to be phased (including left/right buffers)")
+			("region", bpo::value < string >(), "Whole genomic region to be rephased")
 			("map,M", bpo::value < string >(), "Genetic map");
 
 	bpo::options_description opt_algo ("Parameters");
 	opt_algo.add_options()
-			("iteration", bpo::value<int>()->default_value(10), "Number of Iterations")
+			("iteration", bpo::value<int>()->default_value(10), "Number of MCMC iterations")
 			("pbwt-depth", bpo::value<int>()->default_value(2), "Number of neighbors to store")
-			("pbwt-modulo", bpo::value<int>()->default_value(8), "Frequency of PBWT storage")
-			("max-maf", bpo::value<double>(), "Maxium MAF for variant to be rephased");
+			("pbwt-modulo", bpo::value<int>()->default_value(8), "Number of neighbors to store")
+			("maf", bpo::value<double>(), "MAF threshold below which we hets are rephased");
 
 	bpo::options_description opt_output ("Output files");
 	opt_output.add_options()
@@ -79,8 +79,8 @@ void rephaser::check_options() {
 	if (!options.count("output"))
 		vrb.error("You must specify a phased output file with --output");
 
-	if (!options.count("max-maf"))
-		vrb.error("You must specify a MAF threshold with --max-maf");
+	if (!options.count("maf"))
+		vrb.error("You must specify a MAF threshold with --maf");
 
 	if (options.count("seed") && options["seed"].as < int > () < 0)
 		vrb.error("Random number generator needs a positive seed value");
@@ -91,7 +91,7 @@ void rephaser::verbose_files() {
 	vrb.bullet("Input VCF     : [" + options["input"].as < string > () + "]");
 	if (options.count("map")) vrb.bullet("Genetic Map   : [" + options["map"].as < string > () + "]");
 	vrb.bullet("Output VCF    : [" + options["output"].as < string > () + "]");
-	vrb.bullet("Regi      on  : [" + options["region"].as < string > () + "]");
+	vrb.bullet("Region        : [" + options["region"].as < string > () + "]");
 	if (options.count("log")) vrb.bullet("Output LOG    : [" + options["log"].as < string > () + "]");
 }
 

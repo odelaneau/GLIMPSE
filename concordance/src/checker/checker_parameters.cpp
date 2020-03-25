@@ -31,7 +31,7 @@ void checker::declare_options() {
 	bpo::options_description opt_input ("Input files");
 	opt_input.add_options()
 			("input", bpo::value< string >(), "File listing True, Imputed, Frequencies and Regions")
-			("sample", bpo::value< string >(), "Samples to process, separated by commas")					//To be written!!!
+			("samples", bpo::value< string >(), "List of samples to process, one sample ID per line")
 			("info_af", bpo::value< string >()->default_value("AF"), "Name of the INFO/AF field to be used in the frequency file.");
 
 	bpo::options_description opt_algo ("Parameters");

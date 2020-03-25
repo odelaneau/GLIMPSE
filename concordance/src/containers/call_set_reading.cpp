@@ -29,14 +29,16 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 			mappingT = vector < int > (n_true_samples, -1);
 			mappingE = vector < int > (n_esti_samples, -1);
 			for (int i = 0 ; i < n_true_samples ; i ++) {
-				for (int j = 0 ; j < n_esti_samples ; j ++) {
-					string ts = string(sr->readers[0].header->samples[i]);
-					string es = string(sr->readers[1].header->samples[j]);
-					if (ts == es) {
-						mappingT[i] = N;
-						mappingE[j] = N;
-						samples.push_back(ts);
-						N ++;
+				string ts = string(sr->readers[0].header->samples[i]);
+				if (subset_samples.count(ts) > 0) {
+					for (int j = 0 ; j < n_esti_samples ; j ++) {
+						string es = string(sr->readers[1].header->samples[j]);
+						if (ts == es) {
+							mappingT[i] = N;
+							mappingE[j] = N;
+							samples.push_back(ts);
+							N ++;
+						}
 					}
 				}
 			}

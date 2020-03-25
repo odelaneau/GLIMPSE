@@ -31,26 +31,21 @@ haplotype_set::~haplotype_set() {
 	n_hap = 0;
 }
 
-void haplotype_set::mapRareHets(float max_maf) {
+void haplotype_set::mapRareHets(float maf) {
+	RHflag = vector < vector < bool > > (n_site, vector < bool > (n_hap/2, false));
+	RHprob = vector < vector < float > > (n_hap/2);
 	for (int l = 0 ; l  < V.vec_pos.size() ; l ++) {
-		if (V.vec_pos[l]->getMAF() < max_maf) {
+		if (V.vec_pos[l]->getMAF() < maf) {
+			CVflag.push_back(false);
 			for (int h = 0 ; h < n_hap ; h += 2) {
-				if (H_opt_var.get(l,h+0) != H_opt_var.get(l,h+1)) {
-					RH.emplace_back(h/2, l, H_opt_var.get(l,h+0));
-					RHflag.push_back(true);
-				} else RHflag.push_back(false);
+				RHflag[l][h/2] = (H_opt_var.get(l,h+0) != H_opt_var.get(l,h+1));
+				if (RHflag[l][h/2]) RHprob[h/2].push_back(0.0f);
 			}
+		} else {
+			CVflag.push_back(true);
+			CVidx.push_back(l);
 		}
 	}
-}
-
-void haplotype_set::updateapsGivenRareHets() {
-	tac.clock();
-	for (unsigned int r = 0 ; r < RH.size() ; r ++) {
-		H_opt_var.set(RH[r].var_idx, 2*RH[r].ind_idx+0, RH[r].sampled_a0);
-		H_opt_var.set(RH[r].var_idx, 2*RH[r].ind_idx+0, !RH[r].sampled_a0);
-	}
-	vrb.bullet("Update phasing at rare hets (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
 }
 
 void haplotype_set::initPositionalBurrowWheelerTransform(int _pbwt_depth, int _pbwt_modulo) {

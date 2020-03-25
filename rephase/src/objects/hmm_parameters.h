@@ -26,6 +26,8 @@
 
 #include <utils/otools.h>
 #include <containers/variant_map.h>
+#include <containers/haplotype_set.h>
+
 
 class hmm_parameters {
 public :
@@ -43,7 +45,7 @@ public :
 	~hmm_parameters();
 
 	//METHODS
-	void initialise(variant_map &, int, int, float);
+	void initialise(variant_map &, haplotype_set &, int);
 };
 
 #endif

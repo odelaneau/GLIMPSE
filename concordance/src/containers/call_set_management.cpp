@@ -50,8 +50,21 @@ void call_set::initialize(string fgrps, double _T, int _D) {
 	}
 	vrb.bullet("#sites  = " + stb.str(site2grp.size()));
 	vrb.bullet("#groups = " + stb.str(rsquared_str.size()));
+	fd.close();
+}
+
+void call_set::setTargets(string fsamples) {
+	vrb.title("Reading subset of samples to consider in analysis");
+	string buffer;
+	input_file fd (fsamples);
+	vector < string > tokens;
+	while (getline(fd, buffer, '\n')) subset_samples.insert(buffer);
+	vrb.bullet("#samples  = " + stb.str(subset_samples.size()));
+	fd.close();
 }
 
 call_set::~call_set() {
 
 }
+
+

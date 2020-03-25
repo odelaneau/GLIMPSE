@@ -22,7 +22,6 @@
 #include <rephaser/rephaser_header.h>
 
 #include <io/genotype_reader.h>
-#include <io/genotype_writer.h>
 #include <io/gmap_reader.h>
 
 void rephaser::read_files_and_initialise() {
@@ -56,6 +55,7 @@ void rephaser::read_files_and_initialise() {
 	for (int t = 0 ; t < HMM.size() ; t ++) HMM[t] = new rephase_hmm(H, M);
 
 	//step5
-	M.initialise(V, 20000, H.n_hap, options["max-maf"].as < double > ());
+	H.mapRareHets(options["maf"].as < double > ());
+	M.initialise(V, H, 20000);
 	H.initPositionalBurrowWheelerTransform(options["pbwt-depth"].as < int > (), options["pbwt-modulo"].as < int > ());
 }
