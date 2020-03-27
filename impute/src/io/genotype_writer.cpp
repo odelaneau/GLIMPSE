@@ -19,8 +19,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 ////////////////////////////////////////////////////////////////////////////////
+
 #include <io/genotype_writer.h>
-#include <version/version.h>
+#include "../../versions/versions.h"
 
 
 #define OFILE_VCFU	0
@@ -46,7 +47,7 @@ void genotype_writer::writeGenotypes(string fname, int output_start, int output_
 
 	// Create VCF header
 	bcf_hdr_append(hdr, string("##fileDate="+tac.date()).c_str());
-	bcf_hdr_append(hdr, string("##source=LCC_phase v" + string(VERSION)).c_str());
+	bcf_hdr_append(hdr, string("##source=GLIMPSE_impute v" + string(IMPUTE_VERSION)).c_str());
 	bcf_hdr_append(hdr, string("##contig=<ID="+ V.vec_pos[0]->chr + ">").c_str());
 	bcf_hdr_append(hdr, "##INFO=<ID=RAF,Number=A,Type=Float,Description=\"ALT allele frequency in the reference panel\">");
 	bcf_hdr_append(hdr, "##INFO=<ID=AF,Number=A,Type=Float,Description=\"ALT allele frequency computed from DS/GP field across target samples\">");

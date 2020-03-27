@@ -22,6 +22,12 @@
 #ifndef _VERSION_H
 #define _VERSION_H
 
-#define VERSION "1.0.0"
+#define CHUNK_VERSION "1.0.0"
+#define CONCORDANCE_VERSION "1.0.0"
+#define IMPUTE_VERSION "1.0.0"
+#define LIGATE_VERSION "1.0.0"
+#define PHASE_VERSION "1.0.0"
+#define SAMPLE_VERSION "1.0.0"
+#define SNPARRAY_VERSION "1.0.0"
 
 #endif

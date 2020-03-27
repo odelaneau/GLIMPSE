@@ -20,6 +20,7 @@
 // SOFTWARE.
 ////////////////////////////////////////////////////////////////////////////////
 
+#include "../../versions/versions.h"
 #include <sampler/sampler_header.h>
 
 void sampler::declare_options() {
@@ -52,10 +53,10 @@ void sampler::parse_command_line(vector < string > & args) {
 	} catch ( const boost::program_options::error& e ) { cerr << "Error parsing command line arguments: " << string(e.what()) << endl; exit(0); }
 
 
-	vrb.title("LCC_sample");
+	vrb.title("[GLIMPSE] Sample and solve haplotypes from GLIMPSE impute/phase output files");
 	vrb.bullet("Author        : Simone RUBINACCI & Olivier DELANEAU, University of Lausanne");
 	vrb.bullet("Contact       : simone.rubinacci@unil.ch & olivier.delaneau@unil.ch");
-	vrb.bullet("Version       : 1.0.0");
+	vrb.bullet("Version       : " + string(SAMPLE_VERSION));
 	vrb.bullet("Run date      : " + tac.date());
 
 	if (options.count("help")) { cout << descriptions << endl; exit(0); }

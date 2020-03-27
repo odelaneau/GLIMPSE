@@ -20,6 +20,7 @@
 // SOFTWARE.
 ////////////////////////////////////////////////////////////////////////////////
 
+#include "../../versions/versions.h"
 #include <ligater/ligater_header.h>
 
 void ligater::declare_options() {
@@ -51,10 +52,10 @@ void ligater::parse_command_line(vector < string > & args) {
 	} catch ( const boost::program_options::error& e ) { cerr << "Error parsing command line arguments: " << string(e.what()) << endl; exit(0); }
 
 
-	vrb.title("LCC_ligate");
+	vrb.title("[GLIMPSE] Ligate multiple output files into chromosome-wide files");
 	vrb.bullet("Author        : Simone RUBINACCI & Olivier DELANEAU, University of Lausanne");
 	vrb.bullet("Contact       : simone.rubinacci@unil.ch & olivier.delaneau@unil.ch");
-	vrb.bullet("Version       : 1.0.0");
+	vrb.bullet("Version       : " + string(LIGATE_VERSION));
 	vrb.bullet("Run date      : " + tac.date());
 
 	if (options.count("help")) { cout << descriptions << endl; exit(0); }

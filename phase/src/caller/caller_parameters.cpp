@@ -20,8 +20,9 @@
 // SOFTWARE.
 ////////////////////////////////////////////////////////////////////////////////
 
+#include "../../versions/versions.h"
 #include <caller/caller_header.h>
-#include <version/version.h>
+
 
 void caller::declare_options() {
 	bpo::options_description opt_base ("Basic options");
@@ -65,10 +66,10 @@ void caller::parse_command_line(vector < string > & args) {
 	if (options.count("log") && !vrb.open_log(options["log"].as < string > ()))
 		vrb.error("Impossible to create log file [" + options["log"].as < string > () +"]");
 
-	vrb.title("LCC_phase");
+	vrb.title("[GLIMPSE] Phase and impute low coverage sequencing data");
 	vrb.bullet("Author        : Simone RUBINACCI & Olivier DELANEAU, University of Lausanne");
 	vrb.bullet("Contact       : simone.rubinacci@unil.ch & olivier.delaneau@unil.ch");
-	vrb.bullet("Version       : " + string(VERSION));
+	vrb.bullet("Version       : " + string(PHASE_VERSION));
 	vrb.bullet("Run date      : " + tac.date());
 
 	if (options.count("help")) { cout << descriptions << endl; exit(0); }

@@ -20,6 +20,7 @@
 // SOFTWARE.
 ////////////////////////////////////////////////////////////////////////////////
 
+#include "../../versions/versions.h"
 #include <snparray/snparray_header.h>
 
 void snparray::declare_options() {
@@ -59,10 +60,10 @@ void snparray::parse_command_line(vector < string > & args) {
 	if (options.count("log") && !vrb.open_log(options["log"].as < string > ()))
 		vrb.error("Impossible to create log file [" + options["log"].as < string > () +"]");
 
-	vrb.title("Genotype calling from GLs using uniform");
-	vrb.bullet("Author        : Olivier DELANEAU, University of Lausanne");
-	vrb.bullet("Contact       : olivier.delaneau@gmail.com");
-	vrb.bullet("Version       : 1.0.0");
+	vrb.title("[GLIMPSE] Simulation of SNP array from high coverage sequencing data");
+	vrb.bullet("Author        : Simone RUBINACCI & Olivier DELANEAU, University of Lausanne");
+	vrb.bullet("Contact       : simone.rubinacci@unil.ch & olivier.delaneau@unil.ch");
+	vrb.bullet("Version       : " + string(SNPARRAY_VERSION));
 	vrb.bullet("Run date      : " + tac.date());
 }
 
