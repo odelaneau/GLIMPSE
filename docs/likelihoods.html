@@ -10,7 +10,7 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>Low Coverage Caller</title>
+    <title>GLIMPSE</title>
     
     <!-- Bootstrap core CSS -->
     <link href="./css/bootstrap.min.css" rel="stylesheet">
@@ -47,13 +47,64 @@
     <div class="container theme-showcase" role="main">
     
 	    <div class="page-header">
-	    	<h1>Sample whole chromosome haplotypes</h1>
+	    	<h1>Computation of genotype likelihoods</h1>
 		</div>
 		
-		<p>This is a template showcasing the optional theme stylesheet included in Bootstrap. </p>
-		<p>Use it as a starting point to create something more unique by building on or modifying it.</p>
+		<p>
+		GLIMPSE requires input data to take the form of <b>Genotype Likelihoods</b> (GLs).
+		GLs need to be computed at all target individuals and <b>all variant sites present in the reference panel</b> of haplotypes used for the imputation.
+		In this section, we describe a simple procedure to compute GLs from sequencing data using <a href="http://www.htslib.org/">BCFtools</a>.
+		However, other callers, such as GATK for instance, can be also considered as soon as the GLs are encoded in a VCF/BCF file using the FORMAT/PL field.
+		</p>
 		
-		<code>bcftools mpileup -f $REF -I -E -a 'FORMAT/DP' -T $VPOS -r chr$CHR $CRAM | bcftools call -Aim -C alleles -T $TPOS -Oz -o $OUT > $LOG</code>
+		<div class="well">
+			<h3>1. Extracting variable positions in the reference panel</h3>
+				
+			<p>
+			We want this information to tell bcftools at which positions to make a call.
+			For simplicity here, we only focus on SNPs but GLIMPSE can impute any type of variants as soon it is bi-allelic and has GLs being properly defined.
+			To perform the extraction from the chromosome 20 of a reference panel <code>myReference.chr20.vcf.gz</code>, run first bcftools as follows:
+			</p>
+			
+			<code> > bcftools view -G -Oz -o myReference.chr20.sites.vcf.gz myReference.chr20.vcf.gz</code>
+			
+			<br><br><p>Then, convert the output file <code>myReference.chr20.sites.vcf.gz</code> into TSV format, using this command:</p>
+			
+			<code> > bcftools query -f'%CHROM\t%POS\t%REF,%ALT\n' myReference.chr20.sites.vcf.gz | bgzip -c > myReference.chr20.sites.tsv.gz</code>
+			
+			<br><br><p>Generate this pair of files (*.vcf.gz + *.tsv.gz) for all chromosome separately.</p>
+		</div>
+		
+		<div class="well">
+			<h3>2. Computing GLs for a single individual at specific positions</h3>
+
+			<p>
+			Once ready the position files, you can then start doing the calling in itself.
+			Let's assume the sequencing data for the individual of interest is stored in the following BAM file <code>mySequence.ind1.bam</code>.
+			This BAM needs to be aligned on the reference genome, be sorted by positions, and have all PCR duplicates marked (using PICARD for instance). 
+			Then, run the following command:
+			</p>
+			
+			<code> 
+			> BAM=mySequence.ind1.bam<br>
+			&nbsp;> VCF=myReference.chr20.sites.vcf.gz<br>
+			&nbsp;> TSV=myReference.chr20.sites.tsv.gz<br>
+			&nbsp;> OUT=myGLs.ind1.chr20.vcf.gz<br>
+			&nbsp;> bcftools mpileup -I -E -T $VCF -r chr20 $BAM | bcftools call -Aim -C alleles -T $TSV -Oz -o $OUT<br>
+			</code>
+			
+			<br><br><p>c
+			Note here, that we use <code>-T myReference.chr20.sites.<b>vcf</b>.gz</code> in the first part of the command line and <code>-T myReference.chr20.sites.<b>tsv</b>.gz</code> in the second par of the command line.
+			There might have been simpler ways of doing this, but this worked well in our case. 
+			You may also tune the options of bcftools to your specific needs, requirements and data.
+			</p>
+			
+			<p>Of note, if your sequencing data is stored in CRAM files and not BAM files, use this equivalent command:</p>
+			
+			<code> > bcftools mpileup -f myReferenceGenome.fasta -I -E -a 'FORMAT/DP' -T myReference.chr20.sites.vcf.gz -r chr20 mySequence.bam | bcftools call -Aim -C alleles -T myReference.chr20.sites.tsv.gz -Oz -o myGLs.ind1.vcf.gz</code>
+			
+			<br><br><p>Where <code>myReferenceGenome.fasta</code> is the reference genome sequence that has been used to map the reads.</p>
+		</div>
 
     </div> <!-- /container -->
 	
