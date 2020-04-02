@@ -46,14 +46,120 @@
     <!-- CONTENT -->
     <div class="container theme-showcase" role="main">
     
-	    <div class="page-header">
-	    	<h1>Impute/Phase a genomic region</h1>
-		</div>
+	<div class="page-header">
+	    <h1>Impute and phase a genomic region</h1>
+	</div>
 		
-		<p>This is a template showcasing the optional theme stylesheet included in Bootstrap. </p>
-		<p>Use it as a starting point to create something more unique by building on or modifying it.</p>
-		
-		<code>Command line to run</code>
+		<h3>Command options</h3>
+		  <table class="table table-striped">
+		    <thead>
+		      <tr>
+                	<th>Long form</th>
+               		<th>Short</th>
+                	<th>Argument</th>
+                	<th>Description</th>
+		      </tr>
+		    </thead>
+		    <tbody>
+		      <tr>
+                	<td><code>--help</code></td>
+                	<td>NA</td>
+                	<td>NA</td>
+                	<td>Produces an help message with a short description of the comman options</td>
+		      </tr>
+		      <tr>
+                	<td><code>--seed</code></td>
+		        <td>NA</td>
+		        <td>INT</td>
+                	<td>Seed for random number generator.</td>
+		      </tr>
+		      <tr>
+                	<td><code>--thread</code></td>
+		        <td>NA</td>
+		        <td>INT</td>
+                	<td>Number of threads to use (default 1).</td>
+		      </tr>
+		      <tr>
+                	<td><code>--input</code></td>
+		        <td><code>--I</code></td>
+		        <td>STRING</td>
+		        <td>Input VCF/BCF file containing genotype likelihoods</td>
+		      </tr>
+		      <tr>
+                	<td><code>--reference</code></td>
+		        <td><code>--R</code></td>
+		        <td>STRING</td>
+		        <td>Reference panel of haplotypes in VCF/BCF format.</td>
+		      </tr>
+		      <tr>
+                	<td><code>--input-region</code></td>
+		        <td>NA</td>
+		        <td>STRING</td>
+		        <td>Target region used for imputation, including left and right buffers (e.g. chr20:1000000-2000000).</td>
+		      </tr>
+		      <tr>
+                	<td><code>--map</code></td>
+		        <td><code>--M</code></td>
+		        <td>STRING</td>
+		        <td>File containing the genetic map.</td>
+		      </tr>
+		      <tr>
+                	<td><code>--burnin</code></td>
+		        <td>NA</td>
+		        <td>INT</td>
+		        <td>Number of burn-in iterations of the Gibbs sampler.</td>
+		      </tr>
+		      <tr>
+                	<td><code>--main</code></td>
+		        <td>NA</td>
+		        <td>INT</td>
+		        <td>Number of main iterations of the Gibbs sampler. Each main iterations cotributes to output genotypes. Haplotypes sampled for the last (max 16) iterations are stored in the HS field.</td>
+		      </tr>
+		      <tr>
+                	<td><code>--pbwt-depth</code></td>
+		        <td>NA</td>
+		        <td>INT</td>
+		        <td>Depth of PBWT indexes to condition on.</td>
+		      </tr>
+		      <tr>
+                	<td><code>--pbwt-modulo</code></td>
+		        <td>NA</td>
+		        <td>INT</td>
+		        <td>Frequency of PBWT selection.</td>
+		      </tr>
+		      <tr>
+                	<td><code>--init-states</code></td>
+		        <td>NA</td>
+		        <td>INT</td>
+		        <td>Number of states used for initialization and maximal number of states in the subsequent iterations.</td>
+		      </tr>
+		      <tr>
+                	<td><code>--init-pool</code></td>
+		        <td>NA</td>
+		        <td>INT</td>
+		        <td>List of samples (sample IDs) from which haplotypes are initialised.</td>
+		      </tr>
+		      <tr>
+                	<td><code>--output</code></td>
+		        <td><code>-O</code></td>
+		        <td>STRING</td>
+		        <td>Output VCF/BCF file containing genotype probabilities (GP field), imputed dosages (DS field), best guess genotypes (GT field), sampled haplotypes in the last (max 16) main iterations (HS field) and info-score.</td>
+		      </tr>
+		      <tr>
+                	<td><code>--output-region</code></td>
+		        <td>NA</td>
+		        <td>STRING</td>
+		        <td>Target imputed region, excluding left and right buffers (e.g. chr20:1000000-2000000).</td>
+		      </tr>
+		      <tr>
+                	<td><code>--log</code></td>
+		        <td>NA</td>
+		        <td>STRING</td>
+		        <td>Log file.</td>
+		      </tr>
+		    </tbody>
+		  </table>
+		</div>	
 
     </div> <!-- /container -->
 	

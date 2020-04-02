@@ -46,14 +46,56 @@
     <!-- CONTENT -->
     <div class="container theme-showcase" role="main">
     
-	    <div class="page-header">
-	    	<h1>Ligate multiple chunks together</h1>
-		</div>
-		
-		<p>This is a template showcasing the optional theme stylesheet included in Bootstrap. </p>
-		<p>Use it as a starting point to create something more unique by building on or modifying it.</p>
-		
-		<code>Command line to run</code>
+    
+	<div class="page-header">
+	   	<h1>Ligate multiple chunks together</h1>
+	</div>
+
+	<div class="col-md-6">
+		<h3>Command options</h3>
+		  <table class="table table-striped">
+		    <thead>
+		      <tr>
+                	<th>Long form</th>
+               		<th>Short</th>
+                	<th>Argument</th>
+                	<th>Description</th>
+		      </tr>
+		    </thead>
+		    <tbody>
+		      <tr>
+                	<td><code>--help</code></td>
+                	<td>NA</td>
+                	<td>NA</td>
+                	<td>Produces an help message with a short description of the comman options</td>
+		      </tr>
+		      <tr>
+                	<td><code>--seed</code></td>
+		        <td>NA</td>
+		        <td>INT</td>
+                	<td>Seed for random number generator.</td>
+		      </tr>
+		      <tr>
+                	<td><code>--input</code></td>
+		        <td><code>--I</code></td>
+		        <td>STRING</td>
+		        <td>Text file containing the full list of files to ligate (one file per line)</td>
+		      </tr>
+		      <tr>
+                	<td><code>--output</code></td>
+		        <td><code>-O</code></td>
+		        <td>STRING</td>
+		        <td>Output VCF/BCF file for the merged regions. Phased information (HS field) is updated accordingly for the full region.</td>
+		      </tr>
+		      <tr>
+                	<td><code>--log</code></td>
+		        <td>NA</td>
+		        <td>STRING</td>
+		        <td>Log file.</td>
+		      </tr>
+		    </tbody>
+		  </table>
+		</div>	
 
     </div> <!-- /container -->
 	
