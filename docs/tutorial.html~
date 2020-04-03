@@ -66,7 +66,7 @@
 		<br>
 		<br>
 		In this tutorial, we show how to run GLIMPSE from sequencing reads data (BAM/CRAM file) to obtain refined genotype and haplotype calls.
-		A small dataset containing chromosome 22 downsampled 1x sequencing reads for one individual (NA12878) is provided with GLIMPSE, 
+		A small dataset containing chromsome 22 downsampled 1x sequencing reads for one individual (NA12878) is provided with GLIMPSE, 
 		together with a reference genome FASTA file (for chromsome 22) needed for genotype likelihood computations.
 		<br>
 		<br>
