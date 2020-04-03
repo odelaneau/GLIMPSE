@@ -18,12 +18,13 @@
 				<li><a href="commands.html">GLIMPSE command options</a></li>
 				<li role="separator" class="divider"></li>
 				<li class="dropdown-header">Running GLIMPSE</li>
-				<li><a href="tutorial.html#run_likelihoods">  0. Preliminaries and test datasets</a></li>
-				<li><a href="tutorial.html#run_likelihoods">  1. Computation of genotype likelihoods</a></li>
-				<li><a href="tutorial.html#run_chunk">  2. Split the genome into chunks</a></li>
-				<li><a href="tutorial.html#run_phase">  3. Impute and phase a genomic region</a></li>
-				<li><a href="tutorial.html#run_ligate">  4. Ligate multiple chunks together</a></li>
-				<li><a href="tutorial.html#run_sample">  5. Sample haplotypes</a></li>
+				<li><a href="tutorial.html#run_preliminaries">  1. Datasets and preliminaries</a></li>
+				<li><a href="tutorial.html#run_preliminaries">  1. Reference panel</a></li>
+				<li><a href="tutorial.html#run_likelihoods">  3. Computation of genotype likelihoods</a></li>
+				<li><a href="tutorial.html#run_chunk">  4. Split the genome into chunks</a></li>
+				<li><a href="tutorial.html#run_phase">  5. Impute and phase a genomic region</a></li>
+				<li><a href="tutorial.html#run_ligate">  6. Ligate multiple chunks together</a></li>
+				<li><a href="tutorial.html#run_sample">  7. Sample haplotypes</a></li>
 			</ul>
 		</li>
 		<li class="dropdown">

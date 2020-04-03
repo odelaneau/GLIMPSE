@@ -8,7 +8,7 @@
 		
     <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
     <meta name="description" content="">
-    <meta name="author" content="">
+    <meta name="author" content="srubinac" >
 
     <title>GLIMPSE</title>
     
@@ -47,57 +47,62 @@
     <div class="container theme-showcase" role="main">
     
 	<div class="page-header">
-		<h1>Installation</h1>
+		<h1>GLIMPSE installation</h1>
 	</div>
+		<div class="well">
+			<h3>Required libraries</h3>	
+			<p>GLIMPSE requires two libraries installed on the system:</p>
+			<ol>
+				<li><a href="http://www.htslib.org/">HTSlib</a>: C library for reading/writing high-throughput sequencing data.</li>
+				<li><a href="https://www.boost.org/">BOOST</a>: A free peer-reviewed portable C++ source libraries. GLIMPSE uses two specific BOOST libraries: iostreams and program_options.</li>
+			</ol>
+			<p>Make sure that the following standard library flags can be used by g++ on your system:</p>
+			<ul>
+				<li><code>-lz</code>, <code>-lbz2</code> and <code>-llzma</code> for reading/writing compressed files.</li>
+				<li><code>-lm</code> for basic math operations.</li>
+				<li><code>-lpthread</code> for multi-threading.</li>
+			</ul>
+			<p>You can do so by checking the outcome of the following commands:</p>
+			<code>locate -b '\libz.so'</code><br>
+			<code>locate -b '\libbz2.so'</code><br>
+			<code>locate -b '\liblzma.so'</code><br>
+			<code>locate -b '\libm.so'</code><br>
+			<code>locate -b '\libpthread.so'</code><br>
+		</div>
 		
-		<p>GLIMPSE requres two libraries installed on the system:</p>
-		<ol>
-			<li><a href="http://www.htslib.org/">HTSlib</a>: C library for reading/writing high-throughput sequencing data.</li>
-			<li><a href="https://www.boost.org/">BOOST</a>: A free peer-reviewed portable C++ source libraries. GLIMPSE uses two specific BOOST libraries: iostreams and program_options.</li>
-		</ol>
-		<p>Make sure that the following standard library flags can be used by g++ on your system:</p>
-		<ul>
-			<li><code>-lz</code>, <code>-lbz2</code> and <code>-llzma</code> for reading/writing compressed files.</li>
-			<li><code>-lm</code> for basic math operations.</li>
-			<li><code>-lpthread</code> for multi-threading.</li>
-		</ul>
-		<p>You can do so by checking the outcome of the following commands:</p>
-		<code>locate -b '\libz.so'</code><br>
-		<code>locate -b '\libbz2.so'</code><br>
-		<code>locate -b '\liblzma.so'</code><br>
-		<code>locate -b '\libm.so'</code><br>
-		<code>locate -b '\libpthread.so'</code><br>
-
-		<p>Then, download the last version of the GLIMPSE code using:</p>
-		<code>git clone https://github.com/odelaneau/GLIMPSE.git</code>
-		<p>Navigate to the downloaded folder using <code>cd GLIMPSE</code>.</p>
-		<p>You'll find there a folder containing all the software packages are other utility folders:</p>
-		<ul>
-			<li><code>docs</code>: source code of this website.</li>
-			<li><code>maps</code>: genetic maps for human taken from HapMap.</li>
-			<li><code>test</code>: folder with small example datasets.</li>
-			<li><code>README.md</code>: front page of the GitHub.</li>
-			<li><code>LICENSE</code>: copy of the MIT license.</li>
-			<li><code>makefile</code> Makefile to compile all the programs at once, by recursively calling all the makefiles of the projects.</li>
-		</ul>
-		<p>Each software in the suite contains the same folder structure:</p>
-		<ul>
-			<li><code>bin</code>: folder for the compiled binary.</li>
-			<li><code>obj</code>: folder with all binary objects.</li>
-			<li><code>src</code>: folder with all SHAPIT4 source code.</li>
-			<li><code>makefile</code> Makefile to compile the program.</li>
-		</ul>
-		<p>In order to compile a specific tool of the suite, for example <i>GLIMPSE phase</i>, go in directory of the software (<code>cd phase</code>) and edit the specific <code>makefile</code> at lines 19-24 so that the following variables are correctly set up (look at the paths already there for an example):</p>
-		<ul>
-			<li><code>HTSLIB_INC</code> (line 19): path to the HTSlib header files,</li>
-			<li><code>HTSLIB_LIB</code> (line 20): path to the static HTSlib library (file <code>libhts.a</code>),</li>
-			<li><code>BOOST_INC</code> (line 21): path to the BOOST header files (often <code>/usr/include</code>),</li>
-			<li><code>BOOST_LIB_IO</code> (line 22): path to the static BOOST <i>iostreams</i> library (file <code>libboost_iostreams.a</code>),</li>
-			<li><code>BOOST_LIB_PO</code> (line 23): path to the static BOOST <i>program_options</i> library (file <code>libboost_iostreams.a</code>),</li>
-		</ul>
-		<p>The static libraries (<i>*.a</i> files) can be located with this command:</p>
-		<code>locate libboost_program_options.a libboost_iostreams.a libhts.a</code>
-		<p>Once all paths correctly set up, proceed with the compilation using <code>make</code>. The binary can be found in the <code>bin/</code> folder and will have a name similar to <code>GLIMPSE_phase</code></p>
+		<div class="well">
+			<h3>Installation</h3>	
+			<p>Download the last version of the GLIMPSE code using:</p>
+			<code>git clone https://github.com/odelaneau/GLIMPSE.git</code>
+			<p>Navigate to the downloaded folder using <code>cd GLIMPSE</code>.</p>
+			<p>You'll find there a folder containing all the software packages are other utility folders:</p>
+			<ul>
+				<li><code>docs</code>: source code of this website.</li>
+				<li><code>maps</code>: genetic maps for human taken from HapMap.</li>
+				<li><code>test</code>: folder with small example datasets.</li>
+				<li><code>README.md</code>: front page of the GitHub.</li>
+				<li><code>LICENSE</code>: copy of the MIT license.</li>
+				<li><code>makefile</code> Makefile to compile all the programs at once, by recursively calling all the makefiles of the projects.</li>
+			</ul>
+			<p>Each software in the suite contains the same folder structure:</p>
+			<ul>
+				<li><code>bin</code>: folder for the compiled binary.</li>
+				<li><code>obj</code>: folder with all binary objects.</li>
+				<li><code>src</code>: folder with source code.</li>
+				<li><code>makefile</code> Makefile to compile the program.</li>
+			</ul>
+			<p>In order to compile a specific tool of the suite, for example <i>GLIMPSE phase</i>, go in directory of the software (<code>cd phase</code>) and edit the specific <code>makefile</code> at lines 19-24 so that the following variables are correctly set up (look at the paths already there for an example):</p>
+			<ul>
+				<li><code>HTSLIB_INC</code> (line 19): path to the HTSlib header files,</li>
+				<li><code>HTSLIB_LIB</code> (line 20): path to the static HTSlib library (file <code>libhts.a</code>),</li>
+				<li><code>BOOST_INC</code> (line 21): path to the BOOST header files (often <code>/usr/include</code>),</li>
+				<li><code>BOOST_LIB_IO</code> (line 22): path to the static BOOST <i>iostreams</i> library (file <code>libboost_iostreams.a</code>),</li>
+				<li><code>BOOST_LIB_PO</code> (line 23): path to the static BOOST <i>program_options</i> library (file <code>libboost_iostreams.a</code>),</li>
+			</ul>
+			<p>The static libraries (<i>*.a</i> files) can be located with this command:</p>
+			<code>locate libboost_program_options.a libboost_iostreams.a libhts.a</code>
+			<p>Once all paths correctly set up, proceed with the compilation using <code>make</code>. The binary can be found in the <code>bin/</code> folder and will have a name similar to <code>GLIMPSE_phase</code></p>
+		</div>
     </div> <!-- /container -->
 	
  <footer class="footer">
