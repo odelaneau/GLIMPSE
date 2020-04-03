@@ -330,9 +330,9 @@
 		</div>
 		
 		<div id="run_sample" class="page-header">
-	    	<h1>A1. Downloading and downsampling GIAB high coverage data</h1>
+	    	<h1>A1. Low coverage reads</h1>
 	    	<div class="well">
-				<h3>A1.1. Low coverage reads</h3>
+				<h3>A1.1. Downsample GIAB high coverage data</h3>
 				
 				<p>
 				We can donwload the dull downsampled (30x) dataset for NA12878 from NCBI website, provided by Genome In A Bottle consortium:
