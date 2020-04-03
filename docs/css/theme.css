@@ -37,3 +37,8 @@ body {
 label {
 	font-weight: normal !important;
 }
+
+img.logo {
+	max-width:20%;
+	max-height:20%;
+}
