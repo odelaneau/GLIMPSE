@@ -1,5 +1,3 @@
-![GitHub GLIMPSE](/docs/images/branding/glimpse_logo_400x171.png)
-
 # GLIMPSE TOOLS 
 
 GLIMPSE is a set of tools for phasing and imputation for low-coverage sequencing datasets:
