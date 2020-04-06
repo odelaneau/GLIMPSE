@@ -72,7 +72,7 @@
 						<li><b>Accurate imputed genotype calls.</b> Our method takes advantage of reference panels (containing thousands of haplotypes) to refine genotypes likelihoods from low-coverage datasets and produce high quality genotype calls.</li>
 						<li><b>Accurate phasing.</b> GLIMPSE outputs accurate phased information for the low-coverage sequenced dataset.</li>
 						<li><b>Low-coverage sequencing outperforms SNP arrays.</b> 
-							Imputation using low-coverage sequencing data is more accurate than SNP array imputation in the full range of allele frequency. 
+							Imputation using low-coverage sequencing data is more accurate than SNP array imputation. 
 							Results for <a href="rsquare_eur.html">European</a> and <a href="rsquare_asw.html">African-American</a> populations are interactively available on the website. 
 						<li><b>A cost-effective paradigm.</b> GLIMPSE realises whole genome imputation from the HRC reference panel for less than 1$ cost.</li>
 					</ol>
