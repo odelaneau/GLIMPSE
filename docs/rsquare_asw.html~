@@ -17,7 +17,7 @@
 		
     <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
     <meta name="description" content="">
-    <meta name="author" content="">
+    <meta name="author" content="srubinac" >
 
     <title>GLIMPSE</title>
     <link rel="icon" href="images/branding/glimpse_icon.png">
@@ -222,8 +222,8 @@
 			}
 			window.myScatter.update();
 		};
-		updateData("data/rsquare/ASW.impute.default.cov1.0.rsquare.grp.json", "lccimpute10", document.getElementById("lccimpute10").checked, "#92C4E3");		
-		updateData("data/rsquare/ASW.beagle5.GSA-24v2-0_A1-b38.rsquare.grp.json", "GSA-24v2-0_A1", document.getElementById("GSA-24v2-0_A1").checked, "#FFA971");
+		updateData("data/rsquare/ASW.impute.default.cov1.0.rsquare.grp.json", "lccimpute10", document.getElementById("lccimpute10").checked, "#3473b2");		
+		updateData("data/rsquare/ASW.beagle5.GSA-24v2-0_A1-b38.rsquare.grp.json", "GSA-24v2-0_A1", document.getElementById("GSA-24v2-0_A1").checked, "#ffa64d");
 	};
 
 	</script>
