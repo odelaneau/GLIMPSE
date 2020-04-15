@@ -62,9 +62,9 @@
       <h4>
 		  <p><b>Tool name:</b></p>
         <p><a href="#chunk"><span class="label label-success" style="display:inline-block; width:130px; height:22px;">GLIMPSE chunk</span></a> defines chunks where to run imputation</p>
-        <p><a href="#phase"><span class="label label-primary" style="display:inline-block; width:130px;">GLIMPSE phase</span></a> main GLIMPSE algorithm, performs phasing and imputation refining genotype likelihoods</p>
-        <p><a href="#ligate"><span class="label label-info" style="display:inline-block; width:130px;">GLIMPSE ligate</span></a> concatenate imputation chunks in a single VCF/BCF file ligating phased information</p>
-        <p><a href="#sample"><span class="label label-warning" style="display:inline-block; width:130px;">GLIMPSE sample</span></a> generate haplotype calls by sampling haplotype estimates</p>
+        <p><a href="#phase"><span class="label label-primary" style="display:inline-block; width:130px; height:22px;">GLIMPSE phase</span></a> main GLIMPSE algorithm, performs phasing and imputation refining genotype likelihoods</p>
+        <p><a href="#ligate"><span class="label label-info" style="display:inline-block; width:130px; height:22px;">GLIMPSE ligate</span></a> concatenates imputation chunks in a single VCF/BCF file ligating phased information</p>
+        <p><a href="#sample"><span class="label label-warning" style="display:inline-block; width:130px; height:22px;">GLIMPSE sample</span></a> generates haplotype calls by sampling haplotype estimates</p>
         <hr>
         <p><b>Detailed description</b></p>
       </h4>
@@ -87,9 +87,6 @@
 			  <h4>Usage</h4>
 			  <code>GLIMPSE_chunk --input input.GLs.vcf.gz --reference reference.bcf --region chr20 --window-size 2000000 --window-count 2000 --buffer-size 500000 --buffer-count 500 --output chunks.txt --log chunks.log </code>
 			  <table class="table table-striped">
-			  	<col width="15%">
-  				<col width="10%">
-  				<col width="10%">
   				<col width="65%">
 			 	 <h4>Command options</h4>
 			    <thead>
@@ -123,7 +120,7 @@
 	                	<td><code>--reference</code></td>
 			        <td><code>--R</code></td>
 			        <td>STRING</td>
-			        <td>Reference panel file possibly with or without GT field (for efficiency reasons a file containing only the positions of the reference panel is recommended).</td>
+			        <td>Reference panel file possibly without GT field (for efficiency reasons a file containing only the positions of the reference panel is recommended).</td>
 			      </tr>
 			      <tr>
 	            	<td><code>--region</code></td>
@@ -312,10 +309,11 @@
 			  <h4>Usage</h4>
 			  <code>GLIMPSE_ligate --input list.imputed.txt --output imputed.chr20.bcf --log imputed.chr20.log</code>
 			  <table class="table table-striped">
-			 	<col width="15%">
+			  	<col width="15%">
   				<col width="10%">
   				<col width="10%">
   				<col width="65%">
+  				
 			 	 <h4>Command options</h4>
 			    <thead>
 			      <tr>

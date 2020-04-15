@@ -57,7 +57,7 @@
     <div class="container theme-showcase" role="main">
 		<div class="page-header">
 			<div style="text-align: center;">
-				<img src="images/branding/glimpse_logo_300dpi.png" width="500" height="214" alt="GLIMPSE">	    	
+				<img src="images/branding/glimpse_logo_300dpi.png" style="width: 50%;" alt="GLIMPSE">	    	
 				<br>
 				<p><h1><b><font color="red">G</font></b>enotype <b><font color="red">L</font></b>ikelihoods <b><font color="red">IM</font></b>putation and <b><font color="red">P</font></b>ha<b><font color="red">S</font></b>ing m<b><font color="red">E</font></b>thod</h1></p>
 				<p><h4><font color="grey"  style="font-variant: small-caps">Catch a glimpse of your low depth sequencing data</font><h4></p>	
@@ -80,7 +80,7 @@
 					<p>GLIMPSE tools is available under the <a href="https://en.wikipedia.org/wiki/MIT_License">MIT licence</a> on the Github repository <a href="https://github.com/odelaneau/GLIMPSE">https://github.com/odelaneau/GLIMPSE</a>.</p>	
 		 			<br>
 		 			<p>If you use the GLIMPSE in your research work, please cite the following paper:</p>
-					<p><a href="">Simone Rubinacci, Diogo Ribeiro, Robin Hofmeister, Olivier Delaneau. Efficient phasing and imputation of low-coverage sequencing datasets using large reference panels. BiorXiv [Preprint], 2020.</a></p>
+					<p><a href="https://www.biorxiv.org/content/10.1101/2020.04.14.040329v1">Simone Rubinacci, Diogo Ribeiro, Robin Hofmeister, Olivier Delaneau. Efficient phasing and imputation of low-coverage sequencing data using large reference panels. BiorXiv [Preprint], 2020.</a></p>
 					<br>
 					<p>GLIMPSE was developed by Simone Rubinacci and Olivier Delaneau at the University of Lausanne, Switzerland.</p>
 				</span>
@@ -129,7 +129,7 @@
 			      </div>
 		      </div><!-- /.col-sm-4 -->
 		      <div class="col-sm-3">
-			      <div class="panel panel-info">
+			      <div class="panel panel-primary">
 				      <div class="panel-heading">
 							<h3 class="panel-title">GLIMPSE phase</h3>
 				      </div>
@@ -141,7 +141,7 @@
 			      </div>
 		      </div><!-- /.col-sm-4 -->
 		      <div class="col-sm-3">
-			      <div class="panel panel-primary">
+			      <div class="panel panel-info">
 				      <div class="panel-heading">
 							<h3 class="panel-title">GLIMPSE ligate</h3>
 				      </div>
@@ -172,7 +172,7 @@
 		<h3>Dashboard</h3>		
 				
 			<div class="alert alert-success" role="alert">
-	        	<a href="https://github.com/odelaneau/GLIMPSE" target="Github" name="Github"><strong>03/04/2020: Version 1.0 is avaiable on Github!</strong></a> Check our github page to download version 1.0 and have a GLIMPSE of your data
+	        	<a href="https://github.com/odelaneau/GLIMPSE" target="Github" name="Github"><strong>15/04/2020: Version 1.0 is available on Github!</strong></a> Check our Github page to download version 1.0 and have a GLIMPSE of your data
 	      </div>
 	      <div class="well" role="alert">
 		      <strong>03/04/2020: Website update.</strong> A full tutorial is now available under Documentation -> Running GLIMPSE.
