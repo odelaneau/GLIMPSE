@@ -28,6 +28,7 @@ call_set::call_set () {
 
 void call_set::initialize(vector < double > _bins, double _T, int _D) {
 	vrb.title("Initializing engine based on frequency bins:");
+	use_subset_samples=false;
 	T = _T;
 	D = _D;
 	bins = _bins;
@@ -42,6 +43,7 @@ void call_set::initialize(vector < double > _bins, double _T, int _D) {
 
 void call_set::initialize(string fgrps, double _T, int _D) {
 	vrb.title("Initializing engine based on groups:");
+	use_subset_samples=false;
 	T = _T;
 	D = _D;
 	bins.clear();
@@ -78,6 +80,7 @@ void call_set::initialize(string fgrps, double _T, int _D) {
 
 void call_set::setTargets(string fsamples) {
 	vrb.title("Reading subset of samples to consider in analysis");
+	use_subset_samples=true;
 	string buffer;
 	input_file fd (fsamples);
 	vector < string > tokens;

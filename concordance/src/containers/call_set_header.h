@@ -35,6 +35,7 @@ public:
 	// Sample IDs [N] & Bins [L]
 	int N, L, D;
 	double T;
+	bool use_subset_samples;
 	set < string > subset_samples;
 	vector < string > samples;
 	vector < double > bins;

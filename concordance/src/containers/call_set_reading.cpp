@@ -53,7 +53,7 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 			mappingE = vector < int > (n_esti_samples, -1);
 			for (int i = 0 ; i < n_true_samples ; i ++) {
 				string ts = string(sr->readers[0].header->samples[i]);
-				if (subset_samples.count(ts) > 0) {
+				if (!use_subset_samples || subset_samples.count(ts)>0) {
 					for (int j = 0 ; j < n_esti_samples ; j ++) {
 						string es = string(sr->readers[1].header->samples[j]);
 						if (ts == es) {
