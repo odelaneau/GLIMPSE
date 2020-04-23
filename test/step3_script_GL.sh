@@ -6,6 +6,12 @@ bcftools index -f reference_panel/1000GP.chr22.noNA12878.sites.vcf.gz
 
 bcftools query -f'%CHROM\t%POS\t%REF,%ALT\n' reference_panel/1000GP.chr22.noNA12878.sites.vcf.gz | bgzip -c > reference_panel/1000GP.chr22.noNA12878.sites.tsv.gz
 
+##Bugfix for [E::_regions_match_alleles] Compressed and indexed targets file is required
+#suggested by @alek0991 https://github.com/odelaneau/GLIMPSE/issues/3
+#requres htslib in your path
+#
+#tabix -s1 -b2 -e2 reference_panel/1000GP.chr22.noNA12878.sites.tsv.gz
+
 BAM=NA12878_1x_bam/NA12878.chr22.1x.bam
 VCF=reference_panel/1000GP.chr22.noNA12878.sites.vcf.gz
 TSV=reference_panel/1000GP.chr22.noNA12878.sites.tsv.gz
