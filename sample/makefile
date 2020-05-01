@@ -15,7 +15,7 @@ CFILE=$(shell find src -name *.cpp)
 OFILE=$(shell for file in `find src -name *.cpp`; do echo obj/$$(basename $$file .cpp).o; done)
 VPATH=$(shell for file in `find src -name *.cpp`; do echo $$(dirname $$file); done)
 
-#CONDITIONAL PATH DEFINITON 
+#CONDITIONAL PATH DEFINITON
 desktop: $(BFILE)
 
 #COMPILATION RULES
