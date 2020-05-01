@@ -1,4 +1,5 @@
-projects = chunk concordance impute ligate phase sample snparray
+# projects = chunk concordance impute ligate phase sample snparray
+projects = chunk ligate phase sample
 
 .PHONY: all $(projects)
 
