@@ -241,7 +241,7 @@
 			We use GLIMPSE_chunk to generate imputation regions for the full chromosome 22, modifying few default parameters in this way:
 			</p>
 			
-			<p style="text-indent:-5px ! important;"><code> > bin/GLIMPSE_chunk --input reference_panel/1000GP.chr22.noNA12878.sites.vcf.gz --region 22 --window-size 2000000 --buffer-size 200000 --output chunks.chr22.txt</code></p>			
+			<p style="text-indent:-5px ! important;"><code> > bin/GLIMPSE_chunk --input NA12878_1x_vcf/NA12878.chr22.1x.vcf.gz --reference reference_panel/1000GP.chr22.noNA12878.sites.vcf.gz --region 22 --window-size 2000000 --buffer-size 200000 --output chunks.chr22.txt</code></p>			
 			This generates a file containing the imputation chunks and larger chunks including buffers that we will use to run GLIMPSE_phase. 		
 		</div>
 		

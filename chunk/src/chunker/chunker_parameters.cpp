@@ -32,8 +32,7 @@ void chunker::declare_options() {
 
 	bpo::options_description opt_input ("Input files");
 	opt_input.add_options()
-			("input,I", bpo::value< string >(), "Main GL data")
-			("reference,R", bpo::value< string >(), "Reference haplotype data")
+			("input,I", bpo::value< string >(), "Reference or target dataset at all variable positions in VCF/BCF format. The GT field is not required.")
 			("region", bpo::value< string >(), "Chromosome or region to be splitted");
 
 	bpo::options_description opt_algo ("Parameters");
@@ -73,9 +72,6 @@ void chunker::check_options() {
 	if (!options.count("input"))
 		vrb.error("You must specify one input file using --input");
 
-	if (!options.count("reference"))
-		vrb.error("You must use a reference panel using --reference");
-
 	if (!options.count("region"))
 		vrb.error("You must specify a region to be split using --region (ideally a chromosome)");
 
@@ -90,7 +86,6 @@ void chunker::verbose_files() {
 	vrb.title("Files:");
 	vrb.bullet("Input VCF      : [" + options["input"].as < string > () + "]");
 	vrb.bullet("Chromosome     : [" + options["region"].as < string > () + "]");
-	vrb.bullet("Reference VCF  : [" + options["reference"].as < string > () + "]");
 	vrb.bullet("Output file    : [" + options["output"].as < string > () + "]");
 	if (options.count("log")) vrb.bullet("Output LOG    : [" + options["log"].as < string > () + "]");
 }

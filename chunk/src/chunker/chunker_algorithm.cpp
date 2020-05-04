@@ -51,7 +51,7 @@ void chunker::split(output_file & fd, int & cidx, string & chr, int start_idx, i
 				left_idx --;
 				left_count = start_idx - left_idx + 1;
 				left_size = positions[start_idx] - positions[left_idx] + 1;
-			} while ((left_idx > 0) && (left_count < buffer_count) || (left_size < buffer_size));
+			} while (((left_idx > 0) && (left_count < buffer_count)) || (left_size < buffer_size));
 		} else { left_idx = 0; }
 		//Get right buffer
 		int right_idx = -1, right_size = -1, right_count = -1;
@@ -61,7 +61,7 @@ void chunker::split(output_file & fd, int & cidx, string & chr, int start_idx, i
 				right_idx ++;
 				right_count = right_idx - stop_idx + 1;
 				right_size = positions[right_idx] - positions[stop_idx] + 1;
-			} while ((right_idx < (positions.size() - 1)) && (right_count < buffer_count) || (right_size < buffer_size));
+			} while (((right_idx < (positions.size() - 1)) && (right_count < buffer_count)) || (right_size < buffer_size));
 		} else { right_idx = positions.size() - 1; }
 		//Process window
 		vrb.bullet("Terminal window [" + stb.str(cidx) + "] -buffer:[" + chr + ":" + stb.str(positions[start_idx]) + "-" + stb.str(positions[stop_idx]) + "] / +buffer:[" + chr +  ":" + stb.str(positions[left_idx]) + "-" + stb.str(positions[right_idx]) + "] / L=" + stb.str(curr_window_size) + "bp / C=" + stb.str(curr_window_count));
@@ -81,7 +81,7 @@ void chunker::chunk() {
 	buffer_count = options["buffer-count"].as < int > ();
 
 	//Read input data (overlapping coordinates)
-	readData(options["input"].as < string > (), options["reference"].as < string > (), options["region"].as < string > ());
+	readData(options["input"].as < string > (), options["region"].as < string > ());
 
 	// Perform chunking!
 	int cidx = 0;

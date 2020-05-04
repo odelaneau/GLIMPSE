@@ -47,7 +47,7 @@ public:
 	~chunker();
 
 	//METHODS
-	void readData(string fmain, string fref, string region);
+	void readData(string fmain, string region);
 
 	//PARAMETERS
 	void declare_options();

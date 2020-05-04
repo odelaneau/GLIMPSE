@@ -117,7 +117,13 @@
 	              <td><code>--input</code></td>
 			        <td><code>--I</code></td>
 			        <td>STRING</td>
-			        <td>Reference panel or target dataset in VCF/BCF format, defined at all variable positions. The file could possibly be without GT field (for efficiency reasons a file containing only the positions is recommended).</td>
+			        <td>Input VCF/BCF file containing genotype likelihoods</td>
+			      </tr>
+			      <tr>
+	                	<td><code>--reference</code></td>
+			        <td><code>--R</code></td>
+			        <td>STRING</td>
+			        <td>Reference panel file possibly without GT field (for efficiency reasons a file containing only the positions of the reference panel is recommended).</td>
 			      </tr>
 			      <tr>
 	            	<td><code>--region</code></td>
