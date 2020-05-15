@@ -21,36 +21,19 @@
  * SOFTWARE.
  ******************************************************************************/
 
-#include <checker/checker_header.h>
+#include <stater/stater_header.h>
 
-void checker::read_files_and_initialise() {
-	//step0: Initialize seed and multi-threading
-	rng.setSeed(options["seed"].as < int > ());
+stater::stater() {
+}
 
-	//step1: process bins/groups & parameters
-	if (options.count("bins")) {
-		D.initialize(options["bins"].as < vector < double > > (), options["minPROB"].as < double > (), options["minDP"].as < int > ());
-	} else {
-		D.initialize(options["groups"].as < string > (), options["minPROB"].as < double > (), options["minDP"].as < int > ());
-	}
+stater::~stater() {
+}
 
-	//step2: read list of samples
-	if (options.count("samples")) D.setTargets(options["samples"].as < string > ());
-
-	//step3: read input files
-	vrb.title("Reading list of input files in [" + options["input"].as < string > () + "]");
-	string buffer;
-	vector < string > tokens;
-	vector < string > vec_regi, vec_true, vec_esti, vec_freq;
-	input_file fd (options["input"].as < string > ());
-	while (getline(fd, buffer, '\n')) {
-		if (stb.split(buffer, tokens) == 4) {
-			vec_regi.push_back(tokens[0]);
-			vec_freq.push_back(tokens[1]);
-			vec_true.push_back(tokens[2]);
-			vec_esti.push_back(tokens[3]);
-		}
-	}
-	vrb.bullet(stb.str(vec_esti.size()) + " sets of files detected");
-	D.readData(vec_true, vec_esti, vec_freq, vec_regi, options["info_af"].as<string>());
+void stater::stats(vector < string > & args) {
+	declare_options();
+	parse_command_line(args);
+	check_options();
+	verbose_files();
+	verbose_options();
+	stats();
 }
