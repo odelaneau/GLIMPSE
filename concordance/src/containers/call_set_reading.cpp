@@ -23,7 +23,44 @@
 
 #include "call_set_header.h"
 
-void call_set::readData(vector < string > & ftruth, vector < string > & festimated, vector < string > & ffrequencies, vector < string > & region, string info_af) {
+float mean(int n, vector<float>& arr) {
+    float sum = 0;
+    for (int i = 0; i < n; i++)
+        sum += arr[i];
+
+    return sum / n;
+}
+
+float stdDev(int n, vector<float>& arr, float mean) {
+	double sum = 0;
+    for (int i = 0; i < n; i++)
+        sum += pow(abs(arr[i] - mean), 2);
+
+    return sqrt(sum / n);
+}
+
+float pearson(int n, vector<float>& x, vector<float>& y) {
+    float sum = 0;
+    float xMean = mean(n, x);
+    float xStdDev = stdDev(n, x, xMean);
+    float yMean  = mean(n, y);
+    float yStdDev = stdDev(n, y, yMean);
+
+    for (int i = 0; i < n; i++)
+        sum += (x[i] - xMean) * (y[i] - yMean);
+
+    return sum / (n * xStdDev * yStdDev);
+}
+
+float pearson_prec(int n, vector<float>& x, vector<float>& y, float xMean, float xStdDev, float yMean, float yStdDev) {
+    float sum = 0;
+    for (int i = 0; i < n; i++)
+        sum += (x[i] - xMean) * (y[i] - yMean);
+
+    return sum / (n * xStdDev * yStdDev);
+}
+
+void call_set::readData(vector < string > & ftruth, vector < string > & festimated, vector < string > & ffrequencies, vector < string > & region, string info_af, int nthreads) {
 	tac.clock();
 	int n_true_samples, n_esti_samples;
 	unsigned long int n_variants_all_chromosomes = 0;
@@ -36,8 +73,10 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 		vrb.bullet("Region      [" + region[f] + "]");
 
 		bcf_srs_t * sr =  bcf_sr_init();
+
 		sr->collapse = COLLAPSE_NONE;
 		sr->require_index = 1;
+		bcf_sr_set_threads(sr, nthreads);
 		bcf_sr_set_regions(sr, region[f].c_str(), 0);
 		bcf_sr_add_reader (sr, ftruth[f].c_str());
 		bcf_sr_add_reader (sr, festimated[f].c_str());
@@ -78,11 +117,13 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 				genotype_bin_totals = vector < unsigned long int > (3 * L, 0);
 				rsquared_bin = vector < stats2D > (L);
 				frequency_bin = vector < stats1D > (L);
+				avg_rsquared_bin = vector < stats1D > (L);
 			} else {
 				genotype_bin_errors = vector < unsigned long int > (3 * rsquared_str.size(), 0);
 				genotype_bin_totals = vector < unsigned long int > (3 * rsquared_str.size(), 0);
 				rsquared_bin = vector < stats2D > (rsquared_str.size());
 				frequency_bin = vector < stats1D > (rsquared_str.size());
+				avg_rsquared_bin = vector < stats1D > (rsquared_str.size());
 			}
 			vrb.bullet("#overlapping samples = " + stb.str(N));
 		}
@@ -97,6 +138,11 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 		vector < float > DSs = vector < float > (N, 0.0f);
 		vector < float > GPs = vector < float > (3*N, 0.0f);
 		vector < int > DPs = vector < int > (N, 0);
+
+		vector < float > sample_dosages(N);
+		vector < float > sample_truth(N);
+		float sum_ds_e = 0.0f;
+		float sum_ds_t = 0.0f;
 
 		map < string, pair < int, bool > > :: iterator itG;
 		bcf1_t * line_t, * line_e, * line_f;
@@ -114,6 +160,8 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 					nds_e = bcf_get_format_float(sr->readers[1].header, line_e, "DS", &ds_arr_e, &nds_arr_e);
 					ngp_e = bcf_get_format_float(sr->readers[1].header, line_e, "GP", &gp_arr_e, &ngp_arr_e);
 					
+					sum_ds_e = 0.0f;
+					sum_ds_t = 0.0f;
 					bool has_validation = false;
 					if ((naf_f==1)&&(ngl_t==3*n_true_samples)&&(nds_e==n_esti_samples)&&(ngp_e==3*n_esti_samples)&&(ndp_t==n_true_samples)) {
 
@@ -162,8 +210,8 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 						}
 
 						// Process variant
-						for (int i = 0 ; i < N ; i ++) {
-							if (grp_bin >= 0) {	// Do this variant fall within a given frequency bin?
+						if (grp_bin >= 0) {	// Do this variant fall within a given frequency bin?
+							for (int i = 0 ; i < N ; i ++) {
 								int true_genotype = getTruth(PLs[3*i+0], PLs[3*i+1], PLs[3*i+2], DPs[i]);
 								if (true_genotype >= 0) {
 									int esti_genotype = getMostLikely(GPs[3*i+0], GPs[3*i+1], GPs[3*i+2]);
@@ -200,14 +248,27 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 									// [5] Update Rsquare per sample
 									rsquared_spl[i].push(DSs[i], true_genotype*1.0f);
 
+									// [6] Update data for AVG Rsquare
+									sample_truth[i] = true_genotype*1.0f;
+									sum_ds_e += DSs[i];
+									sum_ds_t += true_genotype*1.0f;
+
 									// Increment counts
 									has_validation = true;
 									ngenoval ++;
 								}
 							}
-						}
-					}
+							// [6] Compute Rsquare variant and update data
+							float xMean = mean(N, DSs);
+							float xStdDev = stdDev(N, DSs, xMean);
+							float yMean  = mean(N, sample_truth);
+							float yStdDev = stdDev(N, sample_truth, yMean);
 
+							if (xStdDev > 0.0f && yStdDev > 0.0f)
+								avg_rsquared_bin[grp_bin].push(std::pow(pearson_prec(N,DSs,sample_truth, xMean, xStdDev, yMean, yStdDev),2));
+						}
+
+					}
 					// increment number of variants
 					nvariantval += has_validation;
 					nvarianttot ++;
