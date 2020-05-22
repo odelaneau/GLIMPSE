@@ -18,14 +18,9 @@ VPATH=$(shell for file in `find src -name *.cpp`; do echo $$(dirname $$file); do
 #CONDITIONAL PATH DEFINITON
 desktop: HTSLIB_INC=$(HOME)/Tools/htslib-1.9
 desktop: HTSLIB_LIB=$(HOME)/Tools/htslib-1.9/libhts.a
-#desktop: BOOST_INC=/usr/include
-#desktop: BOOST_LIB_IO=/usr/lib/x86_64-linux-gnu/libboost_iostreams.a
-#desktop: BOOST_LIB_PO=/usr/lib/x86_64-linux-gnu/libboost_program_options.a
-#desktop: HTSLIB_INC=../../htslib
-#desktop: HTSLIB_LIB=../../htslib/libhts.a
 desktop: BOOST_INC=/usr/include
-desktop: BOOST_LIB_IO=/usr/local/lib/libboost_iostreams.a
-desktop: BOOST_LIB_PO=/usr/local/lib/libboost_program_options.a
+desktop: BOOST_LIB_IO=/usr/lib/x86_64-linux-gnu/libboost_iostreams.a
+desktop: BOOST_LIB_PO=/usr/lib/x86_64-linux-gnu/libboost_program_options.a
 desktop: $(BFILE)
 
 cluster: HTSLIB_INC=/software/UHTS/Analysis/samtools/1.4/include
