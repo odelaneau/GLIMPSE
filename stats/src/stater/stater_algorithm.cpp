@@ -34,7 +34,7 @@ void stater::stats() {
 	vector < string > files, regions, tokens;
 	input_file fd(options["input"].as < string > ());
 	while (getline(fd, buffer)) {
-		if (stb.split(buffer, tokens) < 2) {
+		if (stb.split(buffer, tokens) >= 2) {
 			regions.push_back(tokens[0]);
 			files.push_back(tokens[1]);
 		}
@@ -66,8 +66,9 @@ void stater::stats() {
 	output_file fdo2(options["output"].as < string > () + ".spl.txt");
 	for (int i = 0 ; i  < spl_ids.size() ; i ++) {
 		fdo2 << spl_ids[i];
-		fdo2 << "\t" << stb.str(spl_info[i], 5);
-		fdo2 << "\t" << stb.str(spl_avgp[i], 5) << endl;
+		//fdo2 << "\t" << stb.str(spl_info[i], 5);
+		fdo2 << "\t" << stb.str(spl_avgp[i], 5);
+		fdo2 << "\t" << stb.str(spl_avgw[i], 5) << endl;
 	}
 	fdo2.close();
 

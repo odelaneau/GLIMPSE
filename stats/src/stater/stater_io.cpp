@@ -25,6 +25,7 @@
 
 void stater::readDataAndComputeStats(vector < string > files, vector < string > regions){
 	tac.clock();
+	double sum_avgw = 0.0f;
 	int n_main_samples = 0;
 	basic_stats spl_rstat_hwe;
 	vector < basic_stats > spl_rstat;
@@ -45,6 +46,7 @@ void stater::readDataAndComputeStats(vector < string > files, vector < string > 
 			for (int i = 0 ; i < n_main_samples ; i ++) spl_ids.push_back(string(sr->readers[0].header->samples[i]));
 			spl_info = vector < double > (spl_ids.size(), 0.0f);
 			spl_avgp = vector < double > (spl_ids.size(), 0.0f);
+			spl_avgw = vector < double > (spl_ids.size(), 0.0f);
 			spl_rstat = vector < basic_stats > (spl_ids.size());
 		} else {
 			if (ntmp_main_samples != n_main_samples) vrb.error("Different number of samples between input files!");
@@ -92,18 +94,29 @@ void stater::readDataAndComputeStats(vector < string > files, vector < string > 
 						spl_rstat[i/3].push(ds);
 						spl_avgp[i/3] += mp;
 					}
+
+					float freq_alt_main = ds_sum / (2 * n_main_samples);
+					float infoscore = (freq_alt_main>0.0 && freq_alt_main<1.0) ? (float)(1.0 - (ds4_sum - ds2_sum) / (2 * n_main_samples * freq_alt_main * (1.0 - freq_alt_main))) : 1.0f;
+					infoscore = (infoscore<0.0f)?0.0f:infoscore;
+					infoscore = roundf(infoscore * 1000.0) / 1000.0;
+					float maf = freq_alt_main;
+					if (freq_alt_main > 0.5) maf = 1.0f - freq_alt_main;
+
+					for(int i = 0 ; i < 3 * n_main_samples ; i += 3) {
+						float gp0 = gp_arr_main[i+0];
+						float gp1 = gp_arr_main[i+1];
+						float gp2 = gp_arr_main[i+2];
+						float mp = max(max(gp0,gp1),gp2);
+						spl_avgw[i/3] += mp * 2 * maf;
+					}
+					sum_avgw += 2 * maf;
+
+					var_freq.back() = freq_alt_main;
+					var_info.back() = infoscore;
+					var_avgp.back() = max_p * 1.0f/n_main_samples;
+					spl_rstat_hwe.push(2.0f * freq_alt_main);
+					n_variants++;
 				}
-
-				float freq_alt_main = ds_sum / (2 * n_main_samples);
-				float infoscore = (freq_alt_main>0.0 && freq_alt_main<1.0) ? (float)(1.0 - (ds4_sum - ds2_sum) / (2 * n_main_samples * freq_alt_main * (1.0 - freq_alt_main))) : 1.0f;
-				infoscore = (infoscore<0.0f)?0.0f:infoscore;
-				infoscore = roundf(infoscore * 1000.0) / 1000.0;
-
-				var_freq.back() = freq_alt_main;
-				var_info.back() = infoscore;
-				var_avgp.back() = max_p * 1.0f/n_main_samples;
-				spl_rstat_hwe.push(2.0f * freq_alt_main * (1.0f - freq_alt_main) + 2.0f * freq_alt_main * freq_alt_main);
-				n_variants++;
 			}
 		}
 		free(gp_arr_main);
@@ -113,7 +126,9 @@ void stater::readDataAndComputeStats(vector < string > files, vector < string > 
 
 	//Finalization
 	for (int i = 0 ; i < n_main_samples ; i ++) {
-		spl_info[i] = 1.0f - spl_rstat[i].variance() / spl_rstat_hwe.variance();
+		//cout << i << " " << spl_rstat[i].variance() << " " << spl_rstat_hwe.variance() << endl;
+		spl_info[i] = 1.0f - (spl_rstat[i].variance() / spl_rstat_hwe.variance());
 		spl_avgp[i] /= var_pos.size();
+		spl_avgw[i] /= sum_avgw;
 	}
 }

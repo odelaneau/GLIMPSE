@@ -45,6 +45,7 @@ public:
 	vector < string > spl_ids;
 	vector < double > spl_info;
 	vector < double > spl_avgp;
+	vector < double > spl_avgw;
 
 	//CONSTRUCTOR
 	stater();
