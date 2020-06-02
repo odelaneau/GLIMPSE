@@ -16,6 +16,7 @@ OFILE=$(shell for file in `find src -name *.cpp`; do echo obj/$$(basename $$file
 VPATH=$(shell for file in `find src -name *.cpp`; do echo $$(dirname $$file); done)
 
 #CONDITIONAL PATH DEFINITON
+
 desktop: $(BFILE)
 
 # EXEFILE=bin/GLIMPSE_phase_static

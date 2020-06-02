@@ -56,6 +56,7 @@ public:
 	vector < stats2D > rsquared_bin;
 	vector < string > rsquared_str;
 	vector < stats1D > frequency_bin;
+	vector < stats1D > avg_rsquared_bin;
 
 	// R2 per group
 	map < string, pair < int, bool > > site2grp;
@@ -77,7 +78,7 @@ public:
 	int getCalibrationBin(float , float , float );
 
 	//
-	void readData(vector < string > &, vector < string > &, vector < string > &, vector < string > &, string info_af);
+	void readData(vector < string > &, vector < string > &, vector < string > &, vector < string > &, string info_af, int nthreads);
 	void writeData(string);
 
 	//

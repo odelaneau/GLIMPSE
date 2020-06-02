@@ -95,6 +95,9 @@ void caller::check_options() {
 
 	if (options.count("seed") && options["seed"].as < int > () < 0)
 		vrb.error("Random number generator needs a positive seed value");
+
+	if (options["main"].as < int > () > 15)
+		vrb.error("Maximum value for --main is 15, to run more iteration, increase --burn");
 }
 
 void caller::verbose_files() {

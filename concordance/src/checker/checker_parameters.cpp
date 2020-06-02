@@ -28,7 +28,8 @@ void checker::declare_options() {
 	bpo::options_description opt_base ("Basic options");
 	opt_base.add_options()
 			("help", "Produce help message")
-			("seed", bpo::value<int>()->default_value(15052011), "Seed of the random number generator");
+			("seed", bpo::value<int>()->default_value(15052011), "Seed of the random number generator")
+			("thread", bpo::value<int>()->default_value(1), "Number of threads");
 
 	bpo::options_description opt_input ("Input files");
 	opt_input.add_options()
@@ -99,6 +100,7 @@ void checker::verbose_options() {
 	vrb.bullet("Seed    : " + stb.str(options["seed"].as < int > ()));
 	vrb.bullet("MinPROB : " + stb.str(options["minPROB"].as < double > ()));
 	vrb.bullet("MinDP   : " + stb.str(options["minDP"].as < int > ()));
+	vrb.bullet("#Threads   : " + stb.str(options["thread"].as < int > ()));
 	if (options.count("bins")) {
 		vector < double > tmp = options["bins"].as < vector < double > > ();
 		vrb.bullet("#bins   : " + stb.str(tmp.size()));

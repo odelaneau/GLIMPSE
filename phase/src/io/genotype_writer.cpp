@@ -56,7 +56,7 @@ void genotype_writer::writeGenotypes(string fname, int output_start, int output_
 	bcf_hdr_append(hdr, "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Unphased genotypes\">");
 	bcf_hdr_append(hdr, "##FORMAT=<ID=DS,Number=1,Type=Float,Description=\"Genotype dosage\">");
 	bcf_hdr_append(hdr, "##FORMAT=<ID=GP,Number=3,Type=Float,Description=\"Genotype posteriors\">");
-	bcf_hdr_append(hdr, "##FORMAT=<ID=HS,Number=1,Type=Integer,Description=\"Sampled haplotype pairs packed into intergers (max: 16 pairs, see NMAIN header line)\">");
+	bcf_hdr_append(hdr, "##FORMAT=<ID=HS,Number=1,Type=Integer,Description=\"Sampled haplotype pairs packed into intergers (max: 15 pairs, see NMAIN header line)\">");
 	bcf_hdr_append(hdr, string("##NMAIN="+stb.str(n_main)).c_str());
 
 	//Add samples

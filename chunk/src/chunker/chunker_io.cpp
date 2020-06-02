@@ -23,30 +23,26 @@
 
 #include <chunker/chunker_header.h>
 
-void chunker::readData(string fmain, string freference, string region) {
+void chunker::readData(string fmain, string region) {
 	tac.clock();
 	vrb.title("Reading input files");
 	vrb.bullet("Main      : [" + fmain + "]");
-	vrb.bullet("Reference : [" + freference + "]");
 
 	bcf_srs_t * sr =  bcf_sr_init();
 	sr->collapse = COLLAPSE_NONE;
 	sr->require_index = 1;
 	if(!(bcf_sr_add_reader (sr, fmain.c_str()))) vrb.error("Problem opening index file for [" + fmain + "]");
-	if(!(bcf_sr_add_reader (sr, freference.c_str()))) vrb.error("Problem opening index file for [" + freference + "]");
 	int nset, n_variants = 0;
 	bcf1_t * line_main;
 	while ((nset = bcf_sr_next_line (sr))) {
-		if (nset == 2) {
-			line_main =  bcf_sr_get_line(sr, 0);
-			if (line_main->n_allele == 2) {
-				bcf_unpack(line_main, BCF_UN_STR);
-				chrID = bcf_hdr_id2name(sr->readers[0].header, line_main->rid);
-				positions.push_back(line_main->pos + 1);
-				n_variants++;
-			}
+		line_main =  bcf_sr_get_line(sr, 0);
+		if (line_main->n_allele == 2) {
+			bcf_unpack(line_main, BCF_UN_STR);
+			chrID = bcf_hdr_id2name(sr->readers[0].header, line_main->rid);
+			positions.push_back(line_main->pos + 1);
+			n_variants++;
 		}
 	}
 	bcf_sr_destroy(sr);
-	vrb.bullet("#overlapping variants = " + stb.str(n_variants) + " (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
+	vrb.bullet("#variants = " + stb.str(n_variants) + " (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
 }

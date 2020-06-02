@@ -38,7 +38,7 @@ void checker::read_files_and_initialise() {
 	if (options.count("samples")) D.setTargets(options["samples"].as < string > ());
 
 	//step3: read input files
-	vrb.title("Reading list of input files int [" + options["input"].as < string > () + "]");
+	vrb.title("Reading list of input files in [" + options["input"].as < string > () + "]");
 	string buffer;
 	vector < string > tokens;
 	vector < string > vec_regi, vec_true, vec_esti, vec_freq;
@@ -52,5 +52,5 @@ void checker::read_files_and_initialise() {
 		}
 	}
 	vrb.bullet(stb.str(vec_esti.size()) + " sets of files detected");
-	D.readData(vec_true, vec_esti, vec_freq, vec_regi, options["info_af"].as<string>());
+	D.readData(vec_true, vec_esti, vec_freq, vec_regi, options["info_af"].as<string>(),options["thread"].as < int > ());
 }

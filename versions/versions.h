@@ -29,5 +29,6 @@
 #define PHASE_VERSION "1.0.0"
 #define SAMPLE_VERSION "1.0.0"
 #define SNPARRAY_VERSION "1.0.0"
+#define STATS_VERSION "1.0.0"
 
 #endif

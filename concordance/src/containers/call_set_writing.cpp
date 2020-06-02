@@ -118,4 +118,13 @@ void call_set::writeData(string fout) {
 		fd5 << samples[i] << " " << rsq0 << " " << rsq2 << endl;
 	}
 	fd5.close();
+
+	// [6] AVG Rsquare per bin
+	vrb.bullet("Average Rsquare per frequency bin");
+	output_file fd6 (fout + ".avg.rsquare.grp.txt.gz");
+	for (int b = 0 ; b < L ; b++) {
+		fd6 << b << " " << avg_rsquared_bin[b].size() << " " << avg_rsquared_bin[b].variance();
+		fd6 << " " << avg_rsquared_bin[b].mean() /*<< " " << rsq2 */<< endl;
+	}
+	fd6.close();
 }
