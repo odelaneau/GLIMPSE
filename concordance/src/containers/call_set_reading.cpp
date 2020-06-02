@@ -54,10 +54,14 @@ float pearson(int n, vector<float>& x, vector<float>& y) {
 
 float pearson_prec(int n, vector<float>& x, vector<float>& y, float xMean, float xStdDev, float yMean, float yStdDev) {
     float sum = 0;
+    float xMean1 = mean(n, x);
+    float yMean1 = mean(n, y);
+    float yStdDev1 = stdDev(n, y, yMean1);
+    float xStdDev1 = stdDev(n, x, xMean1);
     for (int i = 0; i < n; i++)
-        sum += (x[i] - xMean) * (y[i] - yMean);
+        sum += (x[i] - xMean1) * (y[i] - yMean1);
 
-    return sum / (n * xStdDev * yStdDev);
+    return sum / (n * xStdDev1 * yStdDev1);
 }
 
 void call_set::readData(vector < string > & ftruth, vector < string > & festimated, vector < string > & ffrequencies, vector < string > & region, string info_af, int nthreads) {
@@ -77,7 +81,7 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 		sr->collapse = COLLAPSE_NONE;
 		sr->require_index = 1;
 		bcf_sr_set_threads(sr, nthreads);
-		bcf_sr_set_regions(sr, region[f].c_str(), 0);
+        bcf_sr_set_regions(sr, region[f].c_str(), 0);
 		bcf_sr_add_reader (sr, ftruth[f].c_str());
 		bcf_sr_add_reader (sr, festimated[f].c_str());
 		bcf_sr_add_reader (sr, ffrequencies[f].c_str());
@@ -129,15 +133,41 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 		}
 
 		unsigned long nvarianttot = 0, nvariantval = 0, nset = 0, ngenoval = 0, n_errors = 0;
-		int ngl_t, ndp_t, ngl_arr_t = 0, ndp_arr_t = 0, *gl_arr_t = NULL, *dp_arr_t = NULL;
-		float *af_ptr=NULL,*ds_arr_e = NULL, *gp_arr_e = NULL, float_swap;
-		int nds_e, nds_arr_e = 0;
-		float naf_f;
-		int naf_arr_f=0, ngp_e, ngp_arr_e = 0;
+		unsigned long ngenoval1 = 0;
+
+        // counts of valid fields
+		int ngl_t;
+		int ndp_t;
+		int ngt_t;
+        int nds_e;
+        int ngp_e;
+        float naf_f;
+
+
+		// pointers for the arrays holding retrieved field values
+		int *gl_arr_t = nullptr;
+		int *dp_arr_t = nullptr;
+        char* *gt_arr_t = nullptr;
+		float *af_ptr = nullptr;
+		float *ds_arr_e = nullptr;
+		float *gp_arr_e = nullptr;
+		float float_swap;
+
+		// to hold values for last arg to bcf_get_*
+        int ngl_arr_t;
+        int ndp_arr_t;
+        int ngt_arr_t;
+        int nds_arr_e;
+		int naf_arr_f;
+		int ngp_arr_e;
+
+
+		// container vectors for Sample-level data like genotypes and such
 		vector < double > PLs = vector < double > (3*N, 0.0f);
 		vector < float > DSs = vector < float > (N, 0.0f);
 		vector < float > GPs = vector < float > (3*N, 0.0f);
 		vector < int > DPs = vector < int > (N, 0);
+		vector <char> GTs = vector<char>(N, 0);
 
 		vector < float > sample_dosages(N);
 		vector < float > sample_truth(N);
@@ -146,25 +176,35 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 
 		map < string, pair < int, bool > > :: iterator itG;
 		bcf1_t * line_t, * line_e, * line_f;
+		// loop through each variant
 		while ((nset = bcf_sr_next_line (sr))) {
 			if (nset == 3) {
+			    // line of each the three vcfs
 				line_t =  bcf_sr_get_line(sr, 0);
 				line_e =  bcf_sr_get_line(sr, 1);
 				line_f =  bcf_sr_get_line(sr, 2);
+
+				// checks for biallelicity at all vcfs
 				if (line_t->n_allele == 2 && line_e->n_allele == 2 && line_f->n_allele == 2) {
 					bcf_unpack(line_t, BCF_UN_STR);
 
+                    // build arrays for this variant
 				    naf_f = bcf_get_info_float(sr->readers[2].header, line_f, info_af.c_str(), &af_ptr, &naf_arr_f);
 					ngl_t = bcf_get_format_int32(sr->readers[0].header, line_t, "PL", &gl_arr_t, &ngl_arr_t);
 					ndp_t = bcf_get_format_int32(sr->readers[0].header, line_t, "DP", &dp_arr_t, &ndp_arr_t);
-					nds_e = bcf_get_format_float(sr->readers[1].header, line_e, "DS", &ds_arr_e, &nds_arr_e);
+                    // GT
+                    ngt_t = bcf_get_format_string(sr->readers[0].header, line_t, "GT", &gt_arr_t, &ngt_arr_t);
+
+                    nds_e = bcf_get_format_float(sr->readers[1].header, line_e, "DS", &ds_arr_e, &nds_arr_e);
 					ngp_e = bcf_get_format_float(sr->readers[1].header, line_e, "GP", &gp_arr_e, &ngp_arr_e);
-					
+
 					sum_ds_e = 0.0f;
 					sum_ds_t = 0.0f;
 					bool has_validation = false;
-					if ((naf_f==1)&&(ngl_t==3*n_true_samples)&&(nds_e==n_esti_samples)&&(ngp_e==3*n_esti_samples)&&(ndp_t==n_true_samples)) {
-
+					// check that the number of each of these fields is correct.
+					// seemingly, naf_f is the number of AF fields with nonzero values. so it will skip 0 af sites
+					//if ((naf_f==1)&&(ngl_t==3*n_true_samples)&&(nds_e==n_esti_samples)&&(ngp_e==3*n_esti_samples)&&(ndp_t==n_true_samples)) {
+                    if ((ngl_t==3*n_true_samples)&&(nds_e==n_esti_samples)&&(ngp_e==3*n_esti_samples)&&(ndp_t==n_true_samples)) {
 						// Meta data for variant
 						float af =  af_ptr[0];
 						bool flip = (af > 0.5);
@@ -186,13 +226,25 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 						for(int i = 0 ; i < n_true_samples ; i ++) {
 							int idx = mappingT[i];
 							if (idx >= 0) {
+                                // if truth genotypes has
 								if (gl_arr_t[3*i+0] != bcf_int32_missing && gl_arr_t[3*i+1] != bcf_int32_missing && gl_arr_t[3*i+2] != bcf_int32_missing) {
-									PLs[3*idx+0] = unphred[min(gl_arr_t[3*i+0], 255)];
+								    // compute PLs off GLs
+								    PLs[3*idx+0] = unphred[min(gl_arr_t[3*i+0], 255)];
 									PLs[3*idx+1] = unphred[min(gl_arr_t[3*i+1], 255)];
 									PLs[3*idx+2] = unphred[min(gl_arr_t[3*i+2], 255)];
-									if (dp_arr_t[i]!= bcf_int32_missing) DPs[idx] = dp_arr_t[i];
+
+									// grab genotypes
+
+									// fill in DPs
+									if (dp_arr_t[i]!= bcf_int32_missing){
+									    DPs[idx] = dp_arr_t[i];
+									}
 									else DPs[idx] = 0;
-									if (flip) { float_swap = PLs[3*idx+2]; PLs[3*idx+2] = PLs[3*idx+0]; PLs[3*idx+0] = float_swap; }
+									if (flip) {
+									    float_swap = PLs[3*idx+2];
+									    PLs[3*idx+2] = PLs[3*idx+0];
+									    PLs[3*idx+0] = float_swap;
+									}
 								} else { PLs[3*idx+0] = -1.0f; PLs[3*idx+1] = -1.0f; PLs[3*idx+2] = -1.0f; }
 							}
 						}
@@ -205,7 +257,12 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 								GPs[3*idx+0] = gp_arr_e[3*i+0];
 								GPs[3*idx+1] = gp_arr_e[3*i+1];
 								GPs[3*idx+2] = gp_arr_e[3*i+2];
-								if (flip) { float_swap = GPs[3*idx+2]; GPs[3*idx+2] = GPs[3*idx+0]; GPs[3*idx+0] = float_swap; DSs[idx] = 2.0f - DSs[idx]; }
+								if (flip) {
+								    float_swap = GPs[3*idx+2];
+								    GPs[3*idx+2] = GPs[3*idx+0];
+								    GPs[3*idx+0] = float_swap;
+								    DSs[idx] = 2.0f - DSs[idx];
+								}
 							}
 						}
 
@@ -213,7 +270,9 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 						if (grp_bin >= 0) {	// Do this variant fall within a given frequency bin?
 							for (int i = 0 ; i < N ; i ++) {
 								int true_genotype = getTruth(PLs[3*i+0], PLs[3*i+1], PLs[3*i+2], DPs[i]);
-								if (true_genotype >= 0) {
+
+								// if true_genotype is NOT VALID (i.e. getTruth returns -1), then it skips the sample variant
+								if (true_genotype >= 0) { // <--- TODO: OK, here is where some are getting filtered out.
 									int esti_genotype = getMostLikely(GPs[3*i+0], GPs[3*i+1], GPs[3*i+2]);
 									int cal_bin = getCalibrationBin(GPs[3*i+0], GPs[3*i+1], GPs[3*i+2]);
 
@@ -256,7 +315,9 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 									// Increment counts
 									has_validation = true;
 									ngenoval ++;
+									ngenoval1 ++;
 								}
+                                else {ngenoval1 ++;}
 							}
 							// [6] Compute Rsquare variant and update data
 							float xMean = mean(N, DSs);
@@ -264,8 +325,11 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 							float yMean  = mean(N, sample_truth);
 							float yStdDev = stdDev(N, sample_truth, yMean);
 
-							if (xStdDev > 0.0f && yStdDev > 0.0f)
-								avg_rsquared_bin[grp_bin].push(std::pow(pearson_prec(N,DSs,sample_truth, xMean, xStdDev, yMean, yStdDev),2));
+							if (xStdDev > 0.0f && yStdDev > 0.0f) {
+                                avg_rsquared_bin[grp_bin].push(
+                                        std::pow(pearson_prec(N, DSs, sample_truth, xMean, xStdDev, yMean, yStdDev),
+                                                 2));
+                            }
 						}
 
 					}
@@ -284,6 +348,7 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 		vrb.bullet("#variants in the overlap = " + stb.str(nvarianttot));
 		vrb.bullet("#variants with validation data = " + stb.str(nvariantval));
 		vrb.bullet("#genotypes used in validation = " + stb.str(ngenoval));
+        vrb.bullet("#jeremy genotypes used in validation = " + stb.str(ngenoval1));
 		vrb.bullet("%error rate in this file = " + stb.str(n_errors * 100.0f / ngenoval));
 	}
 	vrb.bullet("Total #variants = " + stb.str(n_variants_all_chromosomes));
