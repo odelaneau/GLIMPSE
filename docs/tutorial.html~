@@ -359,7 +359,7 @@
 		<div id="run_concordance" class="page-header">
 	    	<h1>8. Check imputation accuracy</h1>
 	    	<p>
-				Since we downsampled the reads from the original 30x data, we might be interested now in checking how accurate the imputation was compared the original 30x dataset.
+				Since we downsampled the reads from the original 30x data, we might be interested now in checking how accurate the imputation is, compared the original 30x dataset.
 				For this purpose we use the GLIMPSE_concordance tool, which can be used to compute the r<sup>2</sup> correlation between imputed dosages (in MAF bins) and highly-confident genotype calls from the high-coverage dataset.
 			</p>
 			<div class="well">
@@ -378,7 +378,7 @@
 				<p>
 				<p style="text-indent:-5px ! important;"><code>
 				&nbsp;> ./bin/GLIMPSE_concordance --input concordance.lst --minDP 8 --output GLIMPSE_concordance/output --minPROB 0.9999 \<br>
-				&nbsp;>     --bins 0.00000 0.00020 0.00050 0.00100 0.00200 0.00500 0.01000 0.02000 0.05000 0.10000 0.15000 0.20000 0.25000 0.30000 0.35000 0.40000 0.45000 0.50000 \<br>
+				&nbsp;>     --bins 0.00000 0.00100 0.00200 0.00500 0.01000 0.02000 0.05000 0.10000 0.15000 0.20000 0.25000 0.30000 0.35000 0.40000 0.45000 0.50000 \<br>
 				&nbsp;>     --info_af AF_nfe --thread 4
 				</code></p>	
 			</div>

@@ -215,7 +215,7 @@
 			&nbsp;> TSV=reference_panel/1000GP.chr22.noNA12878.sites.tsv.gz<br>
 			&nbsp;> REFGEN=reference-genome/hs38DH.chr22.fa.gz<br>
 			&nbsp;> OUT=NA12878_1x_vcf/NA12878.chr22.1x.vcf.gz<br>			
-			&nbsp;> bcftools mpileup -f ${REFGEN} -I -E -a 'FORMAT/DP' -T ${VCF} -r chr22 ${BAM} -Ou | bcftools call -Aim -C alleles -T ${TSV} -Oz -o ${OUT}
+			&nbsp;> bcftools mpileup -f ${REFGEN} -I -E -a 'FORMAT/DP' -T ${VCF} -r chr22 ${BAM} -Ou | bcftools call -Aim -C alleles -T ${TSV} -Oz -o ${OUT} <br>
 			&nbsp;> bcftools index -f ${OUT}<br>
 			</code></p>
 			
