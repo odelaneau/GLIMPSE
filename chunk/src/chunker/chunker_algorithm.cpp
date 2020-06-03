@@ -30,6 +30,8 @@ void chunker::split(output_file & fd, int & cidx, string & chr, int start_idx, i
 
 	// Check if we can further split
 	int mid_idx = start_idx + curr_window_count / 2;
+	while (mid_idx+1 < positions.size() && positions[mid_idx+1] == positions[mid_idx])	++mid_idx;
+
 	int next0_window_count = mid_idx - start_idx + 1;
 	int next0_window_size = positions[mid_idx] - positions[start_idx]+1;
 	int next1_window_count = stop_idx - mid_idx + 1;
