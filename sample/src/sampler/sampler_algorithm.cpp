@@ -104,7 +104,7 @@ void sampler::sample() {
 		//Retrieve variant informations
 		line =  bcf_sr_get_line(sr, 0);
 
-		//Retrive GT
+		//Retrieve GT
 		int n_gt_fields = 0;
 		int ngt = bcf_get_genotypes(hdr, line, &gt_fields, &n_gt_fields);
 		assert(ngt == 2*nsamples && n_gt_fields == 2*nsamples);

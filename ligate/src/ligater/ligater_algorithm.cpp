@@ -82,6 +82,7 @@ void ligater::update_distances_and_write_record(htsFile * fd, bcf_hdr_t * hdr, b
 
 	updateHS(body_hs_fields);
 	bcf_update_format_int32(hdr, r_body, "HS", body_hs_fields, nsamples);
+	bcf_update_info(hdr, r_body, "BUF", NULL, 0, BCF_HT_INT);  // the type does not matter with n=0 / This removes INFO/BUF field
 	bcf_write1(fd, hdr, r_body);
 }
 
