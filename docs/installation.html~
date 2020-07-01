@@ -113,15 +113,7 @@
 			<code>locate libboost_program_options.a libboost_iostreams.a libhts.a</code>
 			<p>Once all paths correctly set up, proceed with the compilation using <code>make</code>. The binary can be found in the <code>bin/</code> folder and will have a name similar to <code>GLIMPSE_phase</code></p>
 		</div>
-		
-		<div class="well">
-			<h3>Static binaries</h3>	
-			<p>In the case the installation is unsuccessful, static binaries (for Ubuntu x64 systems) of the latest release version are available in the static_bins folder. The binaries are just meant to make GLIMPSE available in systems where the dependencies are
-			unavailable or difficult to install, but we <b>strongly</b> recommend to compile the working version and do not rely on static binaries, since binaries can suffer of a performance decrease.</p>
-	   </div>		
     </div> <!-- /container -->
-    
-
 	
  <footer class="footer">
       <div class="container" style="text-align: center;">
