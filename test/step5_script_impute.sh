@@ -4,7 +4,7 @@ mkdir -p GLIMPSE_impute
 
 VCF=NA12878_1x_vcf/NA12878.chr22.1x.vcf.gz
 REF=reference_panel/1000GP.chr22.noNA12878.bcf
-MAP=../maps/genetic_maps.b37/chr22.b37.gmap.gz
+MAP=../maps/genetic_maps.b38/chr22.b38.gmap.gz
 
 while IFS="" read -r LINE || [ -n "$LINE" ]; 
 do   

@@ -168,31 +168,38 @@
 		GLs need to be computed at all target individuals and <b>all variant sites present in the reference panel</b> of haplotypes used for the imputation.
 		In this section, we describe a simple procedure to compute GLs from sequencing data using BCFtools.
 		However, other callers, such as GATK for instance, can be also considered as soon as the GLs are encoded in a VCF/BCF file using the FORMAT/PL field.
-		<br>
-		For this tutorial we only follow step 3.1 and step 3.2, because step 3.3 is not necessary since we have only one target sample in our study panel.
-		The code for sections 3.1 and 3.2 is included in the script <code>step2_script_GL.sh</code>.
 		</p>
+		
+		<p><b><span style="font-size: larger;">Please note that BCFtools does not call correctly genotype likelihoods for indels and this might affect the quality of the imputation even at non-indels.
+		For this reason in this tutorial we only focus on bi-allelic SNPs.</span></b></p>
+		
+		<p>For this tutorial we only follow step 3.1 and step 3.2, because step 3.3 is not necessary since we have only one target sample in our study panel.
+		The code for sections 3.1 and 3.2 is included in the script <code>step2_script_GL.sh</p>
+		</code>.
+		
 		
 		<div class="well">
 			<h3>3.1. Extracting variable positions in the reference panel</h3>
 				
 			<p>
 			We want this information to tell BCFtools at which positions to make a call.
-			For simplicity here, we only focus on SNPs but GLIMPSE can impute any type of variants as soon it is bi-allelic and has GLs being properly defined.
+			Since BCFtools does not seem to compute correctly genotype likelihood for indels, here we only focus on SNPs (however, GLIMPSE can impute any type of variants as soon it is bi-allelic and has GLs being properly defined).
 			To perform the extraction from the chromosome 22 of a reference panel <code>1000GP.chr22.noNA12878.bcf</code>, run first BCFtools as follows:
 			</p>
 			
 			<p style="text-indent:-5px ! important;"><code>
-			&nbsp;> bcftools view -G reference_panel/1000GP.chr22.noNA12878.bcf -Oz -o reference_panel/1000GP.chr22.noNA12878.sites.vcf.gz<br>
+			&nbsp;> bcftools view -G -m 2 -M 2 -v snps reference_panel/1000GP.chr22.noNA12878.bcf -Oz -o reference_panel/1000GP.chr22.noNA12878.sites.vcf.gz<br>
 			&nbsp;> bcftools index -f reference_panel/1000GP.chr22.noNA12878.sites.vcf.gz
 			</code></p>
 			
 			<p>Then, convert the output file <code>1000GP.chr22.noNA12878.sites.vcf.gz</code> into TSV format and index the file using tabix (requires htslib in PATH), using this command:</p>
 			
-			<p style="text-indent:-5px ! important;"><code> 
+			<p style="text-indent:-5px ! important;">
+			<code> 
 			&nbsp;> bcftools query -f'%CHROM\t%POS\t%REF,%ALT\n' reference_panel/1000GP.chr22.noNA12878.sites.vcf.gz | bgzip -c > reference_panel/1000GP.chr22.noNA12878.sites.tsv.gz<br>
 			&nbsp;> tabix -s1 -b2 -e2 reference_panel/1000GP.chr22.noNA12878.sites.tsv.gz
-			</code></p>
+			</code>
+			</p>
 			
 			<p>In a general pipeline, we should generate this pair of files (*.vcf.gz + *.tsv.gz) for all chromosome separately.</p>
 		</div>
@@ -204,7 +211,7 @@
 			Once ready the position files, we can then start doing the calling in itself.
 			We use the downsampled 1x BAM file generated in section 1.1 <code>NA12878_1x_bam/NA12878.chr22.1x.bam</code>.
 			<br>
-			BCFtools requires the reference genome in order to align the BAM file. We used the reference genome version used by the 1000 Genomes Project (<code>reference_genome/hs38DH.chr22.fa.gz[fai,gzi]</code>)
+			BCFtools requires the reference genome in order to align the BAM file. We used the reference genome version used by the 1000 Genomes Project (<code>reference_genome/hs38DH.chr22.fa.gz[.fai,.gzi]</code>)
 			<br>
 			We can run the following command:
 			</p>
@@ -215,11 +222,12 @@
 			&nbsp;> TSV=reference_panel/1000GP.chr22.noNA12878.sites.tsv.gz<br>
 			&nbsp;> REFGEN=reference-genome/hs38DH.chr22.fa.gz<br>
 			&nbsp;> OUT=NA12878_1x_vcf/NA12878.chr22.1x.vcf.gz<br>			
-			&nbsp;> bcftools mpileup -f ${REFGEN} -I -E -a 'FORMAT/DP' -T ${VCF} -r chr22 ${BAM} -Ou | bcftools call -Aim -C alleles -T ${TSV} -Oz -o ${OUT}
+			&nbsp;> bcftools mpileup -f ${REFGEN} -I -E -a 'FORMAT/DP' -T ${VCF} -r chr22 ${BAM} -Ou | bcftools call -Aim -C alleles -T ${TSV} -Oz -o ${OUT} <br>
 			&nbsp;> bcftools index -f ${OUT}<br>
 			</code></p>
 			
-			<p>Note here, that we use <code>-T reference_panel/1000GP.chr22.noNA12878.sites.<b>vcf</b>.gz</code> in the first part of the command line and <code>-T reference_panel/1000GP.chr22.noNA12878.sites.<b>tsv</b>.gz</code> in the second part of the command line.</p>
+			<p>Note here, that we use <code>-T reference_panel/1000GP.chr22.noNA12878.sites.<b>vcf</b>.gz</code> in the first part of the command line and <br>
+			<code>-T reference_panel/1000GP.chr22.noNA12878.sites.<b>tsv</b>.gz</code> in the second part of the command line.</p>
 			<p>You may also tune the options of BCFtools to your specific needs, requirements and data.</p>
 			<p>As an output of this step we have a VCF file format containing genotype likelihoods at each site in the reference panel. </p>
 		</div>
@@ -287,7 +295,7 @@
 				<p style="text-indent:-5px ! important;"><code>
 				&nbsp;> VCF=NA12878_1x_vcf/NA12878.chr22.1x.vcf.gz<br>
 				&nbsp;> REF=reference_panel/1000GP.chr22.noNA12878.bcf<br>
-				&nbsp;> MAP=../maps/genetic_maps.b37/chr22.b37.gmap.gz<br>
+				&nbsp;> MAP=../maps/genetic_maps.b38/chr22.b38.gmap.gz<br>
 				
 				&nbsp;> while IFS="" read -r LINE || [ -n "$LINE" ];<br>
 				&nbsp;> do<br>
@@ -378,7 +386,7 @@
 				<p>
 				<p style="text-indent:-5px ! important;"><code>
 				&nbsp;> ./bin/GLIMPSE_concordance --input concordance.lst --minDP 8 --output GLIMPSE_concordance/output --minPROB 0.9999 \<br>
-				&nbsp;>     --bins 0.00000 0.00100 0.00200 0.00500 0.01000 0.02000 0.05000 0.10000 0.15000 0.20000 0.25000 0.30000 0.35000 0.40000 0.45000 0.50000 \<br>
+				&nbsp;>     --bins 0.00000 0.00100 0.00200 0.00500 0.01000 0.05000 0.10000 0.20000 0.50000 \<br>
 				&nbsp;>     --info_af AF_nfe --thread 4
 				</code></p>	
 			</div>
