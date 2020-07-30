@@ -1,6 +1,7 @@
 # GLIMPSE Tools
 
 [![](docs/images/branding/glimpse_logo_250x107.png)](https://odelaneau.github.io/GLIMPSE/)
+
 [![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 ### Versions
@@ -23,5 +24,6 @@ GLIMPSE is a set of tools for phasing and imputation for low-coverage sequencing
 
 ### Documentation and tutorials
 
-Please visit our website for tutorials, documentation and installation instructions 
+Please visit our website for tutorials, documentation and installation instructions:
+
 https://odelaneau.github.io/GLIMPSE/
