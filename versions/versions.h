@@ -26,7 +26,7 @@
 #define CONCORDANCE_VERSION "1.0.0"
 #define IMPUTE_VERSION "1.0.0"
 #define LIGATE_VERSION "1.0.0"
-#define PHASE_VERSION "1.0.0"
+#define PHASE_VERSION "1.1.0"
 #define SAMPLE_VERSION "1.0.0"
 #define SNPARRAY_VERSION "1.0.0"
 #define STATS_VERSION "1.0.0"
