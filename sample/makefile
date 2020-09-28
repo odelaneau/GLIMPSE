@@ -1,6 +1,11 @@
 #COMPILER MODE C++11
 CXX=g++ -std=c++11
 
+
+#create folders
+dummy_build_folder_bin := $(shell mkdir -p bin)
+dummy_build_folder_obj := $(shell mkdir -p obj)
+
 #COMPILER & LINKER FLAGS
 CXXFLAG=-O3
 LDFLAG=-O3
