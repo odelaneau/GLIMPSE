@@ -33,6 +33,7 @@ class genotype_set {
 public:
 	//DATA
 	int n_site, n_ind;					//Number of variants, number of individuals
+	int n_hap;
 	vector < genotype * > vecG;			//Vector of genotypes
 
 	//CONSTRUCTOR/DESTRUCTOR

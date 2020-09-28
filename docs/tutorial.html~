@@ -61,7 +61,7 @@
 		
 		<p>
 		GLIMPSE is a tool of software for imputation and phasing of low-coverage datasets in the form of <b>genotype gikelihoods</b> (GLs) at all variant positions.
-		GLIMPSE requires <a href="http://www.htslib.org/">BCFtools</a> v1.7 (or later) as a requirement, since it makes use of indexed VCF/BCF files. 
+		GLIMPSE requires <a href="http://www.htslib.org/">HTSlib and BCFtools</a> v1.7 (or later) as a requirement, since it makes use of indexed VCF/BCF files. 
 		Here we also used BCFtools to compute genotype likelihoods.
 		<br>
 		<br>
@@ -89,7 +89,7 @@
 			<h3>1.2. Low coverage reads</h3>
 				
 			<p>
-			In this example we downsampled the publicly available 30x data available for NA12878 provided by the 1000 Genomes project (in collaboration with the New York Genomes Center).
+			In this example we downsampled the publicly available 30x data available for NA12878 provided by the Genome In A Bottle consortium (GIAB).
 			We downloaded the full dataset, kept only chromosome 22 reads and downsampled to 1x. The resulting BAM file can be found in: 
 			</p>
 			
@@ -174,9 +174,8 @@
 		For this reason in this tutorial we only focus on bi-allelic SNPs.</span></b></p>
 		
 		<p>For this tutorial we only follow step 3.1 and step 3.2, because step 3.3 is not necessary since we have only one target sample in our study panel.
-		The code for sections 3.1 and 3.2 is included in the script <code>step2_script_GL.sh</p>
-		</code>.
-		
+		The code for sections 3.1 and 3.2 is included in the script <code>step2_script_GL.sh</code>.
+		</p>
 		
 		<div class="well">
 			<h3>3.1. Extracting variable positions in the reference panel</h3>
@@ -287,7 +286,7 @@
 				<h3>5.1. Running GLIMPSE</h3>
 				
 				<p>
-				To run GLIMPSE_phase we only need to run a job for each imputation chunk. Each job runs on 8 threads in this example. 
+				To run GLIMPSE_phase we only need to run a job for each imputation chunk. Each job runs on 1 thread in this example. 
 				Input data are the dataset containing the genotype likelihoods, a reference panel of haplotypes, a fine-scale genetic map (e.g. from the International HapMap project) and buffered and imputation regions. 
 				We run GLIMPSE phase using default parameters that can apply to most datasets. For extremely low coverage and small reference panels, increasing the number of iterations might give more accuracy.
 				</p>
@@ -303,7 +302,7 @@
 				&nbsp;> &nbsp;&nbsp;IRG=$(echo $LINE | cut -d" " -f3)<br>
 				&nbsp;> &nbsp;&nbsp;ORG=$(echo $LINE | cut -d" " -f4)<br>
 				&nbsp;> &nbsp;&nbsp;OUT=GLIMPSE_imputed/NA12878.chr22.1x.${ID}.bcf<br>
-				&nbsp;> &nbsp;&nbsp;bin/GLIMPSE_phase --input ${VCF} --reference ${REF} --map ${MAP} --input-region ${IRG} --output-region ${ORG} --output ${OUT} --thread 8<br>
+				&nbsp;> &nbsp;&nbsp;bin/GLIMPSE_phase --input ${VCF} --reference ${REF} --map ${MAP} --input-region ${IRG} --output-region ${ORG} --output ${OUT}<br>
 				&nbsp;> &nbsp;&nbsp;bcftools index -f ${OUT}<br>
 				&nbsp;> done < chunks.chr22.txt
 				</code></p>
@@ -386,8 +385,8 @@
 				<p>
 				<p style="text-indent:-5px ! important;"><code>
 				&nbsp;> ./bin/GLIMPSE_concordance --input concordance.lst --minDP 8 --output GLIMPSE_concordance/output --minPROB 0.9999 \<br>
-				&nbsp;>     --bins 0.00000 0.00100 0.00200 0.00500 0.01000 0.05000 0.10000 0.20000 0.50000 \<br>
-				&nbsp;>     --info_af AF_nfe --thread 4
+				&nbsp;>     --bins 0.00000 0.00100 0.00200 0.00500 0.01000 0.05000 0.10000 0.20000 0.50000ex \<br>
+				&nbsp;>     --thread 4
 				</code></p>	
 			</div>
 			<div class="well">

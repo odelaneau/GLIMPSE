@@ -26,6 +26,7 @@
 ligater::ligater() {
 	body_hs_fields = NULL;
 	buffer_hs_fields = NULL;
+	fploidy=2;
 }
 
 ligater::~ligater() {

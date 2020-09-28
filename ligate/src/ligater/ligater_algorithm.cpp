@@ -22,6 +22,7 @@
  ******************************************************************************/
 
 #include <ligater/ligater_header.h>
+#include <sys/stat.h>
 
 #define OFILE_VCFU	0
 #define OFILE_VCFC	1
@@ -29,6 +30,13 @@
 
 #define GET(n,i)	(((n)>>(i))&1U)
 #define TOG(n,i)	((n)^=(1UL<<(i)))
+
+std::map<int, string> fploidy_to_msg = {
+		{-2, "Mixed haploid/diploid samples in the region"},
+		{1,"Only haploid samples in the region"},
+		{2,"Only diploid samples in the region"}
+};
+
 
 void ligater::updateHS(int * values) {
 	for (int i = 0 ; i < nsamples ; i++) {
@@ -105,8 +113,30 @@ void ligater::ligate() {
 	bcf_srs_t * sr =  bcf_sr_init();
 	sr->collapse = COLLAPSE_NONE;
 	sr->require_index = 1;
-	for (int f = 0 ; f < nfiles ; f ++) {
-		if(!(bcf_sr_add_reader (sr, filenames[f].c_str()))) vrb.error("Problem opening index file for [" + filenames[f] + "]");
+	for (int f = 0 ; f < nfiles ; f ++)
+	{
+		//Attempt to read the file with the index
+		if(!(bcf_sr_add_reader (sr, filenames[f].c_str())))
+		{
+			//Error reading the index! Attempt to create the index now
+			vrb.warning("Index not found for [" + filenames[f] + "]. GLIMPSE will attempt to create an index for the file.");
+			//Remove the reader, as it's broken
+			bcf_sr_remove_reader (sr, f);
+			//create index using htslib (csi, using default bcftools option 14)
+			int ret = bcf_index_build3(filenames[f].c_str(), NULL, 14, options["thread"].as < int > ());
+
+			if (ret != 0)
+			{
+				if (ret == -2)
+					vrb.error("index: failed to open " + filenames[f]);
+				else if (ret == -3)
+					vrb.error("index: " + filenames[f] + " is in a format that cannot be usefully indexed");
+				else
+					vrb.error("index: failed to create index for + " + filenames[f]);
+			}
+			if(!(bcf_sr_add_reader (sr, filenames[f].c_str()))) vrb.error("Problem opening index file for [" + filenames[f] + "]");
+			else vrb.bullet("Index file for [" + filenames[f] + "] has been successfully created.");
+		}
 	}
 
 	//Extract sample IDs
@@ -119,14 +149,28 @@ void ligater::ligate() {
 	bcf_hrec_t * header_record = bcf_hdr_get_hrec(sr->readers[0].header, BCF_HL_GEN, "NMAIN", NULL, NULL);
 	if (header_record == NULL) vrb.error("Cannot retrieve NMAIN flag in VCF header");
 	nmain = atoi(header_record->value);
-	if (nmain <1 || nmain > 16) vrb.error("NMAIN out of bounds : " + stb.str(nmain));
+	if (nmain <1 || nmain > 15) vrb.error("NMAIN out of bounds : " + stb.str(nmain));
+
 	switching = vector < bool > (nmain * nsamples, false);
 	distances = vector < int > (nmain * 2 * nsamples, 0);
 	vrb.bullet("#main_iterations = " + stb.str(nmain));
 
+	header_record = bcf_hdr_get_hrec(sr->readers[0].header, BCF_HL_GEN, "FPLOIDY", NULL, NULL);
+	if (header_record == NULL) vrb.warning("Cannot retrieve FPLOIDY flag in VCF header [" + filenames[0] + "], used a version of GLIMPSE < 1.1.0? Assuming diploid genotypes only [FPLOIDY=2].");
+	else fploidy = atoi(header_record->value);
+	if (fploidy <-2 || fploidy > 2 || fploidy==0 || fploidy ==-1) vrb.error("FPLOIDY out of bounds : " + stb.str(fploidy));
+	vrb.bullet("FPLOIDY = "+ to_string(fploidy) + " [" + fploidy_to_msg[fploidy] + "]");
+
+
 	//Check sample overlap between all files
 	vrb.bullet("Check sample consistency across all input files");
 	for (int f = 1 ; f < nfiles ; f ++) {
+		int cfploidy = 2;
+		header_record = bcf_hdr_get_hrec(sr->readers[0].header, BCF_HL_GEN, "FPLOIDY", NULL, NULL);
+		if (header_record == NULL) vrb.warning("Cannot retrieve FPLOIDY flag in VCF header [" + filenames[f] + "], used a version of GLIMPSE < 1.1.0? Assuming diploid genotypes only [FPLOIDY=2].");
+		else cfploidy = atoi(header_record->value);
+		if (fploidy != cfploidy) vrb.error("Plody format is different across files [" + filenames[0] + "] and [" + filenames[f] + "] fploidy=" + stb.str(fploidy) + " vs " + stb.str(cfploidy));
+
 		int cnsamples = bcf_hdr_nsamples(sr->readers[f].header);
 		if (cnsamples != nsamples) vrb.error("Numbers of samples are different between [" + filenames[0] + "] and [" + filenames[f] + "] n=" + stb.str(nsamples) + " vs " + stb.str(cnsamples));
 		for (int i = 0 ; i < nsamples ; i ++) {
@@ -262,8 +306,14 @@ void ligater::ligate() {
 	bcf_hdr_destroy(hdr);
 	bcf_sr_destroy(sr);
 	if (hts_close(fp)) vrb.error("Non zero status when closing VCF/BCF file descriptor");
+
 	//Last verbose
 	if (n_variants == 0) vrb.error("No variants to be phased in files");
+
 	vrb.title("Writing completed [L=" + stb.str(n_variants) + "] (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
+	vrb.title("Creating index");
+	//create index using htslib (csi, using default bcftools option 14)
+	if (!bcf_index_build3(string(options["output"].as < string > ()).c_str(), NULL, 14, options["thread"].as < int > ())) vrb.print("Index successfully created");
+	else vrb.warning("Problem building the index. Try to build using tabix/bcftools.");
 }
 

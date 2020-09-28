@@ -28,7 +28,8 @@ void ligater::declare_options() {
 	bpo::options_description opt_base ("Basic options");
 	opt_base.add_options()
 			("help", "Produce help message")
-			("seed", bpo::value<int>()->default_value(15052011), "Seed of the random number generator");
+			("seed", bpo::value<int>()->default_value(15052011), "Seed of the random number generator")
+			("thread", bpo::value<int>()->default_value(1), "Number of threads");
 
 	bpo::options_description opt_input ("Input files");
 	opt_input.add_options()
@@ -86,4 +87,6 @@ void ligater::verbose_files() {
 void ligater::verbose_options() {
 	vrb.title("Parameters:");
 	vrb.bullet("Seed       : " + stb.str(options["seed"].as < int > ()));
+	vrb.bullet("#Threads   : " + stb.str(options["thread"].as < int > ()));
+
 }

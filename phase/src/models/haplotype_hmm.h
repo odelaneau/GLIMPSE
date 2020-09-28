@@ -29,7 +29,7 @@
 
 class haplotype_hmm {
 private:
-	conditioning_set * C;
+	const conditioning_set * C;
 
 	//DYNAMIC ARRAYS
 	vector < float > Emissions;
@@ -38,16 +38,16 @@ private:
 
 public:
 	//CONSTRUCTOR/DESTRUCTOR
-	haplotype_hmm(conditioning_set *);
+	haplotype_hmm(const conditioning_set *);
 	~haplotype_hmm();
 
 	void resize();
-	void init(vector < float > &);
+	void init(const vector < float > &);
 	void forward();
 	//void backward(vector < float > &, vector < float > &, vector < float > &);
 	//void computePosteriors(vector < float > &, vector < float > &, vector < float > &);
-	void backward(vector < float > &, vector < float > &);
-	void computePosteriors(vector < float > &, vector < float > &);
+	void backward(const vector < float > &, vector < float > &);
+	void computePosteriors(const vector < float > &, vector < float > &);
 
 };
 

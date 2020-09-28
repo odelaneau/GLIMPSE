@@ -31,14 +31,15 @@ void call_set::writeData(string fout) {
 	vrb.bullet("Concordance per sample");
 	output_file fd1 (fout + ".error.spl.txt.gz");
 	for (int i = 0 ; i < N ; i++) {
-		float err0 = genotype_spl_errors[3*i+0] * 100.0 / genotype_spl_totals[3*i+0];
-		float err1 = genotype_spl_errors[3*i+1] * 100.0 / genotype_spl_totals[3*i+1];
-		float err2 = genotype_spl_errors[3*i+2] * 100.0 / genotype_spl_totals[3*i+2];
+		int gpos=ind2gpos[i];
 		fd1 << samples[i];
-		fd1 << " " << genotype_spl_errors[3*i+0] << " " << genotype_spl_totals[3*i+0];
-		fd1 << " " << genotype_spl_errors[3*i+1] << " " << genotype_spl_totals[3*i+1];
-		fd1 << " " << genotype_spl_errors[3*i+2] << " " << genotype_spl_totals[3*i+2];
-		fd1 << " " << err0 << " " << err1 << " " << err2 << endl;
+		fd1 << " " << genotype_spl_errors[gpos+0] << " " << genotype_spl_totals[gpos+0];
+		fd1 << " " << genotype_spl_errors[gpos+1] << " " << genotype_spl_totals[gpos+1];
+		if (ploidy[i] > 1) fd1 << " " << genotype_spl_errors[gpos+2] << " " << genotype_spl_totals[gpos+2];
+		fd1 << " " << genotype_spl_errors[gpos+0] * 100.0 / genotype_spl_totals[gpos+0];
+		fd1 << " " << genotype_spl_errors[gpos+1] * 100.0 / genotype_spl_totals[gpos+1];
+		if (ploidy[i] > 1) fd1 << " " << genotype_spl_errors[gpos+2] * 100.0 / genotype_spl_totals[gpos+2];
+		fd1 << endl;
 	}
 	fd1.close();
 
@@ -47,26 +48,26 @@ void call_set::writeData(string fout) {
 	if (L > 0) {
 		vrb.bullet("Concordance per frequency bin");
 		for (int b = 0 ; b < L ; b++) {
-			float err0 = genotype_bin_errors[3*b+0] * 100.0 / genotype_bin_totals[3*b+0];
-			float err1 = genotype_bin_errors[3*b+1] * 100.0 / genotype_bin_totals[3*b+1];
-			float err2 = genotype_bin_errors[3*b+2] * 100.0 / genotype_bin_totals[3*b+2];
 			fd2 << b << " " << frequency_bin[b].size() << " " << frequency_bin[b].mean();
-			fd2 << " " << genotype_bin_errors[3*b+0] << " " << genotype_bin_totals[3*b+0];
-			fd2 << " " << genotype_bin_errors[3*b+1] << " " << genotype_bin_totals[3*b+1];
-			fd2 << " " << genotype_bin_errors[3*b+2] << " " << genotype_bin_totals[3*b+2];
-			fd2 << " " << err0 << " " << err1 << " " << err2 << endl;
+			fd2 << " " << genotype_bin_errors[(max_ploidy+1)*b+0] << " " << genotype_bin_totals[(max_ploidy+1)*b+0];
+			fd2 << " " << genotype_bin_errors[(max_ploidy+1)*b+1] << " " << genotype_bin_totals[(max_ploidy+1)*b+1];
+			if (max_ploidy > 1) fd2 << " " << genotype_bin_errors[(max_ploidy+1)*b+2] << " " << genotype_bin_totals[(max_ploidy+1)*b+2];
+			fd2 << " " << genotype_bin_errors[(max_ploidy+1)*b+0] * 100.0 / genotype_bin_totals[(max_ploidy+1)*b+0];
+			fd2 << " " << genotype_bin_errors[(max_ploidy+1)*b+1] * 100.0 / genotype_bin_totals[(max_ploidy+1)*b+1];
+			if (max_ploidy > 1) fd2 << " " << genotype_bin_errors[(max_ploidy+1)*b+2] * 100.0 / genotype_bin_totals[(max_ploidy+1)*b+2];
+			fd2 << endl;
 		}
 	} else {
 		vrb.bullet("Concordance per group");
 		for (int b = 0 ; b < rsquared_str.size() ; b++) {
-			float err0 = genotype_bin_errors[3*b+0] * 100.0 / genotype_bin_totals[3*b+0];
-			float err1 = genotype_bin_errors[3*b+1] * 100.0 / genotype_bin_totals[3*b+1];
-			float err2 = genotype_bin_errors[3*b+2] * 100.0 / genotype_bin_totals[3*b+2];
 			fd2 << b << " " << rsquared_str[b] << " " << frequency_bin[b].size() << " " << frequency_bin[b].mean();
-			fd2 << " " << genotype_bin_errors[3*b+0] << " " << genotype_bin_totals[3*b+0];
-			fd2 << " " << genotype_bin_errors[3*b+1] << " " << genotype_bin_totals[3*b+1];
-			fd2 << " " << genotype_bin_errors[3*b+2] << " " << genotype_bin_totals[3*b+2];
-			fd2 << " " << err0 << " " << err1 << " " << err2 << endl;
+			fd2 << " " << genotype_bin_errors[(max_ploidy+1)*b+0] << " " << genotype_bin_totals[(max_ploidy+1)*b+0];
+			fd2 << " " << genotype_bin_errors[(max_ploidy+1)*b+1] << " " << genotype_bin_totals[(max_ploidy+1)*b+1];
+			if (max_ploidy > 1) fd2 << " " << genotype_bin_errors[(max_ploidy+1)*b+2] << " " << genotype_bin_totals[(max_ploidy+1)*b+2];
+			fd2 << " " << genotype_bin_errors[(max_ploidy+1)*b+0] * 100.0 / genotype_bin_totals[(max_ploidy+1)*b+0];
+			fd2 << " " << genotype_bin_errors[(max_ploidy+1)*b+1] * 100.0 / genotype_bin_totals[(max_ploidy+1)*b+1];
+			if (max_ploidy > 1) fd2 << " " << genotype_bin_errors[(max_ploidy+1)*b+2] * 100.0 / genotype_bin_totals[(max_ploidy+1)*b+2];
+			fd2 << endl;
 		}
 	}
 	fd2.close();
@@ -76,14 +77,14 @@ void call_set::writeData(string fout) {
 	output_file fd3 (fout + ".error.cal.txt.gz");
 	float step_size = 1.0 / N_BIN_CAL;
 	for (int b = 0 ; b < N_BIN_CAL ; b++) {
-		float err0 = genotype_cal_errors[3*b+0] * 100.0 / genotype_cal_totals[3*b+0];
-		float err1 = genotype_cal_errors[3*b+1] * 100.0 / genotype_cal_totals[3*b+1];
-		float err2 = genotype_cal_errors[3*b+2] * 100.0 / genotype_cal_totals[3*b+2];
-		float errA = (genotype_cal_errors[3*b+0]+genotype_cal_errors[3*b+1]+genotype_cal_errors[3*b+2]) * 100.0 / (genotype_cal_totals[3*b+0]+genotype_cal_totals[3*b+1]+genotype_cal_totals[3*b+2]);
+		float err0 = genotype_cal_errors[(max_ploidy+1)*b+0] * 100.0 / genotype_cal_totals[(max_ploidy+1)*b+0];
+		float err1 = genotype_cal_errors[(max_ploidy+1)*b+1] * 100.0 / genotype_cal_totals[(max_ploidy+1)*b+1];
+		float err2 = genotype_cal_errors[(max_ploidy+1)*b+2] * 100.0 / genotype_cal_totals[(max_ploidy+1)*b+2];
+		float errA = (genotype_cal_errors[(max_ploidy+1)*b+0]+genotype_cal_errors[(max_ploidy+1)*b+1]+genotype_cal_errors[(max_ploidy+1)*b+2]) * 100.0 / (genotype_cal_totals[(max_ploidy+1)*b+0]+genotype_cal_totals[(max_ploidy+1)*b+1]+genotype_cal_totals[(max_ploidy+1)*b+2]);
 		fd3 << b << " " << b*step_size << " " << (b+1)*step_size << " " << (b*step_size + step_size/2);
-		fd3 << " " << genotype_cal_errors[3*b+0] << " " << genotype_cal_totals[3*b+0];
-		fd3 << " " << genotype_cal_errors[3*b+1] << " " << genotype_cal_totals[3*b+1];
-		fd3 << " " << genotype_cal_errors[3*b+2] << " " << genotype_cal_totals[3*b+2];
+		fd3 << " " << genotype_cal_errors[(max_ploidy+1)*b+0] << " " << genotype_cal_totals[(max_ploidy+1)*b+0];
+		fd3 << " " << genotype_cal_errors[(max_ploidy+1)*b+1] << " " << genotype_cal_totals[(max_ploidy+1)*b+1];
+		fd3 << " " << genotype_cal_errors[(max_ploidy+1)*b+2] << " " << genotype_cal_totals[(max_ploidy+1)*b+2];
 		fd3 << " " << err0 << " " << err1 << " " << err2 << " " << errA << endl;
 	}
 	fd3.close();

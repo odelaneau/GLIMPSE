@@ -39,6 +39,10 @@ public:
 	set < string > subset_samples;
 	vector < string > samples;
 	vector < double > bins;
+	int fploidy;
+	std::vector< int > ploidy;
+	std::vector< int > ind2gpos;
+	int n_haploid = 0, 	n_diploid = 0, max_ploidy = 0;
 
 	// Per sample concordance [3xN]
 	vector < unsigned long int > genotype_spl_errors;
@@ -72,13 +76,16 @@ public:
 	void initialize(vector < double >, double, int);
 	void initialize(string, double, int);
 	void setTargets(string fsamples);
+	int getTruth(double, double, int);
+	int getMostLikely(float , float );
+	int getCalibrationBin(float , float );
 	int getTruth(double, double, double, int);
 	int getFrequencyBin(float);
 	int getMostLikely(float , float , float );
 	int getCalibrationBin(float , float , float );
 
 	//
-	void readData(vector < string > &, vector < string > &, vector < string > &, vector < string > &, string info_af, int nthreads);
+	void readData(vector < string > &, vector < string > &, vector < string > &, vector < string > &, bpo::variables_map&);
 	void writeData(string);
 
 	//
@@ -91,6 +98,12 @@ public:
 	void computeCalibration(string output);
 };
 
+inline
+int call_set::getMostLikely(float gp0, float gp1) {
+	if (gp0 > gp1) return 0;
+	if (gp1 > gp0) return 1;
+	return 0;
+}
 
 inline
 int call_set::getMostLikely(float gp0, float gp1, float gp2) {
@@ -101,12 +114,35 @@ int call_set::getMostLikely(float gp0, float gp1, float gp2) {
 }
 
 inline
+int call_set::getCalibrationBin(float gp0, float gp1) {
+	float maxv = 0.0f;
+	if (gp0 > maxv) { maxv = gp0; }
+	if (gp1 > maxv) { maxv = gp1; }
+	return (int)trunc(maxv * (N_BIN_CAL-1));
+}
+
+inline
 int call_set::getCalibrationBin(float gp0, float gp1, float gp2) {
 	float maxv = 0.0f;
 	if (gp0 > maxv) { maxv = gp0; }
 	if (gp1 > maxv) { maxv = gp1; }
 	if (gp2 > maxv) { maxv = gp2; }
 	return (int)trunc(maxv * (N_BIN_CAL-1));
+}
+
+inline
+int call_set::getTruth(double pl0, double pl1, int dp) {
+	if (dp < D) return -1;
+	if (pl0 < 0.0f || pl1 < 0.0f) return -1;
+	double sc = 1.0 / (pl0 + pl1);
+	double p0 = pl0 * sc;
+	double p1 = pl1 * sc;
+	// Not certain enough about truth:
+	if (p0 < T && p1 < T) return -1;
+	// Certain enough about it:
+	if (p0 > p1) return 0;
+	if (p1 > p0) return 1;
+	return -1;
 }
 
 inline

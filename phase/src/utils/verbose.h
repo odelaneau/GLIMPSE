@@ -113,7 +113,7 @@ public:
 		}
 	}
 
-	void progress(string prefix, float percent) {
+	void progress(const string prefix, const float percent) {
 		if (verbose_on_screen) {
 			int curr_percent = int(percent * 100.0);
 			if (prev_percent > curr_percent) prev_percent = -1;

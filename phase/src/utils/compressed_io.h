@@ -39,7 +39,7 @@ protected:
 	std::ifstream file_descriptor;
 
 public:
-	input_file(std::string filename) {
+	input_file(const std::string filename) {
 		if (filename.substr(filename.find_last_of(".") + 1) == "gz") {
 			file_descriptor.open(filename.c_str(), std::ios::in | std::ios::binary);
 			push(boost::iostreams::gzip_decompressor());

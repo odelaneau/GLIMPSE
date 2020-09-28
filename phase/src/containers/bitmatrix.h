@@ -42,7 +42,7 @@ public:
 		bytes = NULL;
 	}
 
-	void allocate(unsigned int nrow, unsigned int ncol) {
+	void allocate(const unsigned int nrow, const unsigned int ncol) {
 		n_rows = nrow + ((nrow%8)?(8-(nrow%8)):0);
 		n_cols = ncol + ((ncol%8)?(8-(ncol%8)):0);
 		n_bytes = (n_cols/8) * (unsigned long)n_rows;
@@ -55,8 +55,8 @@ public:
 		if (bytes != NULL) free(bytes);
 	}
 
-	void set(unsigned int row, unsigned int col, unsigned char bit);
-	unsigned char get(unsigned int row, unsigned int col);
+	void set(const unsigned int row, const unsigned int col, const unsigned char bit);
+	unsigned char get(const unsigned int row, const unsigned int col) const;
 
 
 	/*
@@ -90,20 +90,27 @@ public:
 };
 
 inline
-void bitmatrix::set(unsigned int row, unsigned int col, unsigned char bit) {
-	unsigned int bitcol = col % 8;
-	unsigned long targetAddr = ((unsigned long)row) * (n_cols/8) + col/8;
-	unsigned char mask = ~(1 << (7 - bitcol));
+void bitmatrix::set(const unsigned int row, const unsigned int col, const unsigned char bit) {
+	/* Equivalent to:
+	const unsigned int bitcol = col % 8;
+	const unsigned long targetAddr = ((unsigned long)row) * (n_cols/8) + col/8;
+	const unsigned char mask = ~(1 << (7 - bitcol));
 	this->bytes[targetAddr] &= mask;
 	this->bytes[targetAddr] |= (bit << (7 - bitcol));
+	*/
+	unsigned char * bitp = this->bytes + ((unsigned long)row) * (n_cols/8) + col/8;
+	*bitp = (*bitp & ~(1 << (7 - col % 8))) | (bit << (7 - col % 8));
 }
 
 inline
-unsigned char bitmatrix::get(unsigned int row, unsigned int col) {
-	unsigned int bitcol = col  % 8;
+unsigned char bitmatrix::get(const unsigned int row, const unsigned int col) const {
+	/* Equivalent to:
+	const unsigned int bitcol = col  % 8;
 	unsigned long targetAddr = ((unsigned long)row) * (n_cols/8) +  col/8;
 	unsigned char result = (this->bytes[targetAddr] >> (7 - bitcol)) & 1;
 	return result;
+	*/
+	return (this->bytes[((unsigned long)row) * (n_cols/8) +  col/8] >> (7 - (col  % 8))) & 1;
 }
 
 #endif

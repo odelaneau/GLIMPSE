@@ -29,25 +29,24 @@
 class variant {
 public :
 	//DATA
-	string chr;
-	int bp;
-	string id;
-	string ref;
-	string alt;
-	double cm;
-	int idx;
+	const string chr;
+	const int bp;
+	const string id;
+	const string ref;
+	const string alt;
+	const int idx;
 	unsigned int cref;
 	unsigned int calt;
-	unsigned int cmis;
-	unsigned int fbin;
+	double cm;
 
 	//CONSTRUCTOR/DESTRUCTOR
-	variant(string & chr, int bp, string & id, string & ref, string & alt, int idx);
+	variant(const string & chr, const int bp, const string & id, const string & ref, const string & alt, const int idx, const int cref, const int calt);
 	~variant();
 
-	bool isSingleton();
-	bool isMonomorphic();
-	unsigned int getMAC();
+	bool isSingleton() const;
+	bool isMonomorphic() const;
+	unsigned int getMAC() const;
+	string toString() const;
 };
 
 #endif

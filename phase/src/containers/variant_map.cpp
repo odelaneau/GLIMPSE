@@ -32,22 +32,22 @@ variant_map::~variant_map() {
 	map_pos.clear();
 }
 
-int variant_map::size() {
+std::size_t variant_map::size() const {
 	return vec_pos.size();
 }
 
-variant * variant_map::getByIndex (int i) {
+variant * variant_map::getByIndex (const int i) {
 	return vec_pos[i];
 }
 
-vector < variant * > variant_map::getByPos (int pos) {
+vector < variant * > variant_map::getByPos (const int pos) {
 	vector < variant * > vecS;
 	pair < multimap < int , variant * >::iterator , multimap < int , variant * >::iterator > ret = map_pos.equal_range(pos);
 	for (multimap < int , variant * >::iterator it = ret.first ; it != ret.second ; ++it) vecS.push_back(it->second);
 	return vecS;
 }
 
-vector < variant * > variant_map::getByRef(int pos, string & ref, string & alt) {
+vector < variant * > variant_map::getByRef(const int pos, const string & ref, const string & alt) {
 	vector < variant * > vecS = vector < variant * >();
 	pair < multimap < int , variant * >::iterator , multimap < int , variant * >::iterator > ret = map_pos.equal_range(pos);
 	for (multimap < int , variant * >::iterator it = ret.first ; it != ret.second ; ++it) {
@@ -61,7 +61,7 @@ void variant_map::push(variant * v) {
 	map_pos.insert(pair < int , variant * > (v->bp, v));
 }
 
-int variant_map::setCentiMorgan(vector < int > & pos_bp, vector < double > & pos_cM) {
+int variant_map::setCentiMorgan(const vector < int > & pos_bp, const vector < double > & pos_cM) {
 	int cpt = 0;
 	for (int l = 0 ; l < pos_cM.size() ; l ++) {
 		vector  < variant * > vecS = getByPos(pos_bp[l]);
@@ -73,43 +73,65 @@ int variant_map::setCentiMorgan(vector < int > & pos_bp, vector < double > & pos
 	return cpt;
 }
 
-int variant_map::interpolateCentiMorgan(vector < int > & pos_bp, vector < double > & pos_cM) {
-	int cpt = 0;
+int variant_map::interpolateCentiMorgan(const vector < int > & pos_bp, const vector < double > & pos_cM) {
+	float prog_step = 1.0/vec_pos.size();
+	float prog_bar = 0.0;
+	int n_interpolated = 0, i_locus = 0;
+	double base, rate, dist;
 	double mean_rate = (pos_cM.back() - pos_cM[0]) / (pos_bp.back() - pos_bp[0]);
-	for (int s = 0 ; s < vec_pos.size() ; s ++) {
-		if (vec_pos[s]->cm < 0) {
-			if (vec_pos[s]->bp < pos_bp[0]) vec_pos[s]->cm = pos_cM[0] - mean_rate * (pos_bp[0] - vec_pos[s]->bp);
-			else if (vec_pos[s]->bp > pos_bp.back()) vec_pos[s]->cm = pos_cM.back() + mean_rate * (vec_pos[s]->bp - pos_bp.back());
-			else {
-				int index_from, index_to;
-				for ( index_from = 0 ; index_from < pos_bp.size() && pos_bp[index_from] < vec_pos[s]->bp; ) index_from ++ ;
-				for ( index_to = pos_cM.size() - 1 ; index_to >= 0 && pos_bp[index_to] > vec_pos[s]->bp; ) index_to --;
-				index_from--;
-				index_to++;
-				vec_pos[s]->cm = pos_cM[index_from] + (vec_pos[s]->bp - pos_bp[index_from]) * (pos_cM[index_to] - pos_cM[index_from]) / (pos_bp[index_to] - pos_bp[index_from]);
-				}
-			cpt++;
-		}
-		vrb.progress("  * cM interpolation", (s+1)*1.0/vec_pos.size());
 
+	//Set up first positions to be mean rate
+	while (i_locus<vec_pos.size() && vec_pos[i_locus]->bp < pos_bp[0]) {
+		base = pos_cM[0];
+		dist = (pos_bp[0] - vec_pos[i_locus]->bp);
+		vec_pos[i_locus]->cm = base - mean_rate * dist;
+		n_interpolated ++;
+		i_locus ++;
 	}
-	if (vec_pos[0]->cm < 0) {
-		double socle = -1.0 * vec_pos[0]->cm;
-		for (int s = 0 ; s < vec_pos.size() ; s ++) vec_pos[s]->cm += socle;
+
+	//Set up middle positions using interpolation
+	int closest_pos = 1;
+	for (; i_locus < vec_pos.size() ; ) {
+		if (vec_pos[i_locus]->cm == -1) {
+
+			//Find suitable interpolation interval
+			while (vec_pos[i_locus]->bp > pos_bp[closest_pos] && closest_pos < pos_bp.size()) closest_pos++;
+
+			//Interpolate
+			if (closest_pos < pos_bp.size()) {
+				assert(vec_pos[i_locus]->bp < pos_bp[closest_pos]);
+				assert(vec_pos[i_locus]->bp > pos_bp[closest_pos-1]);
+				base = pos_cM[closest_pos-1];
+				rate = (pos_cM[closest_pos] - pos_cM[closest_pos-1]) / (pos_bp[closest_pos] - pos_bp[closest_pos-1]);
+				dist = (vec_pos[i_locus]->bp - pos_bp[closest_pos-1]);
+				vec_pos[i_locus]->cm = base + rate * dist;
+				n_interpolated ++;
+				i_locus ++;
+			} else break;
+		} else i_locus ++;
 	}
-	return cpt;
+
+	//Set up last positions to be mean rate
+	while (i_locus < vec_pos.size()) {
+		base = pos_cM.back();
+		dist = (vec_pos[i_locus]->bp - pos_bp.back());
+		vec_pos[i_locus]->cm = base + mean_rate * dist;
+		n_interpolated ++;
+		i_locus ++;
+	}
+	return n_interpolated;
 }
 
-unsigned int variant_map::length() {
+unsigned int variant_map::length() const {
 	return vec_pos.back()->bp - vec_pos[0]->bp + 1;
 }
 
-double variant_map::lengthcM() {
+double variant_map::lengthcM() const {
 	return vec_pos.back()->cm - vec_pos[0]->cm;
 }
 
 
-void variant_map::setGeneticMap(gmap_reader & readerGM) {
+void variant_map::setGeneticMap(const gmap_reader & readerGM) {
 	tac.clock();
 	int n_set = setCentiMorgan(readerGM.pos_bp, readerGM.pos_cm);
 	int n_interpolated = interpolateCentiMorgan(readerGM.pos_bp, readerGM.pos_cm);

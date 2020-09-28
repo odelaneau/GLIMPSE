@@ -44,9 +44,10 @@ void caller::read_files_and_initialise() {
 	//step2: Read input files
 	genotype_reader readerG(H, G, V, input_gregion);
 	if (options.count("init-pool")) readerG.readInitializingSamples(options["init-pool"].as < string > ());
-	readerG.scanGenotypes(options["input"].as < string > (), options["reference"].as < string > ());
+	if (options.count("samples-file")) readerG.readSamplesFilePloidy(options["samples-file"].as < string > ());
+	readerG.scanGenotypes(options["input"].as < string > (), options["reference"].as < string > (), options["thread"].as <int> (), options.count("impute-reference-variants"));
 	readerG.allocateGenotypes();
-	readerG.readGenotypes(options["input"].as < string > (), options["reference"].as < string > ());
+	readerG.readGenotypes(options["input"].as < string > (), options["reference"].as < string > (), options["thread"].as <int> (), options.count("impute-reference-variants"));
 
 	//step3: Read and initialise genetic map
 	if (options.count("map")) {
@@ -58,22 +59,16 @@ void caller::read_files_and_initialise() {
 
 	//step4
 	HP0 = vector < vector < float > > (options["thread"].as < int > (), vector < float > (H.n_site * 2, 0.0));
-	HP1 = vector < vector < float > > (options["thread"].as < int > (), vector < float > (H.n_site * 2, 0.0));
-	//HP0noPL = vector < vector < float > > (options["thread"].as < int > (), vector < float > (H.n_site * 2, 0.0));
-	//HP1noPL = vector < vector < float > > (options["thread"].as < int > (), vector < float > (H.n_site * 2, 0.0));
-	//MISMATCH = vector < float > (H.n_site, 0.0f);
+	if (H.max_ploidy > 1) HP1 = vector < vector < float > > (options["thread"].as < int > (), vector < float > (H.n_site * 2, 0.0));
+
 	HLC = vector < vector < float > > (options["thread"].as < int > (), vector < float > (H.n_site * 2, 0.0));
 	HMM = vector < haplotype_hmm * > (options["thread"].as < int > (), NULL);
-	DMM = vector < diplotype_hmm * > (options["thread"].as < int > (), NULL);
-	//FMM = vector < switchandflipphasing * > (options["thread"].as < int > (), NULL);
-	//SMM = vector < switchphasing * > (options["thread"].as < int > (), NULL);
+	if (H.max_ploidy > 1) DMM = vector < diplotype_hmm * > (options["thread"].as < int > (), NULL);
 	COND = vector < conditioning_set * > (options["thread"].as < int > (), NULL);
 	for (int t = 0 ; t < HMM.size() ; t ++) {
-		COND[t] = new conditioning_set(V,H,(readerG.n_ref_samples+readerG.n_main_samples)*2, options["ne"].as < float > ());
+		COND[t] = new conditioning_set(V,H,H.n_hap, options["ne"].as < float > ());
 		HMM[t] = new haplotype_hmm(COND[t]);
-		DMM[t] = new diplotype_hmm(COND[t]);
-		//FMM[t] = new switchandflipphasing (COND[t]);
-		//SMM[t] = new switchphasing (COND[t]);
+		if (H.max_ploidy > 1) DMM[t] = new diplotype_hmm(COND[t]);
 	}
 
 	//step5

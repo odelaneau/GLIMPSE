@@ -37,7 +37,7 @@ public:
 	~gmap_reader();
 
 	//IO
-	void readGeneticMapFile(string);
+	void readGeneticMapFile(const string);
 };
 
 #endif

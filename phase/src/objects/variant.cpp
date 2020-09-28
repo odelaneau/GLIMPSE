@@ -24,31 +24,26 @@
 #define _GLOBAL
 #include <objects/variant.h>
 
-variant::variant(string & chr, int bp, string & id, string & ref, string & alt, int idx) {
-	this->chr = chr;
-	this->bp = bp;
-	this->id = id;
-	this->ref = ref;
-	this->alt = alt;
-	this->idx = idx;
-	this->cref = 0;
-	this->calt = 0;
-	this->cmis = 0;
-	this->fbin = 0;
-	cm = -1;
+variant::variant(const string & _chr,const int _bp, const string & _id, const string & _ref, const string & _alt,const int _idx,const int _cref, const int _calt) :
+	chr(_chr), bp(_bp), id(_id), ref(_ref), alt(_alt), idx(_idx), cref(_cref), calt(_calt), cm(-1)
+{
 }
 
 variant::~variant() {
 }
 
-unsigned int variant::getMAC() {
+unsigned int variant::getMAC() const {
 	return min(cref, calt);
 }
 
-bool variant::isSingleton() {
+bool variant::isSingleton() const {
 	return (calt == 1 || cref == 1);
 }
 
-bool variant::isMonomorphic() {
+bool variant::isMonomorphic() const {
 	return (calt == 0 || cref == 0);
+}
+
+string variant::toString() const {
+	return chr + ":" + std::to_string(bp) + "_" + ref + "_" + alt;
 }

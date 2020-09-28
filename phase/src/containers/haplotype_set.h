@@ -34,9 +34,17 @@ public:
 	//DATA
 	unsigned long n_site;							// #variants
 	unsigned long n_hap;							// #haplotypes
-	unsigned long n_ref;							// #reference haplotypes
+	unsigned long n_main_haps;
+	unsigned long n_ref_haps;							// #reference haplotypes
 	bitmatrix H_opt_var;							// Bit matrix of haplotypes (variant first)
 	vector < bool > initializing_haps;				// Reference haplotype pool (subset) used for initializing iteration
+
+	int fploidy;					//Format ploidy field, to indicate the ploidy in the sample file: 1=only haploids, 2=only diploids, -2=mixed ploidy (haploids and diploids).
+	int max_ploidy;
+	vector < int  > ploidy;
+	vector < int > ind2hapid;
+	//vector < int > hapid2ind;
+	vector < int > hapid2ind;
 
 	//PBWT
 	int pbwt_depth, pbwt_modulo;
@@ -49,10 +57,10 @@ public:
 	~haplotype_set();
 
 	//ROUTINES
-	void updateHaplotypes(genotype_set &);
+	void updateHaplotypes(const genotype_set &);
 
 	//PBWT ROUTINES
-	void initPositionalBurrowWheelerTransform(int, int);
+	void initPositionalBurrowWheelerTransform(const int, const int);
 	void updatePositionalBurrowWheelerTransform();
 };
 

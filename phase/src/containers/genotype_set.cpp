@@ -26,6 +26,7 @@
 genotype_set::genotype_set() {
 	n_site = 0;
 	n_ind = 0;
+	n_hap = 0;
 }
 
 genotype_set::~genotype_set() {

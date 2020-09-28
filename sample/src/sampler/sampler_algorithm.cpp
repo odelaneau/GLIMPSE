@@ -30,6 +30,17 @@
 #define GET(n,i)	(((n)>>(i))&1U)
 #define TOG(n,i)	((n)^=(1UL<<(i)))
 
+std::map<std::string, uint8_t> mapPloidy = {
+		{"1",1},
+		{"2",2}
+};
+
+std::map<int, string> fploidy_to_msg = {
+		{-2, "Mixed haploid/diploid samples in the region"},
+		{1,"Only haploid samples in the region"},
+		{2,"Only diploid samples in the region"}
+};
+
 bool phaseHet(int nmain, int curr_hs, int prev_hs, bool prev_a0, bool prev_a1) {
 	int phase0 = 0, phase1 = 0;
 	for (int s = 0 ; s < nmain ; s ++) {
@@ -53,6 +64,7 @@ bool phaseHet(int nmain, int curr_hs, int prev_hs, bool prev_a0, bool prev_a1) {
 
 void sampler::sample() {
 	tac.clock();
+	fploidy = 2;
 	string filename = options["input"].as < string > ();
 	vrb.title("Generating haplotype pairs for [" + filename + "]");
 
@@ -65,14 +77,58 @@ void sampler::sample() {
 	//Extract sample IDs
 	vrb.bullet("Extract sample IDs");
 	int nsamples = bcf_hdr_nsamples(sr->readers[0].header);
+	sample_names = std::vector<string> (nsamples);
+	for (int i = 0 ; i < nsamples ; i ++) sample_names[i] = string(sr->readers[0].header->samples[i]);
 	vrb.bullet("#samples = " + stb.str(nsamples));
 
 	//Extract #pairs per sample
 	bcf_hrec_t * header_record = bcf_hdr_get_hrec(sr->readers[0].header, BCF_HL_GEN, "NMAIN", NULL, NULL);
 	if (header_record == NULL) vrb.error("Cannot retrieve NMAIN flag in VCF header");
 	int nmain = atoi(header_record->value);
-	if (nmain <1 || nmain > 16) vrb.error("NMAIN out of bounds : " + stb.str(nmain));
+	if (nmain <1 || nmain > 15) vrb.error("NMAIN out of bounds : " + stb.str(nmain));
 	vrb.bullet("#main_iterations = " + stb.str(nmain));
+
+	header_record = bcf_hdr_get_hrec(sr->readers[0].header, BCF_HL_GEN, "FPLOIDY", NULL, NULL);
+	if (header_record == NULL) vrb.warning("Cannot retrieve FPLOIDY flag in VCF header [" + filename + "], used a version of GLIMPSE < 1.1.0? Assuming diploid genotypes only [FPLOIDY=2].");
+	else fploidy = atoi(header_record->value);
+	if (fploidy <-2 || fploidy > 2 || fploidy==0 || fploidy ==-1) vrb.error("FPLOIDY out of bounds : " + stb.str(fploidy));
+	vrb.bullet("FPLOIDY = "+ to_string(fploidy) + " [" + fploidy_to_msg[fploidy] + "]");
+
+	int * buffer = NULL, nbuffer = 0, rbuffer = 0, *hs_fields = NULL, *gt_fields = NULL;
+	int n_gt_fields = 0;
+
+	bcf1_t * line;
+
+	//Ploidy
+	ploidy = std::vector<uint8_t> (nsamples,2);
+	max_ploidy = std::abs(fploidy);
+	n_haploid = 0;
+	n_diploid = 0;
+	if (fploidy==1 || fploidy == 2)
+	{
+		fploidy == 2 ? n_diploid = nsamples: n_haploid = nsamples;
+		for (int i = 0 ; i < nsamples ; i ++) ploidy[i] = fploidy;
+	}
+	else
+	{
+		bcf_sr_next_line (sr);
+		line =  bcf_sr_get_line(sr, 0);
+
+		int ngt = bcf_get_genotypes(sr->readers[0].header, line, &gt_fields, &n_gt_fields);
+		const int line_max_ploidy = ngt/nsamples;
+		assert(line_max_ploidy==max_ploidy); //we do not allow missing data
+		for(int i = 0 ; i < nsamples; ++i)
+		{
+			if (gt_fields[max_ploidy*i+1] == bcf_int32_vector_end)
+			{
+				ploidy[i]=1;
+				++n_haploid;
+			}
+		}
+		n_diploid =  nsamples-n_haploid;
+		assert(n_diploid > 0 && n_haploid > 0);
+		bcf_sr_seek (sr, NULL, 0);
+	}
 
 	//Generating task data
 	bool first_het = true;
@@ -97,62 +153,77 @@ void sampler::sample() {
 
 	//Main loop
 	int n_variants = 0;
-	int * buffer = NULL, nbuffer = 0, rbuffer = 0, *hs_fields = NULL, *gt_fields = NULL;
 
-	bcf1_t * line;
 	while (bcf_sr_next_line (sr)) {
 		//Retrieve variant informations
 		line =  bcf_sr_get_line(sr, 0);
 
 		//Retrieve GT
-		int n_gt_fields = 0;
 		int ngt = bcf_get_genotypes(hdr, line, &gt_fields, &n_gt_fields);
-		assert(ngt == 2*nsamples && n_gt_fields == 2*nsamples);
+		//assert(ngt == 2*nsamples && n_gt_fields == 2*nsamples);
 
 		//Retrieve HS
 		int n_hs_fields = 0;
 		int nhs = bcf_get_format_int32(hdr, line, "HS", &hs_fields, &n_hs_fields);
 		assert(nhs == nsamples && n_hs_fields == nsamples);
 
+		const int line_max_ploidy = ngt/nsamples;
+		assert(line_max_ploidy==max_ploidy); //we do not allow missing data
 		//Process & update record
 		if (maximize) {
-			for (int i = 0 ; i  < nsamples ; i ++) {
-				bool a0 = (bcf_gt_allele(gt_fields[2*i+0])==1);
-				bool a1 = (bcf_gt_allele(gt_fields[2*i+1])==1);
-				if (a0 != a1) {
-					int curr_hs = hs_fields[i];
-					int prev_hs = prev_conf[i];
-					bool prev_a0 = prev_haps[2*i+0];
-					bool prev_a1 = prev_haps[2*i+1];
-					if (prev_hs < 0) {
-						a0 = false; a1 = true;
-						prev_haps[2*i+0] = a0;
-						prev_haps[2*i+1] = a1;
-						prev_conf[i] = curr_hs;
-					} else if (phaseHet(nmain, curr_hs, prev_hs, prev_a0, prev_a1)) {
-						a0 = true; a1 = false;
-						prev_haps[2*i+0] = a0;
-						prev_haps[2*i+1] = a1;
-						prev_conf[i] = curr_hs;
-					} else {
-						a0 = false; a1 = true;
-						prev_haps[2*i+0] = a0;
-						prev_haps[2*i+1] = a1;
-						prev_conf[i] = curr_hs;
+			for (int i = 0 ; i  < nsamples ; i ++)
+			{
+				if (ploidy[i] > 1)
+				{
+					bool a0 = (bcf_gt_allele(gt_fields[max_ploidy*i+0])==1);
+					bool a1 = (bcf_gt_allele(gt_fields[max_ploidy*i+1])==1);
+					if (a0 != a1) {
+						int curr_hs = hs_fields[i];
+						int prev_hs = prev_conf[i];
+						bool prev_a0 = prev_haps[max_ploidy*i+0];
+						bool prev_a1 = prev_haps[max_ploidy*i+1];
+						if (prev_hs < 0) {
+							a0 = false; a1 = true;
+							prev_haps[max_ploidy*i+0] = a0;
+							prev_haps[max_ploidy*i+1] = a1;
+							prev_conf[i] = curr_hs;
+						} else if (phaseHet(nmain, curr_hs, prev_hs, prev_a0, prev_a1)) {
+							a0 = true; a1 = false;
+							prev_haps[max_ploidy*i+0] = a0;
+							prev_haps[max_ploidy*i+1] = a1;
+							prev_conf[i] = curr_hs;
+						} else {
+							a0 = false; a1 = true;
+							prev_haps[max_ploidy*i+0] = a0;
+							prev_haps[max_ploidy*i+1] = a1;
+							prev_conf[i] = curr_hs;
+						}
 					}
+					gt_fields[max_ploidy*i+0] = bcf_gt_phased(a0);
+					gt_fields[max_ploidy*i+1] = bcf_gt_phased(a1);
 				}
-				gt_fields[2*i+0] = bcf_gt_phased(a0);
-				gt_fields[2*i+1] = bcf_gt_phased(a1);
+				else
+				{
+					bool a0 = (bcf_gt_allele(gt_fields[max_ploidy*i+0])==1);
+					gt_fields[max_ploidy*i+0] = bcf_gt_phased(a0);
+					if (max_ploidy > 1) gt_fields[max_ploidy*i+1] = bcf_int32_vector_end;
+				}
+
 			}
-			bcf_update_genotypes(hdr, line, gt_fields, nsamples*2);
+			bcf_update_genotypes(hdr, line, gt_fields, nsamples*max_ploidy);
 		} else {
-			for (int i = 0 ; i  < nsamples ; i ++) {
-				bool a0 = GET(hs_fields[i], 2*sampled_conf[i]+0);
-				bool a1 = GET(hs_fields[i], 2*sampled_conf[i]+1);
-				gt_fields[2*i+0] = bcf_gt_phased(a0);
-				gt_fields[2*i+1] = bcf_gt_phased(a1);
+			for (int i = 0 ; i  < nsamples ; i ++)
+			{
+				bool a0 = GET(hs_fields[i], max_ploidy*sampled_conf[i]+0);
+				gt_fields[line_max_ploidy*i+0] = bcf_gt_phased(a0);
+
+				if (ploidy[i] > 1)
+				{
+					bool a1 = GET(hs_fields[i], max_ploidy*sampled_conf[i]+1);
+					gt_fields[max_ploidy*i+1] = bcf_gt_phased(a1);
+				} else if (max_ploidy > 1) gt_fields[line_max_ploidy*i+1] = bcf_int32_vector_end;
 			}
-			bcf_update_genotypes(hdr, line, gt_fields, nsamples*2);
+			bcf_update_genotypes(hdr, line, gt_fields, nsamples*max_ploidy);
 		}
 
 		//Clear other unwanted format field (all but GT)

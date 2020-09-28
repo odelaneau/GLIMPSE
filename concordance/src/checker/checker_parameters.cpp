@@ -35,7 +35,7 @@ void checker::declare_options() {
 	opt_input.add_options()
 			("input", bpo::value< string >(), "File listing True, Imputed, Frequencies and Regions")
 			("samples", bpo::value< string >(), "List of samples to process, one sample ID per line")
-			("info_af", bpo::value< string >()->default_value("AF"), "Name of the INFO/AF field to be used in the frequency file.");
+			("af-tag", bpo::value< string >()->default_value("AF"), "Allele frequency INFO tag to use for binning. By default the allele frequency is estimated from the INFO/AF tag.");
 
 	bpo::options_description opt_algo ("Parameters");
 	opt_algo.add_options()
@@ -100,6 +100,9 @@ void checker::verbose_options() {
 	vrb.bullet("Seed    : " + stb.str(options["seed"].as < int > ()));
 	vrb.bullet("MinPROB : " + stb.str(options["minPROB"].as < double > ()));
 	vrb.bullet("MinDP   : " + stb.str(options["minDP"].as < int > ()));
+	if (options.count("af-tag")) vrb.bullet("Using INFO/" + options["af-tag"].as < string > () + " tag for binning.");
+	else vrb.bullet("Using INFO/AF tag for binning.");
+
 	vrb.bullet("#Threads   : " + stb.str(options["thread"].as < int > ()));
 	if (options.count("bins")) {
 		vector < double > tmp = options["bins"].as < vector < double > > ();

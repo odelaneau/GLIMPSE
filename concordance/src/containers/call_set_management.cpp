@@ -79,7 +79,7 @@ void call_set::initialize(string fgrps, double _T, int _D) {
 }
 
 void call_set::setTargets(string fsamples) {
-	vrb.title("Reading subset of samples to consider in analysis");
+	vrb.title("Reading the subset of samples to consider in the analysis");
 	use_subset_samples=true;
 	string buffer;
 	input_file fd (fsamples);

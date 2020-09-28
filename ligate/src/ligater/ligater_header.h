@@ -45,6 +45,7 @@ public:
 	vector < int > prev_readers;
 
 	//SAMPLE DATA
+	int fploidy;
 	int nmain;
 	int nsamples;
 	vector < string > sampleIDs;

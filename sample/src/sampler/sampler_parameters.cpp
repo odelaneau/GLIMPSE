@@ -32,7 +32,7 @@ void sampler::declare_options() {
 
 	bpo::options_description opt_input ("Input files");
 	opt_input.add_options()
-			("input", bpo::value < string >(), "VCF/BCF generated through LCC_ligate");
+			("input", bpo::value < string >(), "VCF/BCF generated through GLIMPSE ligate");
 
 	bpo::options_description opt_algo ("Parameters");
 	opt_algo.add_options()

@@ -26,36 +26,49 @@
 
 #include <utils/otools.h>
 
-#define SET(n,i)	(n |= 1UL << i)
-#define CLR(n,i)	(n &= ~(1UL << i));
-#define GET(n,i)	((n >> i) & 1U);
+#define _SET32(n,i)	(n |= 1U << i)
+#define _CLR32(n,i)	(n &= ~(1U << i));
+#define _GET32(n,i)	((n >> i) & 1U);
 
 // 5 bytes per genotype, but sparse!
 struct inferred_genotype {
-	float gp0, gp1, gp2;
-	int hs, idx;
+	float gp0, gp1;
+	int32_t hs, idx;
 
-	inferred_genotype(int _idx, float _gp0, float _gp1, float _gp2, int _hs) : idx(_idx), gp0(_gp0), gp1(_gp1), gp2(_gp2), hs(_hs) {
+	inferred_genotype(const int _idx, const float _gp0, const float _gp1, const int _hs) : idx(_idx), gp0(_gp0), gp1(_gp1), hs(_hs) {
 	}
 
 	bool operator<(const inferred_genotype & g) const {
 		return idx < g.idx;
 	}
 
-	int infer() {
-		if (gp0 >= gp1 && gp0 >= gp2) return 0;
-		if (gp1 >= gp0 && gp1 >= gp2) return 1;
-		if (gp2 >= gp0 && gp2 >= gp1) return 2;
+	int infer() const {
+		float gp2 = 1.0f - gp1 - gp0;
+		if (gp0 > gp1 && gp0 > gp2) return 0;
+		if (gp1 > gp0 && gp1 > gp2) return 1;
+		if (gp2 > gp0 && gp2 > gp1) return 2;
 		return 0;
 	}
+
+	float getGp2() const {
+		return std::max(1.0f - gp1 - gp0, 0.0f);
+	}
+
+	bool infer_haploid() const {
+		return gp1 > gp0;
+	}
 };
+
 
 class genotype {
 public:
 	// INTERNAL DATA
-	string name;
-	unsigned int index;					// Index in containers
-	unsigned int n_variants;			// Number of variants	(to iterate over Variants)
+	const string name;
+	const int index;					// Index in containers
+	const int n_variants;			// Number of variants	(to iterate over Variants)
+	const uint8_t ploidy;				//ploidy can be 1,2 (2 is default)
+	const int hapid;
+	int stored_cnt;
 
 	// This is using lot of memory.
 	// Solution:	Use a dictionnary given that GL triplets are highly repetitive.
@@ -63,7 +76,6 @@ public:
 
 	// Sparse storage for GPs and HSs
 	vector < inferred_genotype > stored_data;
-	int stored_cnt;
 
 	// This should be removed as it is already stored in haplotype_set
 	vector < bool > H0;					// First haplotype
@@ -71,17 +83,18 @@ public:
 
 
 	//CORE METHODS
-	genotype(int, int);
+	genotype(const string _name, const int _index, const int _n_variants, const uint8_t _ploidy, const int _hapid);
 	~genotype();
 	void allocate();
 	void free();
 
 	//PROB METHODS
-	void initHaplotypeLikelihoods(vector < float > &);
-	void sampleHaplotypeH0(vector < float > &);
-	void sampleHaplotypeH1(vector < float > &);
-	void makeHaplotypeLikelihoods(vector < float > &, bool);
-	void storeGenotypePosteriorsAndHaplotypes(vector < float > &, vector < float > &);
+	void initHaplotypeLikelihoods(vector < float > &) const;
+	void sampleHaplotypeH0(const vector < float > &);
+	void sampleHaplotypeH1(const vector < float > &);
+	void makeHaplotypeLikelihoods(vector < float > &, bool) const;
+	void storeGenotypePosteriorsAndHaplotypes(const vector < float > &);
+	void storeGenotypePosteriorsAndHaplotypes(const vector < float > &, const vector < float > &);
 	void sortAndNormAndInferGenotype();
 };
 

@@ -23,7 +23,7 @@
 
 #include <models/diplotype_hmm.h>
 
-diplotype_hmm::diplotype_hmm(conditioning_set * _C) {
+diplotype_hmm::diplotype_hmm(const conditioning_set * _C) {
 	C = _C;
 
 	//INIT EMIT0
@@ -52,12 +52,19 @@ diplotype_hmm::diplotype_hmm(conditioning_set * _C) {
 	probSumH2 = vector < float > (HAP_NUMBER, 1.0);
 	probSumT1 = 1.0;
 	probSumT2 = 1.0;
+
+	curr_locus=0;
+	curr_segment_index=0;
+	curr_segment_locus=0;
+	n_segs=0;
+	sumHProbs=0;
+	sumDProbs=0;
 }
 
 diplotype_hmm::~diplotype_hmm() {
 }
 
-void diplotype_hmm::reallocate(vector < bool > & H0, vector < bool > & H1) {
+void diplotype_hmm::reallocate(const vector < bool > & H0, const vector < bool > & H1) {
 	//SET HET AND ALT
 	HET = vector < char > (C->n_sites, -1);
 	ALT = vector < bool > (C->n_sites, false);
@@ -105,12 +112,12 @@ void diplotype_hmm::forward() {
 	for (curr_locus = 0 ; curr_locus < C->n_sites ; curr_locus ++) {
 		bool paired = (curr_locus % 2 == 0);
 
-		paired?INIT2():INIT1();
-		if (curr_locus != 0 && curr_segment_locus == 0) paired?COLLAPSE2(true):COLLAPSE1(true);
-		if (curr_locus != 0 && curr_segment_locus != 0) paired?RUN2(true):RUN1(true);
-		paired?SUM2():SUM1();
+		INIT(paired);
+		if (curr_locus != 0 && curr_segment_locus == 0) COLLAPSE(true, paired);
+		if (curr_locus != 0 && curr_segment_locus != 0) RUN(true, paired);
+		SUM(paired);
 
-		if (curr_segment_locus == segments[curr_segment_index] - 1) paired?SUMK2():SUMK1();
+		if (curr_segment_locus == segments[curr_segment_index] - 1) SUMK(paired);
 		if (curr_segment_locus == segments[curr_segment_index] - 1) {
 			if (paired) {
 				copy(prob2.begin(), prob2.begin() + C->n_states*HAP_NUMBER, Alpha.begin() + curr_segment_index*C->n_states*HAP_NUMBER);
@@ -134,12 +141,12 @@ void diplotype_hmm::backward() {
 	for (curr_locus = C->n_sites - 1 ; curr_locus >= 0 ; curr_locus--) {
 		bool paired = (curr_locus % 2 == 0);
 
-		paired?INIT2():INIT1();
-		if (curr_locus != C->n_sites - 1 && curr_segment_locus == segments[curr_segment_index] - 1) paired?COLLAPSE2(false):COLLAPSE1(false);
-		if (curr_locus != C->n_sites - 1 && curr_segment_locus != segments[curr_segment_index] - 1) paired?RUN2(false):RUN1(false);
-		paired?SUM2():SUM1();
+		INIT(paired);
+		if (curr_locus != C->n_sites - 1 && curr_segment_locus == segments[curr_segment_index] - 1) COLLAPSE(false, paired);
+		if (curr_locus != C->n_sites - 1 && curr_segment_locus != segments[curr_segment_index] - 1) RUN(false, paired);
+		SUM(paired);
 
-		if (curr_segment_locus == 0) paired?SUMK2():SUMK1();
+		if (curr_segment_locus == 0) SUMK(paired);
 		if (curr_segment_locus == 0 && curr_locus != (C->n_sites - 1)) {
 			if (paired) copy(prob2.begin(), prob2.begin() + C->n_states*HAP_NUMBER, Beta.begin() + curr_segment_index*C->n_states*HAP_NUMBER);
 			else copy(prob1.begin(), prob1.begin() + C->n_states*HAP_NUMBER, Beta.begin() + curr_segment_index*C->n_states*HAP_NUMBER);

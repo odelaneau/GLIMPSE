@@ -52,5 +52,5 @@ void checker::read_files_and_initialise() {
 		}
 	}
 	vrb.bullet(stb.str(vec_esti.size()) + " sets of files detected");
-	D.readData(vec_true, vec_esti, vec_freq, vec_regi, options["info_af"].as<string>(),options["thread"].as < int > ());
+	D.readData(vec_true, vec_esti, vec_freq, vec_regi, options);
 }
