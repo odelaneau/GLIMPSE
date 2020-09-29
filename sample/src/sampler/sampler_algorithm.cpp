@@ -91,7 +91,7 @@ void sampler::sample() {
 	header_record = bcf_hdr_get_hrec(sr->readers[0].header, BCF_HL_GEN, "FPLOIDY", NULL, NULL);
 	if (header_record == NULL) vrb.warning("Cannot retrieve FPLOIDY flag in VCF header [" + filename + "], used a version of GLIMPSE < 1.1.0? Assuming diploid genotypes only [FPLOIDY=2].");
 	else fploidy = atoi(header_record->value);
-	if (fploidy <-2 || fploidy > 2 || fploidy==0 || fploidy ==-1) vrb.error("FPLOIDY out of bounds : " + stb.str(fploidy));
+	if (fploidy_to_msg.find(fploidy) == fploidy_to_msg.end()) vrb.error("FPLOIDY out of bounds : " + stb.str(fploidy));
 	vrb.bullet("FPLOIDY = "+ to_string(fploidy) + " [" + fploidy_to_msg[fploidy] + "]");
 
 	int * buffer = NULL, nbuffer = 0, rbuffer = 0, *hs_fields = NULL, *gt_fields = NULL;
@@ -100,18 +100,18 @@ void sampler::sample() {
 	bcf1_t * line;
 
 	//Ploidy
-	ploidy = std::vector<uint8_t> (nsamples,2);
+	ploidy = std::vector<int> (nsamples);
 	max_ploidy = std::abs(fploidy);
 	n_haploid = 0;
 	n_diploid = 0;
-	if (fploidy==1 || fploidy == 2)
+	if (fploidy > 0)
 	{
 		fploidy == 2 ? n_diploid = nsamples: n_haploid = nsamples;
-		for (int i = 0 ; i < nsamples ; i ++) ploidy[i] = fploidy;
+		for (int i = 0 ; i < nsamples ; i ++) ploidy[i] = max_ploidy;
 	}
 	else
 	{
-		bcf_sr_next_line (sr);
+		if (bcf_sr_next_line (sr)  == 0) vrb.error("No marker found in region");
 		line =  bcf_sr_get_line(sr, 0);
 
 		int ngt = bcf_get_genotypes(sr->readers[0].header, line, &gt_fields, &n_gt_fields);
@@ -119,14 +119,10 @@ void sampler::sample() {
 		assert(line_max_ploidy==max_ploidy); //we do not allow missing data
 		for(int i = 0 ; i < nsamples; ++i)
 		{
-			if (gt_fields[max_ploidy*i+1] == bcf_int32_vector_end)
-			{
-				ploidy[i]=1;
-				++n_haploid;
-			}
+			ploidy[i] = 2 - (gt_fields[max_ploidy*i+1] == bcf_int32_vector_end);
+			ploidy[i] > 1? ++n_diploid : ++n_haploid;
 		}
-		n_diploid =  nsamples-n_haploid;
-		assert(n_diploid > 0 && n_haploid > 0);
+		if (n_diploid == 0 && n_haploid == 0) vrb.error("No sample found.");
 		bcf_sr_seek (sr, NULL, 0);
 	}
 

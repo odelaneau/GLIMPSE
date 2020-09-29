@@ -45,13 +45,17 @@ public:
 	vector < int > prev_readers;
 
 	//SAMPLE DATA
-	int fploidy;
 	int nmain;
 	int nsamples;
 	vector < string > sampleIDs;
 	vector < bool > switching;
 	vector < int > distances;
 	int * body_hs_fields, * buffer_hs_fields;
+
+	int fploidy;
+	std::vector< int > ploidy;
+	int n_haploid = 0, 	n_diploid = 0, max_ploidy = 0;
+	std::vector< int > diploid_idx;
 
 	//CONSTRUCTOR
 	ligater();

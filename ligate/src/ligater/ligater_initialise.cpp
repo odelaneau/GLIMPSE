@@ -36,6 +36,7 @@ void ligater::read_files_and_initialise() {
 	input_file fd(filelist);
 	while (getline(fd, buffer)) filenames.push_back(buffer);
 	vrb.bullet("#files = " + stb.str(filenames.size()));
+	if (filenames.size() == 0) vrb.error("No filenames in input file.");
 
 	//step2: initilize flags
 	vrb.title("Initilialize flags");

@@ -124,16 +124,16 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 			bcf_hrec_t * header_record = bcf_hdr_get_hrec(sr->readers[1].header, BCF_HL_GEN, "FPLOIDY", NULL, NULL);
 			if (header_record == NULL) vrb.warning("Cannot retrieve FPLOIDY flag in VCF header [" + festimated[f] + "], used a version of GLIMPSE < 1.1.0? Assuming diploid genotypes only [FPLOIDY=2].");
 			else fploidy = atoi(header_record->value);
-			if (fploidy <-2 || fploidy > 2 || fploidy==0 || fploidy ==-1) vrb.error("FPLOIDY out of bounds : " + stb.str(fploidy));
+			if (fploidy_to_msg.find(fploidy) == fploidy_to_msg.end()) vrb.error("FPLOIDY out of bounds : " + stb.str(fploidy));
 			vrb.bullet("FPLOIDY = "+ to_string(fploidy) + " [" + fploidy_to_msg[fploidy] + "]");
 
 			//Ploidy
-			ploidy = std::vector<int> (N,2);
+			ploidy = std::vector<int> (N);
 			ind2gpos = std::vector<int> (N);
 			max_ploidy = std::abs(fploidy);
 			n_haploid = 0;
 			n_diploid = 0;
-			if (fploidy==1 || fploidy == 2)
+			if (fploidy > 0)
 			{
 				fploidy == 2 ? n_diploid = N: n_haploid = N;
 				for (int i = 0 ; i < N ; i ++)
@@ -160,12 +160,9 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 				for(int i = 0 ; i < n_esti_samples; ++i)
 				{
 					if (mappingE[i] == -1) continue;
-
 					ind2gpos[j] = 3*n_diploid + 2*n_haploid;
-					ploidy[j] = (gt_fields[max_ploidy*i+1] == bcf_int32_vector_end) ? 1 : 2;
-
-					if (ploidy[j] > 1)	++n_diploid;
-					else ++n_haploid;
+					ploidy[j] = 2 - (gt_fields[max_ploidy*i+1] == bcf_int32_vector_end);
+					ploidy[j] > 1? ++n_diploid : ++n_haploid;
 					++j;
 				}
 				//assert(n_diploid > 0 && n_haploid > 0);

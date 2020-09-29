@@ -34,7 +34,7 @@ public:
 
 	std::vector<string> sample_names;
 	int fploidy;
-	std::vector<uint8_t> ploidy;
+	std::vector<int> ploidy;
 	int n_diploid;
 	int n_haploid;
 	int max_ploidy;
