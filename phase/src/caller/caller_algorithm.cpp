@@ -1,3 +1,4 @@
+
 /*******************************************************************************
  * Copyright (C) 2020 Olivier Delaneau, University of Lausanne
  * Copyright (C) 2020 Simone Rubinacci, University of Lausanne

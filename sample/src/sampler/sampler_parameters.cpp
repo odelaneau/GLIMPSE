@@ -36,7 +36,7 @@ void sampler::declare_options() {
 
 	bpo::options_description opt_algo ("Parameters");
 	opt_algo.add_options()
-			("sample", "Sample a likely haplotype pair for each sample, use it in conbination with --seed")
+			("sample", "Samples a likely haplotype pair for each sample, use it in combination with --seed. Option not recommended for general usage, use --solve instead.")
 			("solve", "Get the most likely haplotype pair for each sample, independent of --seed");
 
 	bpo::options_description opt_output ("Output files");

@@ -44,7 +44,7 @@ void chunker::declare_options() {
 
 	bpo::options_description opt_output ("Output files");
 	opt_output.add_options()
-			("output,O", bpo::value< string >(), "Coordinate files for driving LCC impute/phase runs")
+			("output,O", bpo::value< string >(), "Coordinate files for driving GLIMPSE phase runs")
 			("log", bpo::value< string >(), "Log file");
 
 	descriptions.add(opt_base).add(opt_input).add(opt_algo).add(opt_output);

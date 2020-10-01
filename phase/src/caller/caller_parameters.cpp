@@ -36,22 +36,21 @@ void caller::declare_options() {
 	opt_input.add_options()
 			("input,I", bpo::value < string >(), "Genotypes to be phased in VCF/BCF format")
 			("input-region", bpo::value < string >(), "Whole genomic region to be phased (including left/right buffers)")
-			("reference,H", bpo::value < string >(), "Reference panel of haplotypes in VCF/BCF format")
+			("reference,R", bpo::value < string >(), "Reference panel of haplotypes in VCF/BCF format")
 			("map,M", bpo::value < string >(), "Genetic map")
-			("impute-reference-variants", "Allows imputation at variants only present in the reference panel. The use of this option is intended only to allow imputation at sporadic missing variants. Please consider to re-run the genotype likelihood computation at all reference variants before using this option, since data from the reads might be available in the data. A warning is thrown if reference-only variants are found.")
-			("samples-file",  bpo::value < string >(), "File with sample names and ploidy information. One sample per line with a mandatory second column indicating ploidy (1 or 2). Sample names that are not present are assumed to have ploidy 2.");
+			("samples-file",  bpo::value < string >(), "File with sample names and ploidy information. One sample per line with a mandatory second column indicating ploidy (1 or 2). Sample names that are not present are assumed to have ploidy 2 (diploids). If the parameter is omitted, all samples are assumed to be diploid. GLIMPSE does NOT handle the use of sex (M/F) instead of ploidy.")
+			("impute-reference-only-variants", "Allows imputation at variants only present in the reference panel. The use of this option is intended only to allow imputation at sporadic missing variants. If the number of missing variants is non-sporadic, please re-run the genotype likelihood computation at all reference variants and avoid using this option, since data from the reads should be used. A warning is thrown if reference-only variants are found.");
+
 
 	bpo::options_description opt_algo ("Model parameters");
 	opt_algo.add_options()
 			("burnin", bpo::value<int>()->default_value(10), "Number of Burn-in iterations")
-			("main", bpo::value<int>()->default_value(10), "Number of Main iterations")
+			("main", bpo::value<int>()->default_value(10), "Each main iterations contributes to output genotypes. Haplotypes sampled for the last (max 15) iterations are stored in the HS field.")
 			("pbwt-depth", bpo::value<int>()->default_value(2), "Number of neighbors to store")
 			("pbwt-modulo", bpo::value<int>()->default_value(8), "Frequency of PBWT storage")
 			("init-states", bpo::value<int>()->default_value(1000), "Number of states used for initialization")
 			("init-pool", bpo::value< string >(), "Pool of samples from which initializing haplotypes should be chosen")
 			("ne", bpo::value<float>()->default_value(20000.0), "Effective diploid population size");
-			//("ploidy",  bpo::value < string >()->default_value("2"), "Predefined ploidy assembly. Predefined values: 2, 1, GRCh37, GRCh38, X. The assemblies GRCh37, GRCh38 and X need to have a specified --samples-file defined.")
-
 
 	bpo::options_description opt_output ("Output parameters");
 	opt_output.add_options()

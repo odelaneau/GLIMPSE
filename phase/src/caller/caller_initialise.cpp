@@ -45,9 +45,9 @@ void caller::read_files_and_initialise() {
 	genotype_reader readerG(H, G, V, input_gregion);
 	if (options.count("init-pool")) readerG.readInitializingSamples(options["init-pool"].as < string > ());
 	if (options.count("samples-file")) readerG.readSamplesFilePloidy(options["samples-file"].as < string > ());
-	readerG.scanGenotypes(options["input"].as < string > (), options["reference"].as < string > (), options["thread"].as <int> (), options.count("impute-reference-variants"));
+	readerG.scanGenotypes(options["input"].as < string > (), options["reference"].as < string > (), options["thread"].as <int> (), options.count("impute-reference-only-variants"));
 	readerG.allocateGenotypes();
-	readerG.readGenotypes(options["input"].as < string > (), options["reference"].as < string > (), options["thread"].as <int> (), options.count("impute-reference-variants"));
+	readerG.readGenotypes(options["input"].as < string > (), options["reference"].as < string > (), options["thread"].as <int> (), options.count("impute-reference-only-variants"));
 
 	//step3: Read and initialise genetic map
 	if (options.count("map")) {
