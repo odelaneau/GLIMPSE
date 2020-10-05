@@ -43,7 +43,7 @@ void * phase_callback(void * ptr) {
 }
 
 void caller::phase_individual(const int id_worker, const int id_job) {
-	const int8_t ploidy = G.vecG[id_job]->ploidy;
+	const int ploidy = G.vecG[id_job]->ploidy;
 	if (current_stage == STAGE_INIT) {
 		COND[id_worker]->selectRandom(id_job, options["init-states"].as < int > ());
 		G.vecG[id_job]->initHaplotypeLikelihoods(HLC[id_worker]);
@@ -60,7 +60,6 @@ void caller::phase_individual(const int id_worker, const int id_job) {
 		G.vecG[id_job]->makeHaplotypeLikelihoods(HLC[id_worker], false);
 		HMM[id_worker]->computePosteriors(HLC[id_worker], HP1[id_worker]);
 		G.vecG[id_job]->sampleHaplotypeH1(HP1[id_worker]);
-
 		DMM[id_worker]->rephaseHaplotypes(G.vecG[id_job]->H0, G.vecG[id_job]->H1);
 	}
 

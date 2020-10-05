@@ -31,6 +31,7 @@ haplotype_set::haplotype_set() {
 	pbwt_modulo = 0;
 	max_ploidy = 2;
 	n_main_haps=0;
+	fploidy=2;
 }
 
 haplotype_set::~haplotype_set() {
@@ -95,7 +96,7 @@ void haplotype_set::updatePositionalBurrowWheelerTransform() {
 				//Haplotypes that are *BEFORE* in PBWT array
 				for (int o = 1, c = 0; c < pbwt_depth; ++o) {
 					const int idx = pbwt_idx-o;
-					if (idx < 0 || (idx >= u) != a) break;	// Exit if we hit boundaries or if alleles are different
+					if (idx < 0 || ((idx >= u) != a)) break;	// Exit if we hit boundaries or if alleles are different
 					const int hc = pbwt_array[idx];
 					if (htrind != hapid2ind[hc])
 	            	{
@@ -110,7 +111,7 @@ void haplotype_set::updatePositionalBurrowWheelerTransform() {
 				//Haplotypes that are *AFTER* in PBWT array
 				for (int o = 1, c = 0; c < pbwt_depth; ++o) {
 					const int idx = pbwt_idx+o;
-					if (idx >= n_hap || (idx >= u) != a) break;	// Exit if we hit boundaries or if alleles are different
+					if (idx >= n_hap || ((idx >= u) != a)) break;	// Exit if we hit boundaries or if alleles are different
 					const int hc = pbwt_array[idx];
 					if (htrind != hapid2ind[hc])
 	            	{

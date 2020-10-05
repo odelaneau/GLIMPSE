@@ -64,8 +64,6 @@ void genotype_reader::readSamplesFilePloidy(string ftext) {
 		else repeated_samples=true;
 	}
 	if (repeated_samples) vrb.warning("Repeated sample in the file. Kept first instance");
-
-	vrb.bullet("Set of "+stb.str(ploidy_samples.size()) + " samples with associated ploidy read from sample file.");
 	fd.close();
 }
 
@@ -136,7 +134,9 @@ void genotype_reader::scanGenotypes(string fmain, string fref, int nthreads, con
 	H.fploidy = H.max_ploidy;
 	if (n_diploid > 0 && n_haploid > 0) H.fploidy=-H.fploidy;
 
-	vrb.bullet("#samples = " + stb.str(n_diploid+n_haploid) + " ["  + stb.str(n_haploid) + " haploid" + n_haploid!=1? "s" : "" + "/ " + stb.str(n_diploid) + " diploid"+ n_haploid!=1? "s" : "" + "]");
+	string pl1  = n_haploid!=1? "s" : "";
+	string pl2  = n_diploid!=1? "s" : "";
+	vrb.bullet("#samples = " + stb.str(n_diploid+n_haploid) + " ["  + stb.str(n_haploid) + " haploid" + pl1 + "/ " + stb.str(n_diploid) + " diploid"+ pl2 + "]");
 
 	//Scan file
 	int nset;
@@ -222,6 +222,7 @@ void genotype_reader::readGenotypes(string funphased, string freference, int nth
 	bcf1_t * line_main, * line_ref;
 	float prog_step = 1.0/n_variants;
 	float prog_bar = 0.0;
+	const int max_ploidyP1=H.max_ploidy+1;
 
 	while ((nset = bcf_sr_next_line (sr))) {
 		if (nset < 2 && !(impute_missing && bcf_sr_has_line(sr,1))) continue;
@@ -245,10 +246,10 @@ void genotype_reader::readGenotypes(string funphased, string freference, int nth
 				int32_t *ptr = gt_arr_ref + i*line_max_ploidy;
 				for (int j=0; j<ploidy_ref_samples[i]; j++)
 				{
-					bool a0 = (bcf_gt_allele(ptr[j])==1);
-					H.H_opt_var.set(i_variant, idx_ref_hap, a0);
+					bool a = (bcf_gt_allele(ptr[j])==1);
+					H.H_opt_var.set(i_variant, idx_ref_hap, a);
 					++idx_ref_hap;
-					a0?calt++:cref++;
+					a?calt++:cref++;
 				}
 			}
 
@@ -258,24 +259,21 @@ void genotype_reader::readGenotypes(string funphased, string freference, int nth
 				ngl_main = bcf_get_format_int32(sr->readers[0].header, line_main, "PL", &gl_arr_main, &ngl_arr_main);
 
 				int main_file_max_ploidy = ngl_main/n_main_samples;
-				std::array<float, 3> tmp;
 				float sum=0.0;
 
-				if (main_file_max_ploidy == 3 || main_file_max_ploidy==2)
+				if (max_ploidyP1 != main_file_max_ploidy) continue; //assuming missing data?
+				for(int i = 0 ; i < n_main_samples ; ++i)
 				{
-					for(int i = 0 ; i < n_main_samples ; ++i)
-					{
-						int32_t *ptr = gl_arr_main + i*main_file_max_ploidy;
-						const int ploidy = G.vecG[i]->ploidy;
-						unsigned char *gl = G.vecG[i]->GL.data() + (ploidy+1)*i_variant;
+					int *ptr = gl_arr_main + i*max_ploidyP1;
+					const int ploidy = G.vecG[i]->ploidy;
+					unsigned char *gl = G.vecG[i]->GL.data() + (ploidy+1)*i_variant;
 
-						if ( ptr[0]==bcf_int32_missing || ptr[1]==bcf_int32_missing || ploidy>1 ? ptr[2]==bcf_int32_missing : false) continue;
-						if ( ptr[0]==bcf_int32_vector_end || ptr[1]==bcf_int32_vector_end || ploidy>1 ? ptr[2]==bcf_int32_vector_end : false) continue;
+					if ( ptr[0]==bcf_int32_missing || ptr[1]==bcf_int32_missing || ploidy>1 ? ptr[2]==bcf_int32_missing : false) continue;
+					if ( ptr[0]==bcf_int32_vector_end || ptr[1]==bcf_int32_vector_end || ploidy>1 ? ptr[2]==bcf_int32_vector_end : false) continue;
 
-						gl[0] = (ptr[0]<0 || ptr[0]>=256) ? (unsigned char) 255 : ptr[0];
-						gl[1] = (ptr[1]<0 || ptr[1]>=256) ? (unsigned char) 255 : ptr[1];
-						if (ploidy > 1) gl[2] = (ptr[2]<0 || ptr[2]>=256) ? (unsigned char) 255 : ptr[2];
-					}
+					gl[0] = (ptr[0]<0 || ptr[0]>=256) ? (unsigned char) 255 : ptr[0];
+					gl[1] = (ptr[1]<0 || ptr[1]>=256) ? (unsigned char) 255 : ptr[1];
+					if (ploidy > 1) gl[2] = (ptr[2]<0 || ptr[2]>=256) ? (unsigned char) 255 : ptr[2];
 				}
 			}
 

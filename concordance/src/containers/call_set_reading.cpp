@@ -194,8 +194,9 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 			}
 
 			assert(n_diploid+n_haploid==N);
-			vrb.bullet("#overlapping samples = " + stb.str(n_diploid+n_haploid) + " ["  + stb.str(n_haploid) + " haploid" + n_haploid!=1? "s" : "" + "/ " + stb.str(n_diploid) + " diploid"+ n_haploid!=1? "s" : "" + "]");
-
+			string pl1  = n_haploid!=1? "s" : "";
+			string pl2  = n_diploid!=1? "s" : "";
+			vrb.bullet("#overlapping samples = " + stb.str(n_diploid+n_haploid) + " ["  + stb.str(n_haploid) + " haploid" + pl1 + "/ " + stb.str(n_diploid) + " diploid"+ pl2 + "]");
 			if (n_diploid > 0 && n_haploid > 0)
 					vrb.warning("Samples with mixed ploidy detected. In order to get a correct value of the concordance metrics it is NECESSARY to split the study samples by ploidy before running GLIMPSE_concordance or use the --samples option.");
 

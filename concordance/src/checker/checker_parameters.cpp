@@ -97,6 +97,7 @@ void checker::verbose_files() {
 
 void checker::verbose_options() {
 	vrb.title("Parameters:");
+	vrb.bullet("Output  : " + options["output"].as < string > ());
 	vrb.bullet("Seed    : " + stb.str(options["seed"].as < int > ()));
 	vrb.bullet("MinPROB : " + stb.str(options["minPROB"].as < double > ()));
 	vrb.bullet("MinDP   : " + stb.str(options["minDP"].as < int > ()));

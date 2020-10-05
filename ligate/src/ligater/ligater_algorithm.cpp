@@ -210,12 +210,11 @@ void ligater::ligate() {
 		//let's keep track of the diploids indeces:
 		diploid_idx = std::vector<int>(n_diploid);
 
-		for (int i=0, j=0; i<nsamples; ++i)
-		{
-			if (ploidy[i] == 2) diploid_idx[j++] = i;
-		}
+		for (int i=0, j=0; i<nsamples; ++i) if (ploidy[i] == 2) diploid_idx[j++] = i;
 	}
-	vrb.bullet("#samples = " + stb.str(n_diploid+n_haploid) + " ["  + stb.str(n_haploid) + " haploid" + n_haploid!=1? "s" : "" + "/ " + stb.str(n_diploid) + " diploid"+ n_haploid!=1? "s" : "" + "]");
+	string pl1  = n_haploid!=1? "s" : "";
+	string pl2  = n_diploid!=1? "s" : "";
+	vrb.bullet("#samples = " + stb.str(n_diploid+n_haploid) + " ["  + stb.str(n_haploid) + " haploid" + pl1 + "/ " + stb.str(n_diploid) + " diploid"+ pl2 + "]");
 
 	// Extract number of main iterations
 	header_record = bcf_hdr_get_hrec(sr->readers[0].header, BCF_HL_GEN, "NMAIN", NULL, NULL);
@@ -242,7 +241,6 @@ void ligater::ligate() {
 	int *buffer0=NULL, *buffer1=NULL, nbuffer0=0, nbuffer1=0, rbuffer0=0, rbuffer1=0;
 	bcf1_t * line0, * line1;
 	while (bcf_sr_next_line (sr)) {
-
 		//DETERMINE READERS HAVING THE CURRENT RECORD
 		vector < int > active_readers;
 		vector < bool > file_has_record = vector < bool > (nfiles, false);

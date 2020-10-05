@@ -125,8 +125,9 @@ void sampler::sample() {
 		if (n_diploid == 0 && n_haploid == 0) vrb.error("No sample found.");
 		bcf_sr_seek (sr, NULL, 0);
 	}
-	vrb.bullet("#samples = " + stb.str(n_diploid+n_haploid) + " ["  + stb.str(n_haploid) + " haploid" + n_haploid!=1? "s" : "" + "/ " + stb.str(n_diploid) + " diploid"+ n_haploid!=1? "s" : "" + "]");
-
+	string pl1  = n_haploid!=1? "s" : "";
+	string pl2  = n_diploid!=1? "s" : "";
+	vrb.bullet("#samples = " + stb.str(n_diploid+n_haploid) + " ["  + stb.str(n_haploid) + " haploid" + pl1 + "/ " + stb.str(n_diploid) + " diploid"+ pl2 + "]");
 
 	//Generating task data
 	bool first_het = true;
@@ -213,13 +214,13 @@ void sampler::sample() {
 			for (int i = 0 ; i  < nsamples ; i ++)
 			{
 				bool a0 = GET(hs_fields[i], max_ploidy*sampled_conf[i]+0);
-				gt_fields[line_max_ploidy*i+0] = bcf_gt_phased(a0);
+				gt_fields[max_ploidy*i+0] = bcf_gt_phased(a0);
 
 				if (ploidy[i] > 1)
 				{
 					bool a1 = GET(hs_fields[i], max_ploidy*sampled_conf[i]+1);
 					gt_fields[max_ploidy*i+1] = bcf_gt_phased(a1);
-				} else if (max_ploidy > 1) gt_fields[line_max_ploidy*i+1] = bcf_int32_vector_end;
+				} else if (max_ploidy > 1) gt_fields[max_ploidy*i+1] = bcf_int32_vector_end;
 			}
 			bcf_update_genotypes(hdr, line, gt_fields, nsamples*max_ploidy);
 		}
