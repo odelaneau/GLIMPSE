@@ -84,7 +84,13 @@ void call_set::setTargets(string fsamples) {
 	string buffer;
 	input_file fd (fsamples);
 	vector < string > tokens;
-	while (getline(fd, buffer, '\n')) subset_samples.insert(buffer);
+
+	bool repeated_samples=false;
+	while (getline(fd, buffer))
+	{
+		if (stb.split(buffer, tokens) < 1) vrb.error("Empty line found in sample file.");
+		subset_samples.insert(tokens[0]);
+	}
 	vrb.bullet("#samples  = " + stb.str(subset_samples.size()));
 	fd.close();
 }
