@@ -66,7 +66,7 @@ public:
 	const string name;
 	const int index;					// Index in containers
 	const int n_variants;			// Number of variants	(to iterate over Variants)
-	const uint8_t ploidy;				//ploidy can be 1,2 (2 is default)
+	const int ploidy;				//ploidy can be 1,2 (2 is default)
 	const int hapid;
 	int stored_cnt;
 
@@ -83,7 +83,7 @@ public:
 
 
 	//CORE METHODS
-	genotype(const string _name, const int _index, const int _n_variants, const uint8_t _ploidy, const int _hapid);
+	genotype(const string _name, const int _index, const int _n_variants, const int _ploidy, const int _hapid);
 	~genotype();
 	void allocate();
 	void free();

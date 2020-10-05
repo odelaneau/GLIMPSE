@@ -79,7 +79,7 @@ void sampler::sample() {
 	int nsamples = bcf_hdr_nsamples(sr->readers[0].header);
 	sample_names = std::vector<string> (nsamples);
 	for (int i = 0 ; i < nsamples ; i ++) sample_names[i] = string(sr->readers[0].header->samples[i]);
-	vrb.bullet("#samples = " + stb.str(nsamples));
+	//vrb.bullet("#samples = " + stb.str(nsamples));
 
 	//Extract #pairs per sample
 	bcf_hrec_t * header_record = bcf_hdr_get_hrec(sr->readers[0].header, BCF_HL_GEN, "NMAIN", NULL, NULL);
@@ -125,6 +125,8 @@ void sampler::sample() {
 		if (n_diploid == 0 && n_haploid == 0) vrb.error("No sample found.");
 		bcf_sr_seek (sr, NULL, 0);
 	}
+	vrb.bullet("#samples = " + stb.str(n_diploid+n_haploid) + " ["  + stb.str(n_haploid) + " haploid" + n_haploid!=1? "s" : "" + "/ " + stb.str(n_diploid) + " diploid"+ n_haploid!=1? "s" : "" + "]");
+
 
 	//Generating task data
 	bool first_het = true;

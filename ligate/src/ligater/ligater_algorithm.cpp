@@ -215,7 +215,7 @@ void ligater::ligate() {
 			if (ploidy[i] == 2) diploid_idx[j++] = i;
 		}
 	}
-	vrb.bullet("#overlapping samples = " + stb.str(n_diploid+n_haploid) + " ["  + stb.str(n_haploid) + " haploids / " + stb.str(n_diploid) + " diploids]");
+	vrb.bullet("#samples = " + stb.str(n_diploid+n_haploid) + " ["  + stb.str(n_haploid) + " haploid" + n_haploid!=1? "s" : "" + "/ " + stb.str(n_diploid) + " diploid"+ n_haploid!=1? "s" : "" + "]");
 
 	// Extract number of main iterations
 	header_record = bcf_hdr_get_hrec(sr->readers[0].header, BCF_HL_GEN, "NMAIN", NULL, NULL);

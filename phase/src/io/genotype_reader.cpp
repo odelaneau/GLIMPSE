@@ -136,6 +136,8 @@ void genotype_reader::scanGenotypes(string fmain, string fref, int nthreads, con
 	H.fploidy = H.max_ploidy;
 	if (n_diploid > 0 && n_haploid > 0) H.fploidy=-H.fploidy;
 
+	vrb.bullet("#samples = " + stb.str(n_diploid+n_haploid) + " ["  + stb.str(n_haploid) + " haploid" + n_haploid!=1? "s" : "" + "/ " + stb.str(n_diploid) + " diploid"+ n_haploid!=1? "s" : "" + "]");
+
 	//Scan file
 	int nset;
 	bcf1_t * line_ref;
@@ -264,7 +266,7 @@ void genotype_reader::readGenotypes(string funphased, string freference, int nth
 					for(int i = 0 ; i < n_main_samples ; ++i)
 					{
 						int32_t *ptr = gl_arr_main + i*main_file_max_ploidy;
-						const uint8_t ploidy = G.vecG[i]->ploidy;
+						const int ploidy = G.vecG[i]->ploidy;
 						unsigned char *gl = G.vecG[i]->GL.data() + (ploidy+1)*i_variant;
 
 						if ( ptr[0]==bcf_int32_missing || ptr[1]==bcf_int32_missing || ploidy>1 ? ptr[2]==bcf_int32_missing : false) continue;

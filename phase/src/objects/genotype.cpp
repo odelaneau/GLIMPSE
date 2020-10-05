@@ -56,7 +56,7 @@ void genotype::allocate() {
 void genotype::initHaplotypeLikelihoods(vector < float > & HL) const {
 	std::array<float,3> tmp;
 	float sum;
-	const int8_t ploidyP1 = ploidy+1;
+	const int ploidyP1 = ploidy+1;
 
 	for (int l = 0 ; l < n_variants ; l ++)
 	{
