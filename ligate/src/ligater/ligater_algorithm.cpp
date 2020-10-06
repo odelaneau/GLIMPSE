@@ -184,6 +184,7 @@ void ligater::ligate() {
 	{
 		fploidy == 2 ? n_diploid = nsamples: n_haploid = nsamples;
 		for (int i = 0 ; i < nsamples ; i ++) ploidy[i] = max_ploidy;
+
 	}
 	else
 	{
@@ -206,12 +207,11 @@ void ligater::ligate() {
 		}
 		if (n_diploid == 0 && n_haploid == 0) vrb.error("No sample found.");
 		bcf_sr_seek (sr, NULL, 0);
-
-		//let's keep track of the diploids indeces:
-		diploid_idx = std::vector<int>(n_diploid);
-
-		for (int i=0, j=0; i<nsamples; ++i) if (ploidy[i] == 2) diploid_idx[j++] = i;
 	}
+	//let's keep track of the diploids indices (works with every ploidy vector):
+	diploid_idx = std::vector<int>(n_diploid);
+	for (int i=0, j=0; i<nsamples; ++i) if (ploidy[i] == 2) diploid_idx[j++] = i;
+
 	string pl1  = n_haploid!=1? "s" : "";
 	string pl2  = n_diploid!=1? "s" : "";
 	vrb.bullet("#samples = " + stb.str(n_diploid+n_haploid) + " ["  + stb.str(n_haploid) + " haploid" + pl1 + "/ " + stb.str(n_diploid) + " diploid"+ pl2 + "]");
