@@ -140,7 +140,7 @@ void ligater::ligate() {
 					vrb.error("index: failed to create index for + " + filenames[f]);
 			}
 			if(!(bcf_sr_add_reader (sr, filenames[f].c_str()))) vrb.error("Problem opening index file for [" + filenames[f] + "]");
-			else vrb.bullet("Index file for [" + filenames[f] + "] has been successfully created.");
+			else vrb.bullet("Index file for [" + filenames[f] + "] has been successfully created.\n");
 		}
 	}
 
@@ -240,7 +240,9 @@ void ligater::ligate() {
 	int n_variants = 0;
 	int *buffer0=NULL, *buffer1=NULL, nbuffer0=0, nbuffer1=0, rbuffer0=0, rbuffer1=0;
 	bcf1_t * line0, * line1;
+	int chunk_counter=0;
 	while (bcf_sr_next_line (sr)) {
+
 		//DETERMINE READERS HAVING THE CURRENT RECORD
 		vector < int > active_readers;
 		vector < bool > file_has_record = vector < bool > (nfiles, false);
@@ -263,7 +265,7 @@ void ligater::ligate() {
 		//CASE0: WE ARE NOT IN AN OVERLAPPING REGION [STANDARD CASE]
 		if (active_readers.size() == 1) {
 			// verbose
-			if (prev_readers.size() == 0) vrb.title("First chunk of data from position [" + stb.str(position) + "]");
+			if (prev_readers.size() == 0) vrb.title("Chunk " + stb.str(++chunk_counter) + " from position [" + stb.str(position) + "]");
 			//Write Output using current switching
 			write_record(fp, hdr, line0);
 			//Update current stage of active reader
@@ -316,7 +318,7 @@ void ligater::ligate() {
 			else if (curr_stage0 == STAGE_DBUF && curr_stage1 == STAGE_BODY) {
 				// update switching if necessary
 				if (changedStatus) {
-					vrb.title("Next chunk of data from position [" + stb.str(position) + "]");
+					vrb.title("Chunk " + stb.str(++chunk_counter) + " from position [" + stb.str(position) + "]");
 					int nc = update_switching();
 					vrb.bullet("#switches=" + stb.str(nc));
 				}
@@ -327,7 +329,7 @@ void ligater::ligate() {
 			else if (curr_stage1 == STAGE_DBUF && curr_stage0 == STAGE_BODY) {
 				// update switching if necessary
 				if (changedStatus) {
-					vrb.title("Next chunk of data from position [" + stb.str(position) + "]");
+					vrb.title("Chunk " + stb.str(++chunk_counter) + " from position [" + stb.str(position) + "]");
 					int nc = update_switching();
 					vrb.bullet("#switches=" + stb.str(nc));
 				}
