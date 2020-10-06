@@ -51,7 +51,7 @@ void genotype_writer::writeGenotypes(const string fname, const int output_start,
 	bcf_hdr_append(hdr, string("##contig=<ID="+ V.vec_pos[0]->chr + ">").c_str());
 	bcf_hdr_append(hdr, "##INFO=<ID=RAF,Number=A,Type=Float,Description=\"ALT allele frequency in the reference panel\">");
 	bcf_hdr_append(hdr, "##INFO=<ID=AF,Number=A,Type=Float,Description=\"ALT allele frequency computed from DS/GP field across target samples\">");
-	bcf_hdr_append(hdr, "##INFO=<ID=INFO,Number=A,Type=Float,Description=\"IMPUTE info quality score for diploid samples (set to 1 if haploid samples are present).\">");
+	if (H.fploidy>0) bcf_hdr_append(hdr, "##INFO=<ID=INFO,Number=A,Type=Float,Description=\"IMPUTE info quality score for diploid samples\">");
 	bcf_hdr_append(hdr, "##INFO=<ID=BUF,Number=A,Type=Integer,Description=\"Is it a variant site falling within buffer regions? (0=no/1=yes)\">");
 	bcf_hdr_append(hdr, "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Unphased genotypes\">");
 	bcf_hdr_append(hdr, "##FORMAT=<ID=DS,Number=1,Type=Float,Description=\"Genotype dosage\">");
@@ -146,7 +146,7 @@ void genotype_writer::writeGenotypes(const string fname, const int output_start,
 		infoscore = roundf(infoscore * 1000.0) / 1000.0;
 		bcf_update_info_float(hdr, rec, "RAF", &freq_alt_refp, 1);
 		bcf_update_info_float(hdr, rec, "AF", &freq_alt_main, 1);
-		bcf_update_info_float(hdr, rec, "INFO", &infoscore, 1);
+		if (H.fploidy>0) bcf_update_info_float(hdr, rec, "INFO", &infoscore, 1);
 		bcf_update_info_int32(hdr, rec, "BUF", &buffer, 1);
 
 		// Update FORMAT fields
