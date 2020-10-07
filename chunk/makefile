@@ -51,8 +51,8 @@ static_exe: HTSSRC=../..
 static_exe: HTSLIB_INC=$(HTSSRC)/htslib
 static_exe: HTSLIB_LIB=$(HTSSRC)/htslib/libhts.a
 static_exe: BOOST_INC=/usr/include
-static_exe: BOOST_LIB_IO=/usr/lib/x86_64-linux-gnu/libboost_iostreams.a
-static_exe: BOOST_LIB_PO=/usr/lib/x86_64-linux-gnu/libboost_program_options.a
+static_exe: BOOST_LIB_IO=/usr/local/lib/libboost_iostreams.a
+static_exe: BOOST_LIB_PO=/usr/local/lib/libboost_program_options.a
 static_exe: $(EXEFILE)
 
 #COMPILATION RULES
