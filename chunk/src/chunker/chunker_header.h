@@ -47,7 +47,7 @@ public:
 	~chunker();
 
 	//METHODS
-	void readData(string fmain, string region);
+	void readData(string fmain, string region, int nthreads);
 
 	//PARAMETERS
 	void declare_options();

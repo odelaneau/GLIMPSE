@@ -28,7 +28,8 @@ void chunker::declare_options() {
 	bpo::options_description opt_base ("Basic options");
 	opt_base.add_options()
 			("help", "Produce help message")
-			("seed", bpo::value<int>()->default_value(15052011), "Seed of the random number generator");
+			("seed", bpo::value<int>()->default_value(15052011), "Seed of the random number generator")
+			("thread", bpo::value<int>()->default_value(1), "Number of threads");
 
 	bpo::options_description opt_input ("Input files");
 	opt_input.add_options()
@@ -93,6 +94,7 @@ void chunker::verbose_files() {
 void chunker::verbose_options() {
 	vrb.title("Parameters:");
 	vrb.bullet("Seed             : " + stb.str(options["seed"].as < int > ()));
+	vrb.bullet("#Threads   : " + stb.str(options["thread"].as < int > ()));
 	vrb.bullet("Min. Window size : " + stb.str(options["window-size"].as < int > ()) + "bp / " + stb.str(options["window-count"].as < int > ()) + " variants");
 	vrb.bullet("Min. Buffer size : " + stb.str(options["buffer-size"].as < int > ()) + "bp / " + stb.str(options["buffer-count"].as < int > ()) + " variants");
 }

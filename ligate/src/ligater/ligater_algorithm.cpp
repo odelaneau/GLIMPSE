@@ -123,7 +123,7 @@ void ligater::ligate() {
 		//Attempt to read the file with the index
 		if(!(bcf_sr_add_reader (sr, filenames[f].c_str())))
 		{
-			if (sr->errnum != idx_load_failed) vrb.error("Error opening file: " + filenames[f] + "");
+			if (sr->errnum != idx_load_failed) vrb.error("Failed to open file: " + filenames[f] + "");
 			//Error reading the index! Attempt to create the index now
 			//vrb.warning("Index not found for [" + filenames[f] + "]. GLIMPSE will attempt to create an index for the file.");
 			//Remove the reader, as it's broken
@@ -362,6 +362,6 @@ void ligater::ligate() {
 	vrb.title("Creating index");
 	//create index using htslib (csi, using default bcftools option 14)
 	if (!bcf_index_build3(string(options["output"].as < string > ()).c_str(), NULL, 14, options["thread"].as < int > ())) vrb.print("Index successfully created");
-	else vrb.warning("Problem building the index. Try to build using tabix/bcftools.");
+	else vrb.warning("Problem building the index for the output file. Try to build it using tabix/bcftools.");
 }
 

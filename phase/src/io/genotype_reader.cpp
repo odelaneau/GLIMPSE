@@ -96,8 +96,18 @@ void genotype_reader::scanGenotypes(string fmain, string fref, int nthreads, con
 	sr->require_index = 1;
 	bcf_sr_set_threads(sr, nthreads);
 	if (bcf_sr_set_regions(sr, region.c_str(), 0) == -1) vrb.error("Impossible to jump to region [" + region + "] in [" + fmain + "]");
-	if(!(bcf_sr_add_reader (sr, fmain.c_str()))) vrb.error("Problem opening index file for [" + fmain + "]");
-	if(!(bcf_sr_add_reader (sr, fref.c_str()))) vrb.error("Problem opening index file for [" + fref + "]");
+
+	//Opening files
+	std::array<string,2> fnames = {fmain,fref};
+	for (int reader_id=0; reader_id<2; ++reader_id)
+	{
+		if(!(bcf_sr_add_reader (sr, fnames[reader_id].c_str())))
+		{
+			//we do not build an index here, as the target and reference panel could be accessed in parallel
+			if (sr->errnum != idx_load_failed) vrb.error("Failed to open file: " + fnames[reader_id] + "");
+			else vrb.error("Failed to load index of the file: " + fnames[reader_id] + "");
+		}
+	}
 
 	n_variants = 0;
 	n_glikelihoods=0;

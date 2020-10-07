@@ -72,7 +72,28 @@ void sampler::sample() {
 	bcf_srs_t * sr =  bcf_sr_init();
 	sr->collapse = COLLAPSE_NONE;
 	sr->require_index = 1;
-	if(!(bcf_sr_add_reader (sr, filename.c_str()))) vrb.error("Problem opening index file for [" + filename + "]");
+	if(!(bcf_sr_add_reader (sr, filename.c_str())))
+	{
+		if (sr->errnum != idx_load_failed) vrb.error("Failed to open file: " + filename + "");
+		//Error reading the index! Attempt to create the index now
+		//vrb.warning("Index not found for [" + filenames[f] + "]. GLIMPSE will attempt to create an index for the file.");
+		//Remove the reader, as it's broken
+		bcf_sr_remove_reader (sr, 0);
+		//create index using htslib (csi, using default bcftools option 14)
+		int ret = bcf_index_build3(filename.c_str(), NULL, 14, options["thread"].as < int > ());
+
+		if (ret != 0)
+		{
+			if (ret == -2)
+				vrb.error("index: failed to open " + filename);
+			else if (ret == -3)
+				vrb.error("index: " + filename + " is in a format that cannot be usefully indexed");
+			else
+				vrb.error("index: failed to create index for + " + filename);
+		}
+		if(!(bcf_sr_add_reader (sr, filename.c_str()))) vrb.error("Problem opening/creating index file for [" + filename + "]");
+		else vrb.bullet("Index file for [" + filename + "] has been successfully created.\n");
+	}
 
 	//Extract sample IDs
 	vrb.bullet("Extract sample IDs");
@@ -243,5 +264,10 @@ void sampler::sample() {
 	//Last verbose
 	if (n_variants == 0) vrb.error("No variants to be phased in files");
 	vrb.title("Writing completed [L=" + stb.str(n_variants) + "] (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
+
+	vrb.title("Creating index");
+	//create index using htslib (csi, using default bcftools option 14)
+	if (!bcf_index_build3(string(options["output"].as < string > ()).c_str(), NULL, 14, options["thread"].as < int > ())) vrb.print("Index successfully created");
+	else vrb.warning("Problem building the index for the output file. Try to build it using tabix/bcftools.");
 }
 

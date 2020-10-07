@@ -43,6 +43,7 @@ void checker::read_files_and_initialise() {
 	vector < string > tokens;
 	vector < string > vec_regi, vec_true, vec_esti, vec_freq;
 	input_file fd (options["input"].as < string > ());
+	if (fd.fail()) vrb.error("Cannot open input file: " + options["input"].as < string > () + "");
 	while (getline(fd, buffer, '\n')) {
 		if (stb.split(buffer, tokens) == 4) {
 			vec_regi.push_back(tokens[0]);
@@ -51,6 +52,7 @@ void checker::read_files_and_initialise() {
 			vec_esti.push_back(tokens[3]);
 		}
 	}
-	vrb.bullet(stb.str(vec_esti.size()) + " sets of files detected");
+	if (vec_esti.size()) vrb.bullet(stb.str(vec_esti.size()) + " sets of files detected");
+	else vrb.error("No set of files detected in: " + options["input"].as < string > () + "");
 	D.readData(vec_true, vec_esti, vec_freq, vec_regi, options);
 }

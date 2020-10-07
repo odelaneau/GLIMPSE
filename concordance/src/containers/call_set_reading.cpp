@@ -94,9 +94,30 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 		sr->require_index = 1;
 		if (nthreads > 1) bcf_sr_set_threads(sr, nthreads);
 		bcf_sr_set_regions(sr, region[f].c_str(), 0);
-		bcf_sr_add_reader (sr, ftruth[f].c_str());
-		bcf_sr_add_reader (sr, festimated[f].c_str());
-		bcf_sr_add_reader (sr, ffrequencies[f].c_str());
+
+		//Opening files
+		std::array<string,3> fnames = {ftruth[f],festimated[f],ffrequencies[f]};
+		for (int reader_id=0; reader_id<3; ++reader_id)
+		{
+			if(!(bcf_sr_add_reader (sr, fnames[reader_id].c_str())))
+			{
+				if (sr->errnum != idx_load_failed) vrb.error("Failed to open file: " + fnames[reader_id] + "");
+				bcf_sr_remove_reader (sr, reader_id);
+				int ret = bcf_index_build3(fnames[reader_id].c_str(), NULL, 14, options["thread"].as < int > ());
+
+				if (ret != 0)
+				{
+					if (ret == -2)
+						vrb.error("index: failed to open " + fnames[reader_id]);
+					else if (ret == -3)
+						vrb.error("index: " + fnames[reader_id] + " is in a format that cannot be usefully indexed");
+					else
+						vrb.error("index: failed to create index for + " + fnames[reader_id]);
+				}
+				if(!(bcf_sr_add_reader (sr, fnames[reader_id].c_str()))) vrb.error("Problem opening/creating index file for [" + fnames[reader_id] + "]");
+				else vrb.bullet("Index file for [" + fnames[reader_id] + "] has been successfully created.\n");
+			}
+		}
 
 		// If first file; we initialize data structures
 		if (f == 0) {
