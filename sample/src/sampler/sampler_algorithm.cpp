@@ -72,6 +72,7 @@ void sampler::sample() {
 	bcf_srs_t * sr =  bcf_sr_init();
 	sr->collapse = COLLAPSE_NONE;
 	sr->require_index = 1;
+	bcf_sr_set_threads(sr, options["thread"].as < int > ());
 	if(!(bcf_sr_add_reader (sr, filename.c_str())))
 	{
 		if (sr->errnum != idx_load_failed) vrb.error("Failed to open file: " + filename + "");
@@ -267,7 +268,7 @@ void sampler::sample() {
 
 	vrb.title("Creating index");
 	//create index using htslib (csi, using default bcftools option 14)
-	if (!bcf_index_build3(string(options["output"].as < string > ()).c_str(), NULL, 14, options["thread"].as < int > ())) vrb.print("Index successfully created");
+	if (!bcf_index_build3(options["output"].as < string > ().c_str(), NULL, 14, options["thread"].as < int > ())) vrb.print("Index successfully created");
 	else vrb.warning("Problem building the index for the output file. Try to build it using tabix/bcftools.");
 }
 
