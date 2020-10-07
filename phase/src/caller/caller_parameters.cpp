@@ -100,6 +100,9 @@ void caller::check_options() {
 
 	if (options["main"].as < int > () > 15)
 		vrb.error("Maximum value for --main is 15, to run more iteration, increase --burn");
+
+	if (options["thread"].as < int > () < 1)
+		vrb.error("Number of threads is a strictly positive number.");
 }
 
 void caller::verbose_files() {

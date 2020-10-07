@@ -118,6 +118,8 @@ void ligater::ligate() {
 	bcf_srs_t * sr =  bcf_sr_init();
 	sr->collapse = COLLAPSE_NONE;
 	sr->require_index = 1;
+	int n_threads = options["thread"].as < int > ();
+	if (n_threads > 1) bcf_sr_set_threads(sr, n_threads);
 	for (int f = 0 ; f < nfiles ; f ++)
 	{
 		//Attempt to read the file with the index
@@ -234,6 +236,7 @@ void ligater::ligate() {
 	if (fname.size() > 6 && fname.substr(fname.size()-6) == "vcf.gz") { file_format = "wz"; file_type = OFILE_VCFC; }
 	if (fname.size() > 3 && fname.substr(fname.size()-3) == "bcf") { file_format = "wb"; file_type = OFILE_BCFC; }
 	htsFile * fp = hts_open(fname.c_str(),file_format.c_str());
+	if (n_threads > 1) hts_set_threads(fp, n_threads);
 	bcf_hdr_t * hdr = bcf_hdr_dup(sr->readers[0].header);
 	bcf_hdr_write(fp, hdr);
 

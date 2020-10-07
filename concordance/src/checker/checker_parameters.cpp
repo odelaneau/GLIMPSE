@@ -85,6 +85,9 @@ void checker::check_options() {
 
 	if ((options.count("bins")+options.count("groups")) != 1)
 		vrb.error("You must specify --bins or --groups");
+
+	if (options["thread"].as < int > () < 1)
+		vrb.error("Number of threads is a strictly positive number.");
 }
 
 void checker::verbose_files() {
@@ -99,12 +102,12 @@ void checker::verbose_options() {
 	vrb.title("Parameters:");
 	vrb.bullet("Output  : " + options["output"].as < string > ());
 	vrb.bullet("Seed    : " + stb.str(options["seed"].as < int > ()));
+	vrb.bullet("#Threads   : " + stb.str(options["thread"].as < int > ()));
 	vrb.bullet("MinPROB : " + stb.str(options["minPROB"].as < double > ()));
 	vrb.bullet("MinDP   : " + stb.str(options["minDP"].as < int > ()));
 	if (options.count("af-tag")) vrb.bullet("Using INFO/" + options["af-tag"].as < string > () + " tag for binning.");
 	else vrb.bullet("Using INFO/AF tag for binning.");
 
-	vrb.bullet("#Threads   : " + stb.str(options["thread"].as < int > ()));
 	if (options.count("bins")) {
 		vector < double > tmp = options["bins"].as < vector < double > > ();
 		vrb.bullet("#bins   : " + stb.str(tmp.size()));

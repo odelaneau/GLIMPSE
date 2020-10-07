@@ -34,7 +34,7 @@ genotype_writer::genotype_writer(const haplotype_set & _H, const genotype_set & 
 genotype_writer::~genotype_writer() {
 }
 
-void genotype_writer::writeGenotypes(const string fname, const int output_start, const int output_stop, const int n_main) const {
+void genotype_writer::writeGenotypes(const string fname, const int output_start, const int output_stop, const int n_main, const int n_threads) const {
 	// Init
 	tac.clock();
 	string file_format = "w";
@@ -42,6 +42,7 @@ void genotype_writer::writeGenotypes(const string fname, const int output_start,
 	if (fname.size() > 6 && fname.substr(fname.size()-6) == "vcf.gz") { file_format = "wz"; file_type = OFILE_VCFC; }
 	if (fname.size() > 3 && fname.substr(fname.size()-3) == "bcf") { file_format = "wb"; file_type = OFILE_BCFC; }
 	htsFile * fp = hts_open(fname.c_str(),file_format.c_str());
+	if (n_threads > 1) hts_set_threads(fp, n_threads);
 	bcf_hdr_t * hdr = bcf_hdr_init("w");
 	bcf1_t *rec = bcf_init1();
 

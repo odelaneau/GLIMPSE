@@ -60,23 +60,36 @@
 		</div>
 		
 		<p>
-		GLIMPSE is a tool of software for imputation and phasing of low-coverage datasets in the form of <b>genotype gikelihoods</b> (GLs) at all variant positions.
-		GLIMPSE requires <a href="http://www.htslib.org/">HTSlib and BCFtools</a> v1.7 (or later) as a requirement, since it makes use of indexed VCF/BCF files. 
+		GLIMPSE is a software for imputation and phasing of low-coverage datasets in the form of <b>genotype gikelihoods</b> (GLs) at all variant positions.
+		This tutorial requires GLIMPSE v1.1.0 (or later) and <a href="http://www.htslib.org/">HTSlib and BCFtools</a> v1.10 (or later). 
 		Here we also used BCFtools to compute genotype likelihoods.
 		<br>
 		<br>
-		In this tutorial, we show how to run GLIMPSE from sequencing reads data (BAM/CRAM file) to obtain refined genotype and haplotype calls.
-		A small dataset containing chromosome 22 downsampled 1x sequencing reads for one individual (NA12878) is provided with GLIMPSE, 
-		together with a reference genome FASTA file (for chromsome 22) needed for genotype likelihood computations.
+		In this tutorial, we show how to run GLIMPSE to perform <b>chromosome X imputation</b>. Imputation of chromosome X is different from autosomes, 
+		as chromosome X contains a non pseudo-autosomal region (<b>non-PAR</b>) where males are haploid and females are diploids. The chromosome also
+		contains two pseudo-autosomal regions (PAR1, PAR2), where all samples are diploid. PAR1 and PAR2 are both at the end of the chromosomes. 
+		A schematic representation of the regions of the chromosome is given below:<br><br>
+		
+		<div style="text-align: center;"><img src="images/tutorials/chrX.png" width="1024" height="80" alt="ChrX"></div><br>
+		
+		This tutorial describes the process of getting refined genotype and haplotype calls starting from aligned sequencing reads data (BAM/CRAM file) for the <b>non-PAR region of chromosome X</b>.
+		Imputation of PAR regions of the chromosome is not performed here, as it is not conceptually different from imputation of autosomes. 
+		<br>
+		<br>	
+		The data and the scripts for this tutorial can be downloaded <a href="https://drive.switch.ch/index.php/s/9HEdWR1T8ouRTfW">HERE</a>.
+		<br>
+		A minimal set of data to run this pipeline can be found in the folder <code>tutorial_chrX</code>. Here we assume that the folder is located as a subfolder of the GLIMPSE installation: <code>tutorial_chrX</code>.
+		All datasets used here are in GRCh38/hg38 genome assembly
 		<br>
 		<br>
-		A minimal set of data to run this pipeline can be found in the folder <code>GLIMPSE/tutorial</code>. All datasets used here are in GRCh38/hg38 genome assembly.  
+		A dataset containing chromosome X downsampled 1x sequencing reads (BAM files) for 2 individuals (one male and one female) from ASW population is provided with this tutorial, 
+		together with a reference genome FASTA file needed for genotype likelihood computations.
 		</p>
 
 		<div class="well">
 			<h3>1.1. Setting the environment and binaries</h3>	
-			<p>All scripts have been written assuming <code>&nbsp;> cd GLIMPSE/tutorial/</code> as current directory. Therefore, we require to move to the tutorial directory:
-			<p style="text-indent:-5px ! important;"><code>&nbsp;> cd GLIMPSE/tutorial/</code></p>
+			<p>All scripts have been written assuming <code>&nbsp;>GLIMPSE/tutorial_chrX/</code> as current directory. Therefore, we move to the tutorial_chrX directory:
+			<p style="text-indent:-5px ! important;"><code>&nbsp;> cd GLIMPSE/tutorial_chrX/</code></p>
 			<p>From this folder we build all the GLIMPSE software needed (chunk, phase, ligate, sample and concordance). 
 			For this reason, we require that GLIMPSE can correctly compile on your machine and you might be required to edit the Makefiles manually. 
 			See <a href="installation.html">installation instructions</a> if there are any problems at this stage. 
@@ -89,15 +102,11 @@
 			<h3>1.2. Low coverage reads</h3>
 				
 			<p>
-			In this example we downsampled the publicly available 30x data available for NA12878 provided by the Genome In A Bottle consortium (GIAB).
-			We downloaded the full dataset, kept only chromosome 22 reads and downsampled to 1x. The resulting BAM file can be found in: 
+			In this example we downsampled the publicly available 30x data available for ASW population as part of the 1000 Genomes Project.
+			We downloaded the full dataset, kept only non-PAR chromosome X reads and downsampled to 1x. The resulting BAM file can be found in: 
 			</p>
 			
-			<p style="text-indent:-5px ! important;"><code>GLIMPSE/tutorial/NA12878_1x_bam/NA12878.bam[.bai]</code></p>
-			
-			<p>
-			Details of how we downsampled the dataset are provided in appendix section A1.1.
-			</p>
+			<p style="text-indent:-5px ! important;"><code>asw_1x_bam/*.bam[.bai]</code>, where each bam file in the folder represents a single sample (2 in total).</p>
 		</div>
 			    	
 		<div id="run_reference_panel" class="page-header">
@@ -106,32 +115,32 @@
 		<p>
 		In order to run accurate imputation we recommend to use a targeted reference with ancestry related to the target samples, if possible. 
 		For this tutorial we use the 1000 Genomes Project phase 3 reference panel. 
-		Since the reference panel contains data of our target sample, we need to remove it from the reference panel. 
-		This steps downloads the 1000 genomes b38 data from the EBI ftp site.
+		Since the reference panel contains data of our target samples, we need to remove them from the reference panel. 
+		This steps download the 1000 genomes b38 data from the EBI ftp site and remove the target samples from it.
 		</p>
 		<div class="well">
 			<h3>2.1. Download of the reference panel files</h3>
 
 			<p>
 			The 1000 Genomes phase 3 reference panel is publicly available at EBI 1000 genomes ftp site. 
-			We can download chromosome 22 data using:
+			We can download chromosome X data using:
 			</p>
 		
 			<p style="text-indent:-5px ! important;"><code>
-			&nbsp;> wget http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/supporting/GRCh38_positions/ALL.chr22_GRCh38.genotypes.20170504.vcf.gz{,.tbi}
+			&nbsp;> wget http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/supporting/GRCh38_positions/ALL.chrX_GRCh38.genotypes.20170504.vcf.gz{,.tbi}
 			</code></p>
-			The reference panel size is approximately 200MB.
+			The reference panel size is approximately 950 MB.
 		</div>
 		<div class="well">
-			<h3>2.2. Remove NA12878 from the reference panel and perform basic QC</h3>
+			<h3>2.2. Remove ASW samples from the reference panel and basic QC</h3>
 			<p> 
-			We used BCFtools to remove sample NA12878 from the reference panel and we export the dataset in BCF file format (for efficiency reasons). 
+			We use BCFtools to remove ASW samples from the reference panel and export the dataset in BCF file format (for efficiency reasons). 
 			We also performs a basic QC step that includes:
 			<ol>
 				<li>Generate a text file containing space-spearated old and new chromosome names. This is required to rename the numerical chromosome names with 'chr' tag. Apply the new chromosome names with 'bcftools annotate'.</li>
 				<li>Keep only SNPs and remove multiallelic records.</li>
 			</ol> 
-			The original reference panel files are then deleted from the main tutorial folder:
+			The original reference panel files are then deleted from the main tutorial_chrX folder:
 			</p>
 			
 			<p style="text-indent:-5px ! important;"><code>
@@ -139,12 +148,12 @@
 			&nbsp;> echo ${CHR} chr${CHR}<br>
 			&nbsp;> done >> chr_names.txt<br>
 			<br>
-			&nbsp;> CHR=22<br>
+			&nbsp;> CHR=X<br>
 			&nbsp;> bcftools annotate --rename-chrs chr_names.txt \<br>
 			&nbsp;> &nbsp;&nbsp;&nbsp;&nbsp;ALL.chr${CHR}_GRCh38.genotypes.20170504.vcf.gz -Ou | \<br>
-			&nbsp;> bcftools view -m 2 -M 2 -v snps -s ^NA12878 --threads 4 -Ob -o reference_panel/1000GP.chr22.noNA12878.bcf<br>
-			&nbsp;> bcftools index -f reference_panel/1000GP.chr22.noNA12878.bcf<br>
-			&nbsp;> rm ALL.chr22_GRCh38.genotypes.20170504.vcf.gz*<br>
+			&nbsp;> bcftools view -m 2 -M 2 -v snps -S ^NA19625,NA19703 --threads 4 -Ob -o reference_panel/1000GP.chr${CHR}.filt.bcf<br>
+			&nbsp;> bcftools index -f reference_panel/1000GP.chrX.filt.bcf<br>
+			&nbsp;> rm ALL.chrX_GRCh38.genotypes.20170504.vcf.gz*<br>
 			&nbsp;> rm chr_names.txt<br>
 			</code></p>
 			
@@ -152,7 +161,7 @@
 			The resulting reference panel files can be found in: 
 			</p>
 			
-			<p style="text-indent:-5px ! important;"><code>GLIMPSE/tutorial/reference_panel/1000GP.chr22.noNA12878.bcf[.csi]</code></p>
+			<p style="text-indent:-5px ! important;"><code>reference_panel/1000GP.chrX.filt.bcf[.csi]</code></p>
 			
 			<p>
 			The reference panel can now be used for genotype likelihoods calculations (only the sites, not the data) and imputation.
@@ -172,31 +181,27 @@
 		
 		<p><b><span style="font-size: larger;">Please note that BCFtools does not call correctly genotype likelihoods for indels and this might affect the quality of the imputation even at non-indels.
 		For this reason in this tutorial we only focus on bi-allelic SNPs.</span></b></p>
-		
-		<p>For this tutorial we only follow step 3.1 and step 3.2, because step 3.3 is not necessary since we have only one target sample in our study panel.
-		The code for sections 3.1 and 3.2 is included in the script <code>step2_script_GL.sh</code>.
-		</p>
-		
+			
 		<div class="well">
 			<h3>3.1. Extracting variable positions in the reference panel</h3>
 				
 			<p>
-			We want this information to tell BCFtools at which positions to make a call.
+			We want this information to tell BCFtools at which position to make a call.
 			Since BCFtools does not seem to compute correctly genotype likelihood for indels, here we only focus on SNPs (however, GLIMPSE can impute any type of variants as soon it is bi-allelic and has GLs being properly defined).
-			To perform the extraction from the chromosome 22 of a reference panel <code>1000GP.chr22.noNA12878.bcf</code>, run first BCFtools as follows:
+			To perform the extraction from the chromosome X of a reference panel <code>1000GP.chrX.filt.bcf</code>, run first BCFtools as follows:
 			</p>
 			
 			<p style="text-indent:-5px ! important;"><code>
-			&nbsp;> bcftools view -G -m 2 -M 2 -v snps reference_panel/1000GP.chr22.noNA12878.bcf -Oz -o reference_panel/1000GP.chr22.noNA12878.sites.vcf.gz<br>
-			&nbsp;> bcftools index -f reference_panel/1000GP.chr22.noNA12878.sites.vcf.gz
+			&nbsp;> bcftools view -G -m 2 -M 2 -v snps reference_panel/1000GP.chrX.filt.bcf -Oz -o reference_panel/1000GP.chrX.filt.sites.vcf.gz<br>
+			&nbsp;> bcftools index -f reference_panel/1000GP.chrX.filt.sites.vcf.gz 
 			</code></p>
 			
-			<p>Then, convert the output file <code>1000GP.chr22.noNA12878.sites.vcf.gz</code> into TSV format and index the file using tabix (requires htslib in PATH), using this command:</p>
+			<p>Then, convert the output file <code>1000GP.chrX.filt.sites.vcf.gz </code> into TSV format and index the file using tabix (requires htslib in PATH), using this command:</p>
 			
 			<p style="text-indent:-5px ! important;">
 			<code> 
-			&nbsp;> bcftools query -f'%CHROM\t%POS\t%REF,%ALT\n' reference_panel/1000GP.chr22.noNA12878.sites.vcf.gz | bgzip -c > reference_panel/1000GP.chr22.noNA12878.sites.tsv.gz<br>
-			&nbsp;> tabix -s1 -b2 -e2 reference_panel/1000GP.chr22.noNA12878.sites.tsv.gz
+			&nbsp;> bcftools query -f'%CHROM\t%POS\t%REF,%ALT\n' reference_panel/1000GP.chrX.filt.sites.vcf.gz | bgzip -c > reference_panel/1000GP.chrX.filt.sites.tsv.gz<br>
+			&nbsp;> tabix -s1 -b2 -e2 reference_panel/1000GP.chrX.filt.sites.tsv.gz
 			</code>
 			</p>
 			
@@ -204,40 +209,48 @@
 		</div>
 		
 		<div class="well">
-			<h3>3.2. Computing GLs for a single individual at specific positions</h3>
+			<h3>3.2. Computing GLs for each individual at specific positions</h3>
 
 			<p>
-			Once ready the position files, we can then start doing the calling in itself.
-			We use the downsampled 1x BAM file generated in section 1.1 <code>NA12878_1x_bam/NA12878.chr22.1x.bam</code>.
+			Once ready the position files, we can then start performing the calling step.
+			We use the downsampled 1x BAM files generated in section 1.1 <code>asw_1x_bam/*.chrX.1x.bam</code>.
 			<br>
-			BCFtools requires the reference genome in order to align the BAM file. We used the reference genome version used by the 1000 Genomes Project (<code>reference_genome/hs38DH.chr22.fa.gz[.fai,.gzi]</code>)
+			BCFtools requires the reference genome in order to align the BAM file. We used the reference genome version used by the 1000 Genomes Project (<code>reference_genome/hs38DH.chrX.fa.gz[.fai,.gzi]</code>)
 			<br>
 			We can run the following command:
 			</p>
 			
 			<p style="text-indent:-5px ! important;"><code>
-			&nbsp;> BAM=NA12878_1x_bam/NA12878.bam<br>
-			&nbsp;> VCF=reference_panel/1000GP.chr22.noNA12878.sites.vcf.gz<br>
-			&nbsp;> TSV=reference_panel/1000GP.chr22.noNA12878.sites.tsv.gz<br>
-			&nbsp;> REFGEN=reference-genome/hs38DH.chr22.fa.gz<br>
-			&nbsp;> OUT=NA12878_1x_vcf/NA12878.chr22.1x.vcf.gz<br>			
-			&nbsp;> bcftools mpileup -f ${REFGEN} -I -E -a 'FORMAT/DP' -T ${VCF} -r chr22 ${BAM} -Ou | bcftools call -Aim -C alleles -T ${TSV} -Oz -o ${OUT} <br>
-			&nbsp;> bcftools index -f ${OUT}<br>
+			&nbsp;> list.txt<br>
+			&nbsp;> FILES=asw_1x_bam/asw_samples/*<br>
+			&nbsp;> for file in $FILES; do<br>
+			&nbsp;>     f=$(basename $file)<br>
+			&nbsp;>     BAM=asw_1x_bam/${f}.bam<br>
+			&nbsp;>     VCF=reference_panel/1000GP.chrX.filt.sites.vcf.gz<br>
+			&nbsp;>     TSV=reference_panel/1000GP.chrX.filt.sites.tsv.gz<br>
+			&nbsp;>     REFGEN=reference_genome/hs38DH.chrX.fa.gz<br>
+			&nbsp;>     OUT=asw_1x_vcf/${f}.chrX.1x.vcf.gz<br>			
+			&nbsp;>     bcftools mpileup -f ${REFGEN} -I -E -a 'FORMAT/DP' -T ${VCF} -r chrX ${BAM} -Ou | bcftools call --ploidy GRCh38 -S asw_1x_bam/asw_samples/${f} -Aim -C alleles -T ${TSV} -Oz -o ${OUT} <br>
+			&nbsp;>     bcftools index -f ${OUT}<br>
+			&nbsp;>     ls ${OUT} >> list.txt<br>
+			&nbsp;> done<br>
 			</code></p>
 			
-			<p>Note here, that we use <code>-T reference_panel/1000GP.chr22.noNA12878.sites.<b>vcf</b>.gz</code> in the first part of the command line and <br>
-			<code>-T reference_panel/1000GP.chr22.noNA12878.sites.<b>tsv</b>.gz</code> in the second part of the command line.</p>
+			<p>Note here, that we use <code>-T reference_panel/1000GP.chrX.filt.sites.<b>vcf</b>.gz</code> in the first part of the command line and <br>
+			<code>-T reference_panel/1000GP.chrX.filt.sites.<b>tsv</b>.gz</code> in the second part of the command line.</p>
 			<p>You may also tune the options of BCFtools to your specific needs, requirements and data.</p>
 			<p>As an output of this step we have a VCF file format containing genotype likelihoods at each site in the reference panel. </p>
 		</div>
 		<div class="well">
 			<h3>3.3. Merging genotype likelihoods of multiple individuals</h3>
-			<p>In the case of multiple target individuals, an additional step, <b>not required in this pipeline</b>, is to generate a single file containing genotype likelihoods for all target individuals. 
+			<p>As we have multiple target individuals, an additional step is to generate a single file containing genotype likelihoods for all target individuals. 
 			This can be easily done using BCFtools, for example:
 			</p>
 			
 			<p style="text-indent:-5px ! important;"><code>
-			&nbsp;> bcftools merge -m none -r 22 -Oz -o merged.chr22.1x.vcf.gz -l list.txt<br>
+			&nbsp;> bcftools merge -m none -r chrX:2781480-155701382 -Oz -o asw_1x_vcf/merged.chrX.1x.vcf.gz -l list.txt<br>
+			&nbsp;> bcftools index -f asw_1x_vcf/merged.chrX.1x.vcf.gz<br>
+			&nbsp;> rm list.txt
 			</code></p>
 			
 			<p>Where <code>list.txt</code> is a text file containing the full list of VCF/BCF files containing GLs of each target individual in the study, one individual file per line. 
@@ -260,11 +273,11 @@
 			<h3>4.1. Chunking a chromosome</h3>
 				
 			<p>
-			We use GLIMPSE_chunk to generate imputation regions for the full chromosome 22, modifying few default parameters in this way:
+			We use GLIMPSE_chunk to generate imputation regions for the full non-PAR region of chromosome X, modifying few default parameters in this way:
 			</p>
 			
 			<p style="text-indent:-5px ! important;"><code> 
-			&nbsp;> bin/GLIMPSE_chunk --input reference_panel/1000GP.chr22.noNA12878.sites.vcf.gz --region chr22 --window-size 2000000 --buffer-size 200000 --output chunks.chr22.txt
+			&nbsp;> ./bin/GLIMPSE_chunk --input reference_panel/1000GP.chrX.filt.sites.vcf.gz --region chrX:2781480-155701382 --output chunks.chrX.txt
 			</code></p>			
 			This generates a file containing the imputation chunks and larger chunks including buffers that we will use to run GLIMPSE_phase. 		
 		</div>
@@ -286,25 +299,28 @@
 				<h3>5.1. Running GLIMPSE</h3>
 				
 				<p>
-				To run GLIMPSE_phase we only need to run a job for each imputation chunk. Each job runs on 1 thread in this example. 
-				Input data are the dataset containing the genotype likelihoods, a reference panel of haplotypes, a fine-scale genetic map (e.g. from the International HapMap project) and buffered and imputation regions. 
+				To run GLIMPSE_phase we only need to run a job for each imputation chunk. Each job runs on 4 threads in this example. 
+				Input data are the dataset containing the genotype likelihoods, a reference panel of haplotypes, a fine-scale genetic map (e.g. from the International HapMap project) and buffered and imputation regions. <br>
+				Additionally, as we have samples with mixed ploidy, we will provide the <code>--samples-file</code> parameter, indicating a file containing each sample name and <b>ploidy</b> (one per row).<br>
+				
 				We run GLIMPSE phase using default parameters that can apply to most datasets. For extremely low coverage and small reference panels, increasing the number of iterations might give more accuracy.
 				</p>
 			
 				<p style="text-indent:-5px ! important;"><code>
-				&nbsp;> VCF=NA12878_1x_vcf/NA12878.chr22.1x.vcf.gz<br>
-				&nbsp;> REF=reference_panel/1000GP.chr22.noNA12878.bcf<br>
-				&nbsp;> MAP=../maps/genetic_maps.b38/chr22.b38.gmap.gz<br>
+				&nbsp;> mkdir -p GLIMPSE_impute<br>
+				&nbsp;> VCF=asw_1x_vcf/merged.chrX.1x.vcf.gz<br>
+				&nbsp;> REF=reference_panel/1000GP.chrX.filt.bcf<br>
+				&nbsp; >MAP=../maps/genetic_maps.b38/chrX.b38.gmap.gz<br>
 				
 				&nbsp;> while IFS="" read -r LINE || [ -n "$LINE" ];<br>
 				&nbsp;> do<br>
-				&nbsp;> &nbsp;&nbsp;printf -v ID "%02d" $(echo $LINE | cut -d" " -f1)<br>	
+				&nbsp;> &nbsp;&nbsp;printf -v ID "%03d" $(echo $LINE | cut -d" " -f1)<br>	
 				&nbsp;> &nbsp;&nbsp;IRG=$(echo $LINE | cut -d" " -f3)<br>
 				&nbsp;> &nbsp;&nbsp;ORG=$(echo $LINE | cut -d" " -f4)<br>
-				&nbsp;> &nbsp;&nbsp;OUT=GLIMPSE_imputed/NA12878.chr22.1x.${ID}.bcf<br>
-				&nbsp;> &nbsp;&nbsp;bin/GLIMPSE_phase --input ${VCF} --reference ${REF} --map ${MAP} --input-region ${IRG} --output-region ${ORG} --output ${OUT}<br>
+				&nbsp;> &nbsp;&nbsp;OUT=GLIMPSE_impute/merged.chrX.imputed.${ID}.bcf<br>
+				&nbsp;> &nbsp;&nbsp;./bin/GLIMPSE_phase --input ${VCF} --reference ${REF} --map ${MAP} --input-region ${IRG} --output-region ${ORG} --output ${OUT} --samples-file samples.txt<br>
 				&nbsp;> &nbsp;&nbsp;bcftools index -f ${OUT}<br>
-				&nbsp;> done < chunks.chr22.txt
+				&nbsp;> done < chunks.chrX.txt
 				</code></p>
 				
 				The output is a VCF/BCF file for each imputed chunk. We merge the chunks belonging to the same chromosome together in the next step.
@@ -314,7 +330,7 @@
 		<div id="run_ligate" class="page-header">
 	    	<h1>6. Ligate multiple chunks together</h1>
 	    	<p>
-				Merging together different chunks of the sample chromsome is a standard procedure and it is usually straightforward in the case of genotype data. 
+				Merging together different chunks of the sample chromosome is a standard procedure and it is usually straightforward in the case of genotype data. 
 				However GLIMPSE phase generates phased information in addition of genotype information. 
 				In this case, ligation is a required step to merge multiple chunks together without losing phased imputation. 
 				For this purpose we developed a software in the GLIMPSE software suite, called GLIMPSE_ligate. 
@@ -328,11 +344,11 @@
 				</p>
 			
 				<p style="text-indent:-5px ! important;"><code>
-				&nbsp;> LST=GLIMPSE_ligated/list.chr22.txt<br>
-				&nbsp;> ls GLIMPSE_imputed/NA12878.chr22.imputed.*.bcf > ${LST}<br>
-				&nbsp;> OUT=GLIMPSE_ligated/NA12878.chr22.merged.bcf<br>
-				&nbsp;> bin/GLIMPSE_ligate --input ${LST} --output $OUT<br>
-				&nbsp;> bcftools index -f ${OUT}
+				&nbsp;> mkdir -p GLIMPSE_ligate<br>
+				&nbsp;> LST=GLIMPSE_ligate/list.chrX.txt<br>
+				&nbsp;> ls GLIMPSE_impute/merged.chrX.imputed.*.bcf > ${LST}<br>
+				&nbsp;> OUT=GLIMPSE_ligate/merged.chrX.bcf<br>
+				&nbsp;> ./bin/GLIMPSE_ligate --input ${LST} --output ${OUT}<br>
 				</code></p>		
 				<p>In the case phased information is not needed, this can be the final step, providing chromosome-wide genotype information in the FORMAT/DS and FORMAT/GP field.</p>	
 			</div>
@@ -354,10 +370,10 @@
 				</p>
 			
 				<p style="text-indent:-5px ! important;"><code>
-				&nbsp;> VCF=GLIMPSE_ligated/NA12878.chr22.merged.bcf<br>
-				&nbsp;> OUT=GLIMPSE_phased/NA12878.chr22.phased.bcf<br>
-				&nbsp;> bin/GLIMPSE_sample --input ${VCF} --solve --output ${OUT}<br>
-				&nbsp;> bcftools index -f ${OUT}
+				&nbsp;> mkdir -p GLIMPSE_sample<br>
+				&nbsp;> VCF=GLIMPSE_ligate/merged.chrX.bcf<br>
+				&nbsp;> OUT=GLIMPSE_sample/merged.chrX.sampled.bcf<br>
+				&nbsp;> ./bin/GLIMPSE_sample --input ${VCF} --solve --output ${OUT}<br>
 				</code></p>
 				<p>From the output dataset, accurate phased information, stored in the GT field can be directly used.	</p>
 			</div>
@@ -381,76 +397,26 @@
 				</ol>
 				We provide a file called <code>concordance.lst</code> having all the correct files in the right order for this tutorial.
 				Other parameters specify how confident we want a site to be in the validation data and the MAF bins.<br>
-				The GLIMPSE_concordance too can be run as follows:
-				<p>
-				<p style="text-indent:-5px ! important;"><code>
-				&nbsp;> ./bin/GLIMPSE_concordance --input concordance.lst --minDP 8 --output GLIMPSE_concordance/output --minPROB 0.9999 \<br>
-				&nbsp;>     --bins 0.00000 0.00100 0.00200 0.00500 0.01000 0.05000 0.10000 0.20000 0.50000ex \<br>
-				&nbsp;>     --info_af AF_nfe --thread 4
-				</code></p>	
-			</div>
-			<div class="well">
-				<h3>8.2. Visualising the results</h3>
-				<p>
-				The GLIMPSE_concordance folder contains several files describing the quality of the imputation. In particular, we are interested in the file <code>GLIMPSE_concordance/output.rsquare.grp.txt.gz</code>. 
-				We can visualise the results by going in the <code>plot</code> folder and running: 
-				</p>
-				<p style="text-indent:-5px ! important;"><code>
-				&nbsp;> ./concordance_plot.py
-				</code></p>	
 				
-				<p style="text-indent:-5px ! important;">
-				<div style="text-align: center;"><img src="images/tutorials/accplot.png" width="600" height="480" alt="Accuracy plot"></div>
+				As we have samples with mixed ploidy, we will run the concordance tool two times, with a difference set of samples: haploids and diploids.<br>				
+				
+				For haploid samples, the GLIMPSE_concordance too is run as follows:
+				<p>
+				<p style="text-indent:-5px ! important;"><code>
+				&nbsp;> ./bin/GLIMPSE_concordance --input concordance.lst --minDP 8 --output GLIMPSE_concordance/output.hap --minPROB 0.9999 \<br>
+				&nbsp;>     --bins 0.00000 0.00100 0.00200 0.00500 0.01000 0.05000 0.10000 0.20000 0.50000 \<br>
+				&nbsp;>     --af-tag AF_afr --samples asw_1x_bam/asw_samples/NA19703
 				</code>
+				</p>
+				
+				For diploid samples, the GLIMPSE_concordance too is run as follows:
 				<p>
-				The command requires python3 and matplotlib installed.<br>
-				The plot shows that the 1000 Genomes reference panel can be used to impute accurately variants up to ~1% MAF and there is a drop at rare variants, as expected.
-				</p>
-			</div>
-		</div>
-		
-		<div id="run_sample" class="page-header">
-	    	<h1>A1. Low coverage reads</h1>
-	    	<div class="well">
-				<h3>A1.1. Downsample 1000 Genome Project NYGC high coverage data</h3>
-				
-				<p>
-				30x data for NA12878 has been made available by the New York Genome Center and the 1000 Genomes project. Please refer to the official documentation to download the data:
-				</p>
-			
 				<p style="text-indent:-5px ! important;"><code>
-				https://www.internationalgenome.org/data-portal/data-collection/30x-grch38
-				</code></p>
-				<p>
-				Once the CRAM file (and index) have been downloaded, we create our validation dataset for chromosome 22 using samtools and bcftools (assuming the reference panel has already been downloaded and step 3.1. has already been performed):
-				</p>
-				
-				<p style="text-indent:-5px ! important;"><code>
-				&nbsp;> samtools view -T reference-genome/hs38DH.chr22.fa.gz -bo GLIMPSE_validation/NA12878.bam NA12878.final.cram chr22 <br>
-				&nbsp;> samtools index GLIMPSE_validation/NA12878.bam <br>
-				</code></p>
-				
-				<p style="text-indent:-5px ! important;"><code>
-				&nbsp;> BAM=GLIMPSE_validation/NA12878.bam<br>
-				&nbsp;> VCF=reference_panel/1000GP.chr22.noNA12878.sites.vcf.gz<br>
-				&nbsp;> TSV=reference_panel/1000GP.chr22.noNA12878.sites.tsv.gz<br>
-				&nbsp;> REFGEN=reference-genome/hs38DH.chr22.fa.gz<br>
-				&nbsp;> OUT=GLIMPSE_validation/NA12878.chr22.validation.bcf<br>			
-				&nbsp;> bcftools mpileup -f ${REFGEN} -I -E -a 'FORMAT/DP' -T ${VCF} -r chr22 ${BAM} -Ou | bcftools call -Aim -C alleles -T ${TSV} -Ob -o ${OUT}<br>
-				&nbsp;> bcftools index -f ${OUT}<br>
-				&nbsp;> rm GLIMPSE_validation/NA12878.bam*
-				</code></p>
-				
-				<p>Finally, we can downsample the 30x data to low coverage (1x) using samtools </p>
-				
-				<p style="text-indent:-5px ! important;"><code>
-				&nbsp;> samtools view -T reference-genome/hs38DH.chr22.fa.gz -s 1.03045 -bo NA12878_1x_bam/NA12878.bam NA12878.final.cram chr22<br>
-				&nbsp;> samtools index NA12878_1x_bam/NA12878.bam <br>
-				&nbsp;> rm NA12878.final.cram*
-				</code></p>
-				
-				<p>The output datasets <code>NA12878_1x_bam/NA12878.bam</code> and <code>GLIMPSE_validation/NA12878.chr22.validation.bcf</code> are the files provided in the GLIMPSE tutorial folder.
-				</p>
+				&nbsp;> ./bin/GLIMPSE_concordance --input concordance.lst --minDP 8 --output GLIMPSE_concordance/output.dip --minPROB 0.9999 \<br>
+				&nbsp;>     --bins 0.00000 0.00100 0.00200 0.00500 0.01000 0.05000 0.10000 0.20000 0.50000 \<br>
+				&nbsp;>     --af-tag AF_afr --samples asw_1x_bam/asw_samples/NA19625
+				</code>
+				</p>	
 			</div>
 		</div>
     </div> <!-- /container -->

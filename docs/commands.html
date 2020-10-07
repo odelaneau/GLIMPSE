@@ -61,10 +61,10 @@
 
       <h4>
 		  <p><b>Tool name:</b></p>
-        <p><a href="#chunk"><span class="label label-success" style="display:inline-block; width:130px; height:22px;">GLIMPSE chunk</span></a> defines chunks where to run imputation</p>
-        <p><a href="#phase"><span class="label label-primary" style="display:inline-block; width:130px; height:22px;">GLIMPSE phase</span></a> main GLIMPSE algorithm, performs phasing and imputation refining genotype likelihoods</p>
-        <p><a href="#ligate"><span class="label label-info" style="display:inline-block; width:130px; height:22px;">GLIMPSE ligate</span></a> concatenates imputation chunks in a single VCF/BCF file ligating phased information</p>
-        <p><a href="#sample"><span class="label label-warning" style="display:inline-block; width:130px; height:22px;">GLIMPSE sample</span></a> generates haplotype calls by sampling haplotype estimates</p>
+        <p><a href="#chunk"><span class="label label-success" style="display:inline-block; width:130px; height:22px;">GLIMPSE_chunk</span></a> defines chunks where to run imputation</p>
+        <p><a href="#phase"><span class="label label-primary" style="display:inline-block; width:130px; height:22px;">GLIMPSE_phase</span></a> main GLIMPSE algorithm, performs phasing and imputation refining genotype likelihoods</p>
+        <p><a href="#ligate"><span class="label label-info" style="display:inline-block; width:130px; height:22px;">GLIMPSE_ligate</span></a> concatenates imputation chunks in a single VCF/BCF file ligating phased information</p>
+        <p><a href="#sample"><span class="label label-warning" style="display:inline-block; width:130px; height:22px;">GLIMPSE_sample</span></a> generates haplotype calls by sampling haplotype estimates</p>
         <hr>
         <p><b>Detailed description</b></p>
       </h4>
@@ -113,6 +113,13 @@
 			        <td>INT</td>
 	              <td>Seed for random number generator.</td>
 			      </tr>
+			      <tr>
+			      <td><code>--thread</code></td>
+			        <td>NA</td>
+			        <td>INT</td>
+	                	<td>Number of threads to use (default 1). Multi-threading is only used for reading files using the htslib library</td>
+			      </tr>
+			      <tr>
 			      <tr>
 	              <td><code>--input</code></td>
 			        <td><code>--I</code></td>
@@ -345,6 +352,12 @@
 	                	<td>Seed for random number generator.</td>
 			      </tr>
 			      <tr>
+			      <td><code>--thread</code></td>
+			        <td>NA</td>
+			        <td>INT</td>
+	                	<td>Number of threads to use (default 1). Multi-threading is only used for reading/writing files using the htslib library</td>
+			      </tr>
+			      <tr>
 	                	<td><code>--input</code></td>
 			        <td><code>--I</code></td>
 			        <td>STRING</td>
@@ -402,6 +415,12 @@
 			        <td>NA</td>
 			        <td>INT</td>
 	                	<td>Seed for random number generator.</td>
+			      </tr>
+			      <tr>
+			      <td><code>--thread</code></td>
+			        <td>NA</td>
+			        <td>INT</td>
+	                	<td>Number of threads to use (default 1). Multi-threading is only used for reading/writing files using the htslib library</td>
 			      </tr>
 			      <tr>
 	                	<td><code>--input</code></td>

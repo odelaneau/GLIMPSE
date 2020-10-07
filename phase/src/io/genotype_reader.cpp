@@ -94,7 +94,7 @@ void genotype_reader::scanGenotypes(string fmain, string fref, int nthreads, con
 	bcf_srs_t * sr =  bcf_sr_init();
 	sr->collapse = COLLAPSE_NONE;
 	sr->require_index = 1;
-	bcf_sr_set_threads(sr, nthreads);
+	if (nthreads>1) bcf_sr_set_threads(sr, nthreads);
 	if (bcf_sr_set_regions(sr, region.c_str(), 0) == -1) vrb.error("Impossible to jump to region [" + region + "] in [" + fmain + "]");
 
 	//Opening files
@@ -221,7 +221,7 @@ void genotype_reader::readGenotypes(string funphased, string freference, int nth
 	bcf_srs_t * sr =  bcf_sr_init();
 	sr->collapse = COLLAPSE_NONE;
 	sr->require_index = 1;
-	bcf_sr_set_threads(sr, nthreads);
+	if (nthreads>1) bcf_sr_set_threads(sr, nthreads);
 	bcf_sr_set_regions(sr, region.c_str(), 0);
 	bcf_sr_add_reader (sr, funphased.c_str());
 	bcf_sr_add_reader (sr, freference.c_str());

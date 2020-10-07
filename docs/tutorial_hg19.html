@@ -66,16 +66,21 @@
 		<br>
 		<br>
 		In this tutorial, we show how to run GLIMPSE from sequencing reads data (BAM/CRAM file) to obtain refined genotype and haplotype calls.
-		A small dataset containing chromosome 22 downsampled 1x sequencing reads for one individual (NA12878) is provided with GLIMPSE, 
-		together with a reference genome FASTA file (for chromsome 22) needed for genotype likelihood computations.
 		<br>
 		<br>
-		A minimal set of data to run this pipeline can be found in the folder <code>GLIMPSE/tutorial_hg19</code>. All datasets used here are in GRCh37/hg19 genome assembly.  
+		The data and the scripts for this tutorial can be downloaded <a href="https://drive.switch.ch/index.php/s/MaYLJqhp4gCGwVX">HERE</a>.
+		<br>
+		A minimal set of data to run this pipeline can be found in the folder <code>tutorial_hg19</code>. Here we assume that the folder is located as a subfolder of the GLIMPSE installation: <code>tutorial_chr19</code>.
+		All datasets used here are in GRCh37/hg19 genome assembly
+		<br>
+		<br>
+		A dataset containing chromosome 22 downsampled 1x sequencing reads (BAM file) for 1 individual (NA12878) from ASW population is provided with this tutorial, 
+		together with a reference genome FASTA file needed for genotype likelihood computations.
 		</p>
 
 		<div class="well">
 			<h3>1.1. Setting the environment and binaries</h3>	
-			<p>All scripts have been written assuming <code>&nbsp;> cd GLIMPSE/tutorial_hg19/</code> as current directory. Therefore, we require to move to the test directory:
+			<p>All scripts have been written assuming <code>&nbsp;> cd GLIMPSE/tutorial_hg19/</code> as current directory. Therefore, we require to move to the tutorial_hg19 directory:
 			<p style="text-indent:-5px ! important;"><code>&nbsp;> cd GLIMPSE/tutorial_hg19/</code></p>
 			<p>From this folder we build all the GLIMPSE software needed (chunk, phase, ligate, sample and concordance).
 			For this reason, we require that GLIMPSE can correctly compile on your machine and you might be required to edit the Makefiles manually. 
@@ -128,7 +133,7 @@
 			We used BCFtools to remove sample NA12878 from the reference panel and we export the dataset in BCF file format (for efficiency reasons).
 			We also performs a basic QC step that includes keeping only SNPs and remove multiallelic records.
 			
-			The original reference panel files are then deleted from the main test folder:
+			The original reference panel files are then deleted from the main tutorial_hg19 folder:
 			</p>
 			
 			<p style="text-indent:-5px ! important;"><code>
@@ -175,7 +180,7 @@
 			<p>
 			We want this information to tell BCFtools at which positions to make a call.
 			Since BCFtools does not seem to compute correctly genotype likelihood for indels, here we only focus on SNPs (however, GLIMPSE can impute any type of variants as soon it is bi-allelic and has GLs being properly defined).
-			To perform the extraction from the chromosome 22 of a reference panel <code>000GP.chr22.noNA12878.bcf</code>, run first bcftools as follows:
+			To perform the extraction from the chromosome 22 of a reference panel <code>1000GP.chr22.noNA12878.bcf</code>, run first bcftools as follows:
 			</p>
 			
 			<p style="text-indent:-5px ! important;"><code>
@@ -369,7 +374,7 @@
 					<li>the validation dataset called at the same positions as the imputed file (in a similar way as showed in appendix A1, without the downsampling);</li>
 					<li>the imputed data.</li>
 				</ol>
-				We provide a file called <code>concordance.lst</code> having all the correct files in the right order for this test example.
+				We provide a file called <code>concordance.lst</code> having all the correct files in the right order for this tutorial.
 				Other parameters specify how confident we want a site to be in the validation data and the MAF bins.<br>
 				The GLIMPSE_concordance too can be run as follows:
 				<p>
@@ -390,7 +395,7 @@
 				</code></p>	
 				
 				<p style="text-indent:-5px ! important;">
-				<div style="text-align: center;"><img src="images/test/accplot_hg19.png" width="600" height="480" alt="Accuracy plot"></div>
+				<div style="text-align: center;"><img src="images/tutorials/accplot_hg19.png" width="600" height="480" alt="Accuracy plot"></div>
 				</code>
 				<p>
 				The command requires python3 and matplotlib installed.<br>

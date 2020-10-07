@@ -32,7 +32,7 @@ void chunker::readData(string fmain, string region, int nthreads) {
 	sr->collapse = COLLAPSE_NONE;
 	sr->require_index = 1;
 
-	bcf_sr_set_threads(sr, nthreads);
+	if (nthreads > 1) bcf_sr_set_threads(sr, nthreads);
 	if (bcf_sr_set_regions(sr, region.c_str(), 0) == -1) vrb.error("Impossible to jump to region [" + region + "] in [" + fmain + "]");
 	if(!(bcf_sr_add_reader (sr, fmain.c_str())))
 	{

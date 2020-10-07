@@ -43,7 +43,7 @@ public:
 	~genotype_writer();
 
 	//IO
-	void writeGenotypes(const string foutput, const int, const int, const int) const;
+	void writeGenotypes(const string foutput, const int, const int, const int, const int) const;
 };
 
 #endif

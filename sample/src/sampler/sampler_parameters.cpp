@@ -79,6 +79,9 @@ void sampler::check_options() {
 
 	if (options.count("seed") && options["seed"].as < int > () < 0)
 		vrb.error("Random number generator needs a positive seed value");
+
+	if (options["thread"].as < int > () < 1)
+		vrb.error("Number of threads is a strictly positive number.");
 }
 
 void sampler::verbose_files() {
