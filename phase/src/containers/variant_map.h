@@ -39,17 +39,17 @@ public :
 	~variant_map();
 
 	//METHODS
-	int size();
-	vector < variant * > getByPos(int);
-	vector < variant * > getByRef(int, string &, string &);
-	variant * getByIndex(int);
+	std::size_t size() const;
+	vector < variant * > getByPos(const int);
+	vector < variant * > getByRef(const int, const string &, const string &);
+	variant * getByIndex(const int);
 	void push(variant *);
-	void setGeneticMap(gmap_reader&);
+	void setGeneticMap(const gmap_reader&);
 	void setGeneticMap();
-	int setCentiMorgan(vector < int > & pos_bp, vector < double > & pos_cM);
-	int interpolateCentiMorgan(vector < int > & pos_bp, vector < double > & pos_cM);
-	unsigned int length();
-	double lengthcM();
+	int setCentiMorgan(const vector < int > & pos_bp, const vector < double > & pos_cM);
+	int interpolateCentiMorgan(const vector < int > & pos_bp, const vector < double > & pos_cM);
+	unsigned int length() const;
+	double lengthcM() const;
 };
 
 #endif

@@ -23,7 +23,7 @@
 
 #include <chunker/chunker_header.h>
 
-void chunker::readData(string fmain, string region) {
+void chunker::readData(string fmain, string region, int nthreads) {
 	tac.clock();
 	vrb.title("Reading input files");
 	vrb.bullet("Main      : [" + fmain + "]");
@@ -31,10 +31,19 @@ void chunker::readData(string fmain, string region) {
 	bcf_srs_t * sr =  bcf_sr_init();
 	sr->collapse = COLLAPSE_NONE;
 	sr->require_index = 1;
-	if(!(bcf_sr_add_reader (sr, fmain.c_str()))) vrb.error("Problem opening index file for [" + fmain + "]");
-	int nset, n_variants = 0;
+
+	if (nthreads > 1) bcf_sr_set_threads(sr, nthreads);
+	if (bcf_sr_set_regions(sr, region.c_str(), 0) == -1) vrb.error("Impossible to jump to region [" + region + "] in [" + fmain + "]");
+	if(!(bcf_sr_add_reader (sr, fmain.c_str())))
+	{
+		//we do not build an index here, as the target and reference panel could be accessed in parallel
+		if (sr->errnum != idx_load_failed) vrb.error("Failed to open file: " + fmain + "");
+		else vrb.error("Failed to load index of the file: " + fmain + "");
+	}
+
+	int n_variants = 0;
 	bcf1_t * line_main;
-	while ((nset = bcf_sr_next_line (sr))) {
+	while (bcf_sr_next_line (sr)) {
 		line_main =  bcf_sr_get_line(sr, 0);
 		if (line_main->n_allele == 2) {
 			bcf_unpack(line_main, BCF_UN_STR);

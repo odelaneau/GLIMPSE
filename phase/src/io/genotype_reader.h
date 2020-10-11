@@ -35,11 +35,16 @@ public:
 	haplotype_set & H;
 	genotype_set & G;
 	variant_map & V;
-	string region;
+	const string region;
+	std::vector<string> main_sample_names;
 	set < string > initializing_samples;
+	map <string, int> ploidy_samples;
+	vector<int> ploidy_ref_samples;
 
 	//COUNTS
 	unsigned long n_variants;
+	unsigned long n_glikelihoods;
+	unsigned long n_missing;
 	unsigned long n_main_samples;
 	unsigned long n_ref_samples;
 
@@ -50,8 +55,9 @@ public:
 
 	//IO
 	void readInitializingSamples(string);
-	void scanGenotypes(string funphased, string fphased);
-	void readGenotypes(string funphased, string fphased);
+	void readSamplesFilePloidy(string);
+	void scanGenotypes(string funphased, string fphased, int nthreads, const bool impute_missing);
+	void readGenotypes(string funphased, string fphased, int nthreads, const bool impute_missing);
 };
 
 #endif

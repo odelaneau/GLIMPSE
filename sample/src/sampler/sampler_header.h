@@ -32,6 +32,13 @@ public:
 	bpo::options_description descriptions;
 	bpo::variables_map options;
 
+	std::vector<string> sample_names;
+	int fploidy;
+	std::vector<int> ploidy;
+	int n_diploid;
+	int n_haploid;
+	int max_ploidy;
+
 	//CONSTRUCTOR
 	sampler();
 	~sampler();

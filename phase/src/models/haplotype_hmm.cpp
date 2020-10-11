@@ -23,7 +23,7 @@
 
 #include <models/haplotype_hmm.h>
 
-haplotype_hmm::haplotype_hmm(conditioning_set * _C) {
+haplotype_hmm::haplotype_hmm(const conditioning_set * _C) {
 	C = _C;
 	Emissions = vector < float > (2*C->n_vars, 0.0);
 }
@@ -39,7 +39,7 @@ void haplotype_hmm::resize() {
 	Alpha.resize(C->n_sites * C->n_states);
 }
 
-void haplotype_hmm::init(vector < float > & HL) {
+void haplotype_hmm::init(const vector < float > & HL) {
 	double p0, p1;
 	for (int l = 0 ; l < C->n_vars ; l ++) {
 		p0 = HL[2*l+0] * C->ee + HL[2*l+1] * C->ed;
@@ -49,7 +49,7 @@ void haplotype_hmm::init(vector < float > & HL) {
 	}
 }
 
-void haplotype_hmm::computePosteriors(vector < float > & HL, vector < float > & HP) {
+void haplotype_hmm::computePosteriors(const vector < float > & HL, vector < float > & HP) {
 	resize();
 	init(HL);
 	forward();
@@ -63,14 +63,14 @@ void haplotype_hmm::forward() {
 		if (l == 0) {
 			fact1 = 1.0 / C->n_states;
 			for (int k = 0 ; k < C->n_states ; k ++) {
-				Alpha[k] = Emissions[2*C->Vpoly[l]+C->Hpoly[l*C->n_states+k]] * fact1;
+				Alpha[k] = Emissions[2*C->Vpoly[l]+_GET8(C->Hpoly[l][k/8], k%8)] * fact1;
 				AlphaSum[l] += Alpha[k];
 			}
 		} else {
 			fact1 = C->t[l-1] / C->n_states;
 			fact2 = C->nt[l-1] / AlphaSum[l-1];
 			for (int k = 0 ; k < C->n_states ; k ++) {
-				Alpha[l*C->n_states+k] = (Alpha[(l-1)*C->n_states+k] * fact2 + fact1) * Emissions[2*C->Vpoly[l]+C->Hpoly[l*C->n_states+k]];
+				Alpha[l*C->n_states+k] = (Alpha[(l-1)*C->n_states+k] * fact2 + fact1) * Emissions[2*C->Vpoly[l]+_GET8(C->Hpoly[l][k/8], k%8)];
 				AlphaSum[l] += Alpha[l*C->n_states+k];
 			}
 		}
@@ -78,7 +78,7 @@ void haplotype_hmm::forward() {
 	}
 }
 
-void haplotype_hmm::backward(vector < float > & HL, vector < float > & HP) {
+void haplotype_hmm::backward(const vector < float > & HL, vector < float > & HP) {
 	double betaSumNext, betaSumCurr;
 	double prob0 = 0.0, prob1 = 0.0;
 	double hemit[2][2], pcopy[2], prob[2], betaSumTmp[2];
@@ -95,17 +95,17 @@ void haplotype_hmm::backward(vector < float > & HL, vector < float > & HP) {
 		betaSumCurr = 0.0;
 		if (l == C->n_sites - 1) {
 			for (int k = 0 ; k < C->n_states ; k ++) {
-				prob[C->Hpoly[l*C->n_states+k]] += Alpha[l*C->n_states+k] * beta[k];
-				betaSumTmp[C->Hpoly[l*C->n_states+k]]++;
+				prob[_GET8(C->Hpoly[l][k/8], k%8)] += Alpha[l*C->n_states+k] * beta[k];
+				betaSumTmp[_GET8(C->Hpoly[l][k/8], k%8)]++;
 			}
 		} else {
 			pcopy[0] = C->nt[l] * Emissions[2*C->Vpoly[l+1] + 0] / betaSumNext;
 			pcopy[1] = C->nt[l] * Emissions[2*C->Vpoly[l+1] + 1] / betaSumNext;
 
 			for (int k = 0 ; k < C->n_states ; k ++) {
-				beta[k] = beta[k] * pcopy[C->Hpoly[(l+1)*C->n_states+k]] + C->t[l];
-				prob[C->Hpoly[l*C->n_states+k]] += Alpha[l*C->n_states+k] * beta[k];
-				betaSumTmp[C->Hpoly[l*C->n_states+k]]+=beta[k];
+				beta[k] = beta[k] * pcopy[_GET8(C->Hpoly[l+1][k/8], k%8)] + C->t[l];
+				prob[_GET8(C->Hpoly[l][k/8], k%8)] += Alpha[l*C->n_states+k] * beta[k];
+				betaSumTmp[_GET8(C->Hpoly[l][k/8], k%8)]+=beta[k];
 			}
 		}
 		// Expectation pass

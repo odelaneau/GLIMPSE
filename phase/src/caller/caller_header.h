@@ -78,7 +78,7 @@ public:
 	~caller();
 
 	//METHODS
-	void phase_individual(int, int);
+	void phase_individual(const int, const int);
 	void phase_iteration();
 	void phase_loop();
 

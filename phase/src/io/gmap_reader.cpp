@@ -31,7 +31,7 @@ gmap_reader::~gmap_reader() {
 	vector < double > ().swap(pos_cm);
 }
 
-void gmap_reader::readGeneticMapFile(string fmap) {
+void gmap_reader::readGeneticMapFile(const string fmap) {
 	tac.clock();
 	string buffer;
 	vector < string > tokens;

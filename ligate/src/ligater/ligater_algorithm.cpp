@@ -22,6 +22,7 @@
  ******************************************************************************/
 
 #include <ligater/ligater_header.h>
+#include <sys/stat.h>
 
 #define OFILE_VCFU	0
 #define OFILE_VCFC	1
@@ -30,19 +31,28 @@
 #define GET(n,i)	(((n)>>(i))&1U)
 #define TOG(n,i)	((n)^=(1UL<<(i)))
 
+std::map<int, string> fploidy_to_msg = {
+		{-2, "Mixed haploid/diploid samples in the region"},
+		{1,"Only haploid samples in the region"},
+		{2,"Only diploid samples in the region"}
+};
+
+
 void ligater::updateHS(int * values) {
-	for (int i = 0 ; i < nsamples ; i++) {
+	for (int i = 0 ; i < n_diploid ; i++) {
 		for (int m = 0 ; m < nmain ; m ++) {
-			if (switching[i * nmain + m] && (GET(values[i], 2*m+0) != GET(values[i], 2*m+1))) {
-				TOG(values[i], 2*m+0);
-				TOG(values[i], 2*m+1);
+			if (switching[i * nmain + m] && (GET(values[diploid_idx[i]], 2*m+0) != GET(values[diploid_idx[i]], 2*m+1))) {
+				TOG(values[diploid_idx[i]], 2*m+0);
+				TOG(values[diploid_idx[i]], 2*m+1);
 			}
 		}
 	}
 }
 
 int ligater::update_switching() {
-	assert(switching.size() * 2 == distances.size());
+	//as switching and distances are defined on diploids, this
+	//can be blind about the ploidy type
+
 	int n_changes = 0;
 	for (int d = 0 ; d < distances.size() ; d += 2) {
 		if (switching[d/2]) {
@@ -69,15 +79,18 @@ void ligater::update_distances_and_write_record(htsFile * fd, bcf_hdr_t * hdr, b
 	assert(nhs0 == nsamples && n_body_hs_fields == nsamples);
 	assert(nhs1 == nsamples && n_buffer_hs_fields == nsamples);
 
-	for (int i = 0 ; i < nsamples ; i++) {
-		for (int m = 0 ; m < nmain ; m ++) {
-			bool buf0 = GET(buffer_hs_fields[i], 2*m+0);
-			bool buf1 = GET(buffer_hs_fields[i], 2*m+1);
-			bool bod0 = GET(body_hs_fields[i], 2*m+0);
-			bool bod1 = GET(body_hs_fields[i], 2*m+1);
+	for (int i = 0 ; i < n_diploid; i++) {
+		for (int m = 0 ; m < nmain ; m ++)
+		{
+			bool buf0 = GET(buffer_hs_fields[diploid_idx[i]], 2*m+0);
+			bool buf1 = GET(buffer_hs_fields[diploid_idx[i]], 2*m+1);
+			bool bod0 = GET(body_hs_fields[diploid_idx[i]], 2*m+0);
+			bool bod1 = GET(body_hs_fields[diploid_idx[i]], 2*m+1);
+
 			distances[(i * nmain + m) * 2 + 0] += ((buf0 != bod0) + (buf1 != bod1));
 			distances[(i * nmain + m) * 2 + 1] += ((buf0 != bod1) + (buf1 != bod0));
 		}
+
 	}
 
 	updateHS(body_hs_fields);
@@ -105,28 +118,57 @@ void ligater::ligate() {
 	bcf_srs_t * sr =  bcf_sr_init();
 	sr->collapse = COLLAPSE_NONE;
 	sr->require_index = 1;
-	for (int f = 0 ; f < nfiles ; f ++) {
-		if(!(bcf_sr_add_reader (sr, filenames[f].c_str()))) vrb.error("Problem opening index file for [" + filenames[f] + "]");
+	int n_threads = options["thread"].as < int > ();
+	if (n_threads > 1) bcf_sr_set_threads(sr, n_threads);
+	for (int f = 0 ; f < nfiles ; f ++)
+	{
+		//Attempt to read the file with the index
+		if(!(bcf_sr_add_reader (sr, filenames[f].c_str())))
+		{
+			if (sr->errnum != idx_load_failed) vrb.error("Failed to open file: " + filenames[f] + "");
+			//Error reading the index! Attempt to create the index now
+			//vrb.warning("Index not found for [" + filenames[f] + "]. GLIMPSE will attempt to create an index for the file.");
+			//Remove the reader, as it's broken
+			bcf_sr_remove_reader (sr, f);
+			//create index using htslib (csi, using default bcftools option 14)
+			int ret = bcf_index_build3(filenames[f].c_str(), NULL, 14, options["thread"].as < int > ());
+
+			if (ret != 0)
+			{
+				if (ret == -2)
+					vrb.error("index: failed to open " + filenames[f]);
+				else if (ret == -3)
+					vrb.error("index: " + filenames[f] + " is in a format that cannot be usefully indexed");
+				else
+					vrb.error("index: failed to create index for + " + filenames[f]);
+			}
+			if(!(bcf_sr_add_reader (sr, filenames[f].c_str()))) vrb.error("Problem opening/creating index file for [" + filenames[f] + "]");
+			else vrb.bullet("Index file for [" + filenames[f] + "] has been successfully created.\n");
+		}
 	}
 
 	//Extract sample IDs
 	vrb.bullet("Extract sample IDs");
 	nsamples = bcf_hdr_nsamples(sr->readers[0].header);
 	for (int i = 0 ; i < nsamples ; i ++) sampleIDs.push_back(string(sr->readers[0].header->samples[i]));
-	vrb.bullet("#samples = " + stb.str(nsamples));
+	//vrb.bullet("#samples = " + stb.str(nsamples));
 
-	// Extract number of main iterations
-	bcf_hrec_t * header_record = bcf_hdr_get_hrec(sr->readers[0].header, BCF_HL_GEN, "NMAIN", NULL, NULL);
-	if (header_record == NULL) vrb.error("Cannot retrieve NMAIN flag in VCF header");
-	nmain = atoi(header_record->value);
-	if (nmain <1 || nmain > 16) vrb.error("NMAIN out of bounds : " + stb.str(nmain));
-	switching = vector < bool > (nmain * nsamples, false);
-	distances = vector < int > (nmain * 2 * nsamples, 0);
-	vrb.bullet("#main_iterations = " + stb.str(nmain));
+	bcf_hrec_t * header_record = bcf_hdr_get_hrec(sr->readers[0].header, BCF_HL_GEN, "FPLOIDY", NULL, NULL);
+	if (header_record == NULL) vrb.warning("Cannot retrieve FPLOIDY flag in VCF header [" + filenames[0] + "], used a version of GLIMPSE < 1.1.0? Assuming diploid genotypes only [FPLOIDY=2].");
+	else fploidy = atoi(header_record->value);
+	if (fploidy_to_msg.find(fploidy) == fploidy_to_msg.end()) vrb.error("FPLOIDY out of bounds : " + stb.str(fploidy));
+	vrb.bullet("FPLOIDY = "+ to_string(fploidy) + " [" + fploidy_to_msg[fploidy] + "]");
+
 
 	//Check sample overlap between all files
-	vrb.bullet("Check sample consistency across all input files");
+	vrb.bullet("Checking samples and FPLOIDY consistency across all input files");
 	for (int f = 1 ; f < nfiles ; f ++) {
+		int cfploidy = 2;
+		header_record = bcf_hdr_get_hrec(sr->readers[0].header, BCF_HL_GEN, "FPLOIDY", NULL, NULL);
+		if (header_record == NULL) vrb.warning("Cannot retrieve FPLOIDY flag in VCF header [" + filenames[f] + "], used a version of GLIMPSE < 1.1.0? Assuming diploid genotypes only [FPLOIDY=2].");
+		else cfploidy = atoi(header_record->value);
+		if (fploidy != cfploidy) vrb.error("Plody format is different across files [" + filenames[0] + "] and [" + filenames[f] + "] fploidy=" + stb.str(fploidy) + " vs " + stb.str(cfploidy));
+
 		int cnsamples = bcf_hdr_nsamples(sr->readers[f].header);
 		if (cnsamples != nsamples) vrb.error("Numbers of samples are different between [" + filenames[0] + "] and [" + filenames[f] + "] n=" + stb.str(nsamples) + " vs " + stb.str(cnsamples));
 		for (int i = 0 ; i < nsamples ; i ++) {
@@ -134,7 +176,58 @@ void ligater::ligate() {
 			if (spl != sampleIDs[i]) vrb.error("Sample overlap problem between [" + filenames[0] + "] and [" + filenames[f] + "] idx=" + stb.str(i) + " id1=" + sampleIDs[i] + " / id2=" + spl);
 		}
 	}
-	vrb.bullet("Sample overlap looks good");
+	vrb.bullet("Samples overlap and FPLOIDY are consistent across files.");
+
+	//Ploidy
+	ploidy = std::vector<int> (nsamples);
+	max_ploidy = std::abs(fploidy);
+	n_haploid = 0;
+	n_diploid = 0;
+	if (fploidy > 0)
+	{
+		fploidy == 2 ? n_diploid = nsamples: n_haploid = nsamples;
+		for (int i = 0 ; i < nsamples ; i ++) ploidy[i] = max_ploidy;
+
+	}
+	else
+	{
+		if (bcf_sr_next_line (sr)  == 0) vrb.error("No marker found in files");
+
+		int * gt_fields = NULL;
+		int n_gt_fields = 0;
+
+		bcf1_t * line =  bcf_sr_get_line(sr, 0);
+
+		int ngt = bcf_get_genotypes(sr->readers[0].header, line, &gt_fields, &n_gt_fields);
+		const int line_max_ploidy = ngt/nsamples;
+		assert(line_max_ploidy==max_ploidy); //we do not allow missing data
+		for(int i = 0 ; i < nsamples; ++i)
+		{
+			ploidy[i] = 2 - (gt_fields[max_ploidy*i+1] == bcf_int32_vector_end);
+
+			if (ploidy[i] > 1)	++n_diploid;
+			else ++n_haploid;
+		}
+		if (n_diploid == 0 && n_haploid == 0) vrb.error("No sample found.");
+		bcf_sr_seek (sr, NULL, 0);
+	}
+	//let's keep track of the diploids indices (works with every ploidy vector):
+	diploid_idx = std::vector<int>(n_diploid);
+	for (int i=0, j=0; i<nsamples; ++i) if (ploidy[i] == 2) diploid_idx[j++] = i;
+
+	string pl1  = n_haploid!=1? "s" : "";
+	string pl2  = n_diploid!=1? "s" : "";
+	vrb.bullet("#samples = " + stb.str(n_diploid+n_haploid) + " ["  + stb.str(n_haploid) + " haploid" + pl1 + "/ " + stb.str(n_diploid) + " diploid"+ pl2 + "]");
+
+	// Extract number of main iterations
+	header_record = bcf_hdr_get_hrec(sr->readers[0].header, BCF_HL_GEN, "NMAIN", NULL, NULL);
+	if (header_record == NULL) vrb.error("Cannot retrieve NMAIN flag in VCF header");
+	nmain = atoi(header_record->value);
+	if (nmain <1 || nmain > 15) vrb.error("NMAIN out of bounds : " + stb.str(nmain));
+
+	switching = vector < bool > (nmain * n_diploid, false);
+	distances = vector < int > (nmain * max_ploidy * n_diploid, 0);
+	vrb.bullet("#main_iterations = " + stb.str(nmain));
 
 	//Create output file + header by duplication
 	string file_format = "w";
@@ -143,6 +236,7 @@ void ligater::ligate() {
 	if (fname.size() > 6 && fname.substr(fname.size()-6) == "vcf.gz") { file_format = "wz"; file_type = OFILE_VCFC; }
 	if (fname.size() > 3 && fname.substr(fname.size()-3) == "bcf") { file_format = "wb"; file_type = OFILE_BCFC; }
 	htsFile * fp = hts_open(fname.c_str(),file_format.c_str());
+	if (n_threads > 1) hts_set_threads(fp, n_threads);
 	bcf_hdr_t * hdr = bcf_hdr_dup(sr->readers[0].header);
 	bcf_hdr_write(fp, hdr);
 
@@ -150,6 +244,7 @@ void ligater::ligate() {
 	int n_variants = 0;
 	int *buffer0=NULL, *buffer1=NULL, nbuffer0=0, nbuffer1=0, rbuffer0=0, rbuffer1=0;
 	bcf1_t * line0, * line1;
+	int chunk_counter=0;
 	while (bcf_sr_next_line (sr)) {
 
 		//DETERMINE READERS HAVING THE CURRENT RECORD
@@ -174,7 +269,7 @@ void ligater::ligate() {
 		//CASE0: WE ARE NOT IN AN OVERLAPPING REGION [STANDARD CASE]
 		if (active_readers.size() == 1) {
 			// verbose
-			if (prev_readers.size() == 0) vrb.title("First chunk of data from position [" + stb.str(position) + "]");
+			if (prev_readers.size() == 0) vrb.title("Chunk " + stb.str(++chunk_counter) + " from position [" + stb.str(position) + "]");
 			//Write Output using current switching
 			write_record(fp, hdr, line0);
 			//Update current stage of active reader
@@ -227,7 +322,7 @@ void ligater::ligate() {
 			else if (curr_stage0 == STAGE_DBUF && curr_stage1 == STAGE_BODY) {
 				// update switching if necessary
 				if (changedStatus) {
-					vrb.title("Next chunk of data from position [" + stb.str(position) + "]");
+					vrb.title("Chunk " + stb.str(++chunk_counter) + " from position [" + stb.str(position) + "]");
 					int nc = update_switching();
 					vrb.bullet("#switches=" + stb.str(nc));
 				}
@@ -238,7 +333,7 @@ void ligater::ligate() {
 			else if (curr_stage1 == STAGE_DBUF && curr_stage0 == STAGE_BODY) {
 				// update switching if necessary
 				if (changedStatus) {
-					vrb.title("Next chunk of data from position [" + stb.str(position) + "]");
+					vrb.title("Chunk " + stb.str(++chunk_counter) + " from position [" + stb.str(position) + "]");
 					int nc = update_switching();
 					vrb.bullet("#switches=" + stb.str(nc));
 				}
@@ -246,7 +341,7 @@ void ligater::ligate() {
 				write_record(fp, hdr, line0);
 			}
 			//IMPOSSIBLE CASE
-			else vrb.error("Problematic situation: " + stb.str(curr_stage0) + " " + stb.str(curr_stage1));
+			else vrb.error("Problematic overlapping between chunks): " + stb.str(curr_stage0) + " " + stb.str(curr_stage1));
 			//Update the stages in which the readers are now
 			current_stages[active_readers[0]] = curr_stage0;
 			current_stages[active_readers[1]] = curr_stage1;
@@ -262,8 +357,14 @@ void ligater::ligate() {
 	bcf_hdr_destroy(hdr);
 	bcf_sr_destroy(sr);
 	if (hts_close(fp)) vrb.error("Non zero status when closing VCF/BCF file descriptor");
+
 	//Last verbose
 	if (n_variants == 0) vrb.error("No variants to be phased in files");
+
 	vrb.title("Writing completed [L=" + stb.str(n_variants) + "] (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
+	vrb.title("Creating index");
+	//create index using htslib (csi, using default bcftools option 14)
+	if (!bcf_index_build3(string(options["output"].as < string > ()).c_str(), NULL, 14, options["thread"].as < int > ())) vrb.print("Index successfully created");
+	else vrb.warning("Problem building the index for the output file. Try to build it using tabix/bcftools.");
 }
 

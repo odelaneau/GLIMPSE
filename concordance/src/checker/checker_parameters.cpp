@@ -35,7 +35,7 @@ void checker::declare_options() {
 	opt_input.add_options()
 			("input", bpo::value< string >(), "File listing True, Imputed, Frequencies and Regions")
 			("samples", bpo::value< string >(), "List of samples to process, one sample ID per line")
-			("info_af", bpo::value< string >()->default_value("AF"), "Name of the INFO/AF field to be used in the frequency file.");
+			("af-tag", bpo::value< string >()->default_value("AF"), "Allele frequency INFO tag to use for binning. By default the allele frequency is estimated from the INFO/AF tag.");
 
 	bpo::options_description opt_algo ("Parameters");
 	opt_algo.add_options()
@@ -85,6 +85,9 @@ void checker::check_options() {
 
 	if ((options.count("bins")+options.count("groups")) != 1)
 		vrb.error("You must specify --bins or --groups");
+
+	if (options["thread"].as < int > () < 1)
+		vrb.error("Number of threads is a strictly positive number.");
 }
 
 void checker::verbose_files() {
@@ -97,10 +100,14 @@ void checker::verbose_files() {
 
 void checker::verbose_options() {
 	vrb.title("Parameters:");
+	vrb.bullet("Output  : " + options["output"].as < string > ());
 	vrb.bullet("Seed    : " + stb.str(options["seed"].as < int > ()));
+	vrb.bullet("#Threads   : " + stb.str(options["thread"].as < int > ()));
 	vrb.bullet("MinPROB : " + stb.str(options["minPROB"].as < double > ()));
 	vrb.bullet("MinDP   : " + stb.str(options["minDP"].as < int > ()));
-	vrb.bullet("#Threads   : " + stb.str(options["thread"].as < int > ()));
+	if (options.count("af-tag")) vrb.bullet("Using INFO/" + options["af-tag"].as < string > () + " tag for binning.");
+	else vrb.bullet("Using INFO/AF tag for binning.");
+
 	if (options.count("bins")) {
 		vector < double > tmp = options["bins"].as < vector < double > > ();
 		vrb.bullet("#bins   : " + stb.str(tmp.size()));

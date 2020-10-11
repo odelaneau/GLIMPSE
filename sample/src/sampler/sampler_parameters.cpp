@@ -28,15 +28,16 @@ void sampler::declare_options() {
 	bpo::options_description opt_base ("Basic options");
 	opt_base.add_options()
 			("help", "Produce help message")
-			("seed", bpo::value<int>()->default_value(15052011), "Seed of the random number generator");
+			("seed", bpo::value<int>()->default_value(15052011), "Seed of the random number generator")
+			("thread", bpo::value<int>()->default_value(1), "Number of threads");
 
 	bpo::options_description opt_input ("Input files");
 	opt_input.add_options()
-			("input", bpo::value < string >(), "VCF/BCF generated through LCC_ligate");
+			("input", bpo::value < string >(), "VCF/BCF generated through GLIMPSE ligate");
 
 	bpo::options_description opt_algo ("Parameters");
 	opt_algo.add_options()
-			("sample", "Sample a likely haplotype pair for each sample, use it in conbination with --seed")
+			("sample", "Samples a likely haplotype pair for each sample, use it in combination with --seed. Option not recommended for general usage, use --solve instead.")
 			("solve", "Get the most likely haplotype pair for each sample, independent of --seed");
 
 	bpo::options_description opt_output ("Output files");
@@ -78,6 +79,9 @@ void sampler::check_options() {
 
 	if (options.count("seed") && options["seed"].as < int > () < 0)
 		vrb.error("Random number generator needs a positive seed value");
+
+	if (options["thread"].as < int > () < 1)
+		vrb.error("Number of threads is a strictly positive number.");
 }
 
 void sampler::verbose_files() {
@@ -90,6 +94,7 @@ void sampler::verbose_files() {
 void sampler::verbose_options() {
 	vrb.title("Parameters:");
 	vrb.bullet("Seed       : " + stb.str(options["seed"].as < int > ()));
+	vrb.bullet("#Threads   : " + stb.str(options["thread"].as < int > ()));
 	if (options.count("sample")) vrb.bullet("Mode       : Sample a likely haplotype pair for each sample");
 	else vrb.bullet("Mode       : Get the most likely haplotype pair for each sample");
 }

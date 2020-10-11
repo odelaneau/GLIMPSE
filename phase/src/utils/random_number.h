@@ -36,10 +36,11 @@ protected:
 	std::mt19937 randomEngine;
 	std::uniform_int_distribution < unsigned int > uniformDistributionInt;
 	std::uniform_real_distribution < double > uniformDistributionDouble;
+	std::uniform_real_distribution < float > uniformDistributionFloat;
 
 public:
 
-	random_number_generator(unsigned int seed = 15052011) : randomEngine(seed), uniformDistributionInt(0, 32768), uniformDistributionDouble(0, 1.0) {
+	random_number_generator(unsigned int seed = 15052011) : randomEngine(seed), uniformDistributionInt(0, 32768), uniformDistributionDouble(0, 1.0), uniformDistributionFloat(0.0f,1.0f) {
 	}
 
 	~random_number_generator(){
@@ -64,6 +65,10 @@ public:
 
 	unsigned int getInt(unsigned int isize) {
 		return getInt(0, isize - 1);
+	}
+
+	double getFloat(float fmin=0.0f, float fmax=1.0f) {
+		return uniformDistributionFloat(randomEngine, std::uniform_real_distribution < float > {fmin, fmax}.param());
 	}
 
 	double getDouble(double fmin, double fmax) {

@@ -28,22 +28,22 @@
 #include <containers/variant_map.h>
 #include <containers/haplotype_set.h>
 
-/*
- * Do not ask me why i did not put all this in a cpp file! Lazyness ...
- */
+#define _SET8(n,i)	(n |= 1 << i)
+#define _CLR8(n,i)	(n &= ~(1 << i))
+#define _GET8(n,i)	((n >> i) & 1)
 
 class conditioning_set {
 public:
 	//FIXED DATA
-	variant_map & mapG;
-	haplotype_set & H;
-	unsigned int n_haps;
-	unsigned int n_vars;
-	unsigned int n_effective;
+	const variant_map & mapG;
+	const haplotype_set & H;
+	const unsigned int n_haps;
+	const unsigned int n_vars;
+	const unsigned int n_effective;
 
 	//CONDITIONING STATES
 	vector < int > idxH;
-	vector < bool > Hpoly;
+	vector < vector < unsigned char > > Hpoly;
 	vector < bool > Hmono;
 	vector < unsigned int > Vpoly;
 	vector < unsigned int > Vmono;
@@ -55,24 +55,26 @@ public:
 	vector < float > nt;
 
 	//EMISSION
-	double ed;
-	double ee;
+	const double ed;
+	const double ee;
 
 	//CONSTRUCTOR/DESTRUCTOR/INITIALIZATION
-	conditioning_set(variant_map & _mapG, haplotype_set & _H, unsigned int _n_haps, unsigned int _n_effective) : mapG(_mapG), H(_H) {
-		Hmono.clear();
-		Hpoly.clear();
-		Vmono.clear();
-		Vpoly.clear();
-		t.clear();
-		nt.clear();
-		n_states = 0;
-		n_sites = 0;
-		n_haps = _n_haps;
-		n_vars = mapG.size();
-		n_effective= _n_effective;
-		ed = 0.0001;
-		ee = 0.9999;
+	conditioning_set(const variant_map & _mapG, const haplotype_set & _H, const unsigned int _n_haps, const unsigned int _n_effective) :
+		mapG(_mapG),
+		H(_H),
+		n_haps(_n_haps),
+		n_vars(mapG.size()),
+		n_effective(_n_effective),
+		ed(0.0001),
+		ee(0.9999) {
+			Hmono.clear();
+			Hpoly.clear();
+			Vmono.clear();
+			Vpoly.clear();
+			t.clear();
+			nt.clear();
+			n_states = 0;
+			n_sites = 0;
 	}
 
 	~conditioning_set() {
@@ -99,6 +101,7 @@ public:
 
 	// Update transition probabilities of the HMM for this particular conditioning set
 	void updateTransitions() {
+		if (Vpoly.size() == 0) return;
 		t = vector < float > (Vpoly.size() - 1, 0.0);
 		nt = vector < float > (Vpoly.size() - 1, 0.0);
 		for (int l = 1 ; l < Vpoly.size() ; l ++) {
@@ -111,17 +114,25 @@ public:
 	}
 
 	// Build compact conditioning set, keeping track of polymorphic [need HMM compute] and monomorphic [no need of HMM compute] sites
-	void compact(int ind) {
+	void compact(int ind, const bool init) {
 		clear();
+		bool new_column = true;
 		n_states = idxH.size();
 		for (int l = 0 ; l < n_vars ; l ++) {
-			unsigned int ac = H.H_opt_var.get(l, 2*ind + H.n_ref + 0) + H.H_opt_var.get(l, 2*ind + H.n_ref + 1);		// AC in target
+			unsigned int ac = H.H_opt_var.get(l, 2*ind + H.n_ref_haps + 0) + H.H_opt_var.get(l, 2*ind + H.n_ref_haps + 1);		// AC in target
 			Hmono.push_back(H.H_opt_var.get(l,idxH[0]));																// Allele for monomorphic
-			for (int k = 0 ; k < idxH.size() ; k ++) ac += H.H_opt_var.get(l,idxH[k]);									// AC in conditioning states
+			if (new_column) Hpoly.push_back(vector < unsigned char > (idxH.size()/8 + (idxH.size()%8>0), 0));
+			else fill(Hpoly.back().begin(), Hpoly.back().end(), 0);
+			for (int k = 0 ; k < idxH.size() ; k ++) if (H.H_opt_var.get(l,idxH[k])) { _SET8(Hpoly.back()[k/8], k%8); ac ++; };
 			if (ac > 0 && ac < (idxH.size()+2)) {																		// Is the variant polymorphic? (using both cond. and target haps)
-				Vpoly.push_back(l);																						// If yes: store index
-				for (int k = 0 ; k < idxH.size() ; k ++) Hpoly.push_back(H.H_opt_var.get(l,idxH[k]));					// If yes: store alleles
-			} else Vmono.push_back(l);																					// If no: declare it as monomorphic
+				Vpoly.push_back(l);											// If yes: store index
+				new_column = true;
+				//Hpoly.push_back(vector < unsigned char > (idxH.size()/8 + (idxH.size()%8>0), 0));
+				//for (int k = 0 ; k < idxH.size() ; k ++) if (H.H_opt_var.get(l,idxH[k])) _SET(Hpoly.back()[k/8], k%8);
+			} else {
+				Vmono.push_back(l);																					// If no: declare it as monomorphic
+				new_column = false;
+			}
 		}
 		n_sites = Vpoly.size();		// Store number of polymorphic sites
 	}
@@ -130,13 +141,13 @@ public:
 	void selectRandom(int ind, int K) {
 		//Selection
 		idxH.clear();
-		for (int h = 0 ; h < H.n_ref ; h ++) if (H.initializing_haps[h]) idxH.push_back(h);		// The if is there when pooling is used
-		if (H.n_ref > K) {
+		for (int h = 0 ; h < H.n_ref_haps ; h ++) if (H.initializing_haps[h]) idxH.push_back(h);		// The if is there when pooling is used
+		if (H.n_ref_haps > K) {
 			random_shuffle(idxH.begin(), idxH.end());
 			idxH.erase(idxH.begin() + K, idxH.end());
 			sort(idxH.begin(), idxH.end());
 		}
-		compact(ind);	//Compact it!
+		compact(ind, true);	//Compact it!
 		updateTransitions();	// Update HMM parameters
 	}
 
@@ -144,8 +155,11 @@ public:
 	void selectPBWT(int ind, int K) {
 		//Selection
 		idxH.clear();
-		for (int h0 = 0 ; h0 < H.cond_states[2*ind+0].size() ; h0++) idxH.push_back(H.cond_states[2*ind+0][h0]);
-		for (int h1 = 0 ; h1 < H.cond_states[2*ind+1].size() ; h1++) idxH.push_back(H.cond_states[2*ind+1][h1]);
+		//for (int h0 = 0 ; h0 < H.cond_states[H.ind2hapid[ind]+0].size() ; h0++) idxH.push_back(H.cond_states[H.ind2hapid[ind]+0][h0]);
+		idxH.insert(idxH.end(), H.cond_states[H.ind2hapid[ind]+0].begin(), H.cond_states[H.ind2hapid[ind]+0].end());
+		if (H.ploidy[ind] > 1)
+			idxH.insert(idxH.end(), H.cond_states[H.ind2hapid[ind]+1].begin(), H.cond_states[H.ind2hapid[ind]+1].end());
+
 		sort(idxH.begin(), idxH.end());
 		idxH.erase(unique(idxH.begin(), idxH.end()), idxH.end());
 		if (idxH.size() > K) {
@@ -153,7 +167,7 @@ public:
 			idxH.erase(idxH.begin() + K, idxH.end());
 			sort(idxH.begin(), idxH.end());
 		}
-		compact(ind);	//Compact it!
+		compact(ind, false);	//Compact it!
 		updateTransitions();	// Update HMM parameters
 	}
 };

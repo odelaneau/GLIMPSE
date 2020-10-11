@@ -83,7 +83,7 @@ void chunker::chunk() {
 	buffer_count = options["buffer-count"].as < int > ();
 
 	//Read input data (overlapping coordinates)
-	readData(options["input"].as < string > (), options["region"].as < string > ());
+	readData(options["input"].as < string > (), options["region"].as < string > (), options["thread"].as <int> ());
 
 	if (positions.size() == 0) vrb.error("No markers in region: " + options["region"].as < string > () + ". Check chromosome name and start/end positions.");
 	// Perform chunking!

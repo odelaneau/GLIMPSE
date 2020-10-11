@@ -85,7 +85,7 @@
          </div>
          <div class="panel-body">
 			  <h4>Usage</h4>
-			  <code>GLIMPSE_chunk --input input.GLs.vcf.gz --reference reference.bcf --region chr20 --window-size 2000000 --window-count 2000 --buffer-size 500000 --buffer-count 500 --output chunks.txt --log chunks.log </code>
+			  <code>GLIMPSE_chunk --input input.GLs.vcf.gz --reference reference.bcf --region chr20 --window-size 1000000 --window-count 1000 --buffer-size 250000 --buffer-count 250 --output chunks.txt --log chunks.log </code>
 			  <table class="table table-striped">
 			  	<col width="15%">
   				<col width="10%">
@@ -114,22 +114,23 @@
 	              <td>Seed for random number generator.</td>
 			      </tr>
 			      <tr>
+			      <td><code>--thread</code></td>
+			        <td>NA</td>
+			        <td>INT</td>
+	                	<td>Number of threads to use (default 1). Multi-threading is only used for reading files using the htslib library</td>
+			      </tr>
+			      <tr>
+			      <tr>
 	              <td><code>--input</code></td>
 			        <td><code>--I</code></td>
 			        <td>STRING</td>
-			        <td>Input VCF/BCF file containing genotype likelihoods</td>
-			      </tr>
-			      <tr>
-	                	<td><code>--reference</code></td>
-			        <td><code>--R</code></td>
-			        <td>STRING</td>
-			        <td>Reference panel file possibly without GT field (for efficiency reasons a file containing only the positions of the reference panel is recommended).</td>
+			        <td>Target dataset in VCF/BCF format defined at all variable positions. The file could possibly be without GT field (for efficiency reasons a file containing only the positions is recommended).</td>
 			      </tr>
 			      <tr>
 	            	<td><code>--region</code></td>
 			        <td>NA</td>
 			        <td>STRING</td>
-			        <td>Target region (e.g. chr20:1000000-2000000 or chr20).</td>
+			        <td>Target region, usually a full chromosome (e.g. chr20:1000000-2000000 or chr20). For chrX, please treat PAR and non-PAR regions as different choromosome in order to avoid mixing ploidy.</td>
 			      </tr>
 			      <tr>
 	                	<td><code>--window-size</code></td>
@@ -212,7 +213,7 @@
 	                	<td><code>--thread</code></td>
 			        <td>NA</td>
 			        <td>INT</td>
-	                	<td>Number of threads to use (default 1).</td>
+	                	<td>Number of threads to use (default 1). Multi-threading is performed at the sample level, therefore there will be no benefit from this parameter only one sample is imputed</td>
 			      </tr>
 			      <tr>
 	                	<td><code>--input</code></td>
@@ -238,6 +239,17 @@
 			        <td>STRING</td>
 			        <td>File containing the genetic map.</td>
 			      </tr>
+	                	<td><code>--samples-file</code></td>
+			        <td>NA</td>
+			        <td>STRING</td>
+			        <td>File with sample names and ploidy information. One sample per line with a mandatory second column indicating ploidy (1 or 2). Sample names that are not present are assumed to have ploidy 2 (diploids). GLIMPSE does NOT handle the use of sex (M/F) instead of ploidy.</td>
+			      </tr>
+			      		<td><code>--impute-reference-only-variants</code></td>
+			        <td>NA</td>
+			        <td>STRING</td>
+			        <td>Allows imputation at variants only present in the reference panel. The use of this option is intended only to allow imputation at sporadic missing variants. If the number of missing variants is non-sporadic, please re-run the genotype likelihood computation at all reference variants and avoid using this option, since data from the reads should be used. A warning is thrown if reference-only variants are found.</td>
+			      </tr>
+			      
 			      <tr>
 	                	<td><code>--burnin</code></td>
 			        <td>NA</td>
@@ -248,7 +260,7 @@
 	                	<td><code>--main</code></td>
 			        <td>NA</td>
 			        <td>INT</td>
-			        <td>Number of main iterations of the Gibbs sampler. Each main iterations cotributes to output genotypes. Haplotypes sampled for the last (max 16) iterations are stored in the HS field.</td>
+			        <td>Number of main iterations of the Gibbs sampler. Each main iterations contributes to output genotypes. Haplotypes sampled for the last (max 15) iterations are stored in the HS field.</td>
 			      </tr>
 			      <tr>
 	                	<td><code>--pbwt-depth</code></td>
@@ -340,6 +352,12 @@
 	                	<td>Seed for random number generator.</td>
 			      </tr>
 			      <tr>
+			      <td><code>--thread</code></td>
+			        <td>NA</td>
+			        <td>INT</td>
+	                	<td>Number of threads to use (default 1). Multi-threading is only used for reading/writing files using the htslib library</td>
+			      </tr>
+			      <tr>
 	                	<td><code>--input</code></td>
 			        <td><code>--I</code></td>
 			        <td>STRING</td>
@@ -369,7 +387,7 @@
          </div>
          <div class="panel-body">
 	         <h4>Usage</h4>
-			  <code>GLIMPSE_sample --input imputed.chr20.bcf --sample --output phased.chr20.bcf --log  phased.chr20.log </code>
+			  <code>GLIMPSE_sample --input imputed.chr20.bcf --solve --output phased.chr20.bcf --log  phased.chr20.log </code>
 			  <table class="table table-striped">
 			  	<col width="15%">
   				<col width="10%">
@@ -399,6 +417,12 @@
 	                	<td>Seed for random number generator.</td>
 			      </tr>
 			      <tr>
+			      <td><code>--thread</code></td>
+			        <td>NA</td>
+			        <td>INT</td>
+	                	<td>Number of threads to use (default 1). Multi-threading is only used for reading/writing files using the htslib library</td>
+			      </tr>
+			      <tr>
 	                	<td><code>--input</code></td>
 			        <td><code>--I</code></td>
 			        <td>STRING</td>
@@ -408,7 +432,7 @@
 	                	<td><code>--sample</code></td>
 			        <td>NA</td>
 			        <td>STRING</td>
-			        <td>Sample a likely haplotype pair for each sample (to be used in combination with <code>--seed</code> option) </td>
+			        <td>Samples a likely haplotype pair for each sample, use it in combination with <code>--seed</code>. Option not recommended for general usage, use <code>--solve</code> instead.</td>
 			      </tr>
 			      <tr>
 	                	<td><code>--solve</code></td>

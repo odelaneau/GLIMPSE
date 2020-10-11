@@ -28,7 +28,8 @@ void chunker::declare_options() {
 	bpo::options_description opt_base ("Basic options");
 	opt_base.add_options()
 			("help", "Produce help message")
-			("seed", bpo::value<int>()->default_value(15052011), "Seed of the random number generator");
+			("seed", bpo::value<int>()->default_value(15052011), "Seed of the random number generator")
+			("thread", bpo::value<int>()->default_value(1), "Number of threads");
 
 	bpo::options_description opt_input ("Input files");
 	opt_input.add_options()
@@ -44,7 +45,7 @@ void chunker::declare_options() {
 
 	bpo::options_description opt_output ("Output files");
 	opt_output.add_options()
-			("output,O", bpo::value< string >(), "Coordinate files for driving LCC impute/phase runs")
+			("output,O", bpo::value< string >(), "Coordinate files for driving GLIMPSE phase runs")
 			("log", bpo::value< string >(), "Log file");
 
 	descriptions.add(opt_base).add(opt_input).add(opt_algo).add(opt_output);
@@ -80,6 +81,9 @@ void chunker::check_options() {
 
 	if (options.count("seed") && options["seed"].as < int > () < 0)
 		vrb.error("Random number generator needs a positive seed value");
+
+	if (options["thread"].as < int > () < 1)
+		vrb.error("Number of threads is a strictly positive number.");
 }
 
 void chunker::verbose_files() {
@@ -93,6 +97,7 @@ void chunker::verbose_files() {
 void chunker::verbose_options() {
 	vrb.title("Parameters:");
 	vrb.bullet("Seed             : " + stb.str(options["seed"].as < int > ()));
+	vrb.bullet("#Threads   : " + stb.str(options["thread"].as < int > ()));
 	vrb.bullet("Min. Window size : " + stb.str(options["window-size"].as < int > ()) + "bp / " + stb.str(options["window-count"].as < int > ()) + " variants");
 	vrb.bullet("Min. Buffer size : " + stb.str(options["buffer-size"].as < int > ()) + "bp / " + stb.str(options["buffer-count"].as < int > ()) + " variants");
 }

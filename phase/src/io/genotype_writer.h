@@ -34,16 +34,16 @@
 class genotype_writer {
 public:
 	//DATA
-	haplotype_set & H;
-	genotype_set & G;
-	variant_map & V;
+	const haplotype_set & H;
+	const genotype_set & G;
+	const variant_map & V;
 
 	//CONSTRUCTORS/DESCTRUCTORS
-	genotype_writer(haplotype_set &, genotype_set &, variant_map &);
+	genotype_writer(const haplotype_set &, const genotype_set &, const variant_map &);
 	~genotype_writer();
 
 	//IO
-	void writeGenotypes(string foutput, int, int, int);
+	void writeGenotypes(const string foutput, const int, const int, const int, const int) const;
 };
 
 #endif
