@@ -42,12 +42,10 @@ void caller::read_files_and_initialise() {
 	buildCoordinates();
 
 	//step2: Read input files
-	genotype_reader readerG(H, G, V, input_gregion);
+	genotype_reader readerG(H, G, V, input_gregion, options.count("impute-reference-only-variants"));
 	if (options.count("init-pool")) readerG.readInitializingSamples(options["init-pool"].as < string > ());
 	if (options.count("samples-file")) readerG.readSamplesFilePloidy(options["samples-file"].as < string > ());
-	readerG.scanGenotypes(options["input"].as < string > (), options["reference"].as < string > (), options["thread"].as <int> (), options.count("impute-reference-only-variants"));
-	readerG.allocateGenotypes();
-	readerG.readGenotypes(options["input"].as < string > (), options["reference"].as < string > (), options["thread"].as <int> (), options.count("impute-reference-only-variants"));
+	readerG.readGenotypes(options["input"].as < string > (), options["reference"].as < string > (), options["thread"].as <int> ());
 
 	//step3: Read and initialise genetic map
 	if (options.count("map")) {

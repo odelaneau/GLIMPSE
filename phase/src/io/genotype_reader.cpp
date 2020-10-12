@@ -28,12 +28,18 @@ std::map<std::string, int> mapPloidy = {
 		{"2",2}
 };
 
-genotype_reader::genotype_reader(haplotype_set & _H, genotype_set & _G, variant_map & _V, const string _region) : H(_H), G(_G), V(_V), region(_region) {
+genotype_reader::genotype_reader(
+		haplotype_set & _H,
+		genotype_set & _G,
+		variant_map & _V,
+		const string _region,
+		const bool _impute_missing) : H(_H), G(_G), V(_V), region(_region), impute_missing(_impute_missing) {
 	n_variants = 0;
 	n_main_samples = 0;
 	n_ref_samples = 0;
 	n_glikelihoods = 0;
 	n_missing=0;
+	hdr_ref = NULL;
 }
 
 genotype_reader::~genotype_reader() {
@@ -83,14 +89,8 @@ void genotype_reader::allocateGenotypes() {
 	H.H_opt_var.allocate(H.n_site, H.n_hap);
 }
 
-void genotype_reader::scanGenotypes(string fmain, string fref, int nthreads, const bool impute_missing) {
-	vrb.wait("  * VCF/BCF scanning");
-	tac.clock();
-	int n_haploid = 0, n_diploid=0;
-
-	float prog_step = 1.0/n_variants;
-	float prog_bar = 0.0;
-
+void genotype_reader::readGenotypes(string fmain, string fref, int nthreads)
+{
 	bcf_srs_t * sr =  bcf_sr_init();
 	sr->collapse = COLLAPSE_NONE;
 	sr->require_index = 1;
@@ -109,20 +109,73 @@ void genotype_reader::scanGenotypes(string fmain, string fref, int nthreads, con
 		}
 	}
 
+	scanGenotypes(sr);
+	allocateGenotypes();
+	parseGenotypes(sr);
+
+	bcf_sr_destroy(sr);
+}
+
+void genotype_reader::scanGenotypes(bcf_srs_t * sr) {
+	if(sr==nullptr) vrb.error("Error reading input files");
+
+	vrb.wait("  * VCF/BCF scanning");
+	tac.clock();
+	int n_haploid = 0, n_diploid=0;
+
+	float prog_step = 1.0/n_variants;
+	float prog_bar = 0.0;
+
 	n_variants = 0;
 	n_glikelihoods=0;
 	n_missing=0;
 	n_main_samples = bcf_hdr_nsamples(sr->readers[0].header);
-	n_ref_samples = bcf_hdr_nsamples(sr->readers[1].header);
 
-	//introduce a bit of initilization here.
-	// Needed for ploidy
-	ploidy_ref_samples = std::vector<int> (n_ref_samples,2);
 	main_sample_names = std::vector<string> (n_main_samples);
 	H.ploidy = std::vector<int> (n_main_samples,2);
 	H.ind2hapid = std::vector<int> (n_main_samples);
 	//H.hapid2ind = std::vector<int> (2*n_main_samples);
 	for (int i = 0 ; i < n_main_samples ; i ++) main_sample_names[i] = string(sr->readers[0].header->samples[i]);
+
+	hdr_ref = sr->readers[1].header;
+	n_ref_samples = bcf_hdr_nsamples(hdr_ref);
+
+
+	std::unordered_set<string> main_samples_names_set;
+	for (int i = 0 ; i < n_main_samples ; i ++) main_samples_names_set.insert(main_sample_names[i]);
+
+	char** ref_samples_names = NULL;
+	int n_incl_ref_samples = 0;
+	for (int i = 0; i < n_ref_samples ; i ++)
+	{
+		if (main_samples_names_set.find(string(hdr_ref->samples[i])) == main_samples_names_set.end())
+		{
+			ref_samples_names = (char**) realloc(ref_samples_names, (n_incl_ref_samples+1)*sizeof(const char*));
+			ref_samples_names[n_incl_ref_samples++] = strdup(hdr_ref->samples[i]);
+		}
+	}
+
+	if (n_incl_ref_samples == 0) vrb.error("Number of samples in the reference panel: " + std::to_string(n_ref_samples) + ", exclusive samples (not in the target): " + std::to_string(n_incl_ref_samples));
+
+	if (n_incl_ref_samples != n_ref_samples)
+	{
+		int* imap;
+		if (n_incl_ref_samples) imap = (int*)malloc(n_incl_ref_samples * sizeof(int));
+		hdr_ref = bcf_hdr_subset(hdr_ref, n_incl_ref_samples, ref_samples_names, imap);
+
+		if ( !hdr_ref ) vrb.error("Error occurred while subsetting samples");
+		if ( n_incl_ref_samples != bcf_hdr_nsamples(hdr_ref) )
+		{
+			for (int i=0; i<n_incl_ref_samples; i++) if ( imap[i]<0 ) vrb.error("No such sample: " + string(ref_samples_names[i]));
+			vrb.error("Error occurred while subsetting samples [imap]");
+		}
+		vrb.warning("Found " + std::to_string(n_ref_samples - n_incl_ref_samples) + " repeated sample IDs between target and reference panel. GLIMPSE excludes these samples from the reference panel.");
+		n_ref_samples=n_incl_ref_samples;
+	}
+
+	//introduce a bit of initilization here.
+	// Needed for ploidy
+	ploidy_ref_samples = std::vector<int> (n_ref_samples,2);
 
 	if (ploidy_samples.size() > 0) {
 		for (int i = 0 ; i < n_main_samples ; i ++)
@@ -164,7 +217,7 @@ void genotype_reader::scanGenotypes(string fmain, string fref, int nthreads, con
 			if (to_set_ploidy_ref) //read first line to set the ploidy of the reference panel
 			{
 				int ngt_ref, *gt_arr_ref = NULL, ngt_arr_ref = 0;
-				ngt_ref = bcf_get_genotypes(sr->readers[1].header, line_ref, &gt_arr_ref, &ngt_arr_ref);
+				ngt_ref = bcf_get_genotypes(hdr_ref, line_ref, &gt_arr_ref, &ngt_arr_ref);
 				max_ploidy_ref = ngt_ref/n_ref_samples;
 				if (max_ploidy_ref < 1 || max_ploidy_ref > 2 || ngt_ref%n_ref_samples != 0) vrb.error("Max ploidy of the reference panel cannot be set to neither 1 or 2.");
 
@@ -188,7 +241,8 @@ void genotype_reader::scanGenotypes(string fmain, string fref, int nthreads, con
 		}
 
 	}
-	bcf_sr_destroy(sr);
+	//bcf_sr_destroy(sr);
+	bcf_sr_seek (sr, NULL, 0);
 
 	if (n_variants == 0) vrb.error("No variants to be imputed in files");
 
@@ -202,7 +256,7 @@ void genotype_reader::scanGenotypes(string fmain, string fref, int nthreads, con
 		H.initializing_haps = vector < bool > (H.n_ref_haps, false);
 		int j = 0;
 		for (int i = 0 ; i < n_ref_samples ; i ++) {
-			if (initializing_samples.count(string(sr->readers[1].header->samples[i]))) {
+			if (initializing_samples.count(string(hdr_ref->samples[i]))) {
 				H.initializing_haps[j+0] = true;
 				if (ploidy_ref_samples[i] > 1) H.initializing_haps[j+1] = true;
 			}
@@ -216,8 +270,12 @@ void genotype_reader::scanGenotypes(string fmain, string fref, int nthreads, con
 	if (n_missing > 0) vrb.warning("There are variants of the reference panel with no genotype likelihood in the target dataset. Please compute the likelihoods at all variants in the reference panel in order to use all the information of the sequencing reads.");
 }
 
-void genotype_reader::readGenotypes(string funphased, string freference, int nthreads, const bool impute_missing) {
+void genotype_reader::parseGenotypes(bcf_srs_t * sr) {
+	if(sr==nullptr) vrb.error("Error reading input files");
+
+	vrb.wait("  * VCF/BCF parsing");
 	tac.clock();
+	/*
 	bcf_srs_t * sr =  bcf_sr_init();
 	sr->collapse = COLLAPSE_NONE;
 	sr->require_index = 1;
@@ -225,6 +283,8 @@ void genotype_reader::readGenotypes(string funphased, string freference, int nth
 	bcf_sr_set_regions(sr, region.c_str(), 0);
 	bcf_sr_add_reader (sr, funphased.c_str());
 	bcf_sr_add_reader (sr, freference.c_str());
+
+	 */
 
 	unsigned int i_variant = 0, nset = 0, n_ref_unphased = 0;
 	int ngl_main, ngl_arr_main = 0, *gl_arr_main = NULL;
@@ -241,14 +301,14 @@ void genotype_reader::readGenotypes(string funphased, string freference, int nth
 		if (line_ref->n_allele == 2)
 		{
 			bcf_unpack(line_ref, BCF_UN_STR);
-			string chr = bcf_hdr_id2name(sr->readers[1].header, line_ref->rid);
+			string chr = bcf_hdr_id2name(hdr_ref, line_ref->rid);
 			int pos = line_ref->pos + 1;
 			string id = string(line_ref->d.id);
 			string ref = string(line_ref->d.allele[0]);
 			string alt = string(line_ref->d.allele[1]);
 			unsigned int cref = 0, calt = 0;
 
-			ngt_ref = bcf_get_genotypes(sr->readers[1].header, line_ref, &gt_arr_ref, &ngt_arr_ref);
+			ngt_ref = bcf_get_genotypes(hdr_ref, line_ref, &gt_arr_ref, &ngt_arr_ref);
 			int line_max_ploidy = ngt_ref/n_ref_samples;
 			int idx_ref_hap=0;
 			for(int i = 0 ; i < n_ref_samples ; ++i)
@@ -295,7 +355,7 @@ void genotype_reader::readGenotypes(string funphased, string freference, int nth
 	}
 	free(gl_arr_main);
 	free(gt_arr_ref);
-	bcf_sr_destroy(sr);
+	bcf_hdr_destroy(hdr_ref);
 
 	// Report
 	vrb.bullet("VCF/BCF parsing done ("+stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
