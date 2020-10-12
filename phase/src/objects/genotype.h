@@ -26,9 +26,9 @@
 
 #include <utils/otools.h>
 
-#define _SET32(n,i)	(n |= 1U << i)
-#define _CLR32(n,i)	(n &= ~(1U << i));
-#define _GET32(n,i)	((n >> i) & 1U);
+#define _SET32(n,i)	((n) |= 1U << (i))
+#define _CLR32(n,i)	((n) &= ~(1U << (i)));
+#define _GET32(n,i)	(((n) >> (i)) & 1U);
 
 // 5 bytes per genotype, but sparse!
 struct inferred_genotype {
