@@ -47,7 +47,7 @@ void caller::declare_options() {
 			("burnin", bpo::value<int>()->default_value(10), "Number of Burn-in iterations")
 			("main", bpo::value<int>()->default_value(10), "Each main iterations contributes to output genotypes. Haplotypes sampled for the last (max 15) iterations are stored in the HS field.")
 			("pbwt-depth", bpo::value<int>()->default_value(2), "Number of neighbors to store")
-			("pbwt-modulo", bpo::value<int>()->default_value(8), "Frequency of PBWT storage")
+			("pbwt-modulo", bpo::value<int>()->default_value(8), "Frequency of PBWT selection")
 			("init-states", bpo::value<int>()->default_value(1000), "Number of states used for initialization")
 			("init-pool", bpo::value< string >(), "Pool of samples from which initializing haplotypes should be chosen")
 			("ne", bpo::value<float>()->default_value(20000.0), "Effective diploid population size");
@@ -99,7 +99,7 @@ void caller::check_options() {
 		vrb.error("Random number generator needs a positive seed value");
 
 	if (options["main"].as < int > () > 15)
-		vrb.error("Maximum value for --main is 15, to run more iteration, increase --burn");
+		vrb.error("Maximum value for --main is 15. To run more iteration, increase --burn");
 
 	if (options["thread"].as < int > () < 1)
 		vrb.error("Number of threads is a strictly positive number.");
