@@ -37,7 +37,7 @@ genotype_reader::genotype_reader(
 	n_variants = 0;
 	n_main_samples = 0;
 	n_ref_samples = 0;
-	n_glikelihoods = 0;
+	n_included = 0;
 	n_missing=0;
 	hdr_ref = NULL;
 }
@@ -127,7 +127,7 @@ void genotype_reader::scanGenotypes(bcf_srs_t * sr) {
 	float prog_bar = 0.0;
 
 	n_variants = 0;
-	n_glikelihoods=0;
+	n_included=0;
 	n_missing=0;
 	n_main_samples = bcf_hdr_nsamples(sr->readers[0].header);
 
@@ -236,7 +236,7 @@ void genotype_reader::scanGenotypes(bcf_srs_t * sr) {
 				H.n_ref_haps = n_ref_haploid + 2*(n_ref_samples-n_ref_haploid);
 				to_set_ploidy_ref=false;
 			}
-			nset == 2 ?	++n_glikelihoods : ++n_missing;
+			nset == 2 ?	++n_included : ++n_missing;
 			++n_variants;
 		}
 
@@ -264,7 +264,7 @@ void genotype_reader::scanGenotypes(bcf_srs_t * sr) {
 		}
 	} else H.initializing_haps = vector < bool > (H.n_ref_haps,true);
 
-	vrb.bullet("VCF/BCF scanning [Reg=" + region + " / L=" + stb.str(n_variants) + " (Lgl= " + stb.str(n_glikelihoods) + " (" + stb.str(((float)n_glikelihoods/n_variants)*100.0) + "%) - Lnl= " + stb.str(n_missing)  + " (" + stb.str(((float)n_missing/n_variants)*100.0) + "%))] (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
+	vrb.bullet("VCF/BCF scanning [Reg=" + region + " / L=" + stb.str(n_variants) + " (Li= " + stb.str(n_included) + " (" + stb.str(((float)n_included/n_variants)*100.0) + "%) - Lm= " + stb.str(n_missing)  + " (" + stb.str(((float)n_missing/n_variants)*100.0) + "%))] (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
 	vrb.bullet("VCF/BCF scanning [Nm=" + stb.str(n_main_samples) + " (Nmh=" + stb.str(n_haploid) + " - Nmd=" + stb.str(n_diploid) + ")" + " / Nr=" + stb.str(n_ref_samples) + " (Nrh=" + stb.str(n_ref_haploid) + " - Nrd=" + stb.str(n_ref_samples-n_ref_haploid) + ")" + "]");
 
 	if (n_missing > 0) vrb.warning("There are variants of the reference panel with no genotype likelihood in the target dataset. Please compute the likelihoods at all variants in the reference panel in order to use all the information of the sequencing reads.");
@@ -275,17 +275,6 @@ void genotype_reader::parseGenotypes(bcf_srs_t * sr) {
 
 	vrb.wait("  * VCF/BCF parsing");
 	tac.clock();
-	/*
-	bcf_srs_t * sr =  bcf_sr_init();
-	sr->collapse = COLLAPSE_NONE;
-	sr->require_index = 1;
-	if (nthreads>1) bcf_sr_set_threads(sr, nthreads);
-	bcf_sr_set_regions(sr, region.c_str(), 0);
-	bcf_sr_add_reader (sr, funphased.c_str());
-	bcf_sr_add_reader (sr, freference.c_str());
-
-	 */
-
 	unsigned int i_variant = 0, nset = 0, n_ref_unphased = 0;
 	int ngl_main, ngl_arr_main = 0, *gl_arr_main = NULL;
 	int ngt_ref, *gt_arr_ref = NULL, ngt_arr_ref = 0;
@@ -331,20 +320,23 @@ void genotype_reader::parseGenotypes(bcf_srs_t * sr) {
 				int main_file_max_ploidy = ngl_main/n_main_samples;
 				float sum=0.0;
 
-				if (max_ploidyP1 != main_file_max_ploidy) continue; //assuming missing data?
-				for(int i = 0 ; i < n_main_samples ; ++i)
+				if (max_ploidyP1 == main_file_max_ploidy)
 				{
-					int *ptr = gl_arr_main + i*max_ploidyP1;
-					const int ploidy = G.vecG[i]->ploidy;
-					unsigned char *gl = G.vecG[i]->GL.data() + (ploidy+1)*i_variant;
+					for(int i = 0 ; i < n_main_samples ; ++i)
+					{
+						int *ptr = gl_arr_main + i*max_ploidyP1;
+						const int ploidy = G.vecG[i]->ploidy;
+						unsigned char *gl = G.vecG[i]->GL.data() + (ploidy+1)*i_variant;
 
-					if ( ptr[0]==bcf_int32_missing || ptr[1]==bcf_int32_missing || ploidy>1 ? ptr[2]==bcf_int32_missing : false) continue;
-					if ( ptr[0]==bcf_int32_vector_end || ptr[1]==bcf_int32_vector_end || ploidy>1 ? ptr[2]==bcf_int32_vector_end : false) continue;
+						if ( ptr[0]==bcf_int32_missing || ptr[1]==bcf_int32_missing || ploidy>1 ? ptr[2]==bcf_int32_missing : false) continue;
+						if ( ptr[0]==bcf_int32_vector_end || ptr[1]==bcf_int32_vector_end || ploidy>1 ? ptr[2]==bcf_int32_vector_end : false) continue;
 
-					gl[0] = (ptr[0]<0 || ptr[0]>=256) ? (unsigned char) 255 : ptr[0];
-					gl[1] = (ptr[1]<0 || ptr[1]>=256) ? (unsigned char) 255 : ptr[1];
-					if (ploidy > 1) gl[2] = (ptr[2]<0 || ptr[2]>=256) ? (unsigned char) 255 : ptr[2];
+						gl[0] = (ptr[0]<0 || ptr[0]>=256) ? (unsigned char) 255 : ptr[0];
+						gl[1] = (ptr[1]<0 || ptr[1]>=256) ? (unsigned char) 255 : ptr[1];
+						if (ploidy > 1) gl[2] = (ptr[2]<0 || ptr[2]>=256) ? (unsigned char) 255 : ptr[2];
+					}
 				}
+				//else assuming missing data?
 			}
 
 			V.push(new variant (chr, pos, id, ref, alt, V.size(), cref, calt));
@@ -355,7 +347,6 @@ void genotype_reader::parseGenotypes(bcf_srs_t * sr) {
 	}
 	free(gl_arr_main);
 	free(gt_arr_ref);
-	bcf_hdr_destroy(hdr_ref);
 
 	// Report
 	vrb.bullet("VCF/BCF parsing done ("+stb.str(tac.rel_time()*1.0/1000, 2) + "s)");

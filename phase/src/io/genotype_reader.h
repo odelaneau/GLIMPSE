@@ -47,7 +47,7 @@ public:
 
 	//COUNTS
 	unsigned long n_variants;
-	unsigned long n_glikelihoods;
+	unsigned long n_included;
 	unsigned long n_missing;
 	unsigned long n_main_samples;
 	unsigned long n_ref_samples;

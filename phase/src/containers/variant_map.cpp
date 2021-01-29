@@ -133,14 +133,17 @@ double variant_map::lengthcM() const {
 
 void variant_map::setGeneticMap(const gmap_reader & readerGM) {
 	tac.clock();
+	if (vec_pos.size() == 0) vrb.error("No variant in common between reference and target panel. This can indicate a problem in the input files or during the parsing.");
 	int n_set = setCentiMorgan(readerGM.pos_bp, readerGM.pos_cm);
 	int n_interpolated = interpolateCentiMorgan(readerGM.pos_bp, readerGM.pos_cm);
 	vrb.bullet("cM interpolation [s=" + stb.str(n_set) + " / i=" + stb.str(n_interpolated) + "] (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
 }
 
 void variant_map::setGeneticMap() {
+	tac.clock();
+	if (vec_pos.size() == 0) vrb.error("No variant in common between reference and target panel. This can indicate a problem in the input files or during the parsing.");
 	for (int l = 0 ; l < vec_pos.size() ; l ++) vec_pos[l]->cm = vec_pos[l]->bp * 1.0 / 1e6;
 	double baseline = vec_pos[0]->cm;
 	for (int l = 0 ; l < vec_pos.size() ; l ++) vec_pos[l]->cm -= baseline;
-	vrb.bullet("cM constant [1cM=1Mb]");
+	vrb.bullet("cM constant [1cM=1Mb] (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
 }

@@ -118,13 +118,18 @@ public:
 		clear();
 		bool new_column = true;
 		n_states = idxH.size();
+		if (n_states == 0) vrb.error("States for individual " + std::to_string(ind) + " are zero. Error during selection.");
+
 		for (int l = 0 ; l < n_vars ; l ++) {
-			unsigned int ac = H.H_opt_var.get(l, 2*ind + H.n_ref_haps + 0) + H.H_opt_var.get(l, 2*ind + H.n_ref_haps + 1);		// AC in target
+			unsigned int ac = H.H_opt_var.get(l, H.ind2hapid[ind] + H.n_ref_haps + 0);
+			if (H.ploidy[ind] > 1) ac += H.H_opt_var.get(l, H.ind2hapid[ind] + H.n_ref_haps + 1);		// AC in target
+
 			Hmono.push_back(H.H_opt_var.get(l,idxH[0]));																// Allele for monomorphic
 			if (new_column) Hpoly.push_back(vector < unsigned char > (idxH.size()/8 + (idxH.size()%8>0), 0));
 			else fill(Hpoly.back().begin(), Hpoly.back().end(), 0);
+
 			for (int k = 0 ; k < idxH.size() ; k ++) if (H.H_opt_var.get(l,idxH[k])) { _SET8(Hpoly.back()[k/8], k%8); ac ++; };
-			if (ac > 0 && ac < (idxH.size()+2)) {																		// Is the variant polymorphic? (using both cond. and target haps)
+			if (ac > 0 && ac < (idxH.size()+H.ploidy[ind])) {																		// Is the variant polymorphic? (using both cond. and target haps)
 				Vpoly.push_back(l);											// If yes: store index
 				new_column = true;
 				//Hpoly.push_back(vector < unsigned char > (idxH.size()/8 + (idxH.size()%8>0), 0));
