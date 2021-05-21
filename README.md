@@ -6,7 +6,7 @@
 
 ### Versions
 
-**Current Release: 1.1.0**. Release date: October 07, 2020
+**Current Release: 1.1.1**. Release date: May 05, 2021
 
 For details of past changes please see [CHANGELOG](versions/CHANGELOG.md).
 
