@@ -37,13 +37,18 @@ public:
 	variant_map & V;
 	const string region;
 	const bool impute_missing;
+	const bool inputGL;
+	const bool exclude_repeated_samples;
 
 	std::vector<string> main_sample_names;
 	set < string > initializing_samples;
 	map <string, int> ploidy_samples;
 	vector<int> ploidy_ref_samples;
+	int n_haploid;
+	int n_diploid;
 
 	bcf_hdr_t *hdr_ref;
+	int* imap;
 
 	//COUNTS
 	unsigned long n_variants;
@@ -53,16 +58,20 @@ public:
 	unsigned long n_ref_samples;
 
 	//CONSTRUCTORS/DESCTRUCTORS
-	genotype_reader(haplotype_set &, genotype_set &, variant_map &, string regions, const bool _impute_missing);
+	genotype_reader(haplotype_set &, genotype_set &, variant_map &, string regions, const bool _impute_missing, const bool _inputGL, const bool _exclude_repeated_samples);
 	~genotype_reader();
 	void allocateGenotypes();
 
 	//IO
 	void readInitializingSamples(string);
 	void readSamplesFilePloidy(string);
+	void initReader(bcf_srs_t * sr, string& fmain, string& fref, int nthreads);
 	void readGenotypes(string funphased, string fphased, int nthreads);
 	void scanGenotypes(bcf_srs_t * sr);
 	void parseGenotypes(bcf_srs_t * sr);
+	void set_ploidy_ref(bcf1_t * line_ref);
+
 };
 
 #endif
+

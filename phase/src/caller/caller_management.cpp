@@ -23,10 +23,27 @@
 
 #include <caller/caller_header.h>
 
-caller::caller() {
+caller::caller():
+		input_start(0),
+		input_stop(0),
+		output_start(0),
+		output_stop(0),
+		i_workers(0),
+		i_jobs(0),
+		current_stage(0)
+{
 }
 
-caller::~caller() {
+caller::~caller()
+{
+	for (int t = 0 ; t < HMM.size() ; t ++) {
+		delete HMM[t];
+		delete DMM[t];
+		delete COND[t];
+	}
+	HMM.clear();
+	DMM.clear();
+	COND.clear();
 }
 
 void caller::phase(vector < string > & args) {

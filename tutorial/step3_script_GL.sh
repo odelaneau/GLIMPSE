@@ -1,7 +1,7 @@
 #!/bin/bash
 
 mkdir -p NA12878_1x_vcf
-bcftools view -G -m 2 -M 2 -v snps reference_panel/1000GP.chr22.noNA12878.bcf -Oz -o reference_panel/1000GP.chr22.noNA12878.sites.vcf.gz
+bcftools view -G -m 2 -M 2 -v snps -Oz -o reference_panel/1000GP.chr22.noNA12878.sites.vcf.gz reference_panel/1000GP.chr22.noNA12878.bcf
 bcftools index -f reference_panel/1000GP.chr22.noNA12878.sites.vcf.gz 
 
 bcftools query -f'%CHROM\t%POS\t%REF,%ALT\n' reference_panel/1000GP.chr22.noNA12878.sites.vcf.gz | bgzip -c > reference_panel/1000GP.chr22.noNA12878.sites.tsv.gz

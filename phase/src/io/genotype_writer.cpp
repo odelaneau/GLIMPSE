@@ -52,7 +52,7 @@ void genotype_writer::writeGenotypes(const string fname, const int output_start,
 	bcf_hdr_append(hdr, string("##contig=<ID="+ V.vec_pos[0]->chr + ">").c_str());
 	bcf_hdr_append(hdr, "##INFO=<ID=RAF,Number=A,Type=Float,Description=\"ALT allele frequency in the reference panel\">");
 	bcf_hdr_append(hdr, "##INFO=<ID=AF,Number=A,Type=Float,Description=\"ALT allele frequency computed from DS/GP field across target samples\">");
-	if (H.fploidy>0) bcf_hdr_append(hdr, "##INFO=<ID=INFO,Number=A,Type=Float,Description=\"IMPUTE info quality score for diploid samples\">");
+	if (H.fploidy == 2) bcf_hdr_append(hdr, "##INFO=<ID=INFO,Number=A,Type=Float,Description=\"IMPUTE info quality score for diploid samples\">");
 	bcf_hdr_append(hdr, "##INFO=<ID=BUF,Number=A,Type=Integer,Description=\"Is it a variant site falling within buffer regions? (0=no/1=yes)\">");
 	bcf_hdr_append(hdr, "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Unphased genotypes\">");
 	bcf_hdr_append(hdr, "##FORMAT=<ID=DS,Number=1,Type=Float,Description=\"Genotype dosage\">");
@@ -65,7 +65,7 @@ void genotype_writer::writeGenotypes(const string fname, const int output_start,
 	vector < int > ptr_gps = vector < int > (G.n_ind, 0);		// Pointers to iterate over sparse GPs
 	for (int i = 0 ; i < G.n_ind ; i ++) bcf_hdr_add_sample(hdr, G.vecG[i]->name.c_str());
 	bcf_hdr_add_sample(hdr, NULL);      // to update internal structures
-	bcf_hdr_write(fp, hdr);
+	if (bcf_hdr_write(fp, hdr) )  vrb.error("Failed to write header to file [" + string(fname) + "]");
 
 	//Add records
 	int * genotypes = (int*)malloc(bcf_hdr_nsamples(hdr)*H.max_ploidy*sizeof(int));
@@ -76,6 +76,7 @@ void genotype_writer::writeGenotypes(const string fname, const int output_start,
 	const std::size_t nsites = V.vec_pos.size();
 	float prog_step = 1.0/nsites;
 	float prog_bar = 0.0;
+	std::array<float,3> gp;
 
 	for (int l = 0 ; l < nsites ; l ++) {
 		// Clear current VCF record
@@ -89,65 +90,58 @@ void genotype_writer::writeGenotypes(const string fname, const int output_start,
 		bcf_update_alleles_str(hdr, rec, alleles.c_str());
 
 		// Store individual data
-		float ds_sum=0.0, ds2_sum=0.0, ds4_sum=0.0;
+		float ds_sum=0.0f, ds2_sum=0.0f, ds4_sum=0.0f;
 		std::fill(&genotypes[0], &genotypes[0] + H.max_ploidy*G.n_ind, bcf_gt_unphased(false));
 		for (int i = 0 ; i < G.n_ind ; i++)
 		{
 			// Initialialize output data in case of Ref/Ref genotype
 			int32_t hs = 0;
-			float ds = 0.0f, gp0 = 1.0f, gp1 = 0.0f, gp2 = 0.0f;
+			gp = {1.0f,0.0f,0.0f};
 
 			// Genotype is NOT 100% certain Ref/Ref
 			if ((ptr_gps[i]<G.vecG[i]->stored_data.size()) && (G.vecG[i]->stored_data[ptr_gps[i]].idx==l))
 			{
 				genotypes[H.max_ploidy*i+0] = bcf_gt_unphased(G.vecG[i]->H0[l]);
-				gp0 = G.vecG[i]->stored_data[ptr_gps[i]].gp0;
-				gp1 = G.vecG[i]->stored_data[ptr_gps[i]].gp1;
+				gp[0] = roundf(G.vecG[i]->stored_data[ptr_gps[i]].gp0 * 1000.0) / 1000.0;
+				gp[1] = roundf(G.vecG[i]->stored_data[ptr_gps[i]].gp1 * 1000.0) / 1000.0;
 				hs = G.vecG[i]->stored_data[ptr_gps[i]].hs;
-				ds += gp1;
 				if (G.vecG[i]->ploidy > 1)
 				{
 					genotypes[H.max_ploidy*i+1] = bcf_gt_unphased(G.vecG[i]->H1[l]);
-					gp2 = G.vecG[i]->stored_data[ptr_gps[i]].getGp2();
-					ds += 2.0f * gp2;
+					gp[2] = roundf(G.vecG[i]->stored_data[ptr_gps[i]].getGp2() * 1000.0) / 1000.0;
 				}
 				ptr_gps[i] ++;
 			}
-
 			// Store DS + GP rounded 4 decimals
-			dosages[i] = roundf(ds * 1000.0) / 1000.0;
-			posteriors[(H.max_ploidy+1)*i+0] = roundf(gp0 * 1000.0) / 1000.0;
-			posteriors[(H.max_ploidy+1)*i+1] = roundf(gp1 * 1000.0) / 1000.0;
+			posteriors[(H.max_ploidy+1)*i+0] = gp[0];
+			posteriors[(H.max_ploidy+1)*i+1] = gp[1];
 			if (H.max_ploidy>1)
 			{
-				if (G.vecG[i]->ploidy > 1) posteriors[(H.max_ploidy+1)*i+2] = roundf(gp2 * 1000.0) / 1000.0;
+				if (G.vecG[i]->ploidy > 1) posteriors[(H.max_ploidy+1)*i+2] = gp[2];
 				else
 				{
 					genotypes[H.max_ploidy*i+1] = bcf_int32_vector_end;
 					bcf_float_set(&posteriors[(H.max_ploidy+1)*i+2], bcf_float_vector_end);
 				}
 			}
+			dosages[i] = roundf((gp[1] + 2*gp[2]) * 1000.0) / 1000.0;
 			haplotypes[i] = hs;
 
 			// Compute INFO/INFO statistics
-			ds_sum += ds;
-			if (H.fploidy == 2)
-			{
-				ds2_sum += ds * ds;
-				ds4_sum += gp1 + 4.0*gp2;
-			}
+			ds_sum += gp[1] + 2*gp[2];
+			ds2_sum += (gp[1] + 2*gp[2]) * (gp[1] + 2*gp[2]);
+			ds4_sum += gp[1] + 4*gp[2];
 		}
 
 		// Update INFO fields
 		int buffer = ((V.vec_pos[l]->bp < output_start) || (V.vec_pos[l]->bp > output_stop));
 		float freq_alt_refp = V.vec_pos[l]->calt * 1.0f / (V.vec_pos[l]->calt + V.vec_pos[l]->cref);
 		float freq_alt_main = ds_sum / H.n_main_haps;
-		float infoscore = (H.fploidy == 2 && freq_alt_main>0.0 && freq_alt_main<1.0) ? (float)(1.0 - (ds4_sum - ds2_sum) / (H.n_hap * freq_alt_main * (1.0 - freq_alt_main))) : 1.0f;
-		infoscore = (infoscore<0.0f)?0.0f:infoscore;
-		infoscore = roundf(infoscore * 1000.0) / 1000.0;
+		float infoscore = (H.fploidy == 2 && freq_alt_main>0.0f && freq_alt_main<1.0f) ? (float)(1.0f - (ds4_sum - ds2_sum) / (H.n_main_haps * freq_alt_main * (1.0f - freq_alt_main))) : 1.0f;
+		infoscore = roundf(std::max(infoscore,0.0f) * 1000.0) / 1000.0;
 		bcf_update_info_float(hdr, rec, "RAF", &freq_alt_refp, 1);
 		bcf_update_info_float(hdr, rec, "AF", &freq_alt_main, 1);
-		if (H.fploidy>0) bcf_update_info_float(hdr, rec, "INFO", &infoscore, 1);
+		if (H.fploidy == 2) bcf_update_info_float(hdr, rec, "INFO", &infoscore, 1);
 		bcf_update_info_int32(hdr, rec, "BUF", &buffer, 1);
 
 		// Update FORMAT fields
@@ -157,7 +151,7 @@ void genotype_writer::writeGenotypes(const string fname, const int output_start,
 		bcf_update_format_int32(hdr, rec, "HS", haplotypes, bcf_hdr_nsamples(hdr)*1);
 
 		//Write record
-		bcf_write1(fp, hdr, rec);
+		if (bcf_write1(fp, hdr, rec) ) vrb.error("Failed to write the record [" + V.vec_pos[l]->chr + ":" + std::to_string(V.vec_pos[l]->bp) + "_" + V.vec_pos[l]->ref + "_" + V.vec_pos[l]->alt +"] to file [" + string(fname) + "]");
 		prog_bar+=prog_step;
 		vrb.progress("  * VCF writing", prog_bar);
 	}

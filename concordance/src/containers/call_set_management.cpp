@@ -26,19 +26,20 @@
 call_set::call_set () {
 }
 
-void call_set::initialize(vector < double > _bins, double _T, int _D) {
-	vrb.title("Initializing engine based on frequency bins:");
+void call_set::initialize(vector < double > _maf_bins,double _T, int _D) {
+	vrb.title("Initializing engine based on allele frequency bins:");
 	use_subset_samples=false;
 	T = _T;
 	D = _D;
-	bins = _bins;
+	bins = _maf_bins;
 	L = bins.size() - 1;
+
 	site2grp.clear();
 	rsquared_str.clear();
 	vrb.bullet("Probs >= " + stb.str(T));
 	vrb.bullet("Depth >= " + stb.str(D));
-	vrb.bullet("#intervals in bining = " + stb.str(L));
-	vrb.bullet("bins [" + stb.str(bins) + "]");
+	vrb.bullet("#AF bins = " + stb.str(L));
+	vrb.bullet("AF bins [" + stb.str(bins) + "]");
 }
 
 void call_set::initialize(string fgrps, double _T, int _D) {
@@ -48,6 +49,7 @@ void call_set::initialize(string fgrps, double _T, int _D) {
 	D = _D;
 	bins.clear();
 	L = 0;
+
 	vrb.bullet("Probs >= " + stb.str(T));
 	vrb.bullet("Depth >= " + stb.str(D));
 
@@ -84,15 +86,18 @@ void call_set::setTargets(string fsamples) {
 	string buffer;
 	input_file fd (fsamples);
 	vector < string > tokens;
+	std::pair<std::set<string>::iterator,bool> ret;
 
-	bool repeated_samples=false;
 	while (getline(fd, buffer))
 	{
 		if (stb.split(buffer, tokens) < 1) vrb.error("Empty line found in sample file.");
-		subset_samples.insert(tokens[0]);
+		ret = subset_samples_set.insert(tokens[0]);
+		if (ret.second) subset_samples.push_back(tokens[0]);
+
 	}
 	vrb.bullet("#samples  = " + stb.str(subset_samples.size()));
 	fd.close();
+	if (subset_samples.size()==0) vrb.error("No sample found in the samples file (--samples).");
 }
 
 call_set::~call_set() {

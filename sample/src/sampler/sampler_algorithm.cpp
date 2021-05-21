@@ -172,7 +172,7 @@ void sampler::sample() {
 	htsFile * fp = hts_open(fname.c_str(),file_format.c_str());
 	if (n_threads > 1) hts_set_threads(fp, n_threads);
 	bcf_hdr_t * hdr = bcf_hdr_dup(sr->readers[0].header);
-	bcf_hdr_write(fp, hdr);
+	if (bcf_hdr_write(fp, hdr)) vrb.error("Failed to write header to output file");
 
 	//Main loop
 	int n_variants = 0;
@@ -254,7 +254,8 @@ void sampler::sample() {
 		bcf_update_format(hdr, line, "GP", NULL, 0, BCF_HT_INT);
 		bcf_update_format(hdr, line, "DS", NULL, 0, BCF_HT_INT);
 		// Write updated record in file
-		bcf_write1(fp, hdr, line);
+		if (bcf_write1(fp, hdr, line) ) vrb.error("Failed to write the record output to file");
+
 		//
 		n_variants++;
 	}
@@ -273,4 +274,5 @@ void sampler::sample() {
 	if (!bcf_index_build3(options["output"].as < string > ().c_str(), NULL, 14, options["thread"].as < int > ())) vrb.print("Index successfully created");
 	else vrb.warning("Problem building the index for the output file. Try to build it using tabix/bcftools.");
 }
+
 

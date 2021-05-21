@@ -25,7 +25,7 @@
 
 haplotype_hmm::haplotype_hmm(const conditioning_set * _C) {
 	C = _C;
-	Emissions = vector < float > (2*C->n_vars, 0.0);
+	Emissions = vector < float > (2*C->n_vars, 0.0f);
 }
 
 haplotype_hmm::~haplotype_hmm() {
@@ -35,12 +35,12 @@ haplotype_hmm::~haplotype_hmm() {
 }
 
 void haplotype_hmm::resize() {
-	AlphaSum.resize(C->n_sites);
-	Alpha.resize(C->n_sites * C->n_states);
+	AlphaSum.resize(C->n_sites,0.0f);
+	Alpha.resize(C->n_sites * C->n_states,0.0f);//VALGRIND
 }
 
 void haplotype_hmm::init(const vector < float > & HL) {
-	double p0, p1;
+	float p0, p1;
 	for (int l = 0 ; l < C->n_vars ; l ++) {
 		p0 = HL[2*l+0] * C->ee + HL[2*l+1] * C->ed;
 		p1 = HL[2*l+0] * C->ed + HL[2*l+1] * C->ee;
@@ -57,11 +57,11 @@ void haplotype_hmm::computePosteriors(const vector < float > & HL, vector < floa
 }
 
 void haplotype_hmm::forward() {
-	double fact1, fact2;
+	float fact1, fact2;
 	for (int l = 0 ; l < C->n_sites ; l ++) {
-		AlphaSum[l] = 0.0;
+		AlphaSum[l] = 0.0f;
 		if (l == 0) {
-			fact1 = 1.0 / C->n_states;
+			fact1 = 1.0f / C->n_states;
 			for (int k = 0 ; k < C->n_states ; k ++) {
 				Alpha[k] = Emissions[2*C->Vpoly[l]+_GET8(C->Hpoly[l][k/8], k%8)] * fact1;
 				AlphaSum[l] += Alpha[k];
@@ -79,20 +79,20 @@ void haplotype_hmm::forward() {
 }
 
 void haplotype_hmm::backward(const vector < float > & HL, vector < float > & HP) {
-	double betaSumNext, betaSumCurr;
-	double prob0 = 0.0, prob1 = 0.0;
-	double hemit[2][2], pcopy[2], prob[2], betaSumTmp[2];
-	vector < float > beta = vector < float > (C->n_states, 1.0);
+	float betaSumNext, betaSumCurr;
+	float prob0 = 0.0f, prob1 = 0.0f;
+	float hemit[2][2], pcopy[2], prob[2], betaSumTmp[2];
+	vector < float > beta = vector < float > (C->n_states, 1.0f);
 	for (int l = C->n_sites-1 ; l >= 0 ; l --) {
 		// Initilialization
-		prob[0]=0.0;prob[1]=0.0;
-		betaSumTmp[0]=0.0;betaSumTmp[1]=0.0;
+		prob[0]=0.0f;prob[1]=0.0f;
+		betaSumTmp[0]=0.0f;betaSumTmp[1]=0.0f;
 		hemit[0][0] = C->ee * HL[2*C->Vpoly[l]+0] / Emissions[2*C->Vpoly[l] + 0];
 		hemit[0][1] = C->ed * HL[2*C->Vpoly[l]+0] / Emissions[2*C->Vpoly[l] + 1];
 		hemit[1][0] = C->ed * HL[2*C->Vpoly[l]+1] / Emissions[2*C->Vpoly[l] + 0];
 		hemit[1][1] = C->ee * HL[2*C->Vpoly[l]+1] / Emissions[2*C->Vpoly[l] + 1];
 		// Backward pass
-		betaSumCurr = 0.0;
+		betaSumCurr = 0.0f;
 		if (l == C->n_sites - 1) {
 			for (int k = 0 ; k < C->n_states ; k ++) {
 				prob[_GET8(C->Hpoly[l][k/8], k%8)] += Alpha[l*C->n_states+k] * beta[k];
@@ -131,3 +131,4 @@ void haplotype_hmm::backward(const vector < float > & HL, vector < float > & HP)
 	     HP[2*C->Vmono[l]+1] = prob1 / (prob0 + prob1);
 	 }
 }
+

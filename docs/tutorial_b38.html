@@ -105,47 +105,46 @@
 		</div> 
 		<p>
 		In order to run accurate imputation we recommend to use a targeted reference with ancestry related to the target samples, if possible. 
-		For this tutorial we use the 1000 Genomes Project phase 3 reference panel. 
-		Since the reference panel contains data of our target sample, we need to remove it from the reference panel. 
+		For this tutorial we use the 1000 Genomes Project 30x NYGC reference panel. 
+		Since the reference panel contains data of our target sample and few relatives, we need to remove them from the reference panel. 
 		This steps downloads the 1000 genomes b38 data from the EBI ftp site.
 		</p>
 		<div class="well">
 			<h3>2.1. Download of the reference panel files</h3>
 
 			<p>
-			The 1000 Genomes phase 3 reference panel is publicly available at EBI 1000 genomes ftp site. 
+			The 1000 Genomes Project reference panel is publicly available at EBI 1000 genomes ftp site. 
 			We can download chromosome 22 data using:
 			</p>
 		
 			<p style="text-indent:-5px ! important;"><code>
-			&nbsp;> wget http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/supporting/GRCh38_positions/ALL.chr22_GRCh38.genotypes.20170504.vcf.gz{,.tbi}
+			&nbsp;> wget -c http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/20201028_3202_phased/CCDG_14151_B01_GRM_WGS_2020-08-05_chr22.filtered.shapeit2-duohmm-phased.vcf.gz{,.tbi}
 			</code></p>
-			The reference panel size is approximately 200MB.
+			The reference panel size is approximately 520 MB.  <br>
+			Update (20/05/2021): users reported that the download of the reference panel can be slow and it is often interrupted. Unfortunately, we do not have control on that.
+			However, using wget with the -c option allows to restart the download from where it was interrupted. 
+			Additionally, we recommend to compare the checksum to what it was reported. Instructions for this can be found in the following script:
+			<p style="text-indent:-5px ! important;"><code>
+			step2_script_reference_panel.sh
+			</code></p>
 		</div>
 		<div class="well">
-			<h3>2.2. Remove NA12878 from the reference panel and perform basic QC</h3>
+			<h3>2.2. Remove NA12878 (and family) from the reference panel and perform basic QC</h3>
 			<p> 
-			We used BCFtools to remove sample NA12878 from the reference panel and we export the dataset in BCF file format (for efficiency reasons). 
-			We also performs a basic QC step that includes:
-			<ol>
-				<li>Generate a text file containing space-spearated old and new chromosome names. This is required to rename the numerical chromosome names with 'chr' tag. Apply the new chromosome names with 'bcftools annotate'.</li>
-				<li>Keep only SNPs and remove multiallelic records.</li>
-			</ol> 
+			We used BCFtools to remove sample NA12878 and related samples from the reference panel and we export the dataset in BCF file format (for efficiency reasons). 
+			We also performs a basic QC step by keeping only SNPs and remove multiallelic records.
+			The reason for this is multiple: GLIMPSE only handles bi-allelic SNPs and Bcftools does not perform a good job at calling indels, causing potential problems at neighboring SNPs, therefore we remove them completely from the analysis. 
+			Alternatively, it is possible to keep the indels in the reference panel and force missing-data imputation there.<br>
+
 			The original reference panel files are then deleted from the main tutorial folder:
 			</p>
 			
 			<p style="text-indent:-5px ! important;"><code>
-			&nbsp;> for CHR in {1..23} X ; do <br>
-			&nbsp;> echo ${CHR} chr${CHR}<br>
-			&nbsp;> done >> chr_names.txt<br>
-			<br>
 			&nbsp;> CHR=22<br>
-			&nbsp;> bcftools annotate --rename-chrs chr_names.txt \<br>
-			&nbsp;> &nbsp;&nbsp;&nbsp;&nbsp;ALL.chr${CHR}_GRCh38.genotypes.20170504.vcf.gz -Ou | \<br>
-			&nbsp;> bcftools view -m 2 -M 2 -v snps -s ^NA12878 --threads 4 -Ob -o reference_panel/1000GP.chr22.noNA12878.bcf<br>
-			&nbsp;> bcftools index -f reference_panel/1000GP.chr22.noNA12878.bcf<br>
-			&nbsp;> rm ALL.chr22_GRCh38.genotypes.20170504.vcf.gz*<br>
-			&nbsp;> rm chr_names.txt<br>
+			&nbsp;> bcftools norm -m -any CCDG_14151_B01_GRM_WGS_2020-08-05_chr22.filtered.shapeit2-duohmm-phased.vcf.gz -Ou --threads 4 | <br>
+			&nbsp;  &nbsp;&nbsp;&nbsp;&nbsp;bcftools view -m 2 -M 2 -v snps -s ^NA12878,NA12891,NA12892 --threads 4 -Ob -o reference_panel/1000GP.chr22.noNA12878.bcf <br>
+			&nbsp;> bcftools index -f reference_panel/1000GP.chr22.noNA12878.bcf --threads 4<br>
+			&nbsp;> rm CCDG_14151_B01_GRM_WGS_2020-08-05_chr22.filtered.shapeit2-duohmm-phased.vcf.gz*<br>
 			</code></p>
 			
 			<p>
@@ -181,8 +180,8 @@
 			<h3>3.1. Extracting variable positions in the reference panel</h3>
 				
 			<p>
-			We want this information to tell BCFtools at which positions to make a call.
-			Since BCFtools does not seem to compute correctly genotype likelihood for indels, here we only focus on SNPs (however, GLIMPSE can impute any type of variants as soon it is bi-allelic and has GLs being properly defined).
+			We a VCF/BCF file containing only sites to tell BCFtools at which positions to make a genotype call.
+			Since BCFtools does not compute correctly genotype likelihood for indels, here we only focus on SNPs (however, GLIMPSE can impute any type of variants as soon it is bi-allelic and has GLs being properly defined).
 			To perform the extraction from the chromosome 22 of a reference panel <code>1000GP.chr22.noNA12878.bcf</code>, run first BCFtools as follows:
 			</p>
 			
@@ -200,17 +199,17 @@
 			</code>
 			</p>
 			
-			<p>In a general pipeline, we should generate this pair of files (*.vcf.gz + *.tsv.gz) for all chromosome separately.</p>
+			<p>In a general pipeline, we should generate this pair of files (*.vcf.gz + *.tsv.gz) for all chromosomes separately.</p>
 		</div>
 		
 		<div class="well">
 			<h3>3.2. Computing GLs for a single individual at specific positions</h3>
 
 			<p>
-			Once ready the position files, we can then start doing the calling in itself.
+			Once we have the VCF and TSV files ready, we can then start performing genotype calling for our low-coverage sample.
 			We use the downsampled 1x BAM file generated in section 1.1 <code>NA12878_1x_bam/NA12878.chr22.1x.bam</code>.
 			<br>
-			BCFtools requires the reference genome in order to align the BAM file. We used the reference genome version used by the 1000 Genomes Project (<code>reference_genome/hs38DH.chr22.fa.gz[.fai,.gzi]</code>)
+			BCFtools requires the reference genome in order to align the BAM file. We here use the reference genome version used by the 1000 Genomes Project (<code>reference_genome/hs38DH.chr22.fa.gz[.fai,.gzi]</code>)
 			<br>
 			We can run the following command:
 			</p>
@@ -227,8 +226,8 @@
 			
 			<p>Note here, that we use <code>-T reference_panel/1000GP.chr22.noNA12878.sites.<b>vcf</b>.gz</code> in the first part of the command line and <br>
 			<code>-T reference_panel/1000GP.chr22.noNA12878.sites.<b>tsv</b>.gz</code> in the second part of the command line.</p>
-			<p>You may also tune the options of BCFtools to your specific needs, requirements and data.</p>
-			<p>As an output of this step we have a VCF file format containing genotype likelihoods at each site in the reference panel. </p>
+			<p>You may also tune the options of BCFtools to your specific needs, requirements and data (for example reducing the threshold for the minimum base/mapping quality to another positive number, in order to have less missing data).</p>
+			<p>The output of this step is a VCF file format containing genotype likelihoods at each site in the reference panel. </p>
 		</div>
 		<div class="well">
 			<h3>3.3. Merging genotype likelihoods of multiple individuals</h3>
@@ -237,7 +236,7 @@
 			</p>
 			
 			<p style="text-indent:-5px ! important;"><code>
-			&nbsp;> bcftools merge -m none -r 22 -Oz -o merged.chr22.1x.vcf.gz -l list.txt<br>
+			&nbsp;> bcftools merge -m none -r chr22 -Oz -o merged.chr22.1x.vcf.gz -l list.txt<br>
 			</code></p>
 			
 			<p>Where <code>list.txt</code> is a text file containing the full list of VCF/BCF files containing GLs of each target individual in the study, one individual file per line. 

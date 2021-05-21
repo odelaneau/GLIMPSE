@@ -55,8 +55,8 @@ public:
 	vector < float > nt;
 
 	//EMISSION
-	const double ed;
-	const double ee;
+	const float ed;
+	const float ee;
 
 	//CONSTRUCTOR/DESTRUCTOR/INITIALIZATION
 	conditioning_set(const variant_map & _mapG, const haplotype_set & _H, const unsigned int _n_haps, const unsigned int _n_effective) :
@@ -65,8 +65,8 @@ public:
 		n_haps(_n_haps),
 		n_vars(mapG.size()),
 		n_effective(_n_effective),
-		ed(0.0001),
-		ee(0.9999) {
+		ed(0.0001f),
+		ee(0.9999f) {
 			Hmono.clear();
 			Hpoly.clear();
 			Vmono.clear();
@@ -107,9 +107,9 @@ public:
 		for (int l = 1 ; l < Vpoly.size() ; l ++) {
 			float distcm = mapG.vec_pos[Vpoly[l]]->cm - mapG.vec_pos[Vpoly[l-1]]->cm;
 			if (distcm < 0.00001f) distcm = 0.00001f;
-			float rho = 0.04 * n_effective * distcm;
-			t[l-1] = -1.0 * expm1(-1.0 * rho / n_haps);
-			nt[l-1] = 1-t[l-1];
+			float rho = 0.04f * n_effective * distcm;
+			t[l-1] = -1.0f * expm1(-1.0f * rho / n_haps);
+			nt[l-1] = 1.0f-t[l-1];
 		}
 	}
 
@@ -178,3 +178,4 @@ public:
 };
 
 #endif
+

@@ -39,7 +39,9 @@ void caller::declare_options() {
 			("reference,R", bpo::value < string >(), "Reference panel of haplotypes in VCF/BCF format")
 			("map,M", bpo::value < string >(), "Genetic map")
 			("samples-file",  bpo::value < string >(), "File with sample names and ploidy information. One sample per line with a mandatory second column indicating ploidy (1 or 2). Sample names that are not present are assumed to have ploidy 2 (diploids). If the parameter is omitted, all samples are assumed to be diploid. GLIMPSE does NOT handle the use of sex (M/F) instead of ploidy.")
-			("impute-reference-only-variants", "Allows imputation at variants only present in the reference panel. The use of this option is intended only to allow imputation at sporadic missing variants. If the number of missing variants is non-sporadic, please re-run the genotype likelihood computation at all reference variants and avoid using this option, since data from the reads should be used. A warning is thrown if reference-only variants are found.");
+			("impute-reference-only-variants", "Allows imputation at variants only present in the reference panel. The use of this option is intended only to allow imputation at sporadic missing variants. If the number of missing variants is non-sporadic, please re-run the genotype likelihood computation at all reference variants and avoid using this option, since data from the reads should be used. A warning is thrown if reference-only variants are found.")
+			("input-GL", "Uses FORMATL/GL field instead of FORMAT/PL as input for the genotype likelihoods.")
+			("ban-repeated-sample-names", "Excludes reference samples having names matching the target samples. To be used only when the target and the reference panel share (even partially) the same set of individuals.");
 
 
 	bpo::options_description opt_algo ("Model parameters");
@@ -50,7 +52,7 @@ void caller::declare_options() {
 			("pbwt-modulo", bpo::value<int>()->default_value(8), "Frequency of PBWT selection")
 			("init-states", bpo::value<int>()->default_value(1000), "Number of states used for initialization")
 			("init-pool", bpo::value< string >(), "Pool of samples from which initializing haplotypes should be chosen")
-			("ne", bpo::value<float>()->default_value(20000.0), "Effective diploid population size");
+			("ne", bpo::value<int>()->default_value(20000), "Effective diploid population size");
 
 	bpo::options_description opt_output ("Output parameters");
 	opt_output.add_options()
@@ -119,15 +121,19 @@ void caller::verbose_files() {
 void caller::verbose_options() {
 	vrb.title("Parameters:");
 	vrb.bullet("Seed       : " + stb.str(options["seed"].as < int > ()));
+	if (options.count("input-GL")) vrb.bullet("Input      : FORMAT/GL field for genotype likelihoods");
+	else vrb.bullet("Input      : FORMAT/PL field for genotype likelihoods");
 	vrb.bullet("#Threads   : " + stb.str(options["thread"].as < int > ()));
 	vrb.bullet("#Burnin    : " + stb.str(options["burnin"].as < int > ()));
 	vrb.bullet("#Main      : " + stb.str(options["main"].as < int > ()));
 	vrb.bullet("PBWT depth : " + stb.str(options["pbwt-depth"].as < int > ()));
 	vrb.bullet("PBWT modulo: " + stb.str(options["pbwt-modulo"].as < int > ()));
-	if (options.count("map")) vrb.bullet("HMM     : Recombination rates given by genetic map");
+	if (options.count("map")) vrb.bullet("HMM        : Recombination rates given by genetic map");
 	else vrb.bullet("HMM     : Constant recombination rate of 1cM per Mb");
 	if (options.count("samples-file")) vrb.bullet("Ploidy     : given by samples file");
 	else vrb.bullet("Ploidy     : All samples are diploids in this region");
 	vrb.bullet("Init K     : " + stb.str(options["init-states"].as < int > ()));
 	if (options.count("impute-reference-variants")) vrb.bullet("Imputation at reference-only variants is performed");
+	if (options.count("ban-repeated-sample-names")) vrb.bullet("Excludes reference samples having IDs matching the target samples");
 }
+

@@ -27,85 +27,421 @@ void call_set::writeData(string fout) {
 	tac.clock();
 	vrb.title("Writting output files");
 
+	const int ploidyP1 = ploidy + 1;
+
 	// [1] Concordance per sample
-	vrb.bullet("Concordance per sample");
+	vrb.bullet("Concordance per sample: [" + fout + ".error.spl.txt.gz]");
 	output_file fd1 (fout + ".error.spl.txt.gz");
-	for (int i = 0 ; i < N ; i++) {
+
+	fd1<<"#Genotype concordance by sample (SNPs)\n";
+	fd1 << "#GCsS" << " ";
+	if (ploidy > 1) fd1 << "id sample RR_hom_matches RA_het_matches AA_hom_matches RR_hom_mismatches RA_het_mismatches AA_hom_mismatches RR_hom_mismatches_rate_percent RA_het_mismatches_rate_percent AA_hom_mimatches non_reference_discordanc_rate_percent best_gt_rsquared imputed_ds_rsquared\n";
+	else fd1 << "id sample R_matches A_matches R_mismatches A_mismatches R_mismatches_rate_percent A_mismatches_rate_percent non_reference_discordanc_rate_percent best_gt_rsquared imputed_ds_rsquared\n";
+
+	for (int i = 0 ; i < N ; i++)
+	{
 		int gpos=ind2gpos[i];
-		fd1 << samples[i];
-		fd1 << " " << genotype_spl_errors[gpos+0] << " " << genotype_spl_totals[gpos+0];
-		fd1 << " " << genotype_spl_errors[gpos+1] << " " << genotype_spl_totals[gpos+1];
-		if (ploidy[i] > 1) fd1 << " " << genotype_spl_errors[gpos+2] << " " << genotype_spl_totals[gpos+2];
-		fd1 << " " << genotype_spl_errors[gpos+0] * 100.0 / genotype_spl_totals[gpos+0];
-		fd1 << " " << genotype_spl_errors[gpos+1] * 100.0 / genotype_spl_totals[gpos+1];
-		if (ploidy[i] > 1) fd1 << " " << genotype_spl_errors[gpos+2] * 100.0 / genotype_spl_totals[gpos+2];
+
+		unsigned long nrd_mm = genotype_spl_errors_snps[gpos+0];
+		unsigned long nrd_m = 0;
+		for (int p=1; p<= ploidy; ++p)
+		{
+			nrd_mm += genotype_spl_errors_snps[gpos+p];
+			nrd_m += (genotype_spl_totals_snps[gpos+p] - genotype_spl_errors_snps[gpos+p]);
+		}
+		double nrd = (nrd_m+nrd_mm) > 0 ? nrd_mm*100.0/(nrd_m+nrd_mm) : 0.0;
+
+		nrd = (nrd_m+nrd_mm) > 0 ? nrd_mm*100.0/(nrd_m+nrd_mm) : 0.0;
+
+		fd1 << "GCsS ";
+		fd1 << stb.str(i) << " ";
+		fd1 << samples[i] << " ";
+
+		fd1 << (genotype_spl_totals_snps[gpos+0]-genotype_spl_errors_snps[gpos+0]) << " ";
+		fd1 << (genotype_spl_totals_snps[gpos+1]-genotype_spl_errors_snps[gpos+1]) << " ";
+		if (ploidy > 1) fd1 << (genotype_spl_totals_snps[gpos+2]-genotype_spl_errors_snps[gpos+2]) << " ";
+
+		fd1  << genotype_spl_errors_snps[gpos+0] << " ";
+		fd1 << genotype_spl_errors_snps[gpos+1] << " ";
+		if (ploidy > 1) fd1 << genotype_spl_errors_snps[gpos+2] << " ";
+
+		double d0 = genotype_spl_totals_snps[gpos+0]>0? genotype_spl_errors_snps[gpos+0] * 100.0 / genotype_spl_totals_snps[gpos+0] : 0;
+		double d1 = genotype_spl_totals_snps[gpos+1]>0? genotype_spl_errors_snps[gpos+1] * 100.0 / genotype_spl_totals_snps[gpos+1] : 0;
+		double d2 = (ploidy > 1 && genotype_spl_totals_snps[gpos+2])>0? genotype_spl_errors_snps[gpos+2] * 100.0 / genotype_spl_totals_snps[gpos+2] : 0;
+
+		fd1 << std::setprecision(3) << std::fixed << d0 << " ";
+		fd1 << std::setprecision(3) << std::fixed << d1 << " ";
+		if (ploidy > 1) fd1 << std::setprecision(3) << std::fixed << d2 << " ";
+		//nrd rate
+		fd1 << std::setprecision(3) << std::fixed << std::round(nrd * 1000000.0)/1000000.0 << " ";
+
+		double rsq0 = rsquared_spl_gt_snps[i].corrXY();
+		fd1 << std::setprecision(6) << std::fixed << std::round(rsq0 * rsq0 * 1000000.0)/1000000.0 << " ";
+
+		rsq0 = rsquared_spl_ds_snps[i].corrXY();
+		fd1 << std::setprecision(6) << std::fixed << std::round(rsq0 * rsq0 * 1000000.0)/1000000.0;
+
+		fd1 << endl;
+	}
+
+	fd1<<"#Genotype concordance by sample (indels)\n";
+	fd1 << "#GCsI" << " ";
+	if (ploidy > 1) fd1 << "id sample RR_hom_matches RA_het_matches AA_hom_matches RR_hom_mismatches RA_het_mismatches AA_hom_mismatches RR_hom_mismatches_rate_percent RA_het_mismatches_rate_percent AA_hom_mimatches non_reference_discordanc_rate_percent best_gt_rsquared imputed_ds_rsquared\n";
+	else fd1 << "id sample R_matches A_matches R_mismatches A_mismatches R_mismatches_rate_percent A_mismatches_rate_percent non_reference_discordanc_rate_percent best_gt_rsquared imputed_ds_rsquared\n";
+
+	for (int i = 0 ; i < N ; i++)
+	{
+		int gpos=ind2gpos[i];
+
+		unsigned long nrd_mm = genotype_spl_errors_indels[gpos+0];
+		unsigned long nrd_m = 0;
+		for (int p=1; p<= ploidy; ++p)
+		{
+			nrd_mm += genotype_spl_errors_indels[gpos+p];
+			nrd_m += (genotype_spl_totals_indels[gpos+p] - genotype_spl_errors_indels[gpos+p]);
+		}
+		double nrd = (nrd_m+nrd_mm) > 0 ? nrd_mm*100.0/(nrd_m+nrd_mm) : 0.0;
+
+		nrd = (nrd_m+nrd_mm) > 0 ? nrd_mm*100.0/(nrd_m+nrd_mm) : 0.0;
+
+		fd1 << "GCsI ";
+		fd1 << stb.str(i) << " ";
+		fd1 << samples[i] << " ";
+
+		fd1 << (genotype_spl_totals_indels[gpos+0]-genotype_spl_errors_indels[gpos+0]) << " ";
+		fd1 << (genotype_spl_totals_indels[gpos+1]-genotype_spl_errors_indels[gpos+1]) << " ";
+		if (ploidy > 1) fd1 << (genotype_spl_totals_indels[gpos+2]-genotype_spl_errors_indels[gpos+2]) << " ";
+
+		fd1  << genotype_spl_errors_indels[gpos+0] << " ";
+		fd1 << genotype_spl_errors_indels[gpos+1] << " ";
+		if (ploidy > 1) fd1 << genotype_spl_errors_indels[gpos+2] << " ";
+
+		double d0 = genotype_spl_totals_indels[gpos+0]>0? genotype_spl_errors_indels[gpos+0] * 100.0 / genotype_spl_totals_indels[gpos+0] : 0;
+		double d1 = genotype_spl_totals_indels[gpos+1]>0? genotype_spl_errors_indels[gpos+1] * 100.0 / genotype_spl_totals_indels[gpos+1] : 0;
+		double d2 = (ploidy > 1 && genotype_spl_totals_indels[gpos+2])>0? genotype_spl_errors_indels[gpos+2] * 100.0 / genotype_spl_totals_indels[gpos+2] : 0;
+
+		fd1 << std::setprecision(3) << std::fixed << d0 << " ";
+		fd1 << std::setprecision(3) << std::fixed << d1 << " ";
+		if (ploidy > 1) fd1 << std::setprecision(3) << std::fixed << d2 << " ";
+
+		//nrd rate
+		fd1 << std::setprecision(3) << std::fixed << std::round(nrd * 1000000.0)/1000000.0 << " ";
+
+		double rsq0 = rsquared_spl_gt_indels[i].corrXY();
+		fd1 << std::setprecision(6) << std::fixed << std::round(rsq0 * rsq0 * 1000000.0)/1000000.0 << " ";
+
+		rsq0 = rsquared_spl_ds_indels[i].corrXY();
+		fd1 << std::setprecision(6) << std::fixed << std::round(rsq0 * rsq0 * 1000000.0)/1000000.0;
+
+		fd1 << endl;
+	}
+
+	fd1<<"#Genotype concordance by sample (Variants: SNPs + indels)\n";
+	fd1 << "#GCsV" << " ";
+	if (ploidy > 1) fd1 << "id sample RR_hom_matches RA_het_matches AA_hom_matches RR_hom_mismatches RA_het_mismatches AA_hom_mismatches RR_hom_mismatches_rate_percent RA_het_mismatches_rate_percent AA_hom_mimatches non_reference_discordanc_rate_percent best_gt_rsquared imputed_ds_rsquared\n";
+	else fd1 << "id sample R_matches A_matches R_mismatches A_mismatches R_mismatches_rate_percent A_mismatches_rate_percent non_reference_discordanc_rate_percent best_gt_rsquared imputed_ds_rsquared\n";
+
+	for (int i = 0 ; i < N ; i++)
+	{
+		int gpos=ind2gpos[i];
+
+		unsigned long nrd_mm = genotype_spl_errors_all[gpos+0];
+		unsigned long nrd_m = 0;
+		for (int p=1; p<= ploidy; ++p)
+		{
+			nrd_mm += genotype_spl_errors_all[gpos+p];
+			nrd_m += (genotype_spl_totals_all[gpos+p] - genotype_spl_errors_all[gpos+p]);
+		}
+		double nrd = (nrd_m+nrd_mm) > 0 ? nrd_mm*100.0/(nrd_m+nrd_mm) : 0.0;
+
+		nrd = (nrd_m+nrd_mm) > 0 ? nrd_mm*100.0/(nrd_m+nrd_mm) : 0.0;
+
+		fd1 << "GCsV" << " ";
+		fd1 << stb.str(i) << " ";
+		fd1 << samples[i] << " ";
+
+		fd1 << (genotype_spl_totals_all[gpos+0]-genotype_spl_errors_all[gpos+0]) << " ";
+		fd1 << (genotype_spl_totals_all[gpos+1]-genotype_spl_errors_all[gpos+1]) << " ";
+		if (ploidy > 1) fd1 << (genotype_spl_totals_all[gpos+2]-genotype_spl_errors_all[gpos+2]) << " ";
+
+		fd1  << genotype_spl_errors_all[gpos+0] << " ";
+		fd1 << genotype_spl_errors_all[gpos+1] << " ";
+		if (ploidy > 1) fd1 << genotype_spl_errors_all[gpos+2] << " ";
+
+		double d0 = genotype_spl_totals_all[gpos+0]>0? genotype_spl_errors_all[gpos+0] * 100.0 / genotype_spl_totals_all[gpos+0] : 0;
+		double d1 = genotype_spl_totals_all[gpos+1]>0? genotype_spl_errors_all[gpos+1] * 100.0 / genotype_spl_totals_all[gpos+1] : 0;
+		double d2 = (ploidy > 1 && genotype_spl_totals_all[gpos+2])>0? genotype_spl_errors_all[gpos+2] * 100.0 / genotype_spl_totals_all[gpos+2] : 0;
+
+		fd1 << std::setprecision(3) << std::fixed << d0 << " ";
+		fd1 << std::setprecision(3) << std::fixed << d1 << " ";
+		if (ploidy > 1) fd1 << std::setprecision(3) << std::fixed << d2 << " ";
+
+		//nrd rate
+		fd1 << std::setprecision(3) << std::fixed << std::round(nrd * 1000000.0)/1000000.0 << " ";
+
+		double rsq0 = rsquared_spl_gt_all[i].corrXY();
+		fd1 << std::setprecision(6) << std::fixed << std::round(rsq0 * rsq0 * 1000000.0)/1000000.0 << " ";
+
+		rsq0 = rsquared_spl_ds_all[i].corrXY();
+		fd1 << std::setprecision(6) << std::fixed << std::round(rsq0 * rsq0 * 1000000.0)/1000000.0;
+		fd1 << endl;
+	}
+
+	fd1.close();
+
+	// [2] Concordance per bin
+
+	fd1.open(fout + ".error.grp.txt.gz");
+	if (L > 0)
+	{
+		vrb.bullet("Concordance by frequency bin: [" + fout + ".error.grp.txt.gz]");
+		fd1<<"#Genotype concordance by allele frequency bin (SNPs)\n";
+		fd1 << "#GCsSAF" << " ";
+		if (ploidy > 1) fd1 << "id n_genotypes mean_AF RR_hom_matches RA_het_matches AA_hom_matches RR_hom_mismatches RA_het_mismatches AA_hom_mismatches RR_hom_mismatches_rate_percent RA_het_mismatches_rate_percent AA_hom_mimatches_rate_percent\n";
+		else fd1 << "id n_genotypes mean_AF R_matches A_matches R_mismatches A_mismatches R_mismatches_rate_percent A_mismatches_rate_percent best_gt_rsquared imputed_ds_rsquared\n";
+
+
+		for (int b = 0 ; b < L ; b++)
+		{
+			fd1 << "GCsSAF" << " " << b << " " << frequency_bin_snps[b].size() << " " << frequency_bin_snps[b].mean() << " ";
+			fd1 << (genotype_bin_totals_snps[ploidyP1*b+0] - genotype_bin_errors_snps[ploidyP1*b+0]) << " ";
+			fd1 << (genotype_bin_totals_snps[ploidyP1*b+1] - genotype_bin_errors_snps[ploidyP1*b+1]) << " ";
+			if (ploidy > 1) fd1 << (genotype_bin_totals_snps[ploidyP1*b+2] - genotype_bin_errors_snps[ploidyP1*b+2]) << " ";
+			fd1 << genotype_bin_errors_snps[ploidyP1*b+0] << " ";
+			fd1 << genotype_bin_errors_snps[ploidyP1*b+1] << " ";
+			if (ploidy > 1) fd1 << genotype_bin_errors_snps[ploidyP1*b+2] << " ";
+
+			double d0 = genotype_bin_totals_snps[ploidyP1*b+0]>0? genotype_bin_errors_snps[ploidyP1*b+0] * 100.0 / genotype_bin_totals_snps[ploidyP1*b+0] : 0;
+			double d1 = genotype_bin_totals_snps[ploidyP1*b+1]>0? genotype_bin_errors_snps[ploidyP1*b+1] * 100.0 / genotype_bin_totals_snps[ploidyP1*b+1] : 0;
+			double d2 = (ploidy > 1 && genotype_bin_totals_snps[ploidyP1*b+2]>0)? genotype_bin_errors_snps[ploidyP1*b+2] * 100.0 / genotype_bin_totals_snps[ploidyP1*b+2] : 0;
+
+			fd1 << std::setprecision(3) << std::fixed << d0 << " ";
+			fd1 << std::setprecision(3) << std::fixed << d1 << " ";
+			if (ploidy > 1) fd1 << std::setprecision(3) << std::fixed << d2 << " ";
+
+			double rsq0 = rsquared_bin_gt_snps[b].corrXY();
+			fd1 << std::setprecision(6) << std::fixed << std::round(rsq0* rsq0 * 1000000.0)/1000000.0 << " ";
+
+			rsq0 = rsquared_bin_ds_snps[b].corrXY();
+			fd1 << std::setprecision(6) << std::fixed << std::round(rsq0* rsq0 * 1000000.0)/1000000.0;
+
+			fd1 << endl;
+		}
+
+		fd1<<"#Genotype concordance by allele frequency bin (indels)\n";
+		fd1 << "#GCsIAF" << " ";
+		if (ploidy > 1) fd1 << "id n_genotypes mean_AF RR_hom_matches RA_het_matches AA_hom_matches RR_hom_mismatches RA_het_mismatches AA_hom_mismatches RR_hom_mismatches_rate_percent RA_het_mismatches_rate_percent AA_hom_mimatches_rate_percent\n";
+		else fd1 << "id n_genotypes mean_AF R_matches A_matches R_mismatches A_mismatches R_mismatches_rate_percent A_mismatches_rate_percent best_gt_rsquared imputed_ds_rsquared\n";
+
+
+		for (int b = 0 ; b < L ; b++)
+		{
+			fd1 << "GCsIAF" << " " << b << " " << frequency_bin_indels[b].size() << " " << frequency_bin_indels[b].mean() << " ";
+			fd1 << (genotype_bin_totals_indels[ploidyP1*b+0] - genotype_bin_errors_indels[ploidyP1*b+0]) << " ";
+			fd1 << (genotype_bin_totals_indels[ploidyP1*b+1] - genotype_bin_errors_indels[ploidyP1*b+1]) << " ";
+			if (ploidy > 1) fd1 << (genotype_bin_totals_indels[ploidyP1*b+2] - genotype_bin_errors_indels[ploidyP1*b+2]) << " ";
+			fd1 << genotype_bin_errors_indels[ploidyP1*b+0] << " ";
+			fd1 << genotype_bin_errors_indels[ploidyP1*b+1] << " ";
+			if (ploidy > 1) fd1 << genotype_bin_errors_indels[ploidyP1*b+2] << " ";
+
+			double d0 = genotype_bin_totals_indels[ploidyP1*b+0]>0? genotype_bin_errors_indels[ploidyP1*b+0] * 100.0 / genotype_bin_totals_indels[ploidyP1*b+0] : 0;
+			double d1 = genotype_bin_totals_indels[ploidyP1*b+1]>0? genotype_bin_errors_indels[ploidyP1*b+1] * 100.0 / genotype_bin_totals_indels[ploidyP1*b+1] : 0;
+			double d2 = (ploidy > 1 && genotype_bin_totals_indels[ploidyP1*b+2]>0)? genotype_bin_errors_indels[ploidyP1*b+2] * 100.0 / genotype_bin_totals_indels[ploidyP1*b+2] : 0;
+
+			fd1 << std::setprecision(3) << std::fixed << d0 << " ";
+			fd1 << std::setprecision(3) << std::fixed << d1 << " ";
+			if (ploidy > 1) fd1 << std::setprecision(3) << std::fixed << d2 << " ";
+
+			double rsq0 = rsquared_bin_gt_indels[b].corrXY();
+			fd1 << std::setprecision(6) << std::fixed << std::round(rsq0* rsq0 * 1000000.0)/1000000.0 << " ";
+
+			rsq0 = rsquared_bin_ds_indels[b].corrXY();
+			fd1 << std::setprecision(6) << std::fixed << std::round(rsq0* rsq0 * 1000000.0)/1000000.0;
+
+			fd1 << endl;
+		}
+
+		fd1<<"#Genotype concordance by allele frequency bin (Variants: SNPs + indels)\n";
+		fd1 << "#GCsVAF" << " ";
+		if (ploidy > 1) fd1 << "#GCsVAF id n_genotypes mean_AF RR_hom_matches RA_het_matches AA_hom_matches RR_hom_mismatches RA_het_mismatches AA_hom_mismatches RR_hom_mismatches_rate_percent RA_het_mismatches_rate_percent AA_hom_mimatches_rate_percent\n";
+		else fd1 << "#GCsVAF id n_genotypes mean_AF R_matches A_matches R_mismatches A_mismatches R_mismatches_rate_percent A_mismatches_rate_percent best_gt_rsquared imputed_ds_rsquared\n";
+
+
+		for (int b = 0 ; b < L ; b++)
+		{
+			fd1 << "GCsVAF" << " " << b << " " << frequency_bin_all[b].size() << " " << std::setprecision(6) << std::fixed << frequency_bin_all[b].mean() << " ";
+			fd1 << (genotype_bin_totals_all[ploidyP1*b+0] - genotype_bin_errors_all[ploidyP1*b+0]) << " ";
+			fd1 << (genotype_bin_totals_all[ploidyP1*b+1] - genotype_bin_errors_all[ploidyP1*b+1]) << " ";
+			if (ploidy > 1) fd1 << (genotype_bin_totals_all[ploidyP1*b+2] - genotype_bin_errors_all[ploidyP1*b+2]) << " ";
+			fd1 << genotype_bin_errors_all[ploidyP1*b+0] << " ";
+			fd1 << genotype_bin_errors_all[ploidyP1*b+1] << " ";
+			if (ploidy > 1) fd1 << genotype_bin_errors_all[ploidyP1*b+2] << " ";
+
+			double d0 = genotype_bin_totals_all[ploidyP1*b+0]>0? genotype_bin_errors_all[ploidyP1*b+0] * 100.0 / genotype_bin_totals_all[ploidyP1*b+0] : 0;
+			double d1 = genotype_bin_totals_all[ploidyP1*b+1]>0? genotype_bin_errors_all[ploidyP1*b+1] * 100.0 / genotype_bin_totals_all[ploidyP1*b+1] : 0;
+			double d2 = (ploidy > 1 && genotype_bin_totals_all[ploidyP1*b+2]>0)? genotype_bin_errors_all[ploidyP1*b+2] * 100.0 / genotype_bin_totals_all[ploidyP1*b+2] : 0;
+
+			fd1 << std::setprecision(3) << std::fixed << d0 << " ";
+			fd1 << std::setprecision(3) << std::fixed << d1 << " ";
+			if (ploidy > 1) fd1 << std::setprecision(3) << std::fixed << d2 << " ";
+
+			double rsq0 = rsquared_bin_gt_all[b].corrXY();
+			fd1 << std::setprecision(6) << std::fixed << std::round(rsq0* rsq0 * 1000000.0)/1000000.0 << " ";
+
+			rsq0 = rsquared_bin_ds_all[b].corrXY();
+			fd1 << std::setprecision(6) << std::fixed << std::round(rsq0* rsq0 * 1000000.0)/1000000.0;
+
+			fd1 << endl;
+		}
+	}
+	else
+	{
+		vrb.bullet("Concordance by group: [" + fout + ".error.grp.txt.gz]");
+		fd1<<"#Genotype concordance by group bin (Variants: SNPs + indels)\n";
+		//TODO group option disabled for now..
+		for (int b = 0 ; b < rsquared_str.size() ; b++)
+		{
+			fd1 << b << " " << rsquared_str[b] << " " << frequency_bin_all[b].size() << " " << frequency_bin_all[b].mean();
+			fd1 << " " << genotype_bin_errors_all[ploidyP1*b+0] << " " << genotype_bin_totals_all[ploidyP1*b+0];
+			fd1 << " " << genotype_bin_errors_all[ploidyP1*b+1] << " " << genotype_bin_totals_all[ploidyP1*b+1];
+			if (ploidy > 1) fd1 << " " << genotype_bin_errors_all[ploidyP1*b+2] << " " << genotype_bin_totals_all[ploidyP1*b+2];
+			fd1 << " " << genotype_bin_errors_all[ploidyP1*b+0] * 100.0 / genotype_bin_totals_all[ploidyP1*b+0];
+			fd1 << " " << genotype_bin_errors_all[ploidyP1*b+1] * 100.0 / genotype_bin_totals_all[ploidyP1*b+1];
+			if (ploidy > 1) fd1 << " " << genotype_bin_errors_all[ploidyP1*b+2] * 100.0 / genotype_bin_totals_all[ploidyP1*b+2];
+			fd1 << endl;
+		}
+	}
+	fd1.close();
+
+	// [3] Calibration
+	vrb.bullet("Concordance per calibration bin: [" + fout + ".error.cal.txt.gz]");
+	fd1.open(fout + ".error.cal.txt.gz");
+	float step_size = 1.0 / N_BIN_CAL;
+
+	fd1<<"#Genotype caoncordance by calibration bin (SNPs)\n";
+	fd1 << "#GCsSC" << " ";
+	if (ploidy > 1) fd1 << "id start_bin end_bin avg_bin RR_hom_matches RA_het_matches AA_hom_matches RR_hom_mismatches RA_het_mismatches AA_hom_mismatches RR_hom_mismatches_rate_percent RA_het_mismatches_rate_percent AA_hom_mimatches_rate_percent all_mismatches_rate_percent\n";
+	else fd1 << "id start_bin end_bin avg_bin R_matches A_matches R_mismatches A_mismatches R_mismatches_rate_percent A_mismatches_rate_percent all_mismatches_rate_percent\n";
+
+	for (int b = 0 ; b < N_BIN_CAL ; b++) {
+		unsigned long int sumE = genotype_cal_errors_snps[ploidyP1*b+0] + genotype_cal_errors_snps[ploidyP1*b+1];
+		if (ploidy > 1) sumE += genotype_cal_errors_snps[ploidyP1*b+2];
+		unsigned long int sumT = genotype_cal_totals_snps[ploidyP1*b+0] + genotype_cal_totals_snps[ploidyP1*b+1];
+		if (ploidy > 1) sumT += genotype_cal_totals_snps[ploidyP1*b+2];
+
+		double errA = sumT? sumE * 100.0 / sumT : 0;
+
+		fd1 << std::setprecision(2) << std::fixed << "GCsSC" << " " << b << " " << b*step_size << " " << (b+1)*step_size << " " << std::setprecision(3) << std::fixed << b*step_size + step_size/2.0 << " ";
+
+		fd1 << (genotype_cal_totals_snps[ploidyP1*b+0] - genotype_cal_errors_snps[ploidyP1*b+0]) << " ";
+		fd1 << (genotype_cal_totals_snps[ploidyP1*b+1] - genotype_cal_errors_snps[ploidyP1*b+1]) << " ";
+		if (ploidy > 1) fd1 << (genotype_cal_totals_snps[ploidyP1*b+2] - genotype_cal_errors_snps[ploidyP1*b+2]) << " ";
+
+		fd1 << genotype_cal_errors_snps[ploidyP1*b+0] << " ";
+		fd1 << genotype_cal_errors_snps[ploidyP1*b+1] << " ";
+		if (ploidy > 1) fd1 << std::setprecision(2) << std::fixed << genotype_cal_errors_snps[ploidyP1*b+2] << " ";
+
+		double d0 = genotype_cal_totals_snps[ploidyP1*b+0]>0? genotype_cal_errors_snps[ploidyP1*b+0]*100.0 / genotype_cal_totals_snps[ploidyP1*b+0] : 0;
+		double d1 = genotype_cal_totals_snps[ploidyP1*b+1]>0? genotype_cal_errors_snps[ploidyP1*b+1]*100.0 / genotype_cal_totals_snps[ploidyP1*b+1] : 0;
+		double d2 = (ploidy > 1 && genotype_cal_totals_snps[ploidyP1*b+2]>0)? genotype_cal_errors_snps[ploidyP1*b+2]*100.0 / genotype_cal_totals_snps[ploidyP1*b+2] : 0;
+
+		fd1 << std::setprecision(6) << std::fixed << d0 << " ";
+		fd1 << std::setprecision(6) << std::fixed << d1 << " ";
+		if (ploidy > 1) fd1 << std::setprecision(4) << std::fixed << d2 << " ";
+
+		fd1 << std::setprecision(6) << std::fixed << errA;
+		fd1 << endl;
+	}
+
+	fd1<<"#Genotype caoncordance by calibration bin (indels)\n";
+	fd1 << "#GCsIC" << " ";
+	if (ploidy > 1) fd1 << "id start_bin end_bin avg_bin RR_hom_matches RA_het_matches AA_hom_matches RR_hom_mismatches RA_het_mismatches AA_hom_mismatches RR_hom_mismatches_rate_percent RA_het_mismatches_rate_percent AA_hom_mimatches_rate_percent all_mismatches_rate_percent\n";
+	else fd1 << "id start_bin end_bin avg_bin R_matches A_matches R_mismatches A_mismatches R_mismatches_rate_percent A_mismatches_rate_percent all_mismatches_rate_percent\n";
+
+	for (int b = 0 ; b < N_BIN_CAL ; b++) {
+		unsigned long int sumE = genotype_cal_errors_indels[ploidyP1*b+0] + genotype_cal_errors_indels[ploidyP1*b+1];
+		if (ploidy > 1) sumE += genotype_cal_errors_indels[ploidyP1*b+2];
+		unsigned long int sumT = genotype_cal_totals_indels[ploidyP1*b+0] + genotype_cal_totals_indels[ploidyP1*b+1];
+		if (ploidy > 1) sumT += genotype_cal_totals_indels[ploidyP1*b+2];
+
+		double errA = sumT? sumE * 100.0 / sumT : 0;
+
+		fd1 << std::setprecision(2) << std::fixed << "GCsIC" << " " << b << " " << b*step_size << " " << (b+1)*step_size << " " << std::setprecision(3) << std::fixed << b*step_size + step_size/2.0 << " ";
+
+		fd1 << (genotype_cal_totals_indels[ploidyP1*b+0] - genotype_cal_errors_indels[ploidyP1*b+0]) << " ";
+		fd1 << (genotype_cal_totals_indels[ploidyP1*b+1] - genotype_cal_errors_indels[ploidyP1*b+1]) << " ";
+		if (ploidy > 1) fd1 << (genotype_cal_totals_indels[ploidyP1*b+2] - genotype_cal_errors_indels[ploidyP1*b+2]) << " ";
+
+		fd1 << genotype_cal_errors_indels[ploidyP1*b+0] << " ";
+		fd1 << genotype_cal_errors_indels[ploidyP1*b+1] << " ";
+		if (ploidy > 1) fd1 << std::setprecision(2) << std::fixed << genotype_cal_errors_indels[ploidyP1*b+2] << " ";
+
+		double d0 = genotype_cal_totals_indels[ploidyP1*b+0]>0? genotype_cal_errors_indels[ploidyP1*b+0]*100.0 / genotype_cal_totals_indels[ploidyP1*b+0] : 0;
+		double d1 = genotype_cal_totals_indels[ploidyP1*b+1]>0? genotype_cal_errors_indels[ploidyP1*b+1]*100.0 / genotype_cal_totals_indels[ploidyP1*b+1] : 0;
+		double d2 = (ploidy > 1 && genotype_cal_totals_indels[ploidyP1*b+2]>0)? genotype_cal_errors_indels[ploidyP1*b+2]*100.0 / genotype_cal_totals_indels[ploidyP1*b+2] : 0;
+
+		fd1 << std::setprecision(6) << std::fixed << d0 << " ";
+		fd1 << std::setprecision(6) << std::fixed << d1 << " ";
+		if (ploidy > 1) fd1 << std::setprecision(4) << std::fixed << d2 << " ";
+
+		fd1 << std::setprecision(6) << std::fixed << errA;
+		fd1 << endl;
+	}
+
+	fd1<<"#Genotype caoncordance by calibration bin (Variants: SNPs + indels)\n";
+	fd1 << "#GCsVC" << " ";
+	if (ploidy > 1) fd1 << "id start_bin end_bin avg_bin RR_hom_matches RA_het_matches AA_hom_matches RR_hom_mismatches RA_het_mismatches AA_hom_mismatches RR_hom_mismatches_rate_percent RA_het_mismatches_rate_percent AA_hom_mimatches_rate_percent all_mismatches_rate_percent\n";
+	else fd1 << "id start_bin end_bin avg_bin R_matches A_matches R_mismatches A_mismatches R_mismatches_rate_percent A_mismatches_rate_percent all_mismatches_rate_percent\n";
+
+	for (int b = 0 ; b < N_BIN_CAL ; b++) {
+		unsigned long int sumE = genotype_cal_errors_all[ploidyP1*b+0] + genotype_cal_errors_all[ploidyP1*b+1];
+		if (ploidy > 1) sumE += genotype_cal_errors_all[ploidyP1*b+2];
+		unsigned long int sumT = genotype_cal_totals_all[ploidyP1*b+0] + genotype_cal_totals_all[ploidyP1*b+1];
+		if (ploidy > 1) sumT += genotype_cal_totals_all[ploidyP1*b+2];
+
+		double errA = sumT? sumE * 100.0 / sumT : 0;
+
+		fd1 << std::setprecision(2) << std::fixed << "GCsVC" << " " << b << " " << b*step_size << " " << (b+1)*step_size << " " << std::setprecision(3) << std::fixed << b*step_size + step_size/2.0 << " ";
+
+		fd1 << (genotype_cal_totals_all[ploidyP1*b+0] - genotype_cal_errors_all[ploidyP1*b+0]) << " ";
+		fd1 << (genotype_cal_totals_all[ploidyP1*b+1] - genotype_cal_errors_all[ploidyP1*b+1]) << " ";
+		if (ploidy > 1) fd1 << (genotype_cal_totals_all[ploidyP1*b+2] - genotype_cal_errors_all[ploidyP1*b+2]) << " ";
+
+		fd1 << genotype_cal_errors_all[ploidyP1*b+0] << " ";
+		fd1 << genotype_cal_errors_all[ploidyP1*b+1] << " ";
+		if (ploidy > 1) fd1 << std::setprecision(2) << std::fixed << genotype_cal_errors_all[ploidyP1*b+2] << " ";
+
+		double d0 = genotype_cal_totals_all[ploidyP1*b+0]>0? genotype_cal_errors_all[ploidyP1*b+0]*100.0 / genotype_cal_totals_all[ploidyP1*b+0] : 0;
+		double d1 = genotype_cal_totals_all[ploidyP1*b+1]>0? genotype_cal_errors_all[ploidyP1*b+1]*100.0 / genotype_cal_totals_all[ploidyP1*b+1] : 0;
+		double d2 = (ploidy > 1 && genotype_cal_totals_all[ploidyP1*b+2]>0)? genotype_cal_errors_all[ploidyP1*b+2]*100.0 / genotype_cal_totals_all[ploidyP1*b+2] : 0;
+
+		fd1 << std::setprecision(6) << std::fixed << d0 << " ";
+		fd1 << std::setprecision(6) << std::fixed << d1 << " ";
+		if (ploidy > 1) fd1 << std::setprecision(4) << std::fixed << d2 << " ";
+
+		fd1 << std::setprecision(6) << std::fixed << errA;
 		fd1 << endl;
 	}
 	fd1.close();
 
-	// [2] Concordance per bin
-	output_file fd2 (fout + ".error.grp.txt.gz");
-	if (L > 0) {
-		vrb.bullet("Concordance per frequency bin");
-		for (int b = 0 ; b < L ; b++) {
-			fd2 << b << " " << frequency_bin[b].size() << " " << frequency_bin[b].mean();
-			fd2 << " " << genotype_bin_errors[(max_ploidy+1)*b+0] << " " << genotype_bin_totals[(max_ploidy+1)*b+0];
-			fd2 << " " << genotype_bin_errors[(max_ploidy+1)*b+1] << " " << genotype_bin_totals[(max_ploidy+1)*b+1];
-			if (max_ploidy > 1) fd2 << " " << genotype_bin_errors[(max_ploidy+1)*b+2] << " " << genotype_bin_totals[(max_ploidy+1)*b+2];
-			fd2 << " " << genotype_bin_errors[(max_ploidy+1)*b+0] * 100.0 / genotype_bin_totals[(max_ploidy+1)*b+0];
-			fd2 << " " << genotype_bin_errors[(max_ploidy+1)*b+1] * 100.0 / genotype_bin_totals[(max_ploidy+1)*b+1];
-			if (max_ploidy > 1) fd2 << " " << genotype_bin_errors[(max_ploidy+1)*b+2] * 100.0 / genotype_bin_totals[(max_ploidy+1)*b+2];
-			fd2 << endl;
-		}
-	} else {
-		vrb.bullet("Concordance per group");
-		for (int b = 0 ; b < rsquared_str.size() ; b++) {
-			fd2 << b << " " << rsquared_str[b] << " " << frequency_bin[b].size() << " " << frequency_bin[b].mean();
-			fd2 << " " << genotype_bin_errors[(max_ploidy+1)*b+0] << " " << genotype_bin_totals[(max_ploidy+1)*b+0];
-			fd2 << " " << genotype_bin_errors[(max_ploidy+1)*b+1] << " " << genotype_bin_totals[(max_ploidy+1)*b+1];
-			if (max_ploidy > 1) fd2 << " " << genotype_bin_errors[(max_ploidy+1)*b+2] << " " << genotype_bin_totals[(max_ploidy+1)*b+2];
-			fd2 << " " << genotype_bin_errors[(max_ploidy+1)*b+0] * 100.0 / genotype_bin_totals[(max_ploidy+1)*b+0];
-			fd2 << " " << genotype_bin_errors[(max_ploidy+1)*b+1] * 100.0 / genotype_bin_totals[(max_ploidy+1)*b+1];
-			if (max_ploidy > 1) fd2 << " " << genotype_bin_errors[(max_ploidy+1)*b+2] * 100.0 / genotype_bin_totals[(max_ploidy+1)*b+2];
-			fd2 << endl;
-		}
-	}
-	fd2.close();
-
-	// [3] Calibration
-	vrb.bullet("Concordance per calibration bin");
-	output_file fd3 (fout + ".error.cal.txt.gz");
-	float step_size = 1.0 / N_BIN_CAL;
-	for (int b = 0 ; b < N_BIN_CAL ; b++) {
-		float err0 = genotype_cal_errors[(max_ploidy+1)*b+0] * 100.0 / genotype_cal_totals[(max_ploidy+1)*b+0];
-		float err1 = genotype_cal_errors[(max_ploidy+1)*b+1] * 100.0 / genotype_cal_totals[(max_ploidy+1)*b+1];
-		float err2 = genotype_cal_errors[(max_ploidy+1)*b+2] * 100.0 / genotype_cal_totals[(max_ploidy+1)*b+2];
-		float errA = (genotype_cal_errors[(max_ploidy+1)*b+0]+genotype_cal_errors[(max_ploidy+1)*b+1]+genotype_cal_errors[(max_ploidy+1)*b+2]) * 100.0 / (genotype_cal_totals[(max_ploidy+1)*b+0]+genotype_cal_totals[(max_ploidy+1)*b+1]+genotype_cal_totals[(max_ploidy+1)*b+2]);
-		fd3 << b << " " << b*step_size << " " << (b+1)*step_size << " " << (b*step_size + step_size/2);
-		fd3 << " " << genotype_cal_errors[(max_ploidy+1)*b+0] << " " << genotype_cal_totals[(max_ploidy+1)*b+0];
-		fd3 << " " << genotype_cal_errors[(max_ploidy+1)*b+1] << " " << genotype_cal_totals[(max_ploidy+1)*b+1];
-		fd3 << " " << genotype_cal_errors[(max_ploidy+1)*b+2] << " " << genotype_cal_totals[(max_ploidy+1)*b+2];
-		fd3 << " " << err0 << " " << err1 << " " << err2 << " " << errA << endl;
-	}
-	fd3.close();
-
 	// [4] Rsquare per bin
 	output_file fd4 (fout + ".rsquare.grp.txt.gz");
-	if (L > 0) {
+	if (L > 0)
+	{
 		vrb.bullet("Rsquare per frequency bin");
 		for (int b = 0 ; b < L ; b++) {
-			double rsq0 = rsquared_bin[b].corrXY();
-			double rsq2 = rsq0*rsq0;
-			fd4 << b << " " << frequency_bin[b].size() << " " << frequency_bin[b].mean();
-			fd4 << " " << rsq0 << " " << rsq2 << endl;
+			double rsq_gt = rsquared_bin_gt_all[b].corrXY();
+			double rsq_ds = rsquared_bin_ds_all[b].corrXY();
+			fd4 << b << " " << frequency_bin_all[b].size() << " " << frequency_bin_all[b].mean();
+			fd4 << " " << rsq_gt*rsq_gt << " " << rsq_gt*rsq_gt << endl;
 		}
 	} else {
 		vrb.bullet("Rsquare per frequency bin");
 		for (int b = 0 ; b < rsquared_str.size() ; b++) {
-			double rsq0 = rsquared_bin[b].corrXY();
-			double rsq2 = rsq0*rsq0;
-			fd4 << b << " " << rsquared_str[b] << " " << frequency_bin[b].size() << " " << frequency_bin[b].mean();
-			fd4 << " " << rsq0 << " " << rsq2 << endl;
+			double rsq_gt = rsquared_bin_gt_all[b].corrXY();
+			double rsq_ds = rsquared_bin_ds_all[b].corrXY();
+			fd4 << b << " " << frequency_bin_all[b].size() << " " << frequency_bin_all[b].mean();
+			fd4 << " " << rsq_gt*rsq_gt << " " << rsq_gt*rsq_gt << endl;
 		}
 	}
 	fd4.close();
@@ -113,19 +449,11 @@ void call_set::writeData(string fout) {
 	// [5] Rsquare per sample
 	vrb.bullet("Rsquare per sample");
 	output_file fd5 (fout + ".rsquare.spl.txt.gz");
-	for (int i = 0 ; i < N ; i++) {
-		double rsq0 = rsquared_spl[i].corrXY();
-		double rsq2 = rsq0*rsq0;
-		fd5 << samples[i] << " " << rsq0 << " " << rsq2 << endl;
+	for (int i = 0 ; i < N ; i++)
+	{
+		double rsq_gt = rsquared_spl_gt_all[i].corrXY();
+		double rsq_ds = rsquared_spl_ds_all[i].corrXY();
+		fd5 << samples[i] << " " << rsq_gt << " " << rsq_ds << endl;
 	}
 	fd5.close();
-
-	// [6] AVG Rsquare per bin
-	vrb.bullet("Average Rsquare per frequency bin");
-	output_file fd6 (fout + ".avg.rsquare.grp.txt.gz");
-	for (int b = 0 ; b < L ; b++) {
-		fd6 << b << " " << avg_rsquared_bin[b].size() << " " << avg_rsquared_bin[b].variance();
-		fd6 << " " << avg_rsquared_bin[b].mean() /*<< " " << rsq2 */<< endl;
-	}
-	fd6.close();
 }

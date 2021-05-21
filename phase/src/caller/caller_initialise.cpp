@@ -42,7 +42,7 @@ void caller::read_files_and_initialise() {
 	buildCoordinates();
 
 	//step2: Read input files
-	genotype_reader readerG(H, G, V, input_gregion, options.count("impute-reference-only-variants"));
+	genotype_reader readerG(H, G, V, input_gregion, options.count("impute-reference-only-variants"), options.count("input-GL"), options.count("ban-repeated-sample-names"));
 	if (options.count("init-pool")) readerG.readInitializingSamples(options["init-pool"].as < string > ());
 	if (options.count("samples-file")) readerG.readSamplesFilePloidy(options["samples-file"].as < string > ());
 	readerG.readGenotypes(options["input"].as < string > (), options["reference"].as < string > (), options["thread"].as <int> ());
@@ -56,15 +56,17 @@ void caller::read_files_and_initialise() {
 	vrb.bullet("Region spans " + stb.str(V.length()) + " bp and " + stb.str(V.lengthcM(), 2) + " cM");
 
 	//step4
-	HP0 = vector < vector < float > > (options["thread"].as < int > (), vector < float > (H.n_site * 2, 0.0));
-	if (H.max_ploidy > 1) HP1 = vector < vector < float > > (options["thread"].as < int > (), vector < float > (H.n_site * 2, 0.0));
+	const int nthreads =  options["thread"].as < int > ();
+	const int ne = options["ne"].as < int > ();
+	HP0 = vector < vector < float > > (nthreads, vector < float > (H.n_site * 2, 0.0));
+	if (H.max_ploidy > 1) HP1 = vector < vector < float > > (nthreads, vector < float > (H.n_site * 2, 0.0));
 
-	HLC = vector < vector < float > > (options["thread"].as < int > (), vector < float > (H.n_site * 2, 0.0));
-	HMM = vector < haplotype_hmm * > (options["thread"].as < int > (), NULL);
-	if (H.max_ploidy > 1) DMM = vector < diplotype_hmm * > (options["thread"].as < int > (), NULL);
-	COND = vector < conditioning_set * > (options["thread"].as < int > (), NULL);
+	HLC = vector < vector < float > > (nthreads, vector < float > (H.n_site * 2, 0.0));
+	HMM = vector < haplotype_hmm * > (nthreads, nullptr);
+	if (H.max_ploidy > 1) DMM = vector < diplotype_hmm * > (nthreads, nullptr);
+	COND = vector < conditioning_set * > (nthreads, nullptr);
 	for (int t = 0 ; t < HMM.size() ; t ++) {
-		COND[t] = new conditioning_set(V,H,H.n_hap, options["ne"].as < float > ());
+		COND[t] = new conditioning_set(V,H,H.n_hap,ne);
 		HMM[t] = new haplotype_hmm(COND[t]);
 		if (H.max_ploidy > 1) DMM[t] = new diplotype_hmm(COND[t]);
 	}

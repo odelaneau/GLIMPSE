@@ -43,7 +43,7 @@ float mean(int n, vector<float>& arr) {
 }
 
 float stdDev(int n, vector<float>& arr, float mean) {
-	double sum = 0;
+	float sum = 0.0f;
     for (int i = 0; i < n; i++)
         sum += pow(abs(arr[i] - mean), 2);
 
@@ -75,13 +75,21 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 	tac.clock();
 	int n_true_samples, n_esti_samples;
 	unsigned long int n_variants_all_chromosomes = 0;
-	vector < int > mappingT, mappingE;
+	//vector < int > mappingT, mappingE;
+	char** isec_samples_names = NULL;
+	int* truth_imap;
+	int* estimated_imap;
+	int n_isec_samples_names = 0;
 
 	string af_tag = options["af-tag"].as<string>();
+	const bool gt_validation = options.count("gt-validation");
+	const bool gt_target = options.count("gt-target");
+	const bool use_alt_af = options.count("use-alt-af");
 	int nthreads = options["thread"].as < int > ();
 	fploidy=2;
 
-	for (int f = 0 ; f < ftruth.size() ; f ++) {
+	for (int f = 0 ; f < ftruth.size() ; f ++)
+	{
 		vrb.title("Reading set of input files [" + stb.str(f+1) + "/" + stb.str(ftruth.size()) + "]");
 		vrb.bullet("Truth       [" + ftruth[f] + "]");
 		vrb.bullet("Estimates   [" + festimated[f] + "]");
@@ -89,10 +97,12 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 		vrb.bullet("Region      [" + region[f] + "]");
 
 		bcf_srs_t * sr =  bcf_sr_init();
+		bcf_hdr_t *hdr_truth;
+		bcf_hdr_t *hdr_estimated;
 
 		sr->collapse = COLLAPSE_NONE;
 		sr->require_index = 1;
-		if (nthreads > 1) bcf_sr_set_threads(sr, nthreads);
+		if (nthreads > 1) bcf_sr_set_threads(sr, nthreads-1);
 		bcf_sr_set_regions(sr, region[f].c_str(), 0);
 
 		//Opening files
@@ -120,11 +130,52 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 		}
 
 		// If first file; we initialize data structures
-		if (f == 0) {
+		if (f == 0)
+		{
+			std::unordered_set<string> truth_samples_names_set;
+			std::unordered_set<string> isec_samples_names_set;
+
+			int n_true_samples_file = bcf_hdr_nsamples(sr->readers[0].header);
+			int n_esti_samples_file = bcf_hdr_nsamples(sr->readers[1].header);
+			for (int i = 0 ; i < n_true_samples_file ; i ++) truth_samples_names_set.insert(sr->readers[0].header->samples[i]);
+			for (int i = 0 ; i < n_esti_samples_file ; i ++)
+				if (truth_samples_names_set.find(sr->readers[1].header->samples[i]) != truth_samples_names_set.end())
+					isec_samples_names_set.insert(sr->readers[1].header->samples[i]);
+
+			if (!options.count("samples")) subset_samples.assign(isec_samples_names_set.begin(),isec_samples_names_set.end());
+			for (int i = 0; i < subset_samples.size() ; i ++)
+			{
+				if (isec_samples_names_set.find(subset_samples[i]) != isec_samples_names_set.end())
+				{
+					isec_samples_names = (char**) realloc(isec_samples_names, (n_isec_samples_names+1)*sizeof(const char*));
+					isec_samples_names[n_isec_samples_names] = strdup(subset_samples[i].c_str());
+					n_isec_samples_names++;
+				}
+			}
+			if (n_isec_samples_names == 0) vrb.error("No sample in common between datasets");
+
+			truth_imap = (int*)malloc(n_isec_samples_names * sizeof(int));
+			estimated_imap = (int*)malloc(n_isec_samples_names * sizeof(int));
+
+			hdr_truth = bcf_hdr_subset(sr->readers[0].header, n_isec_samples_names, isec_samples_names, truth_imap);
+			hdr_estimated = bcf_hdr_subset(sr->readers[1].header, n_isec_samples_names, isec_samples_names, estimated_imap);
+
+			if ( !hdr_truth || !hdr_estimated || bcf_hdr_nsamples(hdr_truth) != bcf_hdr_nsamples(hdr_estimated) || bcf_hdr_nsamples(hdr_truth)<=0) vrb.error("Error occurred while subsetting truth samples");
+
+			n_true_samples = bcf_hdr_nsamples(hdr_truth);
+			n_esti_samples = bcf_hdr_nsamples(hdr_estimated);
+
+			N=n_true_samples;
+			samples.reserve(N);
+			for (int i=0; i<N;++i) samples.push_back(string(hdr_truth->samples[i]));
+
+/*
+			////////////////////////////////////////////////////////////////////////////////
 			// Processing samples + overlap
 			N = 0;
-			n_true_samples = bcf_hdr_nsamples(sr->readers[0].header);
-			n_esti_samples = bcf_hdr_nsamples(sr->readers[1].header);
+			n_true_samples = bcf_hdr_nsamples(hdr_truth);
+			n_esti_samples = bcf_hdr_nsamples(hdr_estimated);
+
 			mappingT = vector < int > (n_true_samples, -1);
 			mappingE = vector < int > (n_esti_samples, -1);
 			for (int i = 0 ; i < n_true_samples ; i ++) {
@@ -141,25 +192,26 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 					}
 				}
 			}
-
-			bcf_hrec_t * header_record = bcf_hdr_get_hrec(sr->readers[1].header, BCF_HL_GEN, "FPLOIDY", NULL, NULL);
-			if (header_record == NULL) vrb.warning("Cannot retrieve FPLOIDY flag in VCF header [" + festimated[f] + "], used a version of GLIMPSE < 1.1.0? Assuming diploid genotypes only [FPLOIDY=2].");
+*/
+			bcf_hrec_t * header_record = bcf_hdr_get_hrec(hdr_estimated, BCF_HL_GEN, "FPLOIDY", NULL, NULL);
+			if (header_record == NULL) vrb.warning("Cannot retrieve FPLOIDY flag in VCF header [" + festimated[f] + "], used GLIMPSE version < 1.1.0? Assuming diploid genotypes [FPLOIDY=2].");
 			else fploidy = atoi(header_record->value);
 			if (fploidy_to_msg.find(fploidy) == fploidy_to_msg.end()) vrb.error("FPLOIDY out of bounds : " + stb.str(fploidy));
 			vrb.bullet("FPLOIDY = "+ to_string(fploidy) + " [" + fploidy_to_msg[fploidy] + "]");
 
 			//Ploidy
-			ploidy = std::vector<int> (N);
+			ploidy_samples = std::vector<int> (N);
 			ind2gpos = std::vector<int> (N);
-			max_ploidy = std::abs(fploidy);
+			ploidy = std::abs(fploidy);
 			n_haploid = 0;
 			n_diploid = 0;
+			const int ploidyP1 = ploidy + 1;
 			if (fploidy > 0)
 			{
 				fploidy == 2 ? n_diploid = N: n_haploid = N;
 				for (int i = 0 ; i < N ; i ++)
 				{
-					ploidy[i] = fploidy;
+					ploidy_samples[i] = fploidy;
 					ind2gpos[i] = (fploidy+1)*i;
 				}
 			}
@@ -174,44 +226,91 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 				int n_gt_fields = 0;
 
 				bcf1_t * line =  bcf_sr_get_line(sr, 1);
-				int ngt = bcf_get_genotypes(sr->readers[1].header, line, &gt_fields, &n_gt_fields);
+				bcf_subset(hdr_estimated, line, n_isec_samples_names, estimated_imap);
+				int ngt = bcf_get_genotypes(hdr_estimated, line, &gt_fields, &n_gt_fields);
 				const int line_max_ploidy = ngt/n_esti_samples;
-				assert(line_max_ploidy==max_ploidy); //we do not allow missing data
+				assert(line_max_ploidy==ploidy); //we do not allow missing data
 				int j=0;
 				for(int i = 0 ; i < n_esti_samples; ++i)
 				{
-					if (mappingE[i] == -1) continue;
+					//if (mappingE[i] == -1) continue;
 					ind2gpos[j] = 3*n_diploid + 2*n_haploid;
-					ploidy[j] = 2 - (gt_fields[max_ploidy*i+1] == bcf_int32_vector_end);
-					ploidy[j] > 1? ++n_diploid : ++n_haploid;
+					ploidy_samples[j] = 2 - (gt_fields[ploidy*i+1] == bcf_int32_vector_end);
+					ploidy_samples[j] > 1? ++n_diploid : ++n_haploid;
 					++j;
 				}
 				//assert(n_diploid > 0 && n_haploid > 0);
 				bcf_sr_seek (sr, NULL, 0);
 
-				if (n_diploid == 0 && n_haploid == 0)
-					vrb.error("No samples found.");
+				if (n_diploid == 0 && n_haploid == 0) vrb.error("No samples found.");
+				free(gt_fields);
 			}
 
 			// Allocating data structures
-			genotype_spl_errors = vector < unsigned long int > (3*n_diploid + 2*n_haploid, 0);
-			genotype_spl_totals = vector < unsigned long int > (3*n_diploid + 2*n_haploid, 0);
-			genotype_cal_errors = vector < unsigned long int > ((max_ploidy+1) * N_BIN_CAL, 0);
-			genotype_cal_totals = vector < unsigned long int > ((max_ploidy+1) * N_BIN_CAL, 0);
-			rsquared_spl = vector < stats2D > (N);
+			genotype_spl_errors_all = vector < unsigned long int > (3*n_diploid + 2*n_haploid, 0);
+			genotype_spl_totals_all = vector < unsigned long int > (3*n_diploid + 2*n_haploid, 0);
+			genotype_cal_errors_all = vector < unsigned long int > (ploidyP1 * N_BIN_CAL, 0);
+			genotype_cal_totals_all = vector < unsigned long int > (ploidyP1 * N_BIN_CAL, 0);
+			rsquared_spl_ds_all = vector < stats2D > (N);
+			rsquared_spl_gt_all = vector < stats2D > (N);
+
+			//snps
+			// Allocating data structures
+			genotype_spl_errors_snps = vector < unsigned long int > (3*n_diploid + 2*n_haploid, 0);
+			genotype_spl_totals_snps = vector < unsigned long int > (3*n_diploid + 2*n_haploid, 0);
+			genotype_cal_errors_snps = vector < unsigned long int > (ploidyP1 * N_BIN_CAL, 0);
+			genotype_cal_totals_snps = vector < unsigned long int > (ploidyP1 * N_BIN_CAL, 0);
+			rsquared_spl_ds_snps = vector < stats2D > (N);
+			rsquared_spl_gt_snps = vector < stats2D > (N);
+
+			//indels
+			// Allocating data structures
+			genotype_spl_errors_indels = vector < unsigned long int > (3*n_diploid + 2*n_haploid, 0);
+			genotype_spl_totals_indels = vector < unsigned long int > (3*n_diploid + 2*n_haploid, 0);
+			genotype_cal_errors_indels = vector < unsigned long int > (ploidyP1 * N_BIN_CAL, 0);
+			genotype_cal_totals_indels = vector < unsigned long int > (ploidyP1 * N_BIN_CAL, 0);
+			rsquared_spl_ds_indels = vector < stats2D > (N);
+			rsquared_spl_gt_indels = vector < stats2D > (N);
 
 			if (L > 0) {
-				genotype_bin_errors = vector < unsigned long int > ((max_ploidy+1) * L, 0);
-				genotype_bin_totals = vector < unsigned long int > ((max_ploidy+1) * L, 0);
-				rsquared_bin = vector < stats2D > (L);
-				frequency_bin = vector < stats1D > (L);
-				avg_rsquared_bin = vector < stats1D > (L);
+				genotype_bin_errors_all = vector < unsigned long int > (ploidyP1 * L, 0);
+				genotype_bin_totals_all = vector < unsigned long int > (ploidyP1 * L, 0);
+				rsquared_bin_ds_all = vector < stats2D > (L);
+				rsquared_bin_gt_all = vector < stats2D > (L);
+				rsquared_bin_ds_all = vector < stats2D > (L);
+				rsquared_bin_gt_all = vector < stats2D > (L);
+				frequency_bin_all = vector < stats1D > (L);
+
+				genotype_bin_errors_snps = vector < unsigned long int > (ploidyP1 * L, 0);
+				genotype_bin_totals_snps = vector < unsigned long int > (ploidyP1 * L, 0);
+				rsquared_bin_ds_snps = vector < stats2D > (L);
+				rsquared_bin_gt_snps = vector < stats2D > (L);
+				frequency_bin_snps = vector < stats1D > (L);
+
+				genotype_bin_errors_indels = vector < unsigned long int > (ploidyP1 * L, 0);
+				genotype_bin_totals_indels = vector < unsigned long int > (ploidyP1 * L, 0);
+				rsquared_bin_ds_indels = vector < stats2D > (L);
+				rsquared_bin_gt_indels = vector < stats2D > (L);
+				frequency_bin_indels = vector < stats1D > (L);
+
 			} else {
-				genotype_bin_errors = vector < unsigned long int > ((max_ploidy+1) * rsquared_str.size(), 0);
-				genotype_bin_totals = vector < unsigned long int > ((max_ploidy+1) * rsquared_str.size(), 0);
-				rsquared_bin = vector < stats2D > (rsquared_str.size());
-				frequency_bin = vector < stats1D > (rsquared_str.size());
-				avg_rsquared_bin = vector < stats1D > (rsquared_str.size());
+				genotype_bin_errors_all = vector < unsigned long int > (ploidyP1 * rsquared_str.size(), 0);
+				genotype_bin_totals_all = vector < unsigned long int > (ploidyP1 * rsquared_str.size(), 0);
+				rsquared_bin_ds_all = vector < stats2D > (rsquared_str.size());
+				rsquared_bin_gt_all = vector < stats2D > (rsquared_str.size());
+				frequency_bin_all = vector < stats1D > (rsquared_str.size());
+
+				genotype_bin_errors_snps = vector < unsigned long int > (ploidyP1 * rsquared_str.size(), 0);
+				genotype_bin_totals_snps = vector < unsigned long int > (ploidyP1 * rsquared_str.size(), 0);
+				rsquared_bin_ds_snps = vector < stats2D > (rsquared_str.size());
+				rsquared_bin_gt_snps = vector < stats2D > (rsquared_str.size());
+				frequency_bin_snps = vector < stats1D > (rsquared_str.size());
+
+				genotype_bin_errors_indels = vector < unsigned long int > (ploidyP1 * rsquared_str.size(), 0);
+				genotype_bin_totals_indels = vector < unsigned long int > (ploidyP1 * rsquared_str.size(), 0);
+				rsquared_bin_ds_indels = vector < stats2D > (rsquared_str.size());
+				rsquared_bin_gt_indels = vector < stats2D > (rsquared_str.size());
+				frequency_bin_indels = vector < stats1D > (rsquared_str.size());
 			}
 
 			assert(n_diploid+n_haploid==N);
@@ -219,58 +318,111 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 			string pl2  = n_diploid!=1? "s" : "";
 			vrb.bullet("#overlapping samples = " + stb.str(n_diploid+n_haploid) + " ["  + stb.str(n_haploid) + " haploid" + pl1 + "/ " + stb.str(n_diploid) + " diploid"+ pl2 + "]");
 			if (n_diploid > 0 && n_haploid > 0)
-					vrb.warning("Samples with mixed ploidy detected. In order to get a correct value of the concordance metrics it is NECESSARY to split the study samples by ploidy before running GLIMPSE_concordance or use the --samples option.");
+					vrb.error("Samples with mixed ploidy detected. In order to get a correct value of the concordance metrics it is necessary to split the study samples by ploidy before running GLIMPSE_concordance or use the --samples option.");
 
+			ploidy= n_haploid >0 ? 1 : 2;
+		}
+		else
+		{
+			hdr_truth = bcf_hdr_subset(sr->readers[0].header, n_isec_samples_names, isec_samples_names, truth_imap);
+			hdr_estimated = bcf_hdr_subset(sr->readers[1].header, n_isec_samples_names, isec_samples_names, estimated_imap);
 		}
 
-		unsigned long nvarianttot = 0, nvariantval = 0, nset = 0, ngenoval = 0, n_errors = 0;
-		int ngl_t, ndp_t, ngl_arr_t = 0, ndp_arr_t = 0, *gl_arr_t = NULL, *dp_arr_t = NULL;
+		const int ploidyP1 = ploidy + 1;
+		unsigned long nvarianttot = 0, nvariantvalall = 0, nvariantvalsnps = 0, nvariantvalindels = 0, nvariantvalfull=0, nset = 0, ngenoval_all = 0, n_errors_all = 0, n_errors_snps = 0, ngenoval_snps = 0, n_errors_indels = 0, ngenoval_indels = 0;
+		unsigned long count_tg_err_2 = 0, count_tg_err_3 = 0, count_tg_err_4 = 0, count_tg_err_5 = 0, count_tg_err_1 = 0;
+		unsigned long count_es_err_2 = 0, count_es_err_3 = 0, count_es_err_1 = 0;
+		unsigned long afnobin = 0;
+
+		int npl_t, ndp_t, npl_arr_t = 0, ndp_arr_t = 0, *pl_arr_t = NULL, *dp_arr_t = NULL;
 		float *af_ptr=NULL,*ds_arr_e = NULL, *gp_arr_e = NULL, float_swap;
+		int * gt_arr_e = NULL, ngt_arr_e = 0, ngt_e; //ngt_t is npl_t in case of --gt-validation
 		int nds_e, nds_arr_e = 0;
-		float naf_f;
-		int naf_arr_f=0, ngp_e, ngp_arr_e = 0;
-		vector < double > PLs = vector < double > ((3*n_diploid + 2*n_haploid), 0.0f);
+		int naf_f, naf_arr_f=0;
+		int ngp_e, ngp_arr_e = 0;
+		int *itmp=NULL, mitmp=0, tret=0;
+
+		vector < float > GLs = vector < float > ((3*n_diploid + 2*n_haploid), 0.0f);
 		vector < float > DSs = vector < float > (N, 0.0f);
+		vector < int > GTs = vector < int > (N, 0);
 		vector < float > GPs = vector < float > ((3*n_diploid + 2*n_haploid), 0.0f);
 		vector < int > DPs = vector < int > (N, 0);
 
 		vector < float > sample_dosages(N);
-		vector < float > sample_truth(N);
-		float sum_ds_e = 0.0f;
-		float sum_ds_t = 0.0f;
 
 		map < string, pair < int, bool > > :: iterator itG;
 		bcf1_t * line_t, * line_e, * line_f;
+		int nobi=0,noval=0;
+		long int n_disc_var_truth = 0, n_disc_var_est = 0, n_disc_var_af = 0;
 
-		while ((nset = bcf_sr_next_line (sr))) {
-			if (nset == 3) {
+		while ((nset = bcf_sr_next_line (sr)))
+		{
+			if (nset == 3)
+			{
 				line_f =  bcf_sr_get_line(sr, 2);
-				if (line_f->n_allele == 2) {
+
+				const int line_type = bcf_get_variant_types(line_f);
+				/* LINE TYPES:
+				 	 	line_type&VCF_REF -> No alts
+				        line_type&VCF_SNP -> SNP
+						line_type&VCF_INDEL -> INDEL
+						line_type&VCF_MNP -> MNP
+						line_type&VCF_OTHER -> other
+				 */
+				if (line_f->n_allele == 2 && ((line_type==VCF_SNP) || (line_type==VCF_INDEL)))
+				{
+					float af = 0.0f;
+
 					line_t =  bcf_sr_get_line(sr, 0);
 					line_e =  bcf_sr_get_line(sr, 1);
 
+					bcf_subset(hdr_truth, line_t, n_isec_samples_names, truth_imap);
+					bcf_subset(hdr_estimated, line_e, n_isec_samples_names, estimated_imap);
+
 				    naf_f = bcf_get_info_float(sr->readers[2].header, line_f, af_tag.c_str(), &af_ptr, &naf_arr_f);
-					ngl_t = bcf_get_format_int32(sr->readers[0].header, line_t, "PL", &gl_arr_t, &ngl_arr_t);
-					ndp_t = bcf_get_format_int32(sr->readers[0].header, line_t, "DP", &dp_arr_t, &ndp_arr_t);
-					nds_e = bcf_get_format_float(sr->readers[1].header, line_e, "DS", &ds_arr_e, &nds_arr_e);
-					ngp_e = bcf_get_format_float(sr->readers[1].header, line_e, "GP", &gp_arr_e, &ngp_arr_e);
-					
-					sum_ds_e = 0.0f;
-					sum_ds_t = 0.0f;
-					bool has_validation = false;
-					if ((naf_f==1)&&(ngl_t%n_true_samples==0)&&(nds_e==n_esti_samples)&&(ngp_e%n_esti_samples==0)&&(ndp_t==n_true_samples)) {
 
+				    if (naf_f != 1)
+				    {
+			            int AC = -1, AN = 0;
+			            tret = bcf_get_info_int32(sr->readers[2].header, line_f, "AN", &itmp, &mitmp);
+			            if ( tret==1 )
+			            {
+			                AN = itmp[0];
+			                tret = bcf_get_info_int32(sr->readers[2].header, line_f, "AC", &itmp, &mitmp);
+			                if ( tret>0 )
+			                    AC = itmp[0];
+			            }
+			            if ( AN>0 && AC>=0 )
+			            {
+			            	af = (double) AC / AN;
+					    	naf_f=1;
+					    }
+				    } else af =  af_ptr[0];
+
+
+				    if (gt_validation) npl_t = bcf_get_genotypes(hdr_truth, line_t, &pl_arr_t, &npl_arr_t);
+				    else npl_t = bcf_get_format_int32(hdr_truth, line_t, "PL", &pl_arr_t, &npl_arr_t);
+					ndp_t = bcf_get_format_int32(hdr_truth, line_t, "DP", &dp_arr_t, &ndp_arr_t);
+
+					ngt_e = bcf_get_genotypes(hdr_estimated, line_e, &gt_arr_e, &ngt_arr_e);
+					nds_e = bcf_get_format_float(hdr_estimated, line_e, "DS", &ds_arr_e, &nds_arr_e);
+					ngp_e = bcf_get_format_float(hdr_estimated, line_e, "GP", &gp_arr_e, &ngp_arr_e);
+
+					int n_validation_marker=0;
+					if ((naf_f==1)&&(npl_t%n_true_samples==0)&&(gt_target||((nds_e==n_esti_samples)&&(ngp_e%n_esti_samples==0)))&&((ndp_t==n_true_samples) || D==0))
+					{
 						// Meta data for variant
-						int ploidy_e_record=ngp_e/n_esti_samples;
-						int ploidy_t_record=ngl_t/n_true_samples;
+						const int ploidy_gt_e_record=ngt_e/n_esti_samples;
+						const int ploidy_e_record=ngp_e/n_esti_samples;
+						const int ploidy_t_record=npl_t/n_true_samples;
 
-						float af =  af_ptr[0];
-						bool flip = (af > 0.5);
-						float maf = min(af, 1.0f - af);
+						const bool flip = use_alt_af? false : (af > 0.5f);
+						const float maf = use_alt_af? af : min(af, 1.0f - af);
 						int grp_bin = -1;
 						if (L>0) grp_bin = getFrequencyBin(maf);
-						else {
-							string chr = bcf_hdr_id2name(sr->readers[0].header, line_t->rid);
+						else
+						{
+							string chr = bcf_hdr_id2name(hdr_truth, line_t->rid);
 							int pos = line_t->pos + 1;
 							string uuid = chr + "_" + stb.str(pos);
 							itG = site2grp.find(uuid);
@@ -281,138 +433,268 @@ void call_set::readData(vector < string > & ftruth, vector < string > & festimat
 						}
 
 						// Read Truth
-						for(int i = 0 ; i < n_true_samples ; i ++) {
-							int idx = mappingT[i];
-							if (idx >= 0) {
-								if (ploidy[idx] == 1)
+						for(int i = 0 ; i < n_true_samples ; i ++)
+						{
+							const int index = ploidy_t_record*i;//ploidy
+							const int gpos=ind2gpos[i];
+
+							if (gt_validation)
+							{
+								const int pgt = (ploidy_samples[i]>1);
+
+								if ( (pl_arr_t[index+0]==bcf_gt_missing || pl_arr_t[index+pgt]==bcf_gt_missing)
+									|| (pl_arr_t[index+0]==bcf_int32_vector_end || pl_arr_t[index+pgt]==bcf_int32_vector_end))
 								{
-									int gpos=ind2gpos[idx];
-									if (gl_arr_t[ploidy_t_record*i+0] != bcf_int32_missing && gl_arr_t[ploidy_t_record*i+1] != bcf_int32_missing) {
-										PLs[gpos+0] = unphred[min(gl_arr_t[ploidy_t_record*i+0], 255)];
-										PLs[gpos+1] = unphred[min(gl_arr_t[ploidy_t_record*i+1], 255)];
-										if (dp_arr_t[i]!= bcf_int32_missing) DPs[idx] = dp_arr_t[i];
-										else DPs[idx] = 0;
-										if (flip) { float_swap = PLs[gpos+1]; PLs[gpos+1] = PLs[gpos+0]; PLs[gpos+0] = float_swap; }
-									} else { PLs[gpos+0] = -1.0f; PLs[gpos+1] = -1.0f; }
+									GLs[gpos+0] = -1.0f;
+									GLs[gpos+1] = -1.0f;
+									GLs[gpos+pgt] = -1.0f;
 								}
 								else
 								{
-									int gpos=ind2gpos[idx];
-									if (gl_arr_t[ploidy_t_record*i+0] != bcf_int32_missing && gl_arr_t[ploidy_t_record*i+1] != bcf_int32_missing && gl_arr_t[ploidy_t_record*i+2] != bcf_int32_missing) {
-										PLs[gpos+0] = unphred[min(gl_arr_t[ploidy_t_record*i+0], 255)];
-										PLs[gpos+1] = unphred[min(gl_arr_t[ploidy_t_record*i+1], 255)];
-										PLs[gpos+2] = unphred[min(gl_arr_t[ploidy_t_record*i+2], 255)];
-										if (dp_arr_t[i]!= bcf_int32_missing) DPs[idx] = dp_arr_t[i];
-										else DPs[idx] = 0;
-										if (flip) { float_swap = PLs[gpos+2]; PLs[gpos+2] = PLs[gpos+0]; PLs[gpos+0] = float_swap; }
-									} else { PLs[gpos+0] = -1.0f; PLs[gpos+1] = -1.0f; PLs[gpos+2] = -1.0f; }
+									int gt = (bcf_gt_allele(pl_arr_t[index+0])==1);
+									if (ploidy_samples[i]>1) gt += (bcf_gt_allele(pl_arr_t[index+1])==1);
+									GLs[gpos+0] = (gt == 0);
+									GLs[gpos+1] = (gt == 1);
+									GLs[gpos+ploidy] = gt == ploidy;
+								}
+
+							}
+							else
+							{
+								if ( (pl_arr_t[index+0]==bcf_int32_missing || pl_arr_t[index+1]==bcf_int32_missing || pl_arr_t[index+ploidy]==bcf_int32_missing)
+										|| (pl_arr_t[index+0]==bcf_int32_vector_end || pl_arr_t[index+1]==bcf_int32_vector_end || pl_arr_t[index+ploidy]==bcf_int32_vector_end)
+										|| (pl_arr_t[index+0]<0) || (pl_arr_t[index+1]<0) || (pl_arr_t[index+ploidy]<0))
+								{
+									GLs[gpos+0] = -1.0f;
+									GLs[gpos+1] = -1.0f;
+									GLs[gpos+ploidy] = -1.0f;
+								}
+								else
+								{
+									GLs[gpos+0] = unphred[std::min(pl_arr_t[index+0],255)];
+									GLs[gpos+1] = unphred[std::min(pl_arr_t[index+1],255)];
+									GLs[gpos+ploidy] = unphred[std::min(pl_arr_t[index+ploidy],255)];
 								}
 							}
+							DPs[i] = D > 0 ? dp_arr_t[i] : 0;
+							if (flip) { float_swap = GLs[gpos+ploidy]; GLs[gpos+ploidy] = GLs[gpos+0]; GLs[gpos+0] = float_swap; }
 						}
 
 						// Read Estimates
-						for(int i = 0 ; i < n_esti_samples ; i ++) {
-							int idx = mappingE[i];
-							if (idx >= 0) {
-								int gpos=ind2gpos[idx];
-								DSs[idx] = ds_arr_e[i];
-								if (ploidy[idx] == 1)
-								{
-									GPs[gpos+0] = std::round(gp_arr_e[ploidy_e_record*i+0] * 100.0f) / 100.0f;
-									GPs[gpos+1] = std::round(gp_arr_e[ploidy_e_record*i+1] * 100.0f) / 100.0f;
-									if (flip) { float_swap = GPs[gpos+1]; GPs[gpos+1] = GPs[gpos+0]; GPs[gpos+0] = float_swap; DSs[idx] = 1.0f - DSs[idx]; }
-								}
-								else
-								{
-									GPs[gpos+0] = std::round(gp_arr_e[ploidy_e_record*i+0] * 100.0f) / 100.0f;
-									GPs[gpos+1] = std::round(gp_arr_e[ploidy_e_record*i+1] * 100.0f) / 100.0f;
-									GPs[gpos+2] = std::round(gp_arr_e[ploidy_e_record*i+2] * 100.0f) / 100.0f;
+						for(int i = 0 ; i < n_esti_samples ; i ++)
+						{
+							const int gpos=ind2gpos[i];
+							const int pgt = (ploidy_samples[i]>1);
+							const int index = ploidy_gt_e_record*i;//ploidy
 
-									if (flip) { float_swap = GPs[gpos+2]; GPs[gpos+2] = GPs[gpos+0]; GPs[gpos+0] = float_swap; DSs[idx] = 2.0f - DSs[idx]; }
-								}
+							if ( (gt_arr_e[index+0]==bcf_gt_missing || gt_arr_e[index+pgt]==bcf_gt_missing)
+								|| (gt_arr_e[index+0]==bcf_int32_vector_end || gt_arr_e[index+pgt]==bcf_int32_vector_end))
+							{
+								GTs[i] = -1;
 							}
+							else
+							{
+								int gt = (bcf_gt_allele(gt_arr_e[index+0])==1);
+								if (ploidy_samples[i]>1) gt += (bcf_gt_allele(gt_arr_e[index+1])==1);
+								GTs[i] = gt;
+							}
+							if (gt_target)
+							{
+								DSs[i] = GTs[i];
+
+								GPs[gpos+0] = (GTs[i] == 0);
+								GPs[gpos+1] = (GTs[i] == 1);
+								GPs[gpos+ploidy] = (GTs[i] == ploidy);
+							}
+							else
+							{
+								DSs[i] = ds_arr_e[i];
+
+								GPs[gpos+0] = gp_arr_e[ploidy_e_record*i+0];
+								GPs[gpos+1] = gp_arr_e[ploidy_e_record*i+1];
+								GPs[gpos+ploidy] = gp_arr_e[ploidy_e_record*i+ploidy];
+							}
+							if (flip) { float_swap = GPs[gpos+ploidy]; GPs[gpos+ploidy] = GPs[gpos+0]; GPs[gpos+0] = float_swap; DSs[i] = ((float) ploidy) - DSs[i]; GTs[i] = ploidy - GTs[i];}
 						}
 
 						// Process variant
-						if (grp_bin >= 0) {	// Do this variant fall within a given frequency bin?
-							for (int i = 0 ; i < N ; i ++) {
-								int gpos=ind2gpos[i];
-								int true_genotype = getTruth(PLs[gpos+0], PLs[gpos+1], ploidy[i] == 1 ? 0.0 : PLs[gpos+2], DPs[i]);
-								if (true_genotype >= 0) {
-									int esti_genotype = getMostLikely(GPs[gpos+0], GPs[gpos+1], ploidy[i] == 1? 0.0 : GPs[gpos+2]);
-									int cal_bin = getCalibrationBin(GPs[gpos+0], GPs[gpos+1], ploidy[i] == 1 ? 0.0 : GPs[gpos+2]);
+						if (grp_bin >= 0)
+						{	// Do this variant fall within a given frequency bin?
+							for (int i = 0 ; i < N ; i ++)
+							{
+								const int gpos=ind2gpos[i];
+								const int true_genotype = getTruth(GLs[gpos+0], GLs[gpos+1], GLs[gpos+ploidy], DPs[i], ploidy_samples[i]);
+								if (true_genotype >= 0)
+								{
+									int esti_genotype;
+									if (gt_target) esti_genotype = getMostLikelyGT(GTs[i],DSs[i], ploidy_samples[i]);
+									else esti_genotype = getMostLikely(GPs[gpos+0], GPs[gpos+1], GPs[gpos+ploidy], DSs[i], ploidy_samples[i]);
 
-									// [0] Overall concordance for verbose
-									n_errors += (true_genotype != esti_genotype);
+									if (esti_genotype >= 0)
+									{
+										const int cal_bin = getCalibrationBin(GPs[gpos+0], GPs[gpos+1], GPs[gpos+ploidy]);
+										const int is_error = (true_genotype != esti_genotype);
+										// [0] Overall concordance for verbose
+										n_errors_all += is_error;
+										ngenoval_all ++;
+										// [1] Update concordance per sample
+										genotype_spl_errors_all[gpos+true_genotype] += is_error;
+										genotype_spl_totals_all[gpos+true_genotype]++;
+										// [2] Update concordance per bin
+										genotype_bin_errors_all[ploidyP1*grp_bin+true_genotype] += is_error;
+										genotype_bin_totals_all[ploidyP1*grp_bin+true_genotype]++;
+										// [3] Update concordance per calibration bin
+										genotype_cal_errors_all[ploidyP1*cal_bin+true_genotype] += is_error;
+										genotype_cal_totals_all[ploidyP1*cal_bin+true_genotype]++;
+										// [4] Update Rsquare per bin, DS and best-guess
+										rsquared_bin_ds_all[grp_bin].push(DSs[i], true_genotype*1.0f);
+										rsquared_bin_gt_all[grp_bin].push(esti_genotype*1.0f, true_genotype*1.0f);
+										frequency_bin_all[grp_bin].push(maf);
+										// [5] Update Rsquare per sample using DS
+										rsquared_spl_ds_all[i].push(DSs[i], true_genotype*1.0f);
+										// [6] Update Rsquare per sample using estimated genotype
+										rsquared_spl_gt_all[i].push(esti_genotype*1.0f, true_genotype*1.0f);
 
-									// [1] Update concordance per sample
-									switch (true_genotype) {
-									case 0: genotype_spl_errors[gpos+0] += (esti_genotype != 0); genotype_spl_totals[gpos+0]++; break;
-									case 1: genotype_spl_errors[gpos+1] += (esti_genotype != 1); genotype_spl_totals[gpos+1]++; break;
-									case 2: genotype_spl_errors[gpos+2] += (esti_genotype != 2); genotype_spl_totals[gpos+2]++; break;
+										if (line_type==VCF_SNP)
+										{
+											n_errors_snps += is_error;
+											ngenoval_snps ++;
+											genotype_spl_errors_snps[gpos+true_genotype] += is_error;
+											genotype_spl_totals_snps[gpos+true_genotype]++;
+											genotype_bin_errors_snps[ploidyP1*grp_bin+true_genotype] += is_error;
+											genotype_bin_totals_snps[ploidyP1*grp_bin+true_genotype]++;
+											genotype_cal_errors_snps[ploidyP1*cal_bin+true_genotype] += is_error;
+											genotype_cal_totals_snps[ploidyP1*cal_bin+true_genotype]++;
+											rsquared_bin_ds_snps[grp_bin].push(DSs[i], true_genotype*1.0f);
+											rsquared_bin_gt_snps[grp_bin].push(esti_genotype*1.0f, true_genotype*1.0f);
+											frequency_bin_snps[grp_bin].push(maf);
+											rsquared_spl_ds_snps[i].push(DSs[i], true_genotype*1.0f);
+											rsquared_spl_gt_snps[i].push(esti_genotype*1.0f, true_genotype*1.0f);
+										}
+										if (line_type==VCF_INDEL)
+										{
+											n_errors_indels += is_error;
+											ngenoval_indels ++;
+											genotype_spl_errors_indels[gpos+true_genotype] += is_error;
+											genotype_spl_totals_indels[gpos+true_genotype]++;
+											genotype_bin_errors_indels[ploidyP1*grp_bin+true_genotype] += is_error;
+											genotype_bin_totals_indels[ploidyP1*grp_bin+true_genotype]++;
+											genotype_cal_errors_indels[ploidyP1*cal_bin+true_genotype] += is_error;
+											genotype_cal_totals_indels[ploidyP1*cal_bin+true_genotype]++;
+											rsquared_bin_ds_indels[grp_bin].push(DSs[i], true_genotype*1.0f);
+											rsquared_bin_gt_indels[grp_bin].push(esti_genotype*1.0f, true_genotype*1.0f);
+											frequency_bin_indels[grp_bin].push(maf);
+											rsquared_spl_ds_indels[i].push(DSs[i], true_genotype*1.0f);
+											rsquared_spl_gt_indels[i].push(esti_genotype*1.0f, true_genotype*1.0f);
+										}
+										// Increment counts
+										n_validation_marker++;
+									}
+									else
+									{
+										switch (esti_genotype) {
+										case -2:  count_es_err_2++; break;
+										case -3:  count_es_err_3++; break;
+										default:  count_es_err_1++; break;
+										}
 									}
 
-									// [2] Update concordance per bin
+								}
+								else
+								{
 									switch (true_genotype) {
-									case 0:	genotype_bin_errors[(max_ploidy+1)*grp_bin+0] += (esti_genotype != 0); genotype_bin_totals[(max_ploidy+1)*grp_bin+0]++; break;
-									case 1:	genotype_bin_errors[(max_ploidy+1)*grp_bin+1] += (esti_genotype != 1); genotype_bin_totals[(max_ploidy+1)*grp_bin+1]++; break;
-									case 2:	genotype_bin_errors[(max_ploidy+1)*grp_bin+2] += (esti_genotype != 2); genotype_bin_totals[(max_ploidy+1)*grp_bin+2]++; break;
+									case -2:  count_tg_err_2++; break;
+									case -3:  count_tg_err_3++; break;
+									case -4:  count_tg_err_4++; break;
+									case -5:  count_tg_err_5++; break;
+									default:
+										count_tg_err_1++; break;
 									}
-
-									// [3] Update concordance per calibration bin
-									switch (true_genotype) {
-									case 0:	genotype_cal_errors[(max_ploidy+1)*cal_bin+0] += (esti_genotype != 0); genotype_cal_totals[(max_ploidy+1)*cal_bin+0]++; break;
-									case 1:	genotype_cal_errors[(max_ploidy+1)*cal_bin+1] += (esti_genotype != 1); genotype_cal_totals[(max_ploidy+1)*cal_bin+1]++; break;
-									case 2:	genotype_cal_errors[(max_ploidy+1)*cal_bin+2] += (esti_genotype != 2); genotype_cal_totals[(max_ploidy+1)*cal_bin+2]++; break;
-									}
-
-									// [4] Update Rsquare per bin
-									rsquared_bin[grp_bin].push(DSs[i], true_genotype*1.0f);
-									frequency_bin[grp_bin].push(maf);
-
-									// [5] Update Rsquare per sample
-									rsquared_spl[i].push(DSs[i], true_genotype*1.0f);
-
-									// [6] Update data for AVG Rsquare
-									sample_truth[i] = true_genotype*1.0f;
-									sum_ds_e += DSs[i];
-									sum_ds_t += true_genotype*1.0f;
-
-									// Increment counts
-									has_validation = true;
-									ngenoval ++;
 								}
 							}
-							// [6] Compute Rsquare variant and update data
-							float xMean = mean(N, DSs);
-							float xStdDev = stdDev(N, DSs, xMean);
-							float yMean  = mean(N, sample_truth);
-							float yStdDev = stdDev(N, sample_truth, yMean);
-
-							if (xStdDev > 0.0f && yStdDev > 0.0f)
-								avg_rsquared_bin[grp_bin].push(std::pow(pearson_prec(N,DSs,sample_truth, xMean, xStdDev, yMean, yStdDev),2));
-						}
-
+						} else afnobin++;
 					}
+					else noval++;
+
 					// increment number of variants
-					nvariantval += has_validation;
+					nvariantvalall += n_validation_marker>0;
+					nvariantvalfull += n_validation_marker==N;
+
+					if (line_type==VCF_SNP && n_validation_marker) nvariantvalsnps++;
+					if (line_type==VCF_INDEL && n_validation_marker) nvariantvalindels++;
+
 					nvarianttot ++;
 				}
+				else nobi++;
+			}
+			else
+			{
+				if (bcf_sr_has_line(sr,0))
+					++n_disc_var_truth;
+				if (bcf_sr_has_line(sr,1))
+					++n_disc_var_est;
+				if (bcf_sr_has_line(sr,2))
+					++n_disc_var_af;
 			}
 		}
 		free(af_ptr);
-		free(gl_arr_t);
+		free(pl_arr_t);
+		free(gt_arr_e);
 		free(ds_arr_e);
 		free(gp_arr_e);
+		bcf_hdr_destroy(hdr_truth);
+		bcf_hdr_destroy(hdr_estimated);
 		bcf_sr_destroy(sr);
-		n_variants_all_chromosomes += nvariantval;
-		vrb.bullet("#variants in the overlap = " + stb.str(nvarianttot));
-		vrb.bullet("#variants with validation data = " + stb.str(nvariantval));
+		n_variants_all_chromosomes += nvariantvalall;
+		if (afnobin > 0) vrb.bullet("#variants discarded as no associated bin can be set (e.g. AF<=0 or AF>1) = " + stb.str(afnobin));
 		if (nvarianttot==0) vrb.error("No variant found in the intersection of files. Files are probably not aligned correctly. Please verify that chromosome names and regions are matching for the imputed, validation and allele frequency file.");
-		if (nvariantval==0) vrb.error("No usuable validation variant has been found in the intersection of files. Verify that the validation file has PL and DP fields defined and the imputed file has DS and GP fields defined in the same region.");
-		vrb.bullet("#genotypes used in validation = " + stb.str(ngenoval));
-		vrb.bullet("%error rate in this file = " + stb.str(n_errors * 100.0f / ngenoval));
+		if (nvariantvalall==0) vrb.error("No usable validation variant has been found in the intersection of files. Verify that the validation file has FORMAT/PL and FORMAT/DP fields defined, the imputed file has FORMAT/DS and FORMAT/GP fields defined in the same region and the allele frequency file has the INFO/AF (or --af-tag) field defined at every marker.");
+
+		vrb.print("");
+		vrb.bullet("#variants in the overlap (biallelic SNPs and indels) = " + stb.str(nvarianttot));
+		vrb.bullet("#variants with all genotypes in the validation data = " + stb.str(nvariantvalfull));
+		vrb.bullet("#variants with at least one genotype in the validation data = " + stb.str(nvariantvalall) + " [SNPs = " + stb.str(nvariantvalsnps) + " (" + stb.str(nvariantvalsnps*100.0f/nvariantvalall) + "%), indels = " + stb.str(nvariantvalindels)  + " (" + stb.str(nvariantvalindels*100.0f/nvariantvalall) + "%)]");
+
+		string ra,rs,ri;
+		rs = ngenoval_all?stb.str(ngenoval_snps*100.0f/ngenoval_all):"-";
+		ri = ngenoval_all?stb.str(ngenoval_indels*100.0f/ngenoval_all):"-";
+		vrb.bullet("#genotypes used in validation = " + stb.str(ngenoval_all) + " [#SNPs = " + stb.str(ngenoval_snps) + " (" + rs + "%), indels = " + stb.str(ngenoval_indels)  + " (" + ri + "%)]");
+
+		vrb.print("");
+		vrb.bullet("Statistics on discarded true genoypes:");
+		vrb.print("     #FORMAT/DP missing: " + stb.str(count_tg_err_5));
+		vrb.print("     #FORMAT/DP < MinDP: " + stb.str(count_tg_err_2));
+		if (gt_validation)
+		{
+			vrb.print("     #Missing/malformatted GTs: " + stb.str(count_tg_err_3));
+		}
+		else
+		{
+			vrb.print("     #Missing/malformatted PLs: " + stb.str(count_tg_err_3));
+			vrb.print("     #Max(GLs) < MinPROB: " + stb.str(count_tg_err_4));
+			vrb.print("     #Other (e.g. PLs have the same value): " + stb.str(count_tg_err_1));
+		}
+
+		vrb.print("");
+		vrb.bullet("Statistics on discarded dosages / genotype probabilities:");
+		vrb.print("     #Missing/malformatted DSs: " + stb.str(count_es_err_2));
+		if (gt_target) vrb.print("     #Missing/malformatted GTs: " + stb.str(count_es_err_3));
+		else vrb.print("     #Missing/malformatted GPs: " + stb.str(count_es_err_3));
+		vrb.print("     #Other (e.g. no unique best-guess genotype): " + stb.str(count_es_err_1));
+
+		vrb.print("");
+		ra = ngenoval_all?stb.str(n_errors_all*100.0f/ngenoval_all):"-";
+		rs = ngenoval_snps?stb.str(n_errors_snps*100.0f/ngenoval_snps):"-";
+		ri = ngenoval_indels?stb.str(n_errors_indels*100.0f/ngenoval_indels):"-";
+
+		vrb.bullet("Error rate in this file = " + ra + "% [SNPs = " + rs + "%, indels = " + ri + "%)]");
+
 	}
+	free(truth_imap);
+	free(estimated_imap);
+	for(int i = 0; i < n_isec_samples_names; i++) free(isec_samples_names[i]);
+
+	vrb.print("");
 	vrb.bullet("Total #variants = " + stb.str(n_variants_all_chromosomes));
 
 	if (L == 0) {

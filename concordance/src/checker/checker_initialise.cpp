@@ -30,6 +30,7 @@ void checker::read_files_and_initialise() {
 	//step1: process bins/groups & parameters
 	if (options.count("bins")) {
 		D.initialize(options["bins"].as < vector < double > > (), options["minPROB"].as < double > (), options["minDP"].as < int > ());
+		//if (options.count("raf-bins")) D.initializeRAF(options["raf-bins"].as < vector < double > > ();
 	} else {
 		D.initialize(options["groups"].as < string > (), options["minPROB"].as < double > (), options["minDP"].as < int > ());
 	}

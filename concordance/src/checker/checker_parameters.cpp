@@ -35,14 +35,18 @@ void checker::declare_options() {
 	opt_input.add_options()
 			("input", bpo::value< string >(), "File listing True, Imputed, Frequencies and Regions")
 			("samples", bpo::value< string >(), "List of samples to process, one sample ID per line")
-			("af-tag", bpo::value< string >()->default_value("AF"), "Allele frequency INFO tag to use for binning. By default the allele frequency is estimated from the INFO/AF tag.");
+			("af-tag", bpo::value< string >()->default_value("AF"), "Allele frequency INFO tag to use for binning. By default the allele frequency is estimated from the INFO/AF tag.")
+			("gt-validation", "Uses hard called genotypes rather than phread-scaled likelihoods for the validation dataset, reading them from FORMAT/GT field.")
+			("gt-target", "Uses FORMAT/GT field to determine the best-guess genotype rather than the higher FORMAT/GP (default). FORMAT/DS are FORMAT/GP fields are still required for calibration and rsquared calculations.")
+			("use-alt-af", "If specified, the metrics work on the ALT allele frequency (range [0,1]), rather than minor allele frequency (range [0,0.5]).");
+
 
 	bpo::options_description opt_algo ("Parameters");
 	opt_algo.add_options()
 			("minPROB", bpo::value<double>(), "Minimum posterior probability P(G|R) in validation data")
-			("minDP", bpo::value<int>(), "Minimum coverage in validation data")
-			("bins", bpo::value< vector < double > >()->multitoken(), "Frequency bins used for Rsquare computations")
-			("groups", bpo::value< string >(), "Alternative to frequency bins: bins are user defined");
+			("minDP", bpo::value<int>(), "Minimum coverage in validation data. If FORMAT/DP is missing and --minDP > 0, the program exits with an error.")
+			("bins", bpo::value< vector < double > >()->multitoken(), "Allele frequency bins used for rsquared computations. By default they should as MAF bins [0-0.5], while they should take the full range [0-1] if --use-ref-alt is used.")
+			;//("groups", bpo::value< string >(), "Alternative to frequency bins: bins are user defined, by providing a file containing"); //deactivated for now..
 
 	bpo::options_description opt_output ("Output files");
 	opt_output.add_options()
@@ -105,7 +109,7 @@ void checker::verbose_options() {
 	vrb.bullet("#Threads   : " + stb.str(options["thread"].as < int > ()));
 	vrb.bullet("MinPROB : " + stb.str(options["minPROB"].as < double > ()));
 	vrb.bullet("MinDP   : " + stb.str(options["minDP"].as < int > ()));
-	if (options.count("af-tag")) vrb.bullet("Using INFO/" + options["af-tag"].as < string > () + " tag for binning.");
+	if (options.count("af-tag")) vrb.bullet("Using INFO/" + options["af-tag"].as < string > () + " tag for allele frequency bins.");
 	else vrb.bullet("Using INFO/AF tag for binning.");
 
 	if (options.count("bins")) {

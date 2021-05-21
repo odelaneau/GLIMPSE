@@ -96,7 +96,7 @@ void ligater::update_distances_and_write_record(htsFile * fd, bcf_hdr_t * hdr, b
 	updateHS(body_hs_fields);
 	bcf_update_format_int32(hdr, r_body, "HS", body_hs_fields, nsamples);
 	bcf_update_info(hdr, r_body, "BUF", NULL, 0, BCF_HT_INT);  // the type does not matter with n=0 / This removes INFO/BUF field
-	bcf_write1(fd, hdr, r_body);
+	if (bcf_write1(fd, hdr, r_body) ) vrb.error("Failed to write the record output to file");
 }
 
 void ligater::write_record(htsFile *fd, bcf_hdr_t * hdr, bcf1_t *r_body) {
@@ -106,7 +106,8 @@ void ligater::write_record(htsFile *fd, bcf_hdr_t * hdr, bcf1_t *r_body) {
 	updateHS(body_hs_fields);
 	bcf_update_format_int32(hdr, r_body, "HS", body_hs_fields, nsamples);
 	bcf_update_info(hdr, r_body, "BUF", NULL, 0, BCF_HT_INT);  // the type does not matter with n=0 / This removes INFO/BUF field
-	bcf_write1(fd, hdr, r_body);
+	if (bcf_write1(fd, hdr, r_body) ) vrb.error("Failed to write the record output to file");
+
 }
 
 void ligater::ligate() {
@@ -238,7 +239,7 @@ void ligater::ligate() {
 	htsFile * fp = hts_open(fname.c_str(),file_format.c_str());
 	if (n_threads > 1) hts_set_threads(fp, n_threads);
 	bcf_hdr_t * hdr = bcf_hdr_dup(sr->readers[0].header);
-	bcf_hdr_write(fp, hdr);
+	if (bcf_hdr_write(fp, hdr)) vrb.error("Failed to write header to output file");
 
 	//Main loop
 	int n_variants = 0;

@@ -35,16 +35,12 @@ void ligater::declare_options() {
 	opt_input.add_options()
 			("input", bpo::value < string >(), "Text file containing all VCF/BCF to ligate together");
 
-	bpo::options_description opt_algo ("Parameters");
-	opt_algo.add_options()
-			("dummy", bpo::value<int>()->default_value(10), "Dummy parameter to keep this section in the code");
-
 	bpo::options_description opt_output ("Output files");
 	opt_output.add_options()
 			("output,O", bpo::value< string >(), "Output ligated file in VCF/BCF format")
 			("log", bpo::value< string >(), "Log file");
 
-	descriptions.add(opt_base).add(opt_input).add(opt_algo).add(opt_output);
+	descriptions.add(opt_base).add(opt_input).add(opt_output);
 }
 
 void ligater::parse_command_line(vector < string > & args) {

@@ -48,13 +48,13 @@ void genotype::free() {
 }
 
 void genotype::allocate() {
-	GL = vector < unsigned char > ((ploidy+1) * n_variants, 0);
+	GL = vector < unsigned char > ((ploidy+1) * n_variants, (unsigned char) 0);
 	H0 = vector < bool > (n_variants, false);
 	if (ploidy > 1) H1 = vector < bool > (n_variants, false);
 }
 
 void genotype::initHaplotypeLikelihoods(vector < float > & HL) const {
-	std::array<float,3> tmp;
+	std::array<float,3> tmp = {0.0f, 0.0f, 0.0f};
 	float sum;
 	const int ploidyP1 = ploidy+1;
 
@@ -62,10 +62,12 @@ void genotype::initHaplotypeLikelihoods(vector < float > & HL) const {
 	{
 		tmp[0]=unphred[GL[ploidyP1*l+0]];
         tmp[1]=unphred[GL[ploidyP1*l+1]];
-        tmp[2]=ploidy > 1? unphred[GL[ploidyP1*l+2]] : 0.0f;
+        tmp[2]=ploidy > 1? unphred[GL[3*l+2]] : 0.0f;
+
         sum = tmp[0] + tmp[1] + tmp[2];
         tmp[0] /= sum;
         tmp[1] /= sum;
+        tmp[2] /= sum;
 
         //for ploidy==1 this is it
         HL[2*l+0] = tmp[0];
@@ -74,7 +76,6 @@ void genotype::initHaplotypeLikelihoods(vector < float > & HL) const {
 		//if ploidy ==2 we need to consider tmp[2]
         if (ploidy > 1)
         {
-            tmp[2] /= sum;
             HL[2*l+0] += 0.5 * tmp[1];
     		HL[2*l+1] = 0.5 * tmp[1] + tmp[2];
         }
@@ -225,3 +226,4 @@ void genotype::sortAndNormAndInferGenotype() {
 	}
 
 }
+

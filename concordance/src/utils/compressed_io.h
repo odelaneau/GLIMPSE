@@ -96,6 +96,17 @@ public:
 			file_descriptor.close();
 		}
 	}
+
+	void open(std::string filename) {
+		if (filename.substr(filename.find_last_of(".") + 1) == "gz") {
+			file_descriptor.open(filename.c_str(), std::ios::out | std::ios::binary);
+			push(boost::iostreams::gzip_compressor());
+		} else if (filename.substr(filename.find_last_of(".") + 1) == "bz2") {
+			file_descriptor.open(filename.c_str(), std::ios::out | std::ios::binary);
+			push(boost::iostreams::bzip2_compressor());
+		} else file_descriptor.open(filename.c_str());
+		if (!file_descriptor.fail()) push(file_descriptor);
+	}
 };
 
 #endif

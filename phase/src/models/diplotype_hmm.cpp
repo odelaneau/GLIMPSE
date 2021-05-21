@@ -47,11 +47,11 @@ diplotype_hmm::diplotype_hmm(const conditioning_set * _C) {
 	EMIT1[0][7] = C->ed; EMIT1[1][7] = C->ed; EMIT1[2][7] = C->ed;
 
 	//
-	BetaSum = vector < float > (HAP_NUMBER, 0.0);
-	probSumH1 = vector < float > (HAP_NUMBER, 1.0);
-	probSumH2 = vector < float > (HAP_NUMBER, 1.0);
-	probSumT1 = 1.0;
-	probSumT2 = 1.0;
+	BetaSum = vector < float > (HAP_NUMBER, 0.0f);
+	probSumH1 = vector < float > (HAP_NUMBER, 1.0f);
+	probSumH2 = vector < float > (HAP_NUMBER, 1.0f);
+	probSumT1 = 1.0f;
+	probSumT2 = 1.0f;
 
 	curr_locus=0;
 	curr_segment_index=0;
@@ -81,7 +81,7 @@ void diplotype_hmm::reallocate(const vector < bool > & H0, const vector < bool >
 
 	//COMPUTE SEGMENTATION
 	int nv = 0;
-	segments = vector < int > ();
+	segments.clear();
 	for (int l = 0, n_hets = 0 ; l < C->n_sites ;) {
 		n_hets += (HET[l] >= 0);
 		if (n_hets == 4) {
@@ -166,9 +166,9 @@ void diplotype_hmm::rephaseHaplotypes(vector < bool > & H0, vector < bool > & H1
 	backward();
 
 	vector < int > dip_sampled = vector < int > (n_segs, -1);
-	vector < double > dip_probs = vector < double > (HAP_NUMBER, 0.0);
+	vector < float > dip_probs = vector < float > (HAP_NUMBER, 0.0f);
 	for (curr_segment_index = 0, curr_locus = 0 ; curr_segment_index < n_segs ; curr_segment_index ++) {
-		float sumHap = 0.0, sumDip = 0.0;
+		float sumHap = 0.0f, sumDip = 0.0f;
 		if (curr_segment_index == 0) {
 			for (int h = 0 ; h < HAP_NUMBER ; h ++) sumHap += BetaSum[h];
 			for (int d = 0 ; d < HAP_NUMBER ; d ++) {
@@ -184,7 +184,7 @@ void diplotype_hmm::rephaseHaplotypes(vector < bool > & H0, vector < bool > & H1
 				sumDip += dip_probs[d];
 			}
 		}
-		dip_sampled[curr_segment_index] = rng.sample(dip_probs, sumDip);
+		dip_sampled[curr_segment_index] = rng.samplef(dip_probs, sumDip);
 		curr_locus += segments[curr_segment_index];
 	}
 	curr_segment_index = 0;
@@ -205,3 +205,4 @@ void diplotype_hmm::rephaseHaplotypes(vector < bool > & H0, vector < bool > & H1
 		}
 	}
 }
+

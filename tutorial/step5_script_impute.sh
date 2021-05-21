@@ -12,6 +12,6 @@ do
 	IRG=$(echo $LINE | cut -d" " -f3)
 	ORG=$(echo $LINE | cut -d" " -f4)
 	OUT=GLIMPSE_impute/NA12878.chr22.imputed.${ID}.bcf
-	../phase/bin/GLIMPSE_phase --input ${VCF} --reference ${REF} --map ${MAP} --input-region ${IRG} --output-region ${ORG} --output ${OUT}
-	#bcftools index -f ${OUT}
+	../phase/bin/GLIMPSE_phase --input ${VCF} --reference ${REF} --map ${MAP} --main 15 --input-region ${IRG} --output-region ${ORG} --output ${OUT}
+	bcftools index -f ${OUT}
 done < chunks.chr22.txt
