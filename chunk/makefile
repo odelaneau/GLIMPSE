@@ -7,8 +7,8 @@ dummy_build_folder_bin := $(shell mkdir -p bin)
 dummy_build_folder_obj := $(shell mkdir -p obj)
 
 #COMPILER & LINKER FLAGS
-CXXFLAG=-O3
-LDFLAG=-O3
+CXXFLAGS=-O3
+LDFLAGS=-O3
 
 #DYNAMIC LIBRARIES
 DYN_LIBS=-lz -lpthread -lbz2 -llzma -lcurl -lcrypto
