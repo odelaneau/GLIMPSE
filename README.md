@@ -3,6 +3,8 @@
 [![](docs/images/branding/glimpse_logo_250x107.png)](https://odelaneau.github.io/GLIMPSE/)
 
 [![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Bioconda](https://img.shields.io/conda/dn/bioconda/glimpse-bio.svg?label=Bioconda)](http://bioconda.github.io/recipes/glimpse-bio/README.html)
+
 
 ### Versions
 
