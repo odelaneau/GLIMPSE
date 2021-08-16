@@ -118,7 +118,9 @@ public:
 		clear();
 		bool new_column = true;
 		n_states = idxH.size();
-		if (n_states == 0) vrb.error("States for individual " + std::to_string(ind) + " are zero. Error during selection.");
+		if (n_states == 0) {
+			vrb.error("States for individual " + std::to_string(ind) + " are zero. Error during selection.  Try increasing the # samples in thef reference panel and/or the genomic region to consider.");
+		}
 
 		for (int l = 0 ; l < n_vars ; l ++) {
 			unsigned int ac = H.H_opt_var.get(l, H.ind2hapid[ind] + H.n_ref_haps + 0);
