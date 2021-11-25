@@ -134,6 +134,7 @@ void sampler::sample() {
 	}
 	else
 	{
+		/*
 		if (bcf_sr_next_line (sr)  == 0) vrb.error("No marker found in region");
 		line =  bcf_sr_get_line(sr, 0);
 
@@ -147,6 +148,29 @@ void sampler::sample() {
 		}
 		if (n_diploid == 0 && n_haploid == 0) vrb.error("No sample found.");
 		bcf_sr_seek (sr, NULL, 0);
+		*/
+		int n_gt_fields2 = 0;
+		int *gt_fields2 = NULL;
+		bcf1_t * line2;
+		bcf_srs_t * sr2 =  bcf_sr_init();
+		sr2->collapse = COLLAPSE_NONE;
+		sr2->require_index = 1;
+
+		bcf_sr_add_reader (sr2, filename.c_str());
+
+		if (bcf_sr_next_line (sr2)  == 0) vrb.error("No marker found in region");
+		line2 =  bcf_sr_get_line(sr2, 0);
+		int ngt = bcf_get_genotypes(sr2->readers[0].header, line2, &gt_fields2, &n_gt_fields2);
+		const int line_max_ploidy = ngt/nsamples;
+		assert(line_max_ploidy==max_ploidy); //we do not allow missing data
+		for(int i = 0 ; i < nsamples; ++i)
+		{
+			ploidy[i] = 2 - (gt_fields2[max_ploidy*i+1] == bcf_int32_vector_end);
+			ploidy[i] > 1? ++n_diploid : ++n_haploid;
+		}
+		if (n_diploid == 0 && n_haploid == 0) vrb.error("No sample found.");
+		free(gt_fields2);
+		bcf_sr_destroy(sr2);
 	}
 	string pl1  = n_haploid!=1? "s" : "";
 	string pl2  = n_diploid!=1? "s" : "";

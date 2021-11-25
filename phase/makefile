@@ -23,6 +23,16 @@ BFILE=bin/GLIMPSE_$(NAME)
 EXEFILE=bin/GLIMPSE_$(NAME)_static
 
 #CONDITIONAL PATH DEFINITON
+system: DYN_LIBS=-lz -lpthread -lbz2 -llzma
+system: HTSSRC=/usr/local
+system: HTSLIB_INC=$(HTSSRC)/include/htslib
+system: HTSLIB_LIB=$(HTSSRC)/lib/libhts.a
+system: BOOST_INC=/usr/include
+system: BOOST_LIB_IO=/usr/lib/x86_64-linux-gnu/libboost_iostreams.a
+system: BOOST_LIB_PO=/usr/lib/x86_64-linux-gnu/libboost_program_options.a
+system: BOOST_LIB_SE=/usr/lib/x86_64-linux-gnu/libboost_serialization.a
+system: $(BFILE)
+
 desktop: HTSSRC=../..
 desktop: HTSLIB_INC=$(HTSSRC)/htslib
 desktop: HTSLIB_LIB=$(HTSSRC)/htslib/libhts.a
