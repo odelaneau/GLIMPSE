@@ -5,7 +5,7 @@ projects = chunk concordance ligate phase sample snparray
 all: $(projects)
 
 $(projects):
-	$(MAKE) -C $@
+	$(MAKE) -C $@ $(COMPILATION_ENV)
 
 clean:
 	for dir in $(projects); do \

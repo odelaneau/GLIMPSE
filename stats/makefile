@@ -49,30 +49,14 @@ olivier: BOOST_LIB_IO=/usr/lib/x86_64-linux-gnu/libboost_iostreams.a
 olivier: BOOST_LIB_PO=/usr/lib/x86_64-linux-gnu/libboost_program_options.a
 olivier: $(BFILE)
 
-curnagl: DYN_LIBS=-lz -lpthread -lcrypto /dcsrsoft/spack/hetre/v1.1/spack/opt/spack/linux-rhel8-zen2/gcc-9.3.0/xz-5.2.5-3zvzfm67t6ebuerybemshylrysbphghz/lib/liblzma.so /dcsrsoft/spack/hetre/v1.1/spack/opt/spack/linux-rhel8-zen2/gcc-9.3.0/bzip2-1.0.8-tsmb67uwhlqn5g6h6etjvftugq7y6mtl/lib/libbz2.so /dcsrsoft/spack/hetre/v1.1/spack/opt/spack/linux-rhel8-zen2/gcc-9.3.0/curl-7.74.0-fcqjhj645xhqp2ilrzafwqtqqnu7g42v/lib/libcurl.so
-curnagl: HTSSRC=/dcsrsoft/spack/hetre/v1.1/spack/opt/spack/linux-rhel8-zen2/gcc-9.3.0/htslib-1.12-p4n5q4icj4g5e4of7mxq2i5xly4v4tax
-curnagl: HTSLIB_INC=$(HTSSRC)/include
-curnagl: HTSLIB_LIB=$(HTSSRC)/lib/libhts.a
-curnagl: BOOST_INC=/dcsrsoft/spack/hetre/v1.1/spack/opt/spack/linux-rhel8-zen2/gcc-9.3.0/boost-1.74.0-yazg3k7kwtk64o3ljufuoewuhcjqdtqp/include
-curnagl: BOOST_LIB_IO=/dcsrsoft/spack/hetre/v1.1/spack/opt/spack/linux-rhel8-zen2/gcc-9.3.0/boost-1.74.0-yazg3k7kwtk64o3ljufuoewuhcjqdtqp/lib/libboost_iostreams.a
-curnagl: BOOST_LIB_PO=/dcsrsoft/spack/hetre/v1.1/spack/opt/spack/linux-rhel8-zen2/gcc-9.3.0/boost-1.74.0-yazg3k7kwtk64o3ljufuoewuhcjqdtqp/lib/libboost_program_options.a
-curnagl: $(BFILE)
-
-jura: HTSSRC=/scratch/beefgs/FAC/FBM/DBC/odeleanea/default_sensitive/data/libs/htslib-1.12
-jura: HTSLIB_INC=$(HTSSRC)
-jura: HTSLIB_LIB=$(HTSSRC)/libhts.a
-jura: BOOST_INC=/scratch/beefgs/FAC/FBM/DBC/odeleanea/default_sensitive/data/libs/boost/include
-jura: BOOST_LIB_IO=/scratch/beefgs/FAC/FBM/DBC/odeleanea/default_sensitive/data/libs/boost/lib/libboost_iostreams.a
-jura: BOOST_LIB_PO=/scratch/beefgs/FAC/FBM/DBC/odeleanea/default_sensitive/data/libs/boost/lib/libboost_program_options.a
-jura: $(BFILE)
-
-wally: HTSSRC=/scratch/wally/FAC/FBM/DBC/odelanea/default/libs/htslib_v1.12
-wally: HTSLIB_INC=$(HTSSRC)
-wally: HTSLIB_LIB=$(HTSSRC)/libhts.a
-wally: BOOST_INC=/scratch/wally/FAC/FBM/DBC/odelanea/default/libs/boost/include
-wally: BOOST_LIB_IO=/scratch/wally/FAC/FBM/DBC/odelanea/default/libs/boost/lib/libboost_iostreams.a
-wally: BOOST_LIB_PO=/scratch/wally/FAC/FBM/DBC/odelanea/default/libs/boost/lib/libboost_program_options.a
-wally: $(BFILE)
+unil-dcsr: DYN_LIBS=-lz -lpthread -lcrypto $(XZ_ROOT)/lib/liblzma.so $(BZIP2_ROOT)/lib/libbz2.so $(CURL_ROOT)/lib/libcurl.so
+unil-dcsr: HTSSRC=$(HTSLIB_ROOT)
+unil-dcsr: HTSLIB_INC=$(HTSSRC)/include
+unil-dcsr: HTSLIB_LIB=$(HTSSRC)/lib/libhts.a
+unil-dcsr: BOOST_INC=$(BOOST_ROOT)/include
+unil-dcsr: BOOST_LIB_IO=$(BOOST_ROOT)/lib/libboost_iostreams.a
+unil-dcsr: BOOST_LIB_PO=$(BOOST_ROOT)/lib/libboost_program_options.a
+unil-dcsr: $(BFILE)
 
 static_exe: CXXFLAG=-O2
 static_exe: LDFLAG=-O2
