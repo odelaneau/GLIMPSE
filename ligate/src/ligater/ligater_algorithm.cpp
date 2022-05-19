@@ -288,8 +288,17 @@ void ligater::ligate() {
 			//Retrieve who is buffer, who is main
 			rbuffer0 = bcf_get_info_int32(sr->readers[active_readers[0]].header,line0,"BUF",&buffer0, &nbuffer0);
 			rbuffer1 = bcf_get_info_int32(sr->readers[active_readers[1]].header,line1,"BUF",&buffer1, &nbuffer1);
-			if ((buffer0[0] + buffer1[0]) == 0) vrb.error("Overlap between chunk specific variants");
-			if ((buffer0[0] + buffer1[0]) == 2) vrb.error("Overlap between buffer-specific variants");
+			if ((buffer0[0] + buffer1[0]) == 0)
+				vrb.error("Overlap between chunk specific variants, pos: " + to_string(line1->pos+1));
+			if ((buffer0[0] + buffer1[0]) == 2)
+			{
+				if (prev_stage0==STAGE_BODY && prev_stage1 == STAGE_UBUF)
+				{
+					vrb.warning("Overlap between buffer-specific variants, pos: " + to_string(line1->pos+1) + ". Variant recovered using previous buffer information. Please check your chunk files to avoid this warning.");
+					buffer0[0]=0;
+				}
+				else vrb.error("Critical overlap between buffer-specific variants, pos: " + to_string(line1->pos+1));
+			}
 			//Check in which stages the readers are now
 			unsigned char curr_stage0, curr_stage1;
 			if (buffer0[0]) {
