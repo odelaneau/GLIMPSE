@@ -36,13 +36,20 @@ caller::caller():
 
 caller::~caller()
 {
-	for (int t = 0 ; t < HMM.size() ; t ++) {
+	for (int t = 0; t < HMM.size(); t++)
+	{
 		delete HMM[t];
-		delete DMM[t];
-		delete COND[t];
 	}
 	HMM.clear();
+	for (int t = 0; t < DMM.size(); t++)
+	{
+		delete DMM[t];
+	}
 	DMM.clear();
+	for (int t = 0; t < COND.size(); t++)
+	{
+		delete COND[t];
+	}
 	COND.clear();
 }
 

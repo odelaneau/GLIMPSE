@@ -192,25 +192,28 @@ void ligater::ligate() {
 	}
 	else
 	{
-		if (bcf_sr_next_line (sr)  == 0) vrb.error("No marker found in files");
+		int n_gt_fields2 = 0;
+		int *gt_fields2 = NULL;
+		bcf1_t * line2;
+		bcf_srs_t * sr2 =  bcf_sr_init();
+		sr2->collapse = COLLAPSE_NONE;
+		sr2->require_index = 1;
 
-		int * gt_fields = NULL;
-		int n_gt_fields = 0;
+		for (int f = 0 ; f < nfiles ; f ++) bcf_sr_add_reader (sr2, filenames[f].c_str());
 
-		bcf1_t * line =  bcf_sr_get_line(sr, 0);
-
-		int ngt = bcf_get_genotypes(sr->readers[0].header, line, &gt_fields, &n_gt_fields);
+		if (bcf_sr_next_line (sr2)  == 0) vrb.error("No marker found in region");
+		line2 =  bcf_sr_get_line(sr2, 0);
+		int ngt = bcf_get_genotypes(sr2->readers[0].header, line2, &gt_fields2, &n_gt_fields2);
 		const int line_max_ploidy = ngt/nsamples;
 		assert(line_max_ploidy==max_ploidy); //we do not allow missing data
 		for(int i = 0 ; i < nsamples; ++i)
 		{
-			ploidy[i] = 2 - (gt_fields[max_ploidy*i+1] == bcf_int32_vector_end);
-
-			if (ploidy[i] > 1)	++n_diploid;
-			else ++n_haploid;
+			ploidy[i] = 2 - (gt_fields2[max_ploidy*i+1] == bcf_int32_vector_end);
+			ploidy[i] > 1? ++n_diploid : ++n_haploid;
 		}
 		if (n_diploid == 0 && n_haploid == 0) vrb.error("No sample found.");
-		bcf_sr_seek (sr, NULL, 0);
+		free(gt_fields2);
+		bcf_sr_destroy(sr2);
 	}
 	//let's keep track of the diploids indices (works with every ploidy vector):
 	diploid_idx = std::vector<int>(n_diploid);
