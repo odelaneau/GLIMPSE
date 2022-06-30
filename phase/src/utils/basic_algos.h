@@ -41,6 +41,12 @@ public:
 		}
 		return maxIndex;
 	}
+
+	template<class T>
+	inline const T& clamp( const T& v, const T& lo, const T& hi ) const
+	{
+	    return std::max(lo, std::min(v, hi));
+	}
 };
 
 #endif

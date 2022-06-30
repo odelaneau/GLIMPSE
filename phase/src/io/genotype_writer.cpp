@@ -76,7 +76,6 @@ void genotype_writer::writeGenotypes(const string fname, const int output_start,
 	const std::size_t nsites = V.vec_pos.size();
 	float prog_step = 1.0/nsites;
 	float prog_bar = 0.0;
-	std::array<float,3> gp;
 
 	for (int l = 0 ; l < nsites ; l ++) {
 		// Clear current VCF record
@@ -90,47 +89,54 @@ void genotype_writer::writeGenotypes(const string fname, const int output_start,
 		bcf_update_alleles_str(hdr, rec, alleles.c_str());
 
 		// Store individual data
-		float ds_sum=0.0f, ds2_sum=0.0f, ds4_sum=0.0f;
-		std::fill(&genotypes[0], &genotypes[0] + H.max_ploidy*G.n_ind, bcf_gt_unphased(false));
+		float ds_sum=0.0, ds2_sum=0.0, ds4_sum=0.0;
+		std::fill(&genotypes[0], &genotypes[0] + H.max_ploidy*G.vecG.size(), bcf_gt_unphased(false));
 		for (int i = 0 ; i < G.n_ind ; i++)
 		{
 			// Initialialize output data in case of Ref/Ref genotype
 			int32_t hs = 0;
-			gp = {1.0f,0.0f,0.0f};
+			float ds = 0.0f, gp0 = 1.0f, gp1 = 0.0f, gp2 = 0.0f;
 
 			// Genotype is NOT 100% certain Ref/Ref
 			if ((ptr_gps[i]<G.vecG[i]->stored_data.size()) && (G.vecG[i]->stored_data[ptr_gps[i]].idx==l))
 			{
 				genotypes[H.max_ploidy*i+0] = bcf_gt_unphased(G.vecG[i]->H0[l]);
-				gp[0] = roundf(G.vecG[i]->stored_data[ptr_gps[i]].gp0 * 1000.0) / 1000.0;
-				gp[1] = roundf(G.vecG[i]->stored_data[ptr_gps[i]].gp1 * 1000.0) / 1000.0;
+				gp0 = G.vecG[i]->stored_data[ptr_gps[i]].gp0;
+				gp1 = G.vecG[i]->stored_data[ptr_gps[i]].gp1;
 				hs = G.vecG[i]->stored_data[ptr_gps[i]].hs;
+				ds += gp1;
 				if (G.vecG[i]->ploidy > 1)
 				{
 					genotypes[H.max_ploidy*i+1] = bcf_gt_unphased(G.vecG[i]->H1[l]);
-					gp[2] = roundf(G.vecG[i]->stored_data[ptr_gps[i]].getGp2() * 1000.0) / 1000.0;
+					gp2 = G.vecG[i]->stored_data[ptr_gps[i]].getGp2();
+					ds += 2.0f * gp2;
+					alg.clamp(ds, 0.0f, 2.0f);
 				}
 				ptr_gps[i] ++;
 			}
+
 			// Store DS + GP rounded 4 decimals
-			posteriors[(H.max_ploidy+1)*i+0] = gp[0];
-			posteriors[(H.max_ploidy+1)*i+1] = gp[1];
+			dosages[i] = roundf(ds * 1000.0) / 1000.0;
+			posteriors[(H.max_ploidy+1)*i+0] = roundf(gp0 * 1000.0) / 1000.0;
+			posteriors[(H.max_ploidy+1)*i+1] = roundf(gp1 * 1000.0) / 1000.0;
 			if (H.max_ploidy>1)
 			{
-				if (G.vecG[i]->ploidy > 1) posteriors[(H.max_ploidy+1)*i+2] = gp[2];
+				if (G.vecG[i]->ploidy > 1) posteriors[(H.max_ploidy+1)*i+2] = roundf(gp2 * 1000.0) / 1000.0;
 				else
 				{
 					genotypes[H.max_ploidy*i+1] = bcf_int32_vector_end;
 					bcf_float_set(&posteriors[(H.max_ploidy+1)*i+2], bcf_float_vector_end);
 				}
 			}
-			dosages[i] = roundf((gp[1] + 2*gp[2]) * 1000.0) / 1000.0;
 			haplotypes[i] = hs;
 
 			// Compute INFO/INFO statistics
-			ds_sum += gp[1] + 2*gp[2];
-			ds2_sum += (gp[1] + 2*gp[2]) * (gp[1] + 2*gp[2]);
-			ds4_sum += gp[1] + 4*gp[2];
+			ds_sum += ds;
+			if (H.fploidy == 2)
+			{
+				ds2_sum += ds * ds;
+				ds4_sum += gp1 + 4.0*gp2;
+			}
 		}
 
 		// Update INFO fields

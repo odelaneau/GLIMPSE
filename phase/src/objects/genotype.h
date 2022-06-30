@@ -51,7 +51,7 @@ struct inferred_genotype {
 	}
 
 	float getGp2() const {
-		return std::max(1.0f - gp1 - gp0, 0.0f);
+		return alg.clamp(1.0f - gp1 - gp0, 0.0f, 1.0f);
 	}
 
 	bool infer_haploid() const {
