@@ -63,7 +63,7 @@ public:
 	template < class T >
 	std::string str(T n, int prec = -1) {
 		std::ostringstream ss( std::stringstream::out );
-		if (prec >= 0) { ss << setiosflags( std::ios::fixed ); ss.precision(prec); }
+		if (prec >= 0) { ss << std::setiosflags( std::ios::fixed ); ss.precision(prec); }
 		ss << n;
 		return ss.str();
 	}
@@ -71,7 +71,7 @@ public:
 	template < class T >
 	std::string str(std::vector < T > & v, int prec = -1) {
 		std::ostringstream ss( std::stringstream::out );
-		if (prec >= 0) { ss << setiosflags( std::ios::fixed ); ss.precision(prec); }
+		if (prec >= 0) { ss << std::setiosflags( std::ios::fixed ); ss.precision(prec); }
 		for (int e = 0 ; e < v.size() ; e ++) ss << (e>0?" ":"") << v[e] ;
 		return ss.str();
 	}
