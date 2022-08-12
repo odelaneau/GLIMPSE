@@ -25,8 +25,8 @@ fig, axs = plt.subplots(1)
 
 axs.semilogx(x_maf,y_aggr, '--',  marker='o', lw=1, label = 'Aggregate r2', markersize=10, alpha=0.8)
    
-mybins = [0.0002,0.0005,0.001, 0.005,0.02,0.05,0.10,0.20,0.4,0.50]
-labels = ['0.02','0.05','0.1', '0.2', '0.5', '1','2','5','10','15','20','30','40','50']
+mybins = [0.0002,0.0005,0.001,0.002,0.005, 0.01, 0.02, 0.05, 0.10, 0.15, 0.20,0.3, 0.4, 0.50, 0.60]
+labels = ['0.02','0.05','0.1','0.2', '0.5', '1',  '2',  '5', '10', '15', '20','30','40','50', 60]
 axs.set_xlabel('Minor allele frequency (%)')
 axs.set_ylabel('$r^2$ imputed vs true genotypes')
 axs.grid(linestyle='--')
