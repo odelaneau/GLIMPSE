@@ -1,4 +1,4 @@
-# GLIMPSE2
+# GLIMPSE
 
 [![](docs/assets/images/branding/glimpse_logo_250x107.png)](https://odelaneau.github.io/GLIMPSE/)
 

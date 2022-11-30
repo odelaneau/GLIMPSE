@@ -7,7 +7,7 @@ permalink: /
 ---
 <img src="assets/images/branding/glimpse_logo_400x171.png" align="right" alt="GLIMPSE2_logo" style="height:150px">
 
-# GLIMPSE2
+# GLIMPSE
 {: .fs-9 .fw-500 }
 
 A tool for low-coverage whole-genome sequencing imputation
@@ -92,7 +92,7 @@ GLIMPSE is distributed with [MIT license](https://github.com/odelaneau/GLIMPSE/b
 GLIMPSE is an open source project and we very much welcome new contributors. To make the contribution quickly accepted, please first discuss the change you wish to make via issue,
 email, or any other method with the owners of this repository before making a change.
 
-#### Thank you to the contributors of GLIMPSE2!
+#### Thank you to the contributors of GLIMPSE!
 
 <ul class="list-style-none">
 {% for contributor in site.github.contributors %}
