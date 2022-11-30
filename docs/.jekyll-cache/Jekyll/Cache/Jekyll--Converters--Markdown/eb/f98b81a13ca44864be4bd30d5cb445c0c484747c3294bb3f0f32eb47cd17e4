@@ -1,0 +1,8 @@
+I"ß<p class="warning">Docker image not yet available. The docker image will be available with the first relase at the following link</p>
+
+<h1 id="docker-image">Docker image</h1>
+
+<p>GLIMPSE2 provides a Dockerfile and scripts to create a minimal docker image. To download a ready-made docker image please download it from here:</p>
+
+<p><a href="https://github.com/odelaneau?tab=packages&amp;repo_name=glimpse">https://github.com/odelaneau?tab=packages&amp;repo_name=glimpse</a>.</p>
+:ET

@@ -1,6 +1,8 @@
 /*******************************************************************************
- * Copyright (C) 2020 Olivier Delaneau, University of Lausanne
- * Copyright (C) 2020 Simone Rubinacci, University of Lausanne
+ * Copyright (C) 2022-2023 Simone Rubinacci
+ * Copyright (C) 2022-2023 Olivier Delaneau
+ *
+ * MIT Licence
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -29,12 +31,19 @@
 #include <objects/genotype.h>
 #include <containers/variant_map.h>
 
+struct stats_cov {
+	std::vector<stats1D> cov_ind;
+	std::vector<std::vector<int>> depth_count;
+};
+
 class genotype_set {
 public:
 	//DATA
 	int n_site, n_ind;					//Number of variants, number of individuals
 	int n_hap;
-	vector < genotype * > vecG;			//Vector of genotypes
+
+	std::vector < genotype * > vecG;			//Vector of genotypes
+	stats_cov stats;
 
 	//CONSTRUCTOR/DESTRUCTOR
 	genotype_set();

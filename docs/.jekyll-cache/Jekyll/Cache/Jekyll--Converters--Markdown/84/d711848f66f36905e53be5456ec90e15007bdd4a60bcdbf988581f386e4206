@@ -1,0 +1,28 @@
+I"ä<h1 class="no_toc text-center" id="system-requirements">System requirements</h1>
+
+<h2 class="no_toc text-delta" id="table-of-contents">Table of contents</h2>
+
+<ol id="markdown-toc">
+  <li><a href="#system-requirements-1" id="markdown-toc-system-requirements-1">System requirements</a></li>
+</ol>
+
+<hr />
+
+<h2 id="system-requirements-1">System requirements</h2>
+<p>GLIMPSE2 is a set of C++ tools covering the process of haplotype phasing in large datasets. In order to compile, we require a modern Linux operating system and a version of GCC &gt; 4.4. We recommend to use the latest available version for your system.</p>
+
+<p>For example running the following instruction on Ubuntu 20.04 focal:</p>
+
+<div class="code-example">
+  <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">sudo </span>apt <span class="nb">install </span>build-essential
+</code></pre></div>  </div>
+</div>
+
+<p>will install the GNU g++ compiler version 9.2. To check the version of your g++ compiler, simply run:</p>
+
+<div class="code-example">
+  <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>g++ <span class="nt">--version</span>
+</code></pre></div>  </div>
+</div>
+
+:ET

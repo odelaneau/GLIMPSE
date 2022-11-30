@@ -1,6 +1,8 @@
 /*******************************************************************************
- * Copyright (C) 2020 Olivier Delaneau, University of Lausanne
- * Copyright (C) 2020 Simone Rubinacci, University of Lausanne
+ * Copyright (C) 2022-2023 Simone Rubinacci
+ * Copyright (C) 2022-2023 Olivier Delaneau
+ *
+ * MIT Licence
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,10 +25,11 @@
 
 #include <chunker/chunker_header.h>
 
-void chunker::readData(string fmain, string region, int nthreads) {
+void chunker::readData(std::string fmain, std::string region, int nthreads) {
 	tac.clock();
 	vrb.title("Reading input files");
-	vrb.bullet("Main      : [" + fmain + "]");
+	vrb.bullet("Reading file         : [" + fmain + "]");
+
 
 	bcf_srs_t * sr =  bcf_sr_init();
 	sr->collapse = COLLAPSE_NONE;
@@ -42,16 +45,45 @@ void chunker::readData(string fmain, string region, int nthreads) {
 	}
 
 	int n_variants = 0;
+	int n_comm_variants_cnt=0;
+	float* af_ptr = nullptr, af;
+	int *itmp=NULL, mitmp=0, tret=0;
+	int naf_f, naf_arr_f;
+	int rAC=0, nAC=0, *vAC = NULL;
+	int rAN=0, nAN=0, *vAN = NULL;
+
 	bcf1_t * line_main;
 	while (bcf_sr_next_line (sr)) {
 		line_main =  bcf_sr_get_line(sr, 0);
-		if (line_main->n_allele == 2) {
-			bcf_unpack(line_main, BCF_UN_STR);
-			chrID = bcf_hdr_id2name(sr->readers[0].header, line_main->rid);
-			positions.push_back(line_main->pos + 1);
+		if (line_main->n_allele == 2)
+		{
 			n_variants++;
+			if (n_comm_variants_cnt < 1) chrID = bcf_hdr_id2name(sr->readers[0].header, line_main->rid);
+			rAC = bcf_get_info_int32(sr->readers[0].header, line_main, "AC", &vAC, &nAC);
+			rAN = bcf_get_info_int32(sr->readers[0].header, line_main, "AN", &vAN, &nAN);
+			if ((nAC!=1)||(nAN!=1)) vrb.error("VCF/BCF needs AC/AN INFO fields to be present");
+			//Classify variant
+			double MAF = std::min(((vAN[0] - vAC[0])*1.0f)/(vAN[0]), (vAN[0]*1.0f)/(vAN[0]));
+			const bool is_common = MAF >= sparse_maf;
+
+			positions_all_mb.push_back(line_main->pos + 1);
+			map_positions_all.insert(std::pair < int , int> (line_main->pos + 1, positions_all_mb.size()-1));
+			if (is_common)
+			{
+				n_comm_variants_cnt++;
+				positions_common_mb.push_back(line_main->pos + 1);
+				common2all.push_back(positions_all_mb.size()-1);
+				map_positions_common.insert(std::pair < int , int> (line_main->pos + 1, positions_common_mb.size()-1));
+			}
+
 		}
 	}
 	bcf_sr_destroy(sr);
-	vrb.bullet("#variants = " + stb.str(n_variants) + " (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
+	if (itmp) free(itmp);
+	if (vAC) free(vAC);
+	if (vAN) free(vAN);
+	if (report_common_variants)
+		vrb.bullet("#variants            : [ " + stb.str(n_variants) + " | #common variants = " + stb.str(n_comm_variants_cnt) + "] (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
+	else
+		vrb.bullet("#variants            : [" + stb.str(n_variants) + "] (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
 }

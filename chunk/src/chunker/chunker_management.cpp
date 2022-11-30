@@ -1,6 +1,8 @@
 /*******************************************************************************
- * Copyright (C) 2020 Olivier Delaneau, University of Lausanne
- * Copyright (C) 2020 Simone Rubinacci, University of Lausanne
+ * Copyright (C) 2022-2023 Simone Rubinacci
+ * Copyright (C) 2022-2023 Olivier Delaneau
+ *
+ * MIT Licence
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,16 +26,19 @@
 #include <chunker/chunker_header.h>
 
 chunker::chunker() {
-	window_size = 0;
+	window_cm = 0;
+	window_mb = 0;
 	window_count = 0;
-	buffer_size = 0;
+	buffer_cm = 0;
+	buffer_mb = 0;
 	buffer_count = 0;
+	report_common_variants=false;
 }
 
 chunker::~chunker() {
 }
 
-void chunker::chunk(vector < string > & args) {
+void chunker::chunk(std::vector < std::string > & args) {
 	declare_options();
 	parse_command_line(args);
 	check_options();

@@ -1,6 +1,8 @@
 /*******************************************************************************
- * Copyright (C) 2020 Olivier Delaneau, University of Lausanne
- * Copyright (C) 2020 Simone Rubinacci, University of Lausanne
+ * Copyright (C) 2022-2023 Simone Rubinacci
+ * Copyright (C) 2022-2023 Olivier Delaneau
+ *
+ * MIT Licence
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,7 +23,7 @@
  * SOFTWARE.
  ******************************************************************************/
 
-#include "../../versions/versions.h"
+#include "../../../versions/versions.h"
 #include <caller/caller_header.h>
 
 
@@ -30,66 +32,94 @@ void caller::declare_options() {
 	opt_base.add_options()
 			("help", "Produce help message")
 			("seed", bpo::value<int>()->default_value(15052011), "Seed of the random number generator")
-			("thread", bpo::value<int>()->default_value(1), "Number of threads");
+			("threads", bpo::value<int>()->default_value(1), "Number of threads");
 
 	bpo::options_description opt_input ("Input parameters");
 	opt_input.add_options()
-			("input,I", bpo::value < string >(), "Genotypes to be phased in VCF/BCF format")
-			("input-region", bpo::value < string >(), "Whole genomic region to be phased (including left/right buffers)")
-			("reference,R", bpo::value < string >(), "Reference panel of haplotypes in VCF/BCF format")
-			("map,M", bpo::value < string >(), "Genetic map")
-			("samples-file",  bpo::value < string >(), "File with sample names and ploidy information. One sample per line with a mandatory second column indicating ploidy (1 or 2). Sample names that are not present are assumed to have ploidy 2 (diploids). If the parameter is omitted, all samples are assumed to be diploid. GLIMPSE does NOT handle the use of sex (M/F) instead of ploidy.")
-			("impute-reference-only-variants", "Allows imputation at variants only present in the reference panel. The use of this option is intended only to allow imputation at sporadic missing variants. If the number of missing variants is non-sporadic, please re-run the genotype likelihood computation at all reference variants and avoid using this option, since data from the reads should be used. A warning is thrown if reference-only variants are found.")
-			("input-GL", "Uses FORMATL/GL field instead of FORMAT/PL as input for the genotype likelihoods.")
-			("ban-repeated-sample-names", "Excludes reference samples having names matching the target samples. To be used only when the target and the reference panel share (even partially) the same set of individuals.");
-
+			("bam-file", bpo::value < std::string >(), "Input BAM/CRAM file containing the sequencing reads. Only one of the following options: --bam --input-gl, --bam-list can be declared.")
+			("bam-list", bpo::value < std::string >(), "List of input BAM/CRAM files containing the sequencing reads. Only one of the following options: --bam --input-gl, --bam-list can be declared.")
+			("input-gl", bpo::value < std::string >(), "Genotype likelihoods file. Only one of the following options: --bam --input-gl, --bam-list can be declared.")
+			("reference,R", bpo::value < std::string >(), "Reference panel of haplotypes in VCF/BCF format")
+			("map,M", bpo::value < std::string >(), "Genetic map")
+			("samples-file",  bpo::value < std::string >(), "File with sample names and ploidy information. One sample per line with a mandatory second column indicating ploidy (1 or 2). Sample names that are not present are assumed to have ploidy 2 (diploids). If the parameter is omitted, all samples are assumed to be diploid. GLIMPSE does NOT handle the use of sex (M/F) instead of ploidy.")
+			("input-region", bpo::value < std::string >(), "Whole genomic region to be phased (including left/right buffers). Required only if the reference panel in in VCF/BCF format.")
+			("output-region", bpo::value < std::string >(), "Phased genomic region to output. Required only if the reference panel in in VCF/BCF format.")
+			("sparse-maf", bpo::value<float>()->default_value(0.001f), "Expert setting: sites below this MAF are represented/processed using sparse data structures when using VCF/BCF reference panel. Please do not change if not necessary: performance of the software is highly dependent on this parameter. Required only if the reference panel in in VCF/BCF format.")
+			("input-field-gl", "Use FORMAT/GL field instead of FORMAT/PL to read genotyope likelihoods (Used only if --input-gl is defined)")
+			("ind-name", bpo::value < std::string >(), "Name of the sample to be processed. If not specified the prefix of the bam file (--bam) is used.")
+			("keep-monomorphic-ref-sites", "Keeps monomorphic markers in the reference panel, that are removed by default.")
+			("impute-reference-only-variants", "Allows imputation at variants only present in the reference panel. The use of this option is intended only to allow imputation at sporadic missing variants. If the number of missing variants is non-sporadic, please re-run the genotype likelihood computation at all reference variants and avoid using this option, since data from the reads should be used. A warning is thrown if reference-only variants are found. (Used only if --input-gl is defined) ");
 
 	bpo::options_description opt_algo ("Model parameters");
 	opt_algo.add_options()
-			("burnin", bpo::value<int>()->default_value(10), "Number of Burn-in iterations")
-			("main", bpo::value<int>()->default_value(10), "Each main iterations contributes to output genotypes. Haplotypes sampled for the last (max 15) iterations are stored in the HS field.")
-			("pbwt-depth", bpo::value<int>()->default_value(2), "Number of neighbors to store")
-			("pbwt-modulo", bpo::value<int>()->default_value(8), "Frequency of PBWT selection")
-			("init-states", bpo::value<int>()->default_value(1000), "Number of states used for initialization")
-			("init-pool", bpo::value< string >(), "Pool of samples from which initializing haplotypes should be chosen")
-			("ne", bpo::value<int>()->default_value(20000), "Effective diploid population size");
+			("burnin", bpo::value<int>()->default_value(5), "Number of Burn-in iterations")
+			("main", bpo::value<int>()->default_value(15), "Each main iterations contributes to output genotypes. Haplotypes sampled for the last (max 15) iterations are stored in the HS field.")
+			("ne", bpo::value<int>()->default_value(100000), "Effective diploid population size")
+			("min-gl", bpo::value<float>()->default_value(1e-10f), "Expert option. Minimum haploid GL")
+			("err-imp", bpo::value<float>()->default_value(1e-12f), "Expert option. Imputation HMM error rate")
+			("err-phase", bpo::value<float>()->default_value(0.0001f), "Expert option. Imputation HMM error rate");
+
+	bpo::options_description opt_selection ("Selection parameters");
+	opt_selection.add_options()
+			("pbwt-depth", bpo::value<int>()->default_value(12), "Number of neighbors in the PBWT selection step (positive number).")
+			("pbwt-modulo-cm", bpo::value<float>()->default_value(0.1f), "Frequency of PBWT selection in cM (positive number).")
+			("Kinit", bpo::value<int>()->default_value(1000), "Number of selected states used for initialization. Can be set to zero only when --state-list is set, to skip the init selection.")
+			("Kpbwt", bpo::value<int>()->default_value(2000), "Maximum number of PBWT-selected states used for conditioning. Can be set to zero only when --state-list is set, to skip the PBWT selection.")
+			("state-list", bpo::value < std::string >(), "List of haplotypes always present in the copy set, independent from state selection. Not affected by other selection parameters." );
+
+
+	bpo::options_description opt_filters ("BAM/CRAM options and filters");
+	opt_filters.add_options()
+			("call-model", boost::program_options::value< std::string >()->default_value("standard"), "Model to use to call the data. Options: 'standard'")
+			("call-indels", "Perform genotype calling at indels instead of only imputing them using a haplotype scaffold assuming uniform prior. (NOT RECOMMENDED)")
+			("fasta,F", boost::program_options::value< std::string >(), "Faidx indexed reference sequence file.")
+			("mapq", boost::program_options::value< int >()->default_value(10), "Minimum mapping quality for a read to be considered. Set this to only include uniquely mapped reads.")
+			("baseq", boost::program_options::value< int >()->default_value(10), "Minimum phred quality for a base to be considered.")
+			("max-depth", boost::program_options::value< int >()->default_value(40), "Max read depth at a site. Sets the maximum number of reads desidered per site. If the number of reads exceeds this number, the reads at the sites are downsampled.")
+			("keep-orphan-reads", "Keep paired end reads where one of mates is unmapped.")
+			("ignore-orientation", "If provided the orientation of mate pairs where both mates are on the same chromosome and where the first mate is on the positive strand and the second is on the negative strand will be ignored.")
+			("check-proper-pairing", "If provided the caller discards reads that are not properly paired.")
+			("keep-failed-qc", "Keep reads that fail sequencing QC (as indicated by the sequencer). (NOT RECOMMENDED)")
+			("keep-duplicates", "Keep duplicate sequencing reads in the process. (NOT RECOMMENDED)")
+			("illumina13+", "Base quality in the Illumina-1.3 encoding (for older sequencing machines)");
 
 	bpo::options_description opt_output ("Output parameters");
 	opt_output.add_options()
-			("output,O", bpo::value< string >(), "Phased haplotypes in VCF/BCF format")
-			("output-region", bpo::value < string >(), "Phased genomic region to output")
-			("log", bpo::value< string >(), "Log file");
+			("output,O", bpo::value< std::string >(), "Phased haplotypes in VCF/BCF/BGEN format.")
+			("contigs-fai", bpo::value< std::string >(), "If specified, header contig names and their lengths are copied from the provided fasta index file (.fai). Otherwise, only the current contig (chromosome name) is printed in the VCF/BCF header.")
+			("bgen-bits", boost::program_options::value< int >()->default_value(8), "Specifies the number of bits to be used for the encoding probabilities of the output BGEN file. If the output is in the .vcf[.gz]/.bcf format, this value is ignored. Accepted values: 0 < x <= 32. Default: x=8.")
+			("bgen-compr", boost::program_options::value< std::string >()->default_value("zstd"), "Specifies the compression of the output BGEN file. If the output is in the .vcf[.gz]/.bcf format, this value is ignored. Accepted values: [no, zlib, zstd].")
+			("log", bpo::value< std::string >(), "Log file");
 
-	descriptions.add(opt_base).add(opt_input).add(opt_algo).add(opt_output);
+	descriptions.add(opt_base).add(opt_input).add(opt_algo).add(opt_selection).add(opt_filters).add(opt_output);
 }
 
-void caller::parse_command_line(vector < string > & args) {
+void caller::parse_command_line(std::vector < std::string > & args) {
 	try {
 		bpo::store(bpo::command_line_parser(args).options(descriptions).run(), options);
 		bpo::notify(options);
-	} catch ( const boost::program_options::error& e ) { cerr << "Error parsing command line arguments: " << string(e.what()) << endl; exit(0); }
+	} catch ( const boost::program_options::error& e ) { std::cerr << "Error parsing command line arguments: " << std::string(e.what()) << std::endl; exit(0); }
 
-	if (options.count("log") && !vrb.open_log(options["log"].as < string > ()))
-		vrb.error("Impossible to create log file [" + options["log"].as < string > () +"]");
+	if (options.count("log") && !vrb.open_log(options["log"].as < std::string > ()))
+		vrb.error("Impossible to create log file [" + options["log"].as < std::string > () +"]");
 
-	vrb.title("[GLIMPSE] Phase and impute low coverage sequencing data");
-	vrb.bullet("Author        : Simone RUBINACCI & Olivier DELANEAU, University of Lausanne");
-	vrb.bullet("Contact       : simone.rubinacci@unil.ch & olivier.delaneau@unil.ch");
-	vrb.bullet("Version       : " + string(PHASE_VERSION));
-	vrb.bullet("Run date      : " + tac.date());
+	vrb.title("[GLIMPSE2] Phase and impute low coverage sequencing data");
+	vrb.bullet("Authors              : Simone RUBINACCI & Olivier DELANEAU, University of Lausanne");
+	vrb.bullet("Contact              : simone.rubinacci@unil.ch & olivier.delaneau@unil.ch");
+	vrb.bullet("Version       	 : GLIMPSE2_phase v" + std::string(LIGATE_VERSION) + " / commit = " + std::string(__COMMIT_ID__) + " / release = " + std::string (__COMMIT_DATE__));
+	vrb.bullet("Citation	         : BiorXiv, (2022). DOI: https://doi.org/10.1101/2022.11.28.518213");
+	vrb.bullet("        	         : Nature Genetics 53, 120–126 (2021). DOI: https://doi.org/10.1038/s41588-020-00756-0");
+	vrb.bullet("Run date      	 : " + tac.date());
 
-	if (options.count("help")) { cout << descriptions << endl; exit(0); }
+	if (options.count("help")) { std::cout << descriptions << std::endl; exit(0); }
 }
 
 void caller::check_options() {
-	if (!options.count("input"))
-		vrb.error("You must specify one input file using --input");
+	if (!options.count("bam-file") && !options.count("bam-list") && !options.count("input-gl"))
+			vrb.error("You must specify input files using one of the following options: --bam, --bam-list or --input-gl");
 
-	if (!options.count("input-region"))
-		vrb.error("You must specify a region to phase using --input-region (this is given by GLIMPSE_chunk)");
-
-	if (!options.count("output-region"))
-		vrb.error("You must specify a region to output using --output-region (this is given by GLIMPSE_chunk)");
+	if (options.count("bam-file")  + options.count("bam-list") + options.count("input-gl") > 1)
+			vrb.error("You must specify only input parameter between --bam, --bam-list and --input-gl");
 
 	if (!options.count("output"))
 		vrb.error("You must specify a phased output file with --output");
@@ -103,37 +133,235 @@ void caller::check_options() {
 	if (options["main"].as < int > () > 15)
 		vrb.error("Maximum value for --main is 15. To run more iteration, increase --burn");
 
-	if (options["thread"].as < int > () < 1)
+	if (options["threads"].as < int > () < 1)
 		vrb.error("Number of threads is a strictly positive number.");
+
+	std::string reference_filename = options["reference"].as<std::string>();
+	std::string ext0 = stb.get_extension(reference_filename);
+	if (ext0 == "bcf" || ext0 == "vcf") input_fmt = InputFormat::BCF;
+	else if (ext0 =="gz")
+	{
+		auto position = reference_filename.find_last_of ( '.' );
+		if ( position != std::string::npos )
+		{
+			std::string str0 (reference_filename.substr(0, position) );
+			std::string ext1 = stb.get_extension(str0);
+			if (ext1 == "vcf") input_fmt = InputFormat::BCF;
+			else vrb.error("Reference panel file format is not supported.");
+		}
+		else vrb.error("Reference panel file format is not supported.");
+	}
+	else input_fmt = InputFormat::GLIMPSE; //any extension except vcf/bcf/vcf.gz
+
+	//output
+	ext0 = stb.get_extension(options["output"].as<std::string>());
+	if (ext0 == "bcf" || ext0 == "vcf")
+	{
+		if (ext0 == "vcf")
+		{
+			output_fmt=OutputFormat::VCF;
+			output_compr=OutputCompression::NONE;
+		}
+		else
+		{
+			output_fmt=OutputFormat::BCF;
+			output_compr=OutputCompression::ZLIB;
+		}
+	}
+	else if (ext0 =="gz")
+	{
+		auto position = reference_filename.find_last_of ( '.' );
+		if ( position != std::string::npos )
+		{
+			std::string str0 (reference_filename.substr(0, position) );
+			std::string ext1 = stb.get_extension(str0);
+			if (ext1 == "vcf")
+			{
+				output_fmt = OutputFormat::VCF;
+				output_compr = OutputCompression::ZLIB;
+			}
+			else vrb.error("Output file format is not supported.");
+		}
+		else vrb.error("Output file format is not supported.");
+	}
+	else if (ext0 =="bgen")
+	{
+		output_fmt = OutputFormat::BGEN;
+		std::string ocompr = options["bgen-compr"].as<std::string>();
+		if (ocompr == "zstd") output_compr = OutputCompression::ZSTD;
+		else if (ocompr == "zlib") output_compr = OutputCompression::ZLIB;
+		else if (ocompr == "no") output_compr = OutputCompression::NONE;
+		else vrb.error("Output compression must have a value of the following: [no, zlib, zstd].");
+
+		int nbits = options["bgen-bits"].as<int>();
+		if (nbits > 0 && nbits <=32) bgen_bits=nbits;
+		else vrb.error("Parameter number of bits for BGEN file format encoding is invalid");
+	}
+	else vrb.error("Output file format is not supported.");
+
+	#ifdef __BGEN__
+	#else
+		if (output_fmt == OutputFormat::BGEN) vrb.error("GLIMPSE has not been compiled with BGEN support for output file. Please recompile the program with the BGEN_SUPPORT=YES flag or switch to VCF/BCF.");
+	#endif
+
+	if (options.count("contigs-fai"))
+	{
+		std::string fai_fname = options["contigs-fai"].as <std::string>();
+		faidx_t *fai = fai_load3(fai_fname.c_str(),fai_fname.c_str(),NULL,FAI_FASTA);
+		if ( !fai ) vrb.error("Could not parse " + fai_fname);
+		fai_destroy(fai);
+	}
+
+	if (input_fmt != InputFormat::GLIMPSE)
+	{
+		if (!options.count("input-region"))
+			vrb.error("You must specify a region to phase using --input-region (this is given by GLIMPSE_chunk)");
+
+		if (!options.count("output-region"))
+			vrb.error("You must specify a region to output using --output-region (this is given by GLIMPSE_chunk)");
+
+		if (!options.count("sparse-maf"))
+			vrb.error("You must specify a sparse MAF threshold (e.g. 0.001) for reference panel representation.");
+
+		float s_maf = options["sparse-maf"].as < float > ();
+		if (s_maf >= 0.5 || s_maf < 0) vrb.error("The sparse MAF parameter should not be set too high or low. Ideally within the range [1%-0.001%] MAF: 0.1% MAF is the recommended setting]");
+	}
+	else
+	{
+		if (options.count("input-region"))
+			vrb.error("The --input-region parameter is not required when the binary reference panel is used. Value is already provided by the binary reference panel.");
+
+		if (options.count("output-region"))
+			vrb.error("The --output-region parameter is not required when the binary reference panel is used. Value is already provided by the binary reference panel.");
+
+		if (options.count("sparse-maf") && !options["sparse-maf"].defaulted())
+			vrb.error("The --sparse-maf parameter is not required when the binary reference panel is used. Value is already provided by the binary reference panel.");
+
+		if (options.count("map"))
+			vrb.error("The --map parameter is not required when the binary reference panel is used. Value is already provided by the binary reference panel.");
+	}
+
+	if (options.count("state-list"))
+	{
+		input_file state_list(options["state-list"].as<std::string>());
+		if (state_list.fail()) vrb.error("Impossible to open file: " + options["state-list"].as<std::string>());
+
+		if (!options.count("Kinit") || options["Kinit"].as < int > () < 0) vrb.error("Option --Kinit is not present or set to a negative value");
+		if (!options.count("Kpbwt") || options["Kpbwt"].as < int > () < 0) vrb.error("Option --Kpbwt is not present or set to a negative value");
+		if (options["Kpbwt"].as < int > () > 0 && options["pbwt-depth"].as < int > () <= 0) vrb.error("Option --pbwt-depth is not present or set to a non-positive value");
+		if (options["Kpbwt"].as < int > () > 0 && options["pbwt-modulo-cm"].as < float > () <= 0) vrb.error("Option --pbwt-modulo-cm is not present or set to a non-positive value");
+	}
+	else
+	{
+		if (!options.count("Kinit") || options["Kinit"].as < int > () <= 0) vrb.error("Option --Kinit is not present or set to a non-positive value");
+		if (!options.count("Kpbwt") || options["Kpbwt"].as < int > () <= 0 ) vrb.error("Option --Kpbwt is not present or set to a non-positive value");
+		if (!options.count("pbwt-depth") || options["pbwt-depth"].as < int > () <= 0) vrb.error("Option --pbwt-depth is not present or set to a non-positive value");
+		if (!options.count("pbwt-modulo-cm") || options["pbwt-modulo-cm"].as < float > () <= 0) vrb.error("Option --pbwt-modulo-cm is not present or set to a non-positive value");
+	}
+
+	if (options["max-depth"].as <int> () < 10) vrb.error("Max depth has been set too low [< 10].");
 }
 
 void caller::verbose_files() {
 	vrb.title("Files:");
-	vrb.bullet("Input VCF     : [" + options["input"].as < string > () + "]");
-	vrb.bullet("Reference VCF : [" + options["reference"].as < string > () + "]");
-	if (options.count("map")) vrb.bullet("Genetic Map   : [" + options["map"].as < string > () + "]");
-	vrb.bullet("Output VCF    : [" + options["output"].as < string > () + "]");
-	vrb.bullet("Input region  : [" + options["input-region"].as < string > () + "]");
-	vrb.bullet("Output region : [" + options["output-region"].as < string > () + "]");
-	if (options.count("log")) vrb.bullet("Output LOG    : [" + options["log"].as < string > () + "]");
+	std::array<std::string, 3> fmt2string = { {"VCF","BCF","BGEN"} };
+	std::array<std::string, 3> compr2string = { {"NO","ZLIB","ZSTD"} };
+	std::string n_bits = "";
+	if (output_fmt == OutputFormat::BGEN) n_bits = " - " + stb.str(bgen_bits) + " bits";
+
+	if (options.count("bam-list"))
+		vrb.bullet("List BAM/CRAM        : [" + options["bam-list"].as < std::string > () + "]");
+	else if(options.count("bam-file"))
+		vrb.bullet("Input BAM/CRAM       : [" + options["bam-file"].as < std::string > () + "]");
+	else
+		vrb.bullet("Input VCF/BCF likel. : [" + options["input-gl"].as < std::string > () + "]");
+
+	if (options.count("fasta"))
+		vrb.bullet("Reference seq. fasta : [" + options["fasta"].as < std::string > () + "]");
+
+	if (input_fmt == InputFormat::BCF) vrb.bullet("Reference VCF        : [" + options["reference"].as < std::string > () + "]");
+	else vrb.bullet("Reference binary     : [" + options["reference"].as < std::string > () + "]");
+
+	if (options.count("map"))
+		vrb.bullet("Genetic Map          : [" + options["map"].as < std::string > () + "]");
+
+	vrb.bullet("Output file          : [" + options["output"].as < std::string > () + "]");
+	vrb.bullet("Output format        : [" + fmt2string[static_cast<int>(output_fmt)] + " format" + n_bits + " | " + compr2string[static_cast<int>(output_compr)] + " compression]");
+
+
+	if (options.count("log")) vrb.bullet("Output LOG           : [" + options["log"].as < std::string > () + "]");
 }
 
-void caller::verbose_options() {
-	vrb.title("Parameters:");
-	vrb.bullet("Seed       : " + stb.str(options["seed"].as < int > ()));
-	if (options.count("input-GL")) vrb.bullet("Input      : FORMAT/GL field for genotype likelihoods");
-	else vrb.bullet("Input      : FORMAT/PL field for genotype likelihoods");
-	vrb.bullet("#Threads   : " + stb.str(options["thread"].as < int > ()));
-	vrb.bullet("#Burnin    : " + stb.str(options["burnin"].as < int > ()));
-	vrb.bullet("#Main      : " + stb.str(options["main"].as < int > ()));
-	vrb.bullet("PBWT depth : " + stb.str(options["pbwt-depth"].as < int > ()));
-	vrb.bullet("PBWT modulo: " + stb.str(options["pbwt-modulo"].as < int > ()));
-	if (options.count("map")) vrb.bullet("HMM        : Recombination rates given by genetic map");
-	else vrb.bullet("HMM     : Constant recombination rate of 1cM per Mb");
-	if (options.count("samples-file")) vrb.bullet("Ploidy     : given by samples file");
-	else vrb.bullet("Ploidy     : All samples are diploids in this region");
-	vrb.bullet("Init K     : " + stb.str(options["init-states"].as < int > ()));
-	if (options.count("impute-reference-variants")) vrb.bullet("Imputation at reference-only variants is performed");
-	if (options.count("ban-repeated-sample-names")) vrb.bullet("Excludes reference samples having IDs matching the target samples");
-}
+void caller::verbose_options()
+{
+	std::array<std::string,2> no_yes = {"NO","YES"};
+	std::string opt_input_region, opt_output_region, opt_sparse_maf, opt_map, opt_k_init, opt_k_pbwt, opt_pbwt_depth, opt_pbwt_modulo_cm, opt_state_list, opt_samples_file, opt_keep_mono;
 
+	opt_input_region = input_fmt == InputFormat::BCF ? options["input-region"].as < std::string > () : "Given by binary reference panel";
+	opt_output_region = input_fmt == InputFormat::BCF ? options["output-region"].as < std::string > () : "Given by binary reference panel";
+	opt_sparse_maf = input_fmt == InputFormat::BCF ? stb.str(H.sparse_maf) : "Given by binary reference panel";
+	if (input_fmt == InputFormat::BCF) opt_map = options.count("map") ? "Given by genetic map" : "Constant rate of 1cM/Mb";
+	else opt_map = "Given by binary reference panel";
+
+	opt_k_init = options["Kinit"].as < int > () > 0 ? stb.str(options["Kinit"].as < int > ()) : std::string("Init selection not enabled") ;
+	opt_k_pbwt = options["Kpbwt"].as < int > () > 0 ? stb.str(options["Kpbwt"].as < int > ()) : std::string("PBWT selection not enabled");
+	opt_pbwt_depth = options["Kpbwt"].as < int > () > 0 ? stb.str(options["pbwt-depth"].as < int > ()) : std::string("PBWT selection not enabled");
+	opt_pbwt_modulo_cm = options["Kpbwt"].as < int > () > 0 ? stb.str(options["pbwt-modulo-cm"].as < float > ()) : std::string("PBWT selection not enabled");
+	opt_state_list = options.count("state-list") ? stb.str(options["state-list"].as < std::string > ()) : std::string("No list provided");
+	opt_samples_file = options.count("samples-file") ? "Given by samples file" : "Only diploid samples in region";
+	const float err_imp = std::clamp(options["err-imp"].as < float > (), 1e-12f, 1e-3f);
+	const float err_phase = options["err-phase"].as < float > ();
+
+	vrb.title("GLIMPSE_phase parameters:");
+	if (options.count("input-gl") && options.count("input-field-gl")) vrb.bullet("Input                : [FORMAT/GL field for genotype likelihoods]");
+	else if (options.count("input-gl")) vrb.bullet("Input                : [FORMAT/PL field for genotype likelihoods]");
+
+	vrb.bullet("Imputation model     : [Reference panel imputation]");
+	vrb.bullet("Input region         : [" + opt_input_region + "]");
+	vrb.bullet("Output region        : [" + opt_output_region + "]");
+	vrb.bullet("Sparse MAF           : [" + opt_sparse_maf + "]");
+	vrb.bullet("Recombination rates  : [" + opt_map + "]");
+	vrb.bullet("Ploidy               : [" + opt_samples_file + "]");
+	vrb.bullet("Keep monom. ref sites: [" + no_yes[options.count("keep-monomorphic-ref-sites")] + "]");
+
+	vrb.title("Model parameters:");
+	vrb.bullet("#Burnin iterations   : [" + stb.str(options["burnin"].as < int > ()) + "]");
+	vrb.bullet("#Main iterations     : [" + stb.str(options["main"].as < int > ()) + "]");
+	vrb.bullet("Ne [eff. pop. size]  : [" + stb.str(options["ne"].as < int > ()) + "]");
+	vrb.bullet("Phase error rate     : [" + stb.str(err_phase) + "]");
+	vrb.bullet("Imputation error rate: [" + stb.str(err_imp) + "]");
+	vrb.bullet("Min value for hap GLs: [" + stb.str(options["min-gl"].as < float > ()) + "]");
+
+	vrb.title("Selection parameters:");
+	vrb.bullet("K init               : [" + opt_k_init + "]");
+	vrb.bullet("K pbwt               : [" + opt_k_pbwt + "]");
+	vrb.bullet("PBWT depth           : [" + opt_pbwt_depth + "]");
+	vrb.bullet("PBWT modulo (cM)     : [" + opt_pbwt_modulo_cm + "]");
+	vrb.bullet("State list           : [" + opt_state_list + "]");
+
+	if (!options.count("input-gl"))
+	{
+		vrb.title("Genotype calling:");
+		vrb.bullet("Calling model        : [" + options["call-model"].as <std::string> () + "]");
+		vrb.bullet("Indels model         : [" + options.count("call-indels") ? "Perform calling]" : "Haplotype scaffold]");
+
+		vrb.title("BAM/CRAM filters and options:");
+		vrb.bullet("Min mapping quality  : [" + stb.str(options["mapq"].as <int> ()) + "]");
+		vrb.bullet("Min base quality     : [" + stb.str(options["baseq"].as <int> ()) + "]");
+		vrb.bullet("Max depth            : [" + stb.str(options["max-depth"].as <int> ()) + "]");
+
+		vrb.bullet("Keep failed QC       : [" + no_yes[options.count("keep-failed-qc")] + "]");
+		vrb.bullet("Keep orphan reads    : [" + no_yes[options.count("keep-orphan-read")] + "]");
+		vrb.bullet("Keep duplicate reads : [" + no_yes[options.count("keep-duplicates")] + "]");
+		vrb.bullet("Keep supp. alignment : [" + no_yes[options.count("keep-supp")] + "]");
+
+		vrb.bullet("Check pairing        : [" + no_yes[options.count("check-proper-pairing")] + "]");
+		vrb.bullet("Ignore orientation   : [" + no_yes[options.count("ignore-orientation")] + "]");
+		vrb.bullet("Illumina-1.3+        : [" + no_yes[options.count("illumina13")] + "]");
+	}
+
+	vrb.title("Other parameters");
+	vrb.bullet("Seed                 : [" + stb.str(options["seed"].as < int > ()) + "]");
+	vrb.bullet("#Threads             : [" + stb.str(options["threads"].as < int > ()) + "]");
+
+}

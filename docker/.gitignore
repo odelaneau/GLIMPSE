@@ -1,0 +1,3 @@
+resources/
+*.tar.gz
+upload.sh

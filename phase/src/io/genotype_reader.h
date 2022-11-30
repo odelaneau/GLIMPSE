@@ -1,6 +1,8 @@
 /*******************************************************************************
- * Copyright (C) 2020 Olivier Delaneau, University of Lausanne
- * Copyright (C) 2020 Simone Rubinacci, University of Lausanne
+ * Copyright (C) 2022-2023 Simone Rubinacci
+ * Copyright (C) 2022-2023 Olivier Delaneau
+ *
+ * MIT Licence
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,50 +30,52 @@
 
 #include <containers/variant_map.h>
 #include <containers/haplotype_set.h>
+#include <containers/glimpse_mpileup.h>
 
-class genotype_reader {
+class genotype_reader
+{
 public:
 	//DATA
 	haplotype_set & H;
 	genotype_set & G;
 	variant_map & V;
-	const string region;
-	const bool impute_missing;
+	glimpse_mpileup & M;
+
+	const float sparse_maf;
 	const bool inputGL;
-	const bool exclude_repeated_samples;
+	const bool impute_refonly;
+	const bool keep_mono;
 
-	std::vector<string> main_sample_names;
-	set < string > initializing_samples;
-	map <string, int> ploidy_samples;
-	vector<int> ploidy_ref_samples;
-	int n_haploid;
-	int n_diploid;
-
-	bcf_hdr_t *hdr_ref;
-	int* imap;
-
-	//COUNTS
-	unsigned long n_variants;
-	unsigned long n_included;
-	unsigned long n_missing;
-	unsigned long n_main_samples;
-	unsigned long n_ref_samples;
+	int n_ref_samples;
+	std::set < std::string > initializing_samples;
+	std::map < std::string, int> ploidy_samples;
+	std::vector<int> ploidy_ref_samples;
 
 	//CONSTRUCTORS/DESCTRUCTORS
-	genotype_reader(haplotype_set &, genotype_set &, variant_map &, string regions, const bool _impute_missing, const bool _inputGL, const bool _exclude_repeated_samples);
+	genotype_reader(haplotype_set &, genotype_set &, variant_map &, glimpse_mpileup & M, const float _sparse_maf,const bool _inputGL, const bool _impute_refonly, const bool keep_mono);
 	~genotype_reader();
-	void allocateGenotypes();
 
 	//IO
-	void readInitializingSamples(string);
-	void readSamplesFilePloidy(string);
-	void initReader(bcf_srs_t * sr, string& fmain, string& fref, int nthreads);
-	void readGenotypes(string funphased, string fphased, int nthreads);
-	void scanGenotypes(bcf_srs_t * sr);
-	void parseGenotypes(bcf_srs_t * sr);
-	void set_ploidy_ref(bcf1_t * line_ref);
+	//void readInitializingSamples(string);
+	void readSamplesFilePloidy(std::string);
+	void set_ploidy_ref(bcf_srs_t * sr, int id_ref);
+	void set_ploidy_tar();
 
+	void readGenotypes(std::string , std::string , int nthreads);
+
+	void initReader(bcf_srs_t * sr, std::string& fmain, std::string& fref, int nthreads);
+	void initReader(bcf_srs_t * sr, std::string& file, int nthreads);
+
+	void scanGenotypes(bcf_srs_t * sr);
+	void readTarGenotypes(std::string , int);
+	//void readTarGenotypesValidation(string, string, int);
+
+	void parseGenotypes(bcf_srs_t * sr);
+
+	//void initReaderAndBAMs(bcf_srs_t * sr, string& fref, int nthreads);
+	void readGenotypesAndBAMs(std::string funphased, int nthreads);
+	void parseRefGenotypes(bcf_srs_t * sr);
+	void scanGenotypesCommon(bcf_srs_t * sr, int ref_sr_n);
 };
 
 #endif
-

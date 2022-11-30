@@ -1,6 +1,8 @@
 /*******************************************************************************
- * Copyright (C) 2020 Olivier Delaneau, University of Lausanne
- * Copyright (C) 2020 Simone Rubinacci, University of Lausanne
+ * Copyright (C) 2022-2023 Simone Rubinacci
+ * Copyright (C) 2022-2023 Olivier Delaneau
+ *
+ * MIT Licence
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,23 +26,17 @@
 #include <ligater/ligater_header.h>
 
 void ligater::read_files_and_initialise() {
-	vrb.title("Initialization:");
-
 	//step0: Initialize seed & other
 	rng.setSeed(options["seed"].as < int > ());
 
 	//step1:read filenames
-	string buffer;
-	string filelist = options["input"].as < string > ();
+	std::string buffer;
+	std::string filelist = options["input"].as < std::string > ();
 	vrb.title("Read filenames in [" + filelist + "]");
 	input_file fd(filelist);
 	while (getline(fd, buffer)) filenames.push_back(buffer);
 	vrb.bullet("#files = " + stb.str(filenames.size()));
 	if (filenames.size() == 0) vrb.error("No filenames in input file.");
 
-	//step2: initilize flags
-	vrb.title("Initilialize flags");
 	nfiles = filenames.size();
-	current_stages = vector < unsigned char > (nfiles, STAGE_NONE);
-	vrb.bullet("done");
 }

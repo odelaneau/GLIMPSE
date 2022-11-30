@@ -1,0 +1,482 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+	<!-- Global site tag (gtag.js) - Google Analytics -->
+	<script async src="https://www.googletagmanager.com/gtag/js?id=G-2TSEMF47BK"></script>
+	<script>
+		window.dataLayer = window.dataLayer || [];
+		function gtag(){dataLayer.push(arguments);}
+		gtag('js', new Date());
+		gtag('config', 'G-2TSEMF47BK');
+	</script>
+
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+		
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="">
+    <meta name="author" content="srubinac" >
+
+    <title>GLIMPSE</title>
+    <link rel="icon" href="images/branding/glimpse_icon.png">
+    
+    <!-- Bootstrap core CSS -->
+    <link href="./css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap theme -->
+    <link href="./css/bootstrap-theme.min.css" rel="stylesheet">
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <link href="./css/ie10-viewport-bug-workaround.css" rel="stylesheet">
+    <!-- JQuery -->
+    <script type="text/javascript" src="./script/jquery-1.12.4.min.js"></script>
+    <script type="text/javascript" src="./script/bootstrap.min.js"></script>
+    <script type="text/javascript" src="./script/docs.min.js"></script>
+    <!-- chart JS -->
+   	<script type="text/javascript" src="script/Chart.min.js"></script>
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <script type="text/javascript" src="./script/ie10-viewport-bug-workaround.js"></script>
+	<!-- Custom styles for this template -->
+    <link href="./css/theme.css" rel="stylesheet">
+    <!-- Script to load navbar code -->
+	<script>
+		$(function() {
+			$("#navbarbox").load("navbar.html");
+		});
+    </script> 
+</head>
+
+<body>
+
+	<!-- NAVBAR -->
+	<nav class="navbar navbar-inverse navbar-fixed-top">
+	<div class="container" id="navbarbox"></div>
+    </nav>
+    
+    <!-- CONTENT -->
+    <div class="container theme-showcase" role="main">
+	<div class="alert alert-warning" role="alert">
+	27/11/2022: This page describes the <b>GLIMPSE1</b> method. <b>GLIMPSE1</b> is recommended to the users who want to use the joint model, for imputation of >1x data and a moderate sized reference panels. For large reference panels and lower coverages, we recommend the use of the <a href="https://github.com/odelaneau/GLIMPSE"><b>GLIMPSE2</b> method</a>
+	</div>
+    	<div class="page-header">
+	   	<h1>GLIMPSE command options</h1>
+		</div>
+
+      <h4>
+		  <p><b>Tool name:</b></p>
+        <p><a href="#chunk"><span class="label label-success" style="display:inline-block; width:130px; height:22px;">GLIMPSE_chunk</span></a> defines chunks where to run imputation</p>
+        <p><a href="#phase"><span class="label label-primary" style="display:inline-block; width:130px; height:22px;">GLIMPSE_phase</span></a> main GLIMPSE algorithm, performs phasing and imputation refining genotype likelihoods</p>
+        <p><a href="#ligate"><span class="label label-info" style="display:inline-block; width:130px; height:22px;">GLIMPSE_ligate</span></a> concatenates imputation chunks in a single VCF/BCF file ligating phased information</p>
+        <p><a href="#sample"><span class="label label-warning" style="display:inline-block; width:130px; height:22px;">GLIMPSE_sample</span></a> generates haplotype calls by sampling haplotype estimates</p>
+        <hr>
+        <p><b>Detailed description</b></p>
+      </h4>
+      <!-- List of button links
+
+		<p>
+			<a href="#chunk" class="btn btn-success">GLIMPSE chunk</a>
+			<a href="#phase" class="btn btn-info">GLIMPSE phase</a>
+			<a href="#ligate" class="btn btn-primary">GLIMPSE ligate</a>
+			<a href="#sample" class="btn btn-warning">GLIMPSE sample</a>
+		</p>
+		<hr>      
+       -->		
+		<a id="chunk"></a>
+		<div class="panel panel-success">
+      	<div class="panel-heading">
+         	<h3 class="panel-title">GLIMPSE chunk</h3>
+         </div>
+         <div class="panel-body">
+			  <h4>Usage</h4>
+			  <code>GLIMPSE_chunk --input input.GLs.vcf.gz --reference reference.bcf --region chr20 --window-size 1000000 --window-count 1000 --buffer-size 250000 --buffer-count 250 --output chunks.txt --log chunks.log </code>
+			  <table class="table table-striped">
+			  	<col width="15%">
+  				<col width="10%">
+  				<col width="10%">
+  				<col width="65%">
+			 	 <h4>Command options</h4>
+			    <thead>
+			      <tr>
+	                	<th>Long form</th>
+	               		<th>Short</th>
+	                	<th>Argument</th>
+	                	<th>Description</th>
+			      </tr>
+			    </thead>
+			    <tbody>
+			      <tr>
+	                	<td><code>--help</code></td>
+	                	<td>NA</td>
+	                	<td>NA</td>
+	                	<td>Produces an help message with a short description of the command options</td>
+			      </tr>
+			      <tr>
+	              <td><code>--seed</code></td>
+			        <td>NA</td>
+			        <td>INT</td>
+	              <td>Seed for random number generator.</td>
+			      </tr>
+			      <tr>
+			      <td><code>--thread</code></td>
+			        <td>NA</td>
+			        <td>INT</td>
+	                	<td>Number of threads to use (default 1). Multi-threading is only used for reading files using the htslib library</td>
+			      </tr>
+			      <tr>
+			      <tr>
+	              <td><code>--input</code></td>
+			        <td><code>--I</code></td>
+			        <td>STRING</td>
+			        <td>Target dataset in VCF/BCF format defined at all variable positions. The file could possibly be without GT field (for efficiency reasons a file containing only the positions is recommended).</td>
+			      </tr>
+			      <tr>
+	            	<td><code>--region</code></td>
+			        <td>NA</td>
+			        <td>STRING</td>
+			        <td>Target region, usually a full chromosome (e.g. chr20:1000000-2000000 or chr20). For chrX, please treat PAR and non-PAR regions as different choromosome in order to avoid mixing ploidy.</td>
+			      </tr>
+			      <tr>
+	                	<td><code>--window-size</code></td>
+			        <td>NA</td>
+			        <td>INT</td>
+			        <td>Minimal size of the imputation region in basepairs.</td>
+			      </tr>
+			      <tr>
+	                	<td><code>--window-count</code></td>
+			        <td>NA</td>
+			        <td>INT</td>
+			        <td>Minimal number of variants present in the imputation region.</td>
+			      </tr>
+			      <tr>
+	                	<td><code>--buffer-size</code></td>
+			        <td>NA</td>
+			        <td>INT</td>
+			        <td>Minimal size of the buffer region in basepairs.</td>
+			      </tr>
+			      <tr>
+	                	<td><code>--buffer-count</code></td>
+			        <td>NA</td>
+			        <td>INT</td>
+			        <td>Minimal number of variants present in the buffer region.</td>
+			      </tr>
+			      <tr>
+	                	<td><code>--output</code></td>
+			        <td><code>-O</code></td>
+			        <td>STRING</td>
+			        <td>Output file containing buffer and imputation regions.</td>
+			      </tr>
+			      <tr>
+	                	<td><code>--log</code></td>
+			        <td>NA</td>
+			        <td>STRING</td>
+			        <td>Log file.</td>
+			      </tr>
+			    </tbody>
+			  </table>
+			</div>
+		</div>
+
+		<a id="phase"></a>
+		<div class="panel panel-primary">
+      	<div class="panel-heading">
+         	<h3 class="panel-title">GLIMPSE phase</h3>
+         </div>
+         <div class="panel-body">
+			  <h4>Usage</h4>
+			  <code>GLIMPSE_phase --input input.GLs.vcf.gz --reference reference.bcf --region chr20 --thread 8 --input-region chr20:1500000-4500000 --map chr20.b38.gmap.gz --output-region chr20:2000000-4000000 --output imputed.chunk1.bcf --log imputed.chunk1.log </code>
+			  <table class="table table-striped">
+			  	<col width="15%">
+  				<col width="10%">
+  				<col width="10%">
+  				<col width="65%">
+			  
+			 	 <h4>Command options</h4>
+			    <thead>
+			      <tr>
+	                	<th>Long form</th>
+	               		<th>Short</th>
+	                	<th>Argument</th>
+	                	<th>Description</th>
+			      </tr>
+			    </thead>
+			    <tbody>
+			      <tr>
+	                	<td><code>--help</code></td>
+	                	<td>NA</td>
+	                	<td>NA</td>
+	                	<td>Produces an help message with a short description of the command options</td>
+			      </tr>
+			      <tr>
+	                	<td><code>--seed</code></td>
+			        <td>NA</td>
+			        <td>INT</td>
+	                	<td>Seed for random number generator.</td>
+			      </tr>
+			      <tr>
+	                	<td><code>--thread</code></td>
+			        <td>NA</td>
+			        <td>INT</td>
+	                	<td>Number of threads to use (default 1). Multi-threading is performed at the sample level, therefore there will be no benefit from this parameter only one sample is imputed</td>
+			      </tr>
+			      <tr>
+	                	<td><code>--input</code></td>
+			        <td><code>--I</code></td>
+			        <td>STRING</td>
+			        <td>Input VCF/BCF file containing genotype likelihoods</td>
+			      </tr>
+			      <tr>
+	                	<td><code>--reference</code></td>
+			        <td><code>--R</code></td>
+			        <td>STRING</td>
+			        <td>Reference panel of haplotypes in VCF/BCF format.</td>
+			      </tr>
+			      <tr>
+	                	<td><code>--input-region</code></td>
+			        <td>NA</td>
+			        <td>STRING</td>
+			        <td>Target region used for imputation, including left and right buffers (e.g. chr20:1000000-2000000).</td>
+			      </tr>
+			      <tr>
+	                	<td><code>--map</code></td>
+			        <td><code>--M</code></td>
+			        <td>STRING</td>
+			        <td>File containing the genetic map.</td>
+			      </tr>
+	                	<td><code>--samples-file</code></td>
+			        <td>NA</td>
+			        <td>STRING</td>
+			        <td>File with sample names and ploidy information. One sample per line with a mandatory second column indicating ploidy (1 or 2). Sample names that are not present are assumed to have ploidy 2 (diploids). GLIMPSE does NOT handle the use of sex (M/F) instead of ploidy.</td>
+			      </tr>
+			      <tr>
+			        <td><code>--impute-reference-only-variants</code></td>
+			        <td>NA</td>
+			        <td>STRING</td>
+			        <td>Allows imputation at variants only present in the reference panel. The use of this option is intended only to allow imputation at sporadic missing variants. If the number of missing variants is non-sporadic, please re-run the genotype likelihood computation at all reference variants and avoid using this option, since data from the reads should be used. A warning is thrown if reference-only variants are found.</td>
+			      </tr>
+  			      <tr>
+			        <td><code>--input-GL</code></td>
+			        <td>NA</td>
+			        <td>STRING</td>
+			        <td>Uses FORMATL/GL field instead of FORMAT/PL as input for genotype likelihoods.</td>
+			      </tr>
+  			      <tr>
+			        <td><code>--ban-repeated-sample-names</code></td>
+			        <td>NA</td>
+			        <td>STRING</td>
+			        <td>Excludes reference samples having names matching the target samples. To be used only when the target and the reference panel share (even partially) the same set of individuals.</td>
+			      </tr>     
+			      <tr>
+	                	<td><code>--burnin</code></td>
+			        <td>NA</td>
+			        <td>INT</td>
+			        <td>Number of burn-in iterations of the Gibbs sampler.</td>
+			      </tr>
+			      <tr>
+	                	<td><code>--main</code></td>
+			        <td>NA</td>
+			        <td>INT</td>
+			        <td>Number of main iterations of the Gibbs sampler. Each main iterations contributes to output genotypes. Haplotypes sampled for the last (max 15) iterations are stored in the HS field.</td>
+			      </tr>
+			      <tr>
+	                	<td><code>--pbwt-depth</code></td>
+			        <td>NA</td>
+			        <td>INT</td>
+			        <td>Depth of PBWT indexes to condition on.</td>
+			      </tr>
+			      <tr>
+	                	<td><code>--pbwt-modulo</code></td>
+			        <td>NA</td>
+			        <td>INT</td>
+			        <td>Frequency of PBWT selection.</td>
+			      </tr>
+			      <tr>
+	                	<td><code>--init-states</code></td>
+			        <td>NA</td>
+			        <td>INT</td>
+			        <td>Number of states used for initialization and maximal number of states in the subsequent iterations.</td>
+			      </tr>
+			      <tr>
+	                	<td><code>--init-pool</code></td>
+			        <td>NA</td>
+			        <td>INT</td>
+			        <td>List of samples (sample IDs) from which haplotypes are initialised.</td>
+			      </tr>
+			      <tr>
+	                	<td><code>--ne</code></td>
+			        <td>NA</td>
+			        <td>FLOAT</td>
+			        <td>Effective diploid population size.</td>
+			      </tr>
+			      <tr>
+	                	<td><code>--output</code></td>
+			        <td><code>-O</code></td>
+			        <td>STRING</td>
+			        <td>Output VCF/BCF file containing genotype probabilities (GP field), imputed dosages (DS field), best guess genotypes (GT field), sampled haplotypes in the last (max 16) main iterations (HS field) and info-score.</td>
+			      </tr>
+			      <tr>
+	                	<td><code>--output-region</code></td>
+			        <td>NA</td>
+			        <td>STRING</td>
+			        <td>Target imputed region, excluding left and right buffers (e.g. chr20:1000000-2000000).</td>
+			      </tr>
+			      <tr>
+	                	<td><code>--log</code></td>
+			        <td>NA</td>
+			        <td>STRING</td>
+			        <td>Log file.</td>
+			      </tr>
+			    </tbody>
+			  </table>
+			</div>
+		</div>
+		
+		<a id="ligate"></a>
+		<div class="panel panel-info">
+      	<div class="panel-heading">
+         	<h3 class="panel-title">GLIMPSE ligate</h3>
+         </div>
+         <div class="panel-body">
+			  <h4>Usage</h4>
+			  <code>GLIMPSE_ligate --input list.imputed.txt --output imputed.chr20.bcf --log imputed.chr20.log</code>
+			  <table class="table table-striped">
+			  	<col width="15%">
+  				<col width="10%">
+  				<col width="10%">
+  				<col width="65%">
+  				
+			 	 <h4>Command options</h4>
+			    <thead>
+			      <tr>
+	                	<th>Long form</th>
+	               		<th>Short</th>
+	                	<th>Argument</th>
+	                	<th>Description</th>
+			      </tr>
+			    </thead>
+			    <tbody>
+			      <tr>
+	                	<td><code>--help</code></td>
+	                	<td>NA</td>
+	                	<td>NA</td>
+	                	<td>Produces an help message with a short description of the command options</td>
+			      </tr>
+			      <tr>
+	                	<td><code>--seed</code></td>
+			        <td>NA</td>
+			        <td>INT</td>
+	                	<td>Seed for random number generator.</td>
+			      </tr>
+			      <tr>
+			      <td><code>--thread</code></td>
+			        <td>NA</td>
+			        <td>INT</td>
+	                	<td>Number of threads to use (default 1). Multi-threading is only used for reading/writing files using the htslib library</td>
+			      </tr>
+			      <tr>
+	                	<td><code>--input</code></td>
+			        <td><code>--I</code></td>
+			        <td>STRING</td>
+			        <td>Text file containing the full list of files to ligate (one file per line)</td>
+			      </tr>
+			      <tr>
+	                	<td><code>--output</code></td>
+			        <td><code>-O</code></td>
+			        <td>STRING</td>
+			        <td>Output VCF/BCF file for the merged regions. Phased information (HS field) is updated accordingly for the full region.</td>
+			      </tr>
+			      <tr>
+	                	<td><code>--log</code></td>
+			        <td>NA</td>
+			        <td>STRING</td>
+			        <td>Log file.</td>
+			      </tr>
+			    </tbody>
+			  </table>
+			</div>	
+		</div>
+		
+		<a id="sample"></a>
+		<div class="panel panel-warning">
+      	<div class="panel-heading">
+         	<h3 class="panel-title">GLIMPSE sample</h3>
+         </div>
+         <div class="panel-body">
+	         <h4>Usage</h4>
+			  <code>GLIMPSE_sample --input imputed.chr20.bcf --solve --output phased.chr20.bcf --log  phased.chr20.log </code>
+			  <table class="table table-striped">
+			  	<col width="15%">
+  				<col width="10%">
+  				<col width="10%">
+  				<col width="65%">
+			  
+			 	 <h4>Command options</h4>
+			    <thead>
+			      <tr>
+	                	<th>Long form</th>
+	               		<th>Short</th>
+	                	<th>Argument</th>
+	                	<th>Description</th>
+			      </tr>
+			    </thead>
+			    <tbody>
+			      <tr>
+	                	<td><code>--help</code></td>
+	                	<td>NA</td>
+	                	<td>NA</td>
+	                	<td>Produces an help message with a short description of the command options</td>
+			      </tr>
+			      <tr>
+	                	<td><code>--seed</code></td>
+			        <td>NA</td>
+			        <td>INT</td>
+	                	<td>Seed for random number generator.</td>
+			      </tr>
+			      <tr>
+			      <td><code>--thread</code></td>
+			        <td>NA</td>
+			        <td>INT</td>
+	                	<td>Number of threads to use (default 1). Multi-threading is only used for reading/writing files using the htslib library</td>
+			      </tr>
+			      <tr>
+	                	<td><code>--input</code></td>
+			        <td><code>--I</code></td>
+			        <td>STRING</td>
+			        <td>VCF/BCF file generated using <i>GLIMPSE ligate</i></td>
+			      </tr>
+			      <tr>
+	                	<td><code>--sample</code></td>
+			        <td>NA</td>
+			        <td>STRING</td>
+			        <td>Samples a likely haplotype pair for each sample, use it in combination with <code>--seed</code>. Option not recommended for general usage, use <code>--solve</code> instead.</td>
+			      </tr>
+			      <tr>
+	                	<td><code>--solve</code></td>
+			        <td>NA</td>
+			        <td>STRING</td>
+			        <td>Get the most likely haplotype pair for each sample (the random number generator is not used)</td>
+			      </tr>
+			      <tr>
+	                	<td><code>--output</code></td>
+			        <td><code>-O</code></td>
+			        <td>STRING</td>
+			        <td>Output VCF/BCF file containing phased genotypes.</td>
+			      </tr>
+			      <tr>
+	                	<td><code>--log</code></td>
+			        <td>NA</td>
+			        <td>STRING</td>
+			        <td>Log file.</td>
+			      </tr>
+			    </tbody>
+			  </table>
+         </div>
+     </div>
+
+
+    </div> <!-- /container -->
+	
+  <footer class="footer">
+      <div class="container" style="text-align: center;">
+        <span class="text-muted">Copyright © 2020 University of Lausanne | All Rights Reserved</span>
+      </div>
+</footer>

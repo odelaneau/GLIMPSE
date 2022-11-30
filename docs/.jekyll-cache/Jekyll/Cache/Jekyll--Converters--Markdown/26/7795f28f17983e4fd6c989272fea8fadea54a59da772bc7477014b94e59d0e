@@ -1,0 +1,161 @@
+I"x(<h1 id="glossary-of-terms">Glossary of Terms</h1>
+
+<p>Below are some important concepts, software, standards, and other things you might encounter in these Docs and working with SHAPEIT5.</p>
+
+<ul>
+  <li><a href="#glimpse">GLIMPSE</a></li>
+  <li><a href="#genotype-imputation">Genotype imputation</a></li>
+  <li><a href="#haplotype-phasing">Haplotype phasing</a></li>
+  <li><a href="#haplotype-scaffold">Haplotype scaffold</a></li>
+  <li><a href="#impute">IMPUTE</a></li>
+  <li><a href="#low-coverage-whole-genome-sequencing">Low-coverage whole genome sequencing</a></li>
+  <li><a href="#reference-panel">Reference panel</a></li>
+  <li><a href="#shapeit">SHAPEIT</a></li>
+  <li><a href="#snp-array">SNP array</a></li>
+  <li><a href="#singleton">Singleton</a></li>
+  <li><a href="#switch-error-rate">Switch error rate</a></li>
+  <li><a href="#uk-biobank-research-analysis-platform">UK Biobank Research Analysis Platform</a></li>
+  <li><a href="#whole-exome-sequencing-wes">Whole exome sequencing (WES)</a></li>
+  <li><a href="#whole-genome-sequencing-wgs">Whole genome sequencing (WGS)</a></li>
+</ul>
+
+<hr />
+
+<h2 id="glimpse">GLIMPSE</h2>
+
+<p>GLIMPSE (Genotype Likelihoods IMputation and PhaSing mEthod) is a method for haplotype phasing and genotype imputation of low-coverage WGS data, developed by Simone Rubinacci and Olivier Delaneau. The latest version of the tool is GLIMPSE2, which offers the best accuracy and computational performance for large reference panels at rare variants.</p>
+
+<p>Resources:</p>
+<ul>
+  <li>GLIMPSE2 <a href="https://odelaneau.github.io/GLIMPSE/" target="_blank" rel="noopener">[Website]</a> <a href="https://www.biorxiv.org/content/10.1101/2022.11.28.518213v1">[Paper]</a></li>
+  <li>GLIMPSE1 <a href="https://odelaneau.github.io/GLIMPSE/glimpse1/" target="_blank" rel="noopener">[Website]</a> <a href="https://www.nature.com/articles/s41588-020-00756-0">[Paper]</a></li>
+</ul>
+
+<hr />
+
+<h2 id="genotype-imputation">Genotype imputation</h2>
+
+<p>Genotype imputation is a probabilistic inference of the genotypes, typically used for SNP array data or low-coverage WGS. Imputation uses a large reference panel of phased haplotypes to determine large shared identity-by-descent segments that can be used for the statistical inference. Two widely used tools for genotype imputation are <a href="https://www.dropbox.com/sh/mwnceyhir8yze2j/AADbzP6QuAFPrj0Z9_I1RSmla?dl=0" target="_blank" rel="noopener">IMPUTE5 for SNP array data</a>  and <a href="https://odelaneau.github.io/GLIMPSE/" target="_blank" rel="noopener">GLIMPSE tool for low-coverage imputation</a>.</p>
+
+<p>Resources:</p>
+<ul>
+  <li>GLIMPSE for low-coverage imputation <a href="https://odelaneau.github.io/GLIMPSE/" target="_blank" rel="noopener">[Website]</a> <a href="https://www.nature.com/articles/s41588-020-00756-0">[Paper]</a></li>
+  <li>IMPUTE5 for SNP array data <a href="https://www.dropbox.com/sh/mwnceyhir8yze2j/AADbzP6QuAFPrj0Z9_I1RSmla?dl=0" target="_blank" rel="noopener">[Website]</a> <a href="https://journals.plos.org/plosgenetics/article?id=10.1371/journal.pgen.1009049">[Paper]</a></li>
+</ul>
+
+<hr />
+
+<h2 id="haplotype-phasing">Haplotype phasing</h2>
+
+<p>Haplotype phasing involves distinguishing the two parentally inherited copies of each chromosome into haplotypes. <a href="https://odelaneau.github.io/shapeit5/" target="_blank" rel="noopener">SHAPEIT5</a> is a tool for statistical population-based haplotype phasing which focuses specifically at extremely rare variants.</p>
+
+<p>Resources:</p>
+<ul>
+  <li>SHAPEIT5 <a href="https://odelaneau.github.io/shapeit5/" target="_blank" rel="noopener">[Website]</a> <a href="https://www.biorxiv.org/content/10.1101/2022.10.19.512867v1" target="_blank" rel="noopener">[Paper]</a></li>
+</ul>
+
+<hr />
+
+<h2 id="haplotype-scaffold">Haplotype scaffold</h2>
+
+<p>A haplotype scaffold is a set of highly confident haplotypes, typically on a subset of the data. SHAPEIT5 uses the haplotypes derived at common variants as haplotype scaffolds onto which heterozygous genotypes are phased one rare variant at a time.</p>
+
+<hr />
+
+<h2 id="impute">IMPUTE</h2>
+
+<p>IMPUTE is a method for genotype imputation of SNP array data, developed by Jonathan Marchini, Bryan Howie and Simone Rubinacci. The latest version of the tool is IMPUTE5, which offers efficient computational performances for large reference panels.</p>
+
+<p>Resources:</p>
+
+<ul>
+  <li>IMPUTE5 <a href="https://jmarchini.org/software/" target="_blank" rel="noopener">[Website]</a> <a href="https://journals.plos.org/plosgenetics/article?id=10.1371/journal.pgen.1009049">[Paper]</a></li>
+  <li>IMPUTE4 <a href="https://jmarchini.org/software/" target="_blank" rel="noopener">[Website]</a> <a href="https://www.nature.com/articles/s41586-018-0579-z">[Paper]</a></li>
+  <li>IMPUTE2 <a href="https://journals.plos.org/plosgenetics/article?id=10.1371/journal.pgen.1000529" target="_blank" rel="noopener">[Paper 1]</a> <a href="https://www.nature.com/articles/ng.2354">[Paper 2]</a></li>
+  <li>IMPUTE1 <a href="https://www.nature.com/articles/ng2088" target="_blank" rel="noopener">[Paper]</a></li>
+</ul>
+
+<hr />
+
+<h2 id="low-coverage-whole-genome-sequencing">Low-coverage whole genome sequencing</h2>
+
+<p>Low-coverage whole genome sequencing is whole genome sequencing data sequenced at low-depth usually data with a coverage between 0.1x-8x. Conversely to high-coverage WGS, genotype calling in this case is uncertain and very often this data needs to be imputed with specialised methods (e.g. <a href="https://odelaneau.github.io/GLIMPSE/" target="_blank" rel="noopener">GLIMPSE</a>) in order to be used and processed.</p>
+
+<p>Resources:</p>
+<ul>
+  <li>GLIMPSE for low-coverage WGS imputation <a href="https://odelaneau.github.io/GLIMPSE/" target="_blank" rel="noopener">[Website]</a> <a href="https://www.biorxiv.org/content/10.1101/2022.10.19.512867v1" target="_blank" rel="noopener">[Paper]</a></li>
+</ul>
+
+<hr />
+
+<h2 id="reference-panel">Reference panel</h2>
+
+<p>A reference panel is a large set of deeply-sequenced haplotypes used for genotype imputation and haplotype phasing typically for cohorts genotyped using SNP array or low-coverage WGS.</p>
+
+<hr />
+
+<h2 id="shapeit">SHAPEIT</h2>
+
+<p>SHAPEIT (Segmented HAPlotype Estimation and Imputation Tools) is a commonly used method for haplotype phasing, mainly developed by Olivier Delaneau. The latest version of the tool is SHAPEIT5, which offers the best accuracy for large cohorts at rare variants.</p>
+
+<p>Resources:</p>
+<ul>
+  <li>SHAPEIT5 <a href="https://odelaneau.github.io/SHAPEIT5/" target="_blank" rel="noopener">[Paper]</a></li>
+  <li>SHAPEIT4 <a href="https://www.nature.com/articles/s41467-019-13225-y" target="_blank" rel="noopener">[Paper]</a></li>
+  <li>SHAPEIT3 <a href="https://www.nature.com/articles/ng.3583" target="_blank" rel="noopener">[Paper]</a></li>
+  <li>SHAPEIT2 <a href="https://www.nature.com/articles/nmeth.2307" target="_blank" rel="noopener">[Paper]</a></li>
+  <li>SHAPEIT <a href="https://www.nature.com/articles/nmeth.1785" target="_blank" rel="noopener">[Paper]</a></li>
+</ul>
+
+<hr />
+
+<h2 id="snp-array">SNP array</h2>
+
+<p>SNP array is a DNA microarray which is used to detect common SNPs within a population. In the context of GWAS, SNP array data is often imputed using a reference panel of haplotypes (e.g. using <a href="https://www.dropbox.com/sh/mwnceyhir8yze2j/AADbzP6QuAFPrj0Z9_I1RSmla?dl=0">IMPUTE5</a></p>
+
+<p>Resources:</p>
+<ul>
+  <li>IMPUTE5 for SNP array data <a href="https://www.dropbox.com/sh/mwnceyhir8yze2j/AADbzP6QuAFPrj0Z9_I1RSmla?dl=0" target="_blank" rel="noopener">[Website]</a> <a href="https://journals.plos.org/plosgenetics/article?id=10.1371/journal.pgen.1009049">[Paper]</a></li>
+</ul>
+
+<hr />
+
+<h2 id="singleton">Singleton</h2>
+
+<p>A singleton is a rare variant for which genetic variation is carried by a unique chromosome in the dataset (minor allele count of 1). As these variants are unique in the datasets, there is no information to phase the variant, therefore statistical population-based phasing has always reported a switch error rate of 50% at these sites. The typical way to phase these variants is to use family information. However, <a href="https://odelaneau.github.io/shapeit5/" target="_blank" rel="noopener">SHAPEIT5</a> is able to provide for the first time non-random phasing at these sites without the need of family information, by using a simple coalescent-inspired model.</p>
+
+<p>Resources</p>
+<ul>
+  <li>SHAPEIT5 <a href="https://odelaneau.github.io/shapeit5/" target="_blank" rel="noopener">[Website]</a> <a href="https://www.biorxiv.org/content/10.1101/2022.10.19.512867v1" target="_blank" rel="noopener">[Paper]</a></li>
+</ul>
+
+<hr />
+
+<h2 id="switch-error-rate">Switch error rate</h2>
+
+<p>Switch error rate (SER) is a popular metric to measure the quality of phased data. SER is used when known maternal and paternal haplotypes are available and is defined as the number of switch errors divided by the number of opportunities for switch errors.</p>
+
+<hr />
+
+<h2 id="uk-biobank-research-analysis-platform">UK Biobank Research Analysis Platform</h2>
+
+<p>The UK Biobank Research Analysis Platform (RAP), enabled by DNAnexus and Amazon Web Services (AWS), is a cloud-based platform that enables researchers to work with the UK Biobank WGS and WES data.</p>
+
+<p>Resources:</p>
+<ul>
+  <li><a href="https://www.ukbiobank.ac.uk/enable-your-research/research-analysis-platform" target="_blank" rel="noopener">UK Biobank website</a></li>
+</ul>
+
+<hr />
+
+<h2 id="whole-exome-sequencing-wes">Whole exome sequencing (WES)</h2>
+
+<p>Whole exome sequencing (WES) is a technique for sequencing all of the protein-coding regions of genes in a genome. In the UK Biobank dataset, we combined WES with SNP array data and performed phasing with SHAPEIT5.</p>
+
+<hr />
+
+<h2 id="whole-genome-sequencing-wgs">Whole genome sequencing (WGS)</h2>
+
+<p>Whole-genome sequencing (WGS) is the process of determining the DNA sequence of an organism at a single time. WGS is intended at high coverage, from 30x of coverage or more, therefore the quality of genotype calling is high. <a href="https://odelaneau.github.io/shapeit5" target="_blank" rel="noopener">SHAPEIT5</a> is designed for large WGS cohorts (e.g. in the UK Biobank), to distinguish the two inherited copies of each chromosome into haplotypes (see haplotype phasing).</p>
+
+:ET

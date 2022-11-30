@@ -1,0 +1,65 @@
+I"�	<h1 class="no_toc text-center" id="phase_rare">phase_rare</h1>
+
+<p class="highlight">Website under construction. A complete release of GLIMPSE2 will be available by the 5th of December 2022.</p>
+
+<h2 class="no_toc text-delta" id="table-of-contents">Table of contents</h2>
+
+<ol id="markdown-toc">
+  <li><a href="#description" id="markdown-toc-description">Description</a></li>
+  <li><a href="#usage" id="markdown-toc-usage">Usage</a></li>
+  <li><a href="#command-line-options" id="markdown-toc-command-line-options">Command line options</a></li>
+  <li><a href="#command-line-options-1" id="markdown-toc-command-line-options-1">Command line options</a>    <ol>
+      <li><a href="#basic-options" id="markdown-toc-basic-options">Basic options</a></li>
+      <li><a href="#input-files" id="markdown-toc-input-files">Input files</a></li>
+      <li><a href="#parameters-1" id="markdown-toc-parameters-1">Parameters 1</a></li>
+      <li><a href="#parameters-2" id="markdown-toc-parameters-2">Parameters 2</a></li>
+      <li><a href="#output-files" id="markdown-toc-output-files">Output files</a></li>
+    </ol>
+  </li>
+</ol>
+
+<hr />
+
+<h3 id="description">Description</h3>
+<p>Tool to create imputation chunks.</p>
+
+<h3 id="usage">Usage</h3>
+<p>Simple run</p>
+
+<div class="code-example">
+  <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+</code></pre></div>  </div>
+</div>
+
+<hr />
+
+<h3 id="command-line-options">Command line options</h3>
+
+<h3 id="command-line-options-1">Command line options</h3>
+
+<h4 id="basic-options">Basic options</h4>
+
+<p>| Option name 	       | Argument| Default  | Description |
+|:———————|:——–|:———|:————————————-|</p>
+
+<h4 id="input-files">Input files</h4>
+
+<p>| Option name 	       | Argument| Default  | Description |
+|:———————|:——–|:———|:————————————-|</p>
+
+<h4 id="parameters-1">Parameters 1</h4>
+
+<p>| Option name 	      | Argument|  Default  | Description |
+|:——————–|:——–|:———-|:————————————-|</p>
+
+<h4 id="parameters-2">Parameters 2</h4>
+
+<p>| Option name 	      | Argument|  Default  | Description |
+|:——————–|:——–|:———-|:————————————-|</p>
+
+<h4 id="output-files">Output files</h4>
+
+<p>| Option name 	       | Argument| Default  | Description |
+|:———————|:——–|:———|:————————————-|</p>
+
+:ET

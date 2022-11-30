@@ -1,0 +1,404 @@
+{"0": {
+    "doc": "CHANGELOG",
+    "title": "CHANGELOG",
+    "content": "All notable changes to this project are documented in this file. Version 2.0.0 will be released on the 5th of December 2022. ",
+    "url": "/GLIMPSE/CHANGELOG/",
+    "relUrl": "/CHANGELOG/"
+  },"1": {
+    "doc": "CHANGELOG",
+    "title": "v2.0.0",
+    "content": "* Major release. Introduced speedups and accuracy improvements. Version used for the preprint. (https://doi.org/10.1101/2022.11.28.518213) . ",
+    "url": "/GLIMPSE/CHANGELOG/#v200",
+    "relUrl": "/CHANGELOG/#v200"
+  },"2": {
+    "doc": "CHANGELOG",
+    "title": "v1.1.1",
+    "content": "* Removed bug in haploid imputation * Removed bug reading imputing regions with spanning indels (bug reported by @MySelvan) * Removed bug in INFO score calculation * Refactory model classes (cast) * Added --inputGL option * Added --ban-repeated-sample-names option . ",
+    "url": "/GLIMPSE/CHANGELOG/#v111",
+    "relUrl": "/CHANGELOG/#v111"
+  },"3": {
+    "doc": "CHANGELOG",
+    "title": "v1.1.0",
+    "content": "* Better reporting of missing genotype likelihoods and ploidy * Added multi-threaded input for VCF/BCF files * Added haploid/diploid/mixed ploidy imputation * Added FPLOIDY parameter in output * Small improvements in the PBWT selection . ",
+    "url": "/GLIMPSE/CHANGELOG/#v110",
+    "relUrl": "/CHANGELOG/#v110"
+  },"4": {
+    "doc": "CHANGELOG",
+    "title": "v1.0.1",
+    "content": "* Version used for the paper (https://doi.org/10.1038/s41588-020-00756-0) * Change in the state selection for phasing * Bugfix for compatibility with bcftools 1.10.x regarding --main . ",
+    "url": "/GLIMPSE/CHANGELOG/#v101",
+    "relUrl": "/CHANGELOG/#v101"
+  },"5": {
+    "doc": "CHANGELOG",
+    "title": "v1.0.0",
+    "content": "* First release. Version used for the preprint (https://doi.org/10.1101/2020.04.14.040329) . ",
+    "url": "/GLIMPSE/CHANGELOG/#v100",
+    "relUrl": "/CHANGELOG/#v100"
+  },"6": {
+    "doc": "Build from source",
+    "title": "Build from source",
+    "content": "Installation instructions of GLIMPSE2 . ",
+    "url": "/GLIMPSE/docs/installation/build_from_source",
+    "relUrl": "/docs/installation/build_from_source"
+  },"7": {
+    "doc": "chunk",
+    "title": "phase_rare",
+    "content": "Website under construction. A complete release of GLIMPSE2 will be available by the 5th of December 2022. ",
+    "url": "/GLIMPSE/docs/documentation/chunk/#phase_rare",
+    "relUrl": "/docs/documentation/chunk/#phase_rare"
+  },"8": {
+    "doc": "chunk",
+    "title": "Table of contents",
+    "content": ". | Description | Usage | Command line options | Command line options . | Basic options | Input files | Parameters 1 | Parameters 2 | Output files | . | . Description . Tool to create imputation chunks. Usage . Simple run . Command line options . Command line options . Basic options . | Option name | Argument| Default | Description |:———————|:——–|:———|:————————————-| . Input files . | Option name | Argument| Default | Description |:———————|:——–|:———|:————————————-| . Parameters 1 . | Option name | Argument| Default | Description |:——————–|:——–|:———-|:————————————-| . Parameters 2 . | Option name | Argument| Default | Description |:——————–|:——–|:———-|:————————————-| . Output files . | Option name | Argument| Default | Description |:———————|:——–|:———|:————————————-| . ",
+    "url": "/GLIMPSE/docs/documentation/chunk/#table-of-contents",
+    "relUrl": "/docs/documentation/chunk/#table-of-contents"
+  },"9": {
+    "doc": "chunk",
+    "title": "chunk",
+    "content": " ",
+    "url": "/GLIMPSE/docs/documentation/chunk/",
+    "relUrl": "/docs/documentation/chunk/"
+  },"10": {
+    "doc": "Compile GLIMPSE2",
+    "title": "Compile GLIMPSE2",
+    "content": " ",
+    "url": "/GLIMPSE/docs/installation/build_from_source/compile_glimpse2",
+    "relUrl": "/docs/installation/build_from_source/compile_glimpse2"
+  },"11": {
+    "doc": "Compile GLIMPSE2",
+    "title": "Table of contents",
+    "content": ". | Compile GLIMPSE2 | . ",
+    "url": "/GLIMPSE/docs/installation/build_from_source/compile_glimpse2#table-of-contents",
+    "relUrl": "/docs/installation/build_from_source/compile_glimpse2#table-of-contents"
+  },"12": {
+    "doc": "Compile GLIMPSE2",
+    "title": "Compile GLIMPSE2",
+    "content": "Download the last version of the GLIMPSE2 code using: . git clone https://github.com/odelaneau/glimpse.git . Navigate to the downloaded folder using cd glimpse. You’ll find there a folder containing all the software packages are other utility folders: . | chunk: program to define chunks where to run phasing and imputation. | common: basic source files used by different tools. | concordance: program to verify the accuracy of low-coverage imputation against high-coverage genomes | docker: all scripts needed to build a docker file comprising all binaries | docs: documentation in html | ligate: ligate multiple imputed BCF/VCF files into a single chromosome-length file | maps: genetics maps in b37 and b38 | phase: program to impute and phase low-coverage data. | split_reference: prorgram to create GLIMPSE2’s reference file format, used by GLIMPSE2_phase | tutorial: test datasets and scripts | versions: versioning | . Each program in the suite contains the same folder structure: . | bin: folder for the compiled binary. | obj: folder with all binary objects. | src: folder with source code. | makefile: Makefile to compile the program. | . In order to compile a specific tool, for example GLIMPSE2_phase, go in directory of the software (cd phase) and edit the specific makefile at lines so that the following variables are correctly set up (look at the paths already there for an example): . | HTSSRC: path to the root of the HTSlib library, the prefix for HTSLIB_INC and HTSLIB_LIB paths. | HTSLIB_INC: path to the HTSlib header files. | HTSLIB_LIB: path to the static HTSlib library (file libhts.a). | BOOST_INC: path to the BOOST header files (usually /usr/include). | BOOST_LIB_IO: path to the static BOOST iostreams library (file libboost_iostreams.a). | BOOST_LIB_PO: path to the static BOOST program_options library (file libboost_program_options.a). | BOOST_LIB_SE: path to the static BOOST serialization library (file libboost_serialization.a). | . If installed at the system level, static libraries (*.a files) can be located with this command: . locate libboost_program_options.a libboost_iostreams.a libhts.a . Once all paths correctly set up, proceed with the compilation using make. The binary can be found in the bin/ folder of each tool and will have a name similar to GLIMPSE2_phase. You will need to copy the modified makefile in each tool (folder) of GLIMPSE2. ",
+    "url": "/GLIMPSE/docs/installation/build_from_source/compile_glimpse2",
+    "relUrl": "/docs/installation/build_from_source/compile_glimpse2"
+  },"13": {
+    "doc": "concordance",
+    "title": "switch",
+    "content": "Website under construction. A complete release of GLIMPSE2 will be available by the 5th of December 2022. ",
+    "url": "/GLIMPSE/docs/documentation/concordance/#switch",
+    "relUrl": "/docs/documentation/concordance/#switch"
+  },"14": {
+    "doc": "concordance",
+    "title": "Table of contents",
+    "content": ". | Description | Usage | Command line options . | Basic options | Input files | Parameters 1 | Parameters 2 | Output files | . | . Description . Program to compute the genotyping error rate at the sample or marker level. Usage . Simple run . Command line options . Basic options . | Option name | Argument| Default | Description |:———————|:——–|:———|:————————————-| . Input files . | Option name | Argument| Default | Description |:———————|:——–|:———|:————————————-| . Parameters 1 . | Option name | Argument| Default | Description |:——————–|:——–|:———-|:————————————-| . Parameters 2 . | Option name | Argument| Default | Description |:——————–|:——–|:———-|:————————————-| . Output files . | Option name | Argument| Default | Description |:———————|:——–|:———|:————————————-| . ",
+    "url": "/GLIMPSE/docs/documentation/concordance/#table-of-contents",
+    "relUrl": "/docs/documentation/concordance/#table-of-contents"
+  },"15": {
+    "doc": "concordance",
+    "title": "concordance",
+    "content": " ",
+    "url": "/GLIMPSE/docs/documentation/concordance/",
+    "relUrl": "/docs/documentation/concordance/"
+  },"16": {
+    "doc": "Docker",
+    "title": "Docker image",
+    "content": "GLIMPSE2 provides a Dockerfile and scripts to create a minimal docker image. To download a ready-made docker image please download it from here: . https://github.com/odelaneau?tab=packages&amp;repo_name=glimpse. ",
+    "url": "/GLIMPSE/docs/installation/docker#docker-image",
+    "relUrl": "/docs/installation/docker#docker-image"
+  },"17": {
+    "doc": "Docker",
+    "title": "Docker",
+    "content": "Docker image not yet available. The docker image will be available with the first relase at the following link . ",
+    "url": "/GLIMPSE/docs/installation/docker",
+    "relUrl": "/docs/installation/docker"
+  },"18": {
+    "doc": "Documentation",
+    "title": "Documentation",
+    "content": "Website under construction. A complete release of GLIMPSE2 will be available by the 5th of December 2022. Command-line documentation and usage of SHAPEIT5 . Click on a tool below to see its documentation. ",
+    "url": "/GLIMPSE/docs/documentation",
+    "relUrl": "/docs/documentation"
+  },"19": {
+    "doc": "Glossary",
+    "title": "Glossary of Terms",
+    "content": "Below are some important concepts, software, standards, and other things you might encounter in these Docs and working with SHAPEIT5. | GLIMPSE | Genotype imputation | Haplotype phasing | Haplotype scaffold | IMPUTE | Low-coverage whole genome sequencing | Reference panel | SHAPEIT | SNP array | Singleton | Switch error rate | UK Biobank Research Analysis Platform | Whole exome sequencing (WES) | Whole genome sequencing (WGS) | . ",
+    "url": "/GLIMPSE/docs/glossary/#glossary-of-terms",
+    "relUrl": "/docs/glossary/#glossary-of-terms"
+  },"20": {
+    "doc": "Glossary",
+    "title": "GLIMPSE",
+    "content": "GLIMPSE (Genotype Likelihoods IMputation and PhaSing mEthod) is a method for haplotype phasing and genotype imputation of low-coverage WGS data, developed by Simone Rubinacci and Olivier Delaneau. The latest version of the tool is GLIMPSE2, which offers the best accuracy and computational performance for large reference panels at rare variants. Resources: . | GLIMPSE2 [Website] [Paper] | GLIMPSE1 [Website] [Paper] | . ",
+    "url": "/GLIMPSE/docs/glossary/#glimpse",
+    "relUrl": "/docs/glossary/#glimpse"
+  },"21": {
+    "doc": "Glossary",
+    "title": "Genotype imputation",
+    "content": "Genotype imputation is a probabilistic inference of the genotypes, typically used for SNP array data or low-coverage WGS. Imputation uses a large reference panel of phased haplotypes to determine large shared identity-by-descent segments that can be used for the statistical inference. Two widely used tools for genotype imputation are IMPUTE5 for SNP array data and GLIMPSE tool for low-coverage imputation. Resources: . | GLIMPSE for low-coverage imputation [Website] [Paper] | IMPUTE5 for SNP array data [Website] [Paper] | . ",
+    "url": "/GLIMPSE/docs/glossary/#genotype-imputation",
+    "relUrl": "/docs/glossary/#genotype-imputation"
+  },"22": {
+    "doc": "Glossary",
+    "title": "Haplotype phasing",
+    "content": "Haplotype phasing involves distinguishing the two parentally inherited copies of each chromosome into haplotypes. SHAPEIT5 is a tool for statistical population-based haplotype phasing which focuses specifically at extremely rare variants. Resources: . | SHAPEIT5 [Website] [Paper] | . ",
+    "url": "/GLIMPSE/docs/glossary/#haplotype-phasing",
+    "relUrl": "/docs/glossary/#haplotype-phasing"
+  },"23": {
+    "doc": "Glossary",
+    "title": "Haplotype scaffold",
+    "content": "A haplotype scaffold is a set of highly confident haplotypes, typically on a subset of the data. SHAPEIT5 uses the haplotypes derived at common variants as haplotype scaffolds onto which heterozygous genotypes are phased one rare variant at a time. ",
+    "url": "/GLIMPSE/docs/glossary/#haplotype-scaffold",
+    "relUrl": "/docs/glossary/#haplotype-scaffold"
+  },"24": {
+    "doc": "Glossary",
+    "title": "IMPUTE",
+    "content": "IMPUTE is a method for genotype imputation of SNP array data, developed by Jonathan Marchini, Bryan Howie and Simone Rubinacci. The latest version of the tool is IMPUTE5, which offers efficient computational performances for large reference panels. Resources: . | IMPUTE5 [Website] [Paper] | IMPUTE4 [Website] [Paper] | IMPUTE2 [Paper 1] [Paper 2] | IMPUTE1 [Paper] | . ",
+    "url": "/GLIMPSE/docs/glossary/#impute",
+    "relUrl": "/docs/glossary/#impute"
+  },"25": {
+    "doc": "Glossary",
+    "title": "Low-coverage whole genome sequencing",
+    "content": "Low-coverage whole genome sequencing is whole genome sequencing data sequenced at low-depth usually data with a coverage between 0.1x-8x. Conversely to high-coverage WGS, genotype calling in this case is uncertain and very often this data needs to be imputed with specialised methods (e.g. GLIMPSE) in order to be used and processed. Resources: . | GLIMPSE for low-coverage WGS imputation [Website] [Paper] | . ",
+    "url": "/GLIMPSE/docs/glossary/#low-coverage-whole-genome-sequencing",
+    "relUrl": "/docs/glossary/#low-coverage-whole-genome-sequencing"
+  },"26": {
+    "doc": "Glossary",
+    "title": "Reference panel",
+    "content": "A reference panel is a large set of deeply-sequenced haplotypes used for genotype imputation and haplotype phasing typically for cohorts genotyped using SNP array or low-coverage WGS. ",
+    "url": "/GLIMPSE/docs/glossary/#reference-panel",
+    "relUrl": "/docs/glossary/#reference-panel"
+  },"27": {
+    "doc": "Glossary",
+    "title": "SHAPEIT",
+    "content": "SHAPEIT (Segmented HAPlotype Estimation and Imputation Tools) is a commonly used method for haplotype phasing, mainly developed by Olivier Delaneau. The latest version of the tool is SHAPEIT5, which offers the best accuracy for large cohorts at rare variants. Resources: . | SHAPEIT5 [Paper] | SHAPEIT4 [Paper] | SHAPEIT3 [Paper] | SHAPEIT2 [Paper] | SHAPEIT [Paper] | . ",
+    "url": "/GLIMPSE/docs/glossary/#shapeit",
+    "relUrl": "/docs/glossary/#shapeit"
+  },"28": {
+    "doc": "Glossary",
+    "title": "SNP array",
+    "content": "SNP array is a DNA microarray which is used to detect common SNPs within a population. In the context of GWAS, SNP array data is often imputed using a reference panel of haplotypes (e.g. using IMPUTE5 . Resources: . | IMPUTE5 for SNP array data [Website] [Paper] | . ",
+    "url": "/GLIMPSE/docs/glossary/#snp-array",
+    "relUrl": "/docs/glossary/#snp-array"
+  },"29": {
+    "doc": "Glossary",
+    "title": "Singleton",
+    "content": "A singleton is a rare variant for which genetic variation is carried by a unique chromosome in the dataset (minor allele count of 1). As these variants are unique in the datasets, there is no information to phase the variant, therefore statistical population-based phasing has always reported a switch error rate of 50% at these sites. The typical way to phase these variants is to use family information. However, SHAPEIT5 is able to provide for the first time non-random phasing at these sites without the need of family information, by using a simple coalescent-inspired model. Resources . | SHAPEIT5 [Website] [Paper] | . ",
+    "url": "/GLIMPSE/docs/glossary/#singleton",
+    "relUrl": "/docs/glossary/#singleton"
+  },"30": {
+    "doc": "Glossary",
+    "title": "Switch error rate",
+    "content": "Switch error rate (SER) is a popular metric to measure the quality of phased data. SER is used when known maternal and paternal haplotypes are available and is defined as the number of switch errors divided by the number of opportunities for switch errors. ",
+    "url": "/GLIMPSE/docs/glossary/#switch-error-rate",
+    "relUrl": "/docs/glossary/#switch-error-rate"
+  },"31": {
+    "doc": "Glossary",
+    "title": "UK Biobank Research Analysis Platform",
+    "content": "The UK Biobank Research Analysis Platform (RAP), enabled by DNAnexus and Amazon Web Services (AWS), is a cloud-based platform that enables researchers to work with the UK Biobank WGS and WES data. Resources: . | UK Biobank website | . ",
+    "url": "/GLIMPSE/docs/glossary/#uk-biobank-research-analysis-platform",
+    "relUrl": "/docs/glossary/#uk-biobank-research-analysis-platform"
+  },"32": {
+    "doc": "Glossary",
+    "title": "Whole exome sequencing (WES)",
+    "content": "Whole exome sequencing (WES) is a technique for sequencing all of the protein-coding regions of genes in a genome. In the UK Biobank dataset, we combined WES with SNP array data and performed phasing with SHAPEIT5. ",
+    "url": "/GLIMPSE/docs/glossary/#whole-exome-sequencing-wes",
+    "relUrl": "/docs/glossary/#whole-exome-sequencing-wes"
+  },"33": {
+    "doc": "Glossary",
+    "title": "Whole genome sequencing (WGS)",
+    "content": "Whole-genome sequencing (WGS) is the process of determining the DNA sequence of an organism at a single time. WGS is intended at high coverage, from 30x of coverage or more, therefore the quality of genotype calling is high. SHAPEIT5 is designed for large WGS cohorts (e.g. in the UK Biobank), to distinguish the two inherited copies of each chromosome into haplotypes (see haplotype phasing). ",
+    "url": "/GLIMPSE/docs/glossary/#whole-genome-sequencing-wgs",
+    "relUrl": "/docs/glossary/#whole-genome-sequencing-wgs"
+  },"34": {
+    "doc": "Glossary",
+    "title": "Glossary",
+    "content": " ",
+    "url": "/GLIMPSE/docs/glossary/",
+    "relUrl": "/docs/glossary/"
+  },"35": {
+    "doc": "Home",
+    "title": "GLIMPSE2",
+    "content": "A tool for low-coverage whole-genome sequencing imputation . Website under construction. A complete release of GLIMPSE2 will be available by the 5th of December 2022. ",
+    "url": "/GLIMPSE/#glimpse2",
+    "relUrl": "/#glimpse2"
+  },"36": {
+    "doc": "Home",
+    "title": "About",
+    "content": "GLIMPSE2 is a set of tools for low-coverage whole genome sequencing imputation. GLIMPSE2 is based on the GLIMPSE model and designed for reference panels containing hundreads of thousands of reference samples, with a special focus on rare variants. ",
+    "url": "/GLIMPSE/#about",
+    "relUrl": "/#about"
+  },"37": {
+    "doc": "Home",
+    "title": "Citation",
+    "content": "If you use GLIMPSE in your research work, please cite the following papers: . Rubinacci et al., Imputation of low-coverage sequencing data from 150,119 UK Biobank genomes. BiorXiv (2022) . Rubinacci et al., Efficient phasing and imputation of low-coverage sequencing data using large reference panels. Nature Genetics 53.1 (2021): 120-126. Get started now View source code on GitHub . ",
+    "url": "/GLIMPSE/#citation",
+    "relUrl": "/#citation"
+  },"38": {
+    "doc": "Home",
+    "title": "GLIMPSE1",
+    "content": "At the moment, GLIMPSE2 performs imputation only from a reference panel of samples. To use the joint-model, particularly useful for many samples at higher coverages (&gt;0.5x) and small reference panels, please visit the GLIMPSE1 website. ",
+    "url": "/GLIMPSE/#glimpse1",
+    "relUrl": "/#glimpse1"
+  },"39": {
+    "doc": "Home",
+    "title": "News",
+    "content": "Version 2.0.0 will be soon available! See the CHANGELOG for details. ",
+    "url": "/GLIMPSE/#news",
+    "relUrl": "/#news"
+  },"40": {
+    "doc": "Home",
+    "title": "Description",
+    "content": "GLIMPSE2 is composed of the following tools: . | chunk. Tool to phase common sites, typically SNP array data, or the first step of WES/WGS data. | split_reference. Tool to phase common sites, typically SNP array data, or the first step of WES/WGS data. | phase. Ligate multiple phased BCF/VCF files into a single whole chromosome file. Typically run to ligate multiple chunks of phased common variants. | ligate. Tool to phase rare variants onto a scaffold of common variants (output of phase_common / ligate). | concordance. Program to compute switch error rate and genotyping error rate given simulated or trio data. | . chunk split_reference phase ligate concordance . ",
+    "url": "/GLIMPSE/#description",
+    "relUrl": "/#description"
+  },"41": {
+    "doc": "Home",
+    "title": "Getting started",
+    "content": ". | See documentation | . ",
+    "url": "/GLIMPSE/#getting-started",
+    "relUrl": "/#getting-started"
+  },"42": {
+    "doc": "Home",
+    "title": "About the project",
+    "content": "GLIMPSE is developed by Simone Rubinacci &amp; Olivier Delaneau. License . GLIMPSE is distributed with MIT license. Organisations . Contributing . GLIMPSE is an open source project and we very much welcome new contributors. To make the contribution quickly accepted, please first discuss the change you wish to make via issue, email, or any other method with the owners of this repository before making a change. Thank you to the contributors of GLIMPSE2! . We thank the Just the Docs developers, who made this awesome theme for Jekyll. ",
+    "url": "/GLIMPSE/#about-the-project",
+    "relUrl": "/#about-the-project"
+  },"43": {
+    "doc": "Home",
+    "title": "Home",
+    "content": ". ",
+    "url": "/GLIMPSE/",
+    "relUrl": "/"
+  },"44": {
+    "doc": "Installation",
+    "title": "Installation",
+    "content": "Installation instructions of GLIMPSE2 . ",
+    "url": "/GLIMPSE/docs/installation",
+    "relUrl": "/docs/installation"
+  },"45": {
+    "doc": "ligate",
+    "title": "ligate",
+    "content": "Website under construction. A complete release of GLIMPSE2 will be available by the 5th of December 2022. ",
+    "url": "/GLIMPSE/docs/documentation/ligate/",
+    "relUrl": "/docs/documentation/ligate/"
+  },"46": {
+    "doc": "ligate",
+    "title": "Table of contents",
+    "content": ". | Description | Usage | Command line options . | Basic options | Input files | Parameters 1 | Parameters 2 | Output files | . | . Description . Ligatation of multiple phased BCF/VCF files into a single whole chromosome file. GLIMPSE2 is run in chunks that are ligated into chromosome-wide files maintaining the phasing. Usage . Simple run . Command line options . Basic options . | Option name | Argument| Default | Description |:———————|:——–|:———|:————————————-| . Input files . | Option name | Argument| Default | Description |:———————|:——–|:———|:————————————-| . Parameters 1 . | Option name | Argument| Default | Description |:——————–|:——–|:———-|:————————————-| . Parameters 2 . | Option name | Argument| Default | Description |:——————–|:——–|:———-|:————————————-| . Output files . | Option name | Argument| Default | Description |:———————|:——–|:———|:————————————-| . ",
+    "url": "/GLIMPSE/docs/documentation/ligate/#table-of-contents",
+    "relUrl": "/docs/documentation/ligate/#table-of-contents"
+  },"47": {
+    "doc": "phase",
+    "title": "phase_common",
+    "content": "Website under construction. A complete release of GLIMPSE2 will be available by the 5th of December 2022. ",
+    "url": "/GLIMPSE/docs/documentation/phase/#phase_common",
+    "relUrl": "/docs/documentation/phase/#phase_common"
+  },"48": {
+    "doc": "phase",
+    "title": "Table of contents",
+    "content": ". | Description | Usage | Command line options . | Basic options | Input files | Parameters 1 | Parameters 2 | Output files | . | . Description . Tool for imputation and phasing. Usage . Simple run . Command line options . Basic options . | Option name | Argument| Default | Description |:———————|:——–|:———|:————————————-| . Input files . | Option name | Argument| Default | Description |:———————|:——–|:———|:————————————-| . Parameters 1 . | Option name | Argument| Default | Description |:——————–|:——–|:———-|:————————————-| . Parameters 2 . | Option name | Argument| Default | Description |:——————–|:——–|:———-|:————————————-| . Output files . | Option name | Argument| Default | Description |:———————|:——–|:———|:————————————-| . ",
+    "url": "/GLIMPSE/docs/documentation/phase/#table-of-contents",
+    "relUrl": "/docs/documentation/phase/#table-of-contents"
+  },"49": {
+    "doc": "phase",
+    "title": "phase",
+    "content": " ",
+    "url": "/GLIMPSE/docs/documentation/phase/",
+    "relUrl": "/docs/documentation/phase/"
+  },"50": {
+    "doc": "Expert quick start",
+    "title": "Quick Start  [for experts]",
+    "content": "Website under construction. A complete release of GLIMPSE2 will be available by the 5th of December 2022. ",
+    "url": "/GLIMPSE/docs/quickstart/#quick-start--for-experts",
+    "relUrl": "/docs/quickstart/#quick-start--for-experts"
+  },"51": {
+    "doc": "Expert quick start",
+    "title": "Expert quick start",
+    "content": " ",
+    "url": "/GLIMPSE/docs/quickstart/",
+    "relUrl": "/docs/quickstart/"
+  },"52": {
+    "doc": "Required libraries",
+    "title": "Required libraries",
+    "content": " ",
+    "url": "/GLIMPSE/docs/installation/build_from_source/required_libraries",
+    "relUrl": "/docs/installation/build_from_source/required_libraries"
+  },"53": {
+    "doc": "Required libraries",
+    "title": "Table of contents",
+    "content": ". | Required libraries . | HTSlib | Boost | Additional libraries | . | . ",
+    "url": "/GLIMPSE/docs/installation/build_from_source/required_libraries#table-of-contents",
+    "relUrl": "/docs/installation/build_from_source/required_libraries#table-of-contents"
+  },"54": {
+    "doc": "Required libraries",
+    "title": "Required libraries",
+    "content": "GLIMPSE2 requires several libraries installed on the system. Here we assume most of the libraries are available, and we focus on two main libraries: . | HTSlib version &gt;= 1.7: A C library for reading/writing high-throughput sequencing data. | BOOST version &gt;= 1.65: A set of peer-reviewed portable C++ source libraries. GLIMPSE2 uses two specific BOOST libraries: iostreams and program_options. | . HTSlib . Building HTSlib is straightforward and does not require root privileges. Please refer to the HTSlib documentation for complete details. Here we provide a basic script to install HTSlib v1.16: . wget https://github.com/samtools/htslib/releases/download/1.16/htslib-1.16.tar.bz2 tar -xf htslib-1.16.tar.bz2 mv htslib-1.16 htslib cd htslib autoheader; autoconf; ./configure; #optional make . After this, you’ll find the libhts.a inside your current directory and the include files inside subdirectory: ./include/ . Boost . As GLIMPSE2 only requires few of the boost libraries, we’ll build the smallest possible boost build, without requiring root privileges. Please refer to the Boost installation instructions for complete details. Here we provide a basic script to the minimal build of Boost v1.73.0 required to run GLIMPSE2: . wget https://boostorg.jfrog.io/artifactory/main/release/1.73.0/source/boost_1_73_0.tar.bz2 tar --bzip2 -xf boost_1_73_0.tar.bz2 cd boost_1_73_0 ./bootstrap.sh --with-libraries=iostreams,program_options --prefix=../boost #where ../boost is your custom boost installation prefix ./b2 install cd ../boost #change this to the folder you used as --prefix for the bootstrap script . After this, you will also find a copy of the Boost headers in the include/ subdirectory of the installation prefix (our current directory). The Boost static libraries (libboost_iostreams.a and libboost_program_options.a) are found in the subfolder ./lib/ of your installation prefix. Additional libraries . Make sure that the following standard library flags can be used by g++ on your system: . | -lz,-lbz2 and -llzma for reading/writing compressed files. | -lm for basic math operations. | -lpthread for multi-threading | . You can do so by checking the outcome of the following commands: . locate -b '\\libz.so' locate -b '\\libbz2.so' locate -b '\\liblzma.so' locate -b '\\libm.so' locate -b '\\libpthread.so' locate -b '\\libcurl.so' . ",
+    "url": "/GLIMPSE/docs/installation/build_from_source/required_libraries",
+    "relUrl": "/docs/installation/build_from_source/required_libraries"
+  },"55": {
+    "doc": "split_reference",
+    "title": "phase_rare",
+    "content": "Website under construction. A complete release of GLIMPSE2 will be available by the 5th of December 2022. ",
+    "url": "/GLIMPSE/docs/documentation/split_reference/#phase_rare",
+    "relUrl": "/docs/documentation/split_reference/#phase_rare"
+  },"56": {
+    "doc": "split_reference",
+    "title": "Table of contents",
+    "content": ". | Description | Usage | Command line options | Command line options . | Basic options | Input files | Parameters 1 | Parameters 2 | Output files | . | . Description . Tool to create a binary reference panel for quick reading time. Usage . Simple run . Command line options . Command line options . Basic options . | Option name | Argument| Default | Description |:———————|:——–|:———|:————————————-| . Input files . | Option name | Argument| Default | Description |:———————|:——–|:———|:————————————-| . Parameters 1 . | Option name | Argument| Default | Description |:——————–|:——–|:———-|:————————————-| . Parameters 2 . | Option name | Argument| Default | Description |:——————–|:——–|:———-|:————————————-| . Output files . | Option name | Argument| Default | Description |:———————|:——–|:———|:————————————-| . ",
+    "url": "/GLIMPSE/docs/documentation/split_reference/#table-of-contents",
+    "relUrl": "/docs/documentation/split_reference/#table-of-contents"
+  },"57": {
+    "doc": "split_reference",
+    "title": "split_reference",
+    "content": " ",
+    "url": "/GLIMPSE/docs/documentation/split_reference/",
+    "relUrl": "/docs/documentation/split_reference/"
+  },"58": {
+    "doc": "Static binaries",
+    "title": "Static binaries",
+    "content": "A complete installation from source is often non necessary as we provide static binaries at the release link: . https://github.com/odelaneau/glimpse/releases . The executable files only support a 64-bit operating system on the x86_64 CPU platform and require AVX2 support. The files are released under the MIT license. If your system does not support the provided binaries, please look at the docker package provided with GLIMPSE2 . ",
+    "url": "/GLIMPSE/docs/installation/static_binaries",
+    "relUrl": "/docs/installation/static_binaries"
+  },"59": {
+    "doc": "System requirements",
+    "title": "System requirements",
+    "content": " ",
+    "url": "/GLIMPSE/docs/installation/build_from_source/system_requirements",
+    "relUrl": "/docs/installation/build_from_source/system_requirements"
+  },"60": {
+    "doc": "System requirements",
+    "title": "Table of contents",
+    "content": ". | System requirements | . ",
+    "url": "/GLIMPSE/docs/installation/build_from_source/system_requirements#table-of-contents",
+    "relUrl": "/docs/installation/build_from_source/system_requirements#table-of-contents"
+  },"61": {
+    "doc": "System requirements",
+    "title": "System requirements",
+    "content": "GLIMPSE2 is a set of C++ tools covering the process of haplotype phasing in large datasets. In order to compile, we require a modern Linux operating system and a version of GCC &gt; 4.4. We recommend to use the latest available version for your system. For example running the following instruction on Ubuntu 20.04 focal: . sudo apt install build-essential . will install the GNU g++ compiler version 9.2. To check the version of your g++ compiler, simply run: . g++ --version . ",
+    "url": "/GLIMPSE/docs/installation/build_from_source/system_requirements",
+    "relUrl": "/docs/installation/build_from_source/system_requirements"
+  },"62": {
+    "doc": "Tutorials",
+    "title": "Tutorials",
+    "content": "Website under construction. A complete release of GLIMPSE2 will be available by the 5th of December 2022. We provide tutorials to help you to get used with GLIMPSE2 . ",
+    "url": "/GLIMPSE/docs/tutorials",
+    "relUrl": "/docs/tutorials"
+  },"63": {
+    "doc": "Phasing",
+    "title": "Phasing of the UK Biobank sequencing data",
+    "content": "Website under construction. A complete release of GLIMPSE2 will be available by the 5th of December 2022. If you wish to phase the UK Biobank sequencing data and use it as a reference panel, you can use SHAPEIT5 and follow this tutorial. ",
+    "url": "/GLIMPSE/docs/tutorials/ukb_phasing/#phasing-of-the-uk-biobank-sequencing-data",
+    "relUrl": "/docs/tutorials/ukb_phasing/#phasing-of-the-uk-biobank-sequencing-data"
+  },"64": {
+    "doc": "Phasing",
+    "title": "Phasing",
+    "content": " ",
+    "url": "/GLIMPSE/docs/tutorials/ukb_phasing/",
+    "relUrl": "/docs/tutorials/ukb_phasing/"
+  },"65": {
+    "doc": "UK Biobank WGS data",
+    "title": "UK Biobank WGS data",
+    "content": "Website under construction. A complete release of GLIMPSE2 will be available by the 5th of December 2022. ",
+    "url": "/GLIMPSE/docs/tutorials/ukb_wgs/",
+    "relUrl": "/docs/tutorials/ukb_wgs/"
+  },"66": {
+    "doc": "UK Biobank WGS data",
+    "title": "Table of contents",
+    "content": ". ",
+    "url": "/GLIMPSE/docs/tutorials/ukb_wgs/#table-of-contents",
+    "relUrl": "/docs/tutorials/ukb_wgs/#table-of-contents"
+  }
+}

@@ -1,0 +1,95 @@
+I"É<p><img src="assets/images/branding/glimpse_logo_400x171.png" align="right" alt="GLIMPSE2_logo" style="height:150px" /></p>
+
+<h1 class="fs-9 fw-500" id="glimpse2">GLIMPSE2</h1>
+
+<p class="fs-5">A tool for low-coverage whole-genome sequencing imputation</p>
+
+<p><br />
+<br /></p>
+
+<p class="highlight">Website under construction. A complete release of GLIMPSE2 will be available by the 5th of December 2022.</p>
+
+<h2 id="about">About</h2>
+
+<p><a href="https://www.biorxiv.org/content/10.1101/2022.11.28.518213v1">GLIMPSE2</a> is a set of tools for low-coverage whole genome sequencing imputation. GLIMPSE2 is based on the <a href="https://www.nature.com/articles/s41588-020-00756-0">GLIMPSE model</a> and designed for reference panels containing hundreads of thousands of reference samples, with a special focus on rare variants.</p>
+
+<h2 id="citation">Citation</h2>
+
+<p>If you use GLIMPSE in your research work, please cite the following papers:</p>
+
+<p><a href="https://www.biorxiv.org/content/10.1101/2022.11.28.518213v1">Rubinacci et al., Imputation of low-coverage sequencing data from 150,119 UK Biobank genomes. BiorXiv (2022)</a></p>
+
+<p><a href="https://www.nature.com/articles/s41588-020-00756-0">Rubinacci et al., Efficient phasing and imputation of low-coverage sequencing data using large reference panels. Nature Genetics 53.1 (2021): 120-126.</a></p>
+
+<p><a href="#getting-started" class="btn btn-primary fs-5 mb-4 mb-md-0 mr-2 mx-auto">Get started now</a>
+<a href="https://github.com/odelaneau/GLIMPSE" class="btn fs-5 mb-4 mb-md-0">View source code on GitHub</a></p>
+
+<h2 id="glimpse1">GLIMPSE1</h2>
+
+<p>At the moment, GLIMPSE2 performs imputation only from a reference panel of samples. 
+To use the joint-model, particularly useful for many samples at higher coverages (&gt;0.5x) and small reference panels, please visit the <a href="/GLIMPSE/glimpse1/index.html">GLIMPSE1 website</a>.</p>
+
+<h2 id="news">News</h2>
+
+<blockquote class="new">
+  <p><strong>Version <code class="language-plaintext highlighter-rouge">2.0.0</code> will be soon available!</strong>
+See <a href="https://github.com/odelaneau/GLIMPSE/blob/main/docs/CHANGELOG.md">the CHANGELOG</a> for details.</p>
+</blockquote>
+
+<h2 id="description">Description</h2>
+
+<p>GLIMPSE2 is composed of the following tools:</p>
+
+<ul>
+  <li><strong>chunk</strong>. Tool to phase common sites, typically SNP array data, or the first step of WES/WGS data.</li>
+  <li><strong>split_reference</strong>. Tool to phase common sites, typically SNP array data, or the first step of WES/WGS data.</li>
+  <li><strong>phase</strong>. Ligate multiple phased BCF/VCF files into a single whole chromosome file. Typically run to ligate multiple chunks of phased common variants.</li>
+  <li><strong>ligate</strong>. Tool to phase rare variants onto a scaffold of common variants (output of phase_common / ligate).</li>
+  <li><strong>concordance</strong>. Program to compute switch error rate and genotyping error rate given simulated or trio data.</li>
+</ul>
+
+<p><a href="/GLIMPSE/GLIMPSE/docs/documentation/chunk/" class="btn btn-blue">chunk</a>
+<a href="/GLIMPSE/GLIMPSE/docs/documentation/split_reference/" class="btn btn-blue">split_reference</a>
+<a href="/GLIMPSE/GLIMPSE/docs/documentation/phase/" class="btn btn-blue">phase</a>
+<a href="/GLIMPSE/GLIMPSE/docs/documentation/ligate/" class="btn btn-blue">ligate</a>
+<a href="/GLIMPSE/GLIMPSE/docs/documentation/concordance/" class="btn btn-blue">concordance</a></p>
+
+<hr />
+
+<h2 id="getting-started">Getting started</h2>
+
+<ul>
+  <li><a href="/GLIMPSE/GLIMPSE/docs/documentation %}">See documentation</a></li>
+</ul>
+
+<hr />
+
+<h2 id="about-the-project">About the project</h2>
+
+<p>GLIMPSE is developed by Simone Rubinacci &amp; Olivier Delaneau.</p>
+
+<h3 id="license">License</h3>
+
+<p>GLIMPSE is distributed with <a href="https://github.com/odelaneau/GLIMPSE/blob/main/LICENSE">MIT license</a>.</p>
+
+<h3 id="organisations">Organisations</h3>
+
+<div class="d-flex justify-content-around">
+  <div class="p-5"><a href="https://www.unil.ch/index.html"><img src="assets/images/lausanne_logo.jpg" align="right" alt="unil" style="height:50px" /></a></div>
+  <div class="p-5"><a href="https://www.sib.swiss/"><img src="assets/images/sib_logo.jpg" align="right" alt="sib" style="height:50px" /></a></div>
+  <div class="p-5"><a href="https://www.snf.ch/en/Pages/default.aspx"><img src="assets/images/snf.gif" align="right" alt="snf" style="height:50px" /></a></div>
+</div>
+
+<h3 id="contributing">Contributing</h3>
+
+<p>GLIMPSE is an open source project and we very much welcome new contributors. To make the contribution quickly accepted, please first discuss the change you wish to make via issue,
+email, or any other method with the owners of this repository before making a change.</p>
+
+<h4 id="thank-you-to-the-contributors-of-glimpse2">Thank you to the contributors of GLIMPSE2!</h4>
+
+<ul class="list-style-none">
+
+</ul>
+
+<p>We thank the <a href="https://github.com/just-the-docs/just-the-docs">Just the Docs</a> developers, who made this awesome theme for Jekyll.</p>
+:ET

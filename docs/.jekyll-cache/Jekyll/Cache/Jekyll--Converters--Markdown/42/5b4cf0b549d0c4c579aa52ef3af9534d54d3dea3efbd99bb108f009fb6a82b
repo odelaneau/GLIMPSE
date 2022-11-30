@@ -1,0 +1,11 @@
+I"è<p>IMPUTE is a method for genotype imputation of SNP array data, developed by Jonathan Marchini, Bryan Howie and Simone Rubinacci. The latest version of the tool is IMPUTE5, which offers efficient computational performances for large reference panels.</p>
+
+<p>Resources:</p>
+
+<ul>
+  <li>IMPUTE5 <a href="https://jmarchini.org/software/" target="_blank" rel="noopener">[Website]</a> <a href="https://journals.plos.org/plosgenetics/article?id=10.1371/journal.pgen.1009049">[Paper]</a></li>
+  <li>IMPUTE4 <a href="https://jmarchini.org/software/" target="_blank" rel="noopener">[Website]</a> <a href="https://www.nature.com/articles/s41586-018-0579-z">[Paper]</a></li>
+  <li>IMPUTE2 <a href="https://journals.plos.org/plosgenetics/article?id=10.1371/journal.pgen.1000529" target="_blank" rel="noopener">[Paper 1]</a> <a href="https://www.nature.com/articles/ng.2354">[Paper 2]</a></li>
+  <li>IMPUTE1 <a href="https://www.nature.com/articles/ng2088" target="_blank" rel="noopener">[Paper]</a></li>
+</ul>
+:ET

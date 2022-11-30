@@ -1,6 +1,8 @@
 /*******************************************************************************
- * Copyright (C) 2020 Olivier Delaneau, University of Lausanne
- * Copyright (C) 2020 Simone Rubinacci, University of Lausanne
+ * Copyright (C) 2022-2023 Simone Rubinacci
+ * Copyright (C) 2022-2023 Olivier Delaneau
+ *
+ * MIT Licence
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +24,11 @@
  ******************************************************************************/
 
 #include <ligater/ligater_header.h>
+#include <htslib/khash.h>
 #include <sys/stat.h>
+#include <utils/otools.h>
+#include <utils/basic_stats.h>
+
 
 #define OFILE_VCFU	0
 #define OFILE_VCFC	1
@@ -31,83 +37,175 @@
 #define GET(n,i)	(((n)>>(i))&1U)
 #define TOG(n,i)	((n)^=(1UL<<(i)))
 
-std::map<int, string> fploidy_to_msg = {
-		{-2, "Mixed haploid/diploid samples in the region"},
-		{1,"Only haploid samples in the region"},
-		{2,"Only diploid samples in the region"}
-};
+#define SWAP(type_t, a, b) { type_t t = a; a = b; b = t; }
+KHASH_MAP_INIT_STR(vdict, bcf_idinfo_t)
+typedef khash_t(vdict) vdict_t;
 
+void ligater::remove_info(bcf_hdr_t *hdr, bcf1_t *line)
+{
+    // remove all INFO fields
+    if ( !(line->unpacked & BCF_UN_INFO) ) bcf_unpack(line, BCF_UN_INFO);
 
-void ligater::updateHS(int * values) {
-	for (int i = 0 ; i < n_diploid ; i++) {
-		for (int m = 0 ; m < nmain ; m ++) {
-			if (switching[i * nmain + m] && (GET(values[diploid_idx[i]], 2*m+0) != GET(values[diploid_idx[i]], 2*m+1))) {
-				TOG(values[diploid_idx[i]], 2*m+0);
-				TOG(values[diploid_idx[i]], 2*m+1);
-			}
-		}
+    for (int i=0; i<line->n_info; i++)
+    {
+        bcf_info_t *inf = &line->d.info[i];
+        const char *key = bcf_hdr_int2id(hdr,BCF_DT_ID,inf->key);
+        if ( key[0]=='A' && key[1]=='N' && !key[2] ) continue;
+        if ( key[0]=='A' && key[1]=='C' && !key[2] ) continue;
+
+        if ( inf->vptr_free )
+        {
+            free(inf->vptr - inf->vptr_off);
+            inf->vptr_free = 0;
+        }
+        line->d.shared_dirty |= BCF1_DIRTY_INF;
+        inf->vptr = NULL;
+        inf->vptr_off = inf->vptr_len = 0;
+    }
+}
+
+void ligater::remove_format(bcf_hdr_t *hdr, bcf1_t *line)
+{
+    // remove all FORMAT fields except GT
+    if ( !(line->unpacked & BCF_UN_FMT) ) bcf_unpack(line, BCF_UN_FMT);
+
+    for (int i=0; i<line->n_fmt; i++)
+    {
+        bcf_fmt_t *fmt = &line->d.fmt[i];
+        const char *key = bcf_hdr_int2id(hdr,BCF_DT_ID,fmt->id);
+        if ( key[0]=='G' && key[1]=='T' && !key[2] ) continue;
+
+        if ( fmt->p_free )
+        {
+            free(fmt->p - fmt->p_off);
+            fmt->p_free = 0;
+        }
+        line->d.indiv_dirty = 1;
+        fmt->p = NULL;
+    }
+}
+
+void ligater::phase_update(bcf_hdr_t *hdr, bcf1_t *line, const bool uphalf)
+{
+    int i, nGTs = bcf_get_genotypes(hdr, line, &GTa, &mGTa);
+    if ( nGTs <= 0 ) return;    // GT field is not present
+    for (i=0; i<bcf_hdr_nsamples(hdr); i++)
+    {
+		if ( !swap_phase[uphalf][i] ) continue;
+		int *gt = &GTa[i*2];
+		if ( bcf_gt_is_missing(gt[0]) || gt[1]==bcf_int32_vector_end ) continue;
+        if (!bcf_gt_is_phased(gt[0]) || !bcf_gt_is_phased(gt[1])) continue;
+        const int gt0 = bcf_gt_phased(bcf_gt_allele(gt[1])==1);
+        const int gt1 = bcf_gt_phased(bcf_gt_allele(gt[0])==1);
+        gt[0] = gt0;
+        gt[1] = gt1;
+    }
+    bcf_update_genotypes(hdr,line,GTa,nGTs);
+}
+
+void ligater::update_distances()
+{
+	for (int i = 0 ; i < nsamples; i++)
+	{
+	    int *gta = &GTa[i*2];
+	    int *gtb = &GTb[i*2];
+	    if ( gta[1]==bcf_int32_vector_end || gtb[1]==bcf_int32_vector_end ) continue;
+	    if ( bcf_gt_is_missing(gta[0]) || bcf_gt_is_missing(gta[1]) || bcf_gt_is_missing(gtb[0]) || bcf_gt_is_missing(gtb[1]) ) continue;
+	    if ( !bcf_gt_is_phased(gta[1]) || !bcf_gt_is_phased(gtb[1]) ) continue;
+	    if ( bcf_gt_allele(gta[0])==bcf_gt_allele(gta[1]) || bcf_gt_allele(gtb[0])==bcf_gt_allele(gtb[1]) ) continue;
+	    if ( bcf_gt_allele(gta[0])==bcf_gt_allele(gtb[0]) && bcf_gt_allele(gta[1])==bcf_gt_allele(gtb[1]) )
+	    {
+	        if ( swap_phase[0][i] ) nmism[i]++; else nmatch[i]++;
+	    }
+	    if ( bcf_gt_allele(gta[0])==bcf_gt_allele(gtb[1]) && bcf_gt_allele(gta[1])==bcf_gt_allele(gtb[0]) )
+	    {
+	        if ( swap_phase[0][i] ) nmatch[i]++; else nmism[i]++;
+	    }
 	}
 }
 
-int ligater::update_switching() {
-	//as switching and distances are defined on diploids, this
-	//can be blind about the ploidy type
-
-	int n_changes = 0;
-	for (int d = 0 ; d < distances.size() ; d += 2) {
-		if (switching[d/2]) {
-			if (distances[d+0] < distances[d+1]) switching[d/2] = true;
-			else {
-				switching[d/2] = false;
-				n_changes ++;
-			}
-		} else {
-			if (distances[d+0] > distances[d+1]) {
-				switching[d/2] = true;
-				n_changes ++;
-			} else switching[d/2] = false;
-		}
-	}
-	fill(distances.begin(), distances.end(), 0);
-	return n_changes;
+void ligater::write_record(htsFile *fd, bcf_hdr_t * out_hdr, bcf_hdr_t * hdr_in, bcf1_t *line, const bool uphalf)
+{
+	bcf_translate(out_hdr, hdr_in, line);
+	if ( nswap[uphalf] ) phase_update(hdr_in, line, uphalf);
+	//remove_info(out_hdr,line);
+	//remove_format(out_hdr,line);
+	if (bcf_write(fd, out_hdr, line) ) vrb.error("Failed to write the record output to file");
 }
 
-void ligater::update_distances_and_write_record(htsFile * fd, bcf_hdr_t * hdr, bcf1_t * r_buffer, bcf1_t * r_body) {
-	int n_buffer_hs_fields = 0, n_body_hs_fields = 0;
-	int nhs0 = bcf_get_format_int32(hdr, r_body, "HS", &body_hs_fields, &n_body_hs_fields);
-	int nhs1 = bcf_get_format_int32(hdr, r_buffer, "HS", &buffer_hs_fields, &n_buffer_hs_fields);
-	assert(nhs0 == nsamples && n_body_hs_fields == nsamples);
-	assert(nhs1 == nsamples && n_buffer_hs_fields == nsamples);
+void ligater::scan_overlap(const int ifname, const char * seek_chr, int seek_pos)
+{
+	bcf_srs_t * sr =  bcf_sr_init();
+	sr->require_index = 1;
+	sr->collapse = COLLAPSE_NONE;
+	sr->max_unpack = BCF_UN_FMT;
 
-	for (int i = 0 ; i < n_diploid; i++) {
-		for (int m = 0 ; m < nmain ; m ++)
+	int n_threads = options["thread"].as < int > ();
+	if (n_threads > 1) bcf_sr_set_threads(sr, n_threads);
+
+	if (!bcf_sr_add_reader (sr, filenames[ifname-2].c_str())) vrb.error("Problem opening/creating index file for [" + filenames[ifname-2] + "]");
+	if (!bcf_sr_add_reader (sr, filenames[ifname-1].c_str())) vrb.error("Problem opening/creating index file for [" + filenames[ifname-1] + "]");
+
+	int nset = 0;
+	int n_sites_buff = 0;
+	int n_sites_tot = 0;
+	int last_pos=seek_pos;
+
+	bcf1_t * line0 = NULL, * line1 = NULL;
+	bcf_sr_seek(sr, seek_chr, seek_pos);
+	while ((nset = bcf_sr_next_line (sr)))
+	{
+		if (nset==1)
 		{
-			bool buf0 = GET(buffer_hs_fields[diploid_idx[i]], 2*m+0);
-			bool buf1 = GET(buffer_hs_fields[diploid_idx[i]], 2*m+1);
-			bool bod0 = GET(body_hs_fields[diploid_idx[i]], 2*m+0);
-			bool bod1 = GET(body_hs_fields[diploid_idx[i]], 2*m+1);
-
-			distances[(i * nmain + m) * 2 + 0] += ((buf0 != bod0) + (buf1 != bod1));
-			distances[(i * nmain + m) * 2 + 1] += ((buf0 != bod1) + (buf1 != bod0));
+			if ( !bcf_sr_has_line(sr,0) && bcf_sr_region_done(sr,0)) break;  // no input from the first reader
+			++n_sites_tot;
+			continue;
 		}
+		line0 =  bcf_sr_get_line(sr, 0);
+		if (line0->n_allele != 2) continue;
 
+		line1 =  bcf_sr_get_line(sr, 1);
+		//bcf_unpack(line0,BCF_UN_FMT);
+		//bcf_unpack(line1,BCF_UN_FMT);
+		int nGTsa = bcf_get_genotypes(sr->readers[0].header, line0, &GTa, &mGTa);
+		int nGTsb = bcf_get_genotypes(sr->readers[1].header, line1, &GTb, &mGTb);
+		if ( nGTsa != 2*nsamples || nGTsb != 2*nsamples )
+			vrb.error("Non-diploid samples found in overlap at position: " + std::to_string(line0->pos + 1));
+
+		update_distances();
+		last_pos = line0->pos;
+		++n_sites_buff;
+		++n_sites_tot;
+	}
+	bcf_sr_destroy(sr);
+
+	stats1D stats_all;
+	stats1D phaseq;
+
+	nswap[1]=0;
+	for (int i = 0 ; i < nsamples; i++)
+	{
+		swap_phase[1][i] = nmatch[i] < nmism[i];
+		nswap[1] += swap_phase[1][i];
+
+		stats_all.push(nmatch[i] + nmism[i]);
+
+		float f = 99;
+        if ( nmatch[i] && nmism[i] )
+        {
+            // Entropy-inspired quality. The factor 0.7 shifts and scales to (0,1)
+           float f0 = (float)nmatch[i]/(nmatch[i]+nmism[i]);
+           f = (99*(0.7 + f0*logf(f0) + (1-f0)*logf(1-f0))/0.7);
+        }
+        phaseq.push(f);
+
+		nmatch[i] = 0;
+		nmism[i]  = 0;
 	}
 
-	updateHS(body_hs_fields);
-	bcf_update_format_int32(hdr, r_body, "HS", body_hs_fields, nsamples);
-	bcf_update_info(hdr, r_body, "BUF", NULL, 0, BCF_HT_INT);  // the type does not matter with n=0 / This removes INFO/BUF field
-	if (bcf_write1(fd, hdr, r_body) ) vrb.error("Failed to write the record output to file");
-}
-
-void ligater::write_record(htsFile *fd, bcf_hdr_t * hdr, bcf1_t *r_body) {
-	int n_body_hs_fields = 0;
-	int nhs = bcf_get_format_int32(hdr, r_body, "HS", &body_hs_fields, &n_body_hs_fields);
-	assert(nhs == nsamples && n_body_hs_fields == nsamples);
-	updateHS(body_hs_fields);
-	bcf_update_format_int32(hdr, r_body, "HS", body_hs_fields, nsamples);
-	bcf_update_info(hdr, r_body, "BUF", NULL, 0, BCF_HT_INT);  // the type does not matter with n=0 / This removes INFO/BUF field
-	if (bcf_write1(fd, hdr, r_body) ) vrb.error("Failed to write the record output to file");
-
+	if (n_sites_buff <=0) vrb.error("Overlap is empty");
+	nsites_buff_d2.push_back(n_sites_buff/2);
+	vrb.print("Buf " + stb.str(nsites_buff_d2.size() -1) + " ["+std::string(seek_chr)+":"+stb.str(seek_pos+1)+"-"+stb.str(last_pos+1)+"] [L_isec=" + stb.str(n_sites_buff) + " / L_tot=" + stb.str(n_sites_tot) + "] [Avg #hets=" + stb.str(stats_all.mean()) + "] [Switch rate=" + stb.str(nswap[1]*1.0 / nsamples) + "] [Avg phaseQ=" + stb.str(phaseq.mean()) + "]");
 }
 
 void ligater::ligate() {
@@ -115,269 +213,232 @@ void ligater::ligate() {
 	vrb.title("Ligating chunks");
 
 	//Create all input file descriptors
-	vrb.bullet("Create all file descriptors");
-	bcf_srs_t * sr =  bcf_sr_init();
-	sr->collapse = COLLAPSE_NONE;
-	sr->require_index = 1;
-	int n_threads = options["thread"].as < int > ();
-	if (n_threads > 1) bcf_sr_set_threads(sr, n_threads);
-	for (int f = 0 ; f < nfiles ; f ++)
-	{
-		//Attempt to read the file with the index
-		if(!(bcf_sr_add_reader (sr, filenames[f].c_str())))
-		{
-			if (sr->errnum != idx_load_failed) vrb.error("Failed to open file: " + filenames[f] + "");
-			//Error reading the index! Attempt to create the index now
-			//vrb.warning("Index not found for [" + filenames[f] + "]. GLIMPSE will attempt to create an index for the file.");
-			//Remove the reader, as it's broken
-			bcf_sr_remove_reader (sr, f);
-			//create index using htslib (csi, using default bcftools option 14)
-			int ret = bcf_index_build3(filenames[f].c_str(), NULL, 14, options["thread"].as < int > ());
+	vrb.bullet("Creating file descriptor");
 
-			if (ret != 0)
-			{
-				if (ret == -2)
-					vrb.error("index: failed to open " + filenames[f]);
-				else if (ret == -3)
-					vrb.error("index: " + filenames[f] + " is in a format that cannot be usefully indexed");
-				else
-					vrb.error("index: failed to create index for + " + filenames[f]);
-			}
-			if(!(bcf_sr_add_reader (sr, filenames[f].c_str()))) vrb.error("Problem opening/creating index file for [" + filenames[f] + "]");
-			else vrb.bullet("Index file for [" + filenames[f] + "] has been successfully created.\n");
-		}
-	}
-
-	//Extract sample IDs
-	vrb.bullet("Extract sample IDs");
-	nsamples = bcf_hdr_nsamples(sr->readers[0].header);
-	for (int i = 0 ; i < nsamples ; i ++) sampleIDs.push_back(string(sr->readers[0].header->samples[i]));
-	//vrb.bullet("#samples = " + stb.str(nsamples));
-
-	bcf_hrec_t * header_record = bcf_hdr_get_hrec(sr->readers[0].header, BCF_HL_GEN, "FPLOIDY", NULL, NULL);
-	if (header_record == NULL) vrb.warning("Cannot retrieve FPLOIDY flag in VCF header [" + filenames[0] + "], used a version of GLIMPSE < 1.1.0? Assuming diploid genotypes only [FPLOIDY=2].");
-	else fploidy = atoi(header_record->value);
-	if (fploidy_to_msg.find(fploidy) == fploidy_to_msg.end()) vrb.error("FPLOIDY out of bounds : " + stb.str(fploidy));
-	vrb.bullet("FPLOIDY = "+ to_string(fploidy) + " [" + fploidy_to_msg[fploidy] + "]");
-
-
-	//Check sample overlap between all files
-	vrb.bullet("Checking samples and FPLOIDY consistency across all input files");
-	for (int f = 1 ; f < nfiles ; f ++) {
-		int cfploidy = 2;
-		header_record = bcf_hdr_get_hrec(sr->readers[0].header, BCF_HL_GEN, "FPLOIDY", NULL, NULL);
-		if (header_record == NULL) vrb.warning("Cannot retrieve FPLOIDY flag in VCF header [" + filenames[f] + "], used a version of GLIMPSE < 1.1.0? Assuming diploid genotypes only [FPLOIDY=2].");
-		else cfploidy = atoi(header_record->value);
-		if (fploidy != cfploidy) vrb.error("Plody format is different across files [" + filenames[0] + "] and [" + filenames[f] + "] fploidy=" + stb.str(fploidy) + " vs " + stb.str(cfploidy));
-
-		int cnsamples = bcf_hdr_nsamples(sr->readers[f].header);
-		if (cnsamples != nsamples) vrb.error("Numbers of samples are different between [" + filenames[0] + "] and [" + filenames[f] + "] n=" + stb.str(nsamples) + " vs " + stb.str(cnsamples));
-		for (int i = 0 ; i < nsamples ; i ++) {
-			string spl = string(sr->readers[f].header->samples[i]);
-			if (spl != sampleIDs[i]) vrb.error("Sample overlap problem between [" + filenames[0] + "] and [" + filenames[f] + "] idx=" + stb.str(i) + " id1=" + sampleIDs[i] + " / id2=" + spl);
-		}
-	}
-	vrb.bullet("Samples overlap and FPLOIDY are consistent across files.");
-
-	//Ploidy
-	ploidy = std::vector<int> (nsamples);
-	max_ploidy = std::abs(fploidy);
-	n_haploid = 0;
-	n_diploid = 0;
-	if (fploidy > 0)
-	{
-		fploidy == 2 ? n_diploid = nsamples: n_haploid = nsamples;
-		for (int i = 0 ; i < nsamples ; i ++) ploidy[i] = max_ploidy;
-
-	}
-	else
-	{
-		int n_gt_fields2 = 0;
-		int *gt_fields2 = NULL;
-		bcf1_t * line2;
-		bcf_srs_t * sr2 =  bcf_sr_init();
-		sr2->collapse = COLLAPSE_NONE;
-		sr2->require_index = 1;
-
-		for (int f = 0 ; f < nfiles ; f ++) bcf_sr_add_reader (sr2, filenames[f].c_str());
-
-		if (bcf_sr_next_line (sr2)  == 0) vrb.error("No marker found in region");
-		line2 =  bcf_sr_get_line(sr2, 0);
-		int ngt = bcf_get_genotypes(sr2->readers[0].header, line2, &gt_fields2, &n_gt_fields2);
-		const int line_max_ploidy = ngt/nsamples;
-		assert(line_max_ploidy==max_ploidy); //we do not allow missing data
-		for(int i = 0 ; i < nsamples; ++i)
-		{
-			ploidy[i] = 2 - (gt_fields2[max_ploidy*i+1] == bcf_int32_vector_end);
-			ploidy[i] > 1? ++n_diploid : ++n_haploid;
-		}
-		if (n_diploid == 0 && n_haploid == 0) vrb.error("No sample found.");
-		free(gt_fields2);
-		bcf_sr_destroy(sr2);
-	}
-	//let's keep track of the diploids indices (works with every ploidy vector):
-	diploid_idx = std::vector<int>(n_diploid);
-	for (int i=0, j=0; i<nsamples; ++i) if (ploidy[i] == 2) diploid_idx[j++] = i;
-
-	string pl1  = n_haploid!=1? "s" : "";
-	string pl2  = n_diploid!=1? "s" : "";
-	vrb.bullet("#samples = " + stb.str(n_diploid+n_haploid) + " ["  + stb.str(n_haploid) + " haploid" + pl1 + "/ " + stb.str(n_diploid) + " diploid"+ pl2 + "]");
-
-	// Extract number of main iterations
-	header_record = bcf_hdr_get_hrec(sr->readers[0].header, BCF_HL_GEN, "NMAIN", NULL, NULL);
-	if (header_record == NULL) vrb.error("Cannot retrieve NMAIN flag in VCF header");
-	nmain = atoi(header_record->value);
-	if (nmain <1 || nmain > 15) vrb.error("NMAIN out of bounds : " + stb.str(nmain));
-
-	switching = vector < bool > (nmain * n_diploid, false);
-	distances = vector < int > (nmain * max_ploidy * n_diploid, 0);
-	vrb.bullet("#main_iterations = " + stb.str(nmain));
-
-	//Create output file + header by duplication
-	string file_format = "w";
-	string fname = options["output"].as < string > ();
+	std::string file_format = "w";
+	std::string fname = options["output"].as < std::string > ();
 	unsigned int file_type = OFILE_VCFU;
 	if (fname.size() > 6 && fname.substr(fname.size()-6) == "vcf.gz") { file_format = "wz"; file_type = OFILE_VCFC; }
 	if (fname.size() > 3 && fname.substr(fname.size()-3) == "bcf") { file_format = "wb"; file_type = OFILE_BCFC; }
-	htsFile * fp = hts_open(fname.c_str(),file_format.c_str());
-	if (n_threads > 1) hts_set_threads(fp, n_threads);
-	bcf_hdr_t * hdr = bcf_hdr_dup(sr->readers[0].header);
-	if (bcf_hdr_write(fp, hdr)) vrb.error("Failed to write header to output file");
+	bcf_srs_t * sr =  bcf_sr_init();
+	sr->require_index = 1;
+	int n_threads = options["thread"].as < int > ();
+	if (n_threads > 1) if (bcf_sr_set_threads(sr, n_threads) < 0) vrb.error("Failed to create threads");
 
-	//Main loop
-	int n_variants = 0;
-	int *buffer0=NULL, *buffer1=NULL, nbuffer0=0, nbuffer1=0, rbuffer0=0, rbuffer1=0;
-	bcf1_t * line0, * line1;
-	int chunk_counter=0;
-	while (bcf_sr_next_line (sr)) {
+	bcf_hdr_t * out_hdr = NULL;
+	bcf1_t *line = bcf_init();
+	std::vector<int> start_pos(nfiles);
 
-		//DETERMINE READERS HAVING THE CURRENT RECORD
-		vector < int > active_readers;
-		vector < bool > file_has_record = vector < bool > (nfiles, false);
-		for (int f = 0 ; f < nfiles ; f ++) {
-			file_has_record[f] = bcf_sr_has_line(sr, f);
-			if (file_has_record[f]) active_readers.push_back(f);
-		}
+	for (int f = 0, prev_chrid = -1 ; f < nfiles ; f ++)
+	{
+		htsFile *fp = hts_open(filenames[f].c_str(), "r"); if ( !fp ) vrb.error("Failed to open: " + filenames[f] + ".");
+		bcf_hdr_t *hdr = bcf_hdr_read(fp); if ( !hdr ) vrb.error("Failed to parse header: " + filenames[f] +".");
+		out_hdr = bcf_hdr_merge(out_hdr,hdr);
+        if ( bcf_hdr_nsamples(hdr) != bcf_hdr_nsamples(out_hdr) ) vrb.error("Different number of samples in " + filenames[f] + ".");
+        for (int j=0; j<bcf_hdr_nsamples(hdr); j++)
+        	if ( std::string(out_hdr->samples[j]) != std::string(hdr->samples[j]) )  vrb.error("Different sample names in " + filenames[f] + ".");
 
-		//Retrieve variant informations
-		line0 =  bcf_sr_get_line(sr, active_readers[0]);
-		bcf_unpack(line0, BCF_UN_STR);
-		string chr = string(bcf_hdr_id2name(sr->readers[active_readers[0]].header, line0->rid));
-		int position = line0->pos + 1;
-		string rsid = string(line0->d.id);
-		string ref = string(line0->d.allele[0]);
-		string alt = string(line0->d.allele[1]);
-		if (active_readers.size() >= 3) vrb.error("Too many files overlap at position [" + stb.str(position) + "]");
-		if (active_readers.size() == 0) vrb.error("Not enough files overlap at position [" + stb.str(position) + "]");
-
-		//CASE0: WE ARE NOT IN AN OVERLAPPING REGION [STANDARD CASE]
-		if (active_readers.size() == 1) {
-			// verbose
-			if (prev_readers.size() == 0) vrb.title("Chunk " + stb.str(++chunk_counter) + " from position [" + stb.str(position) + "]");
-			//Write Output using current switching
-			write_record(fp, hdr, line0);
-			//Update current stage of active reader
-			for (int r = 0 ; r < prev_readers.size() ; r++) current_stages[prev_readers[r]] = STAGE_DONE;
-			current_stages[active_readers[0]] = STAGE_BODY;
-		}
-
-		//CASE1: WE ARE IN AN OVERLAPPING REGION [LIGATION CASE]
-		if (active_readers.size() == 2) {
-			line1 =  bcf_sr_get_line(sr, active_readers[1]);
-			bcf_unpack(line0, BCF_UN_STR);
-			//Retrieve in which stages the readers were for previous variants
-			unsigned char prev_stage0 = current_stages[active_readers[0]];
-			unsigned char prev_stage1 = current_stages[active_readers[1]];
-			//Retrieve who is buffer, who is main
-			rbuffer0 = bcf_get_info_int32(sr->readers[active_readers[0]].header,line0,"BUF",&buffer0, &nbuffer0);
-			rbuffer1 = bcf_get_info_int32(sr->readers[active_readers[1]].header,line1,"BUF",&buffer1, &nbuffer1);
-			if ((buffer0[0] + buffer1[0]) == 0)
-				vrb.error("Overlap between chunk specific variants, pos: " + to_string(line1->pos+1));
-			if ((buffer0[0] + buffer1[0]) == 2)
-			{
-				if (prev_stage0==STAGE_BODY && prev_stage1 == STAGE_UBUF)
-				{
-					vrb.warning("Overlap between buffer-specific variants, pos: " + to_string(line1->pos+1) + ". Variant recovered using previous buffer information. Please check your chunk files to avoid this warning.");
-					buffer0[0]=0;
-				}
-				else vrb.error("Critical overlap between buffer-specific variants, pos: " + to_string(line1->pos+1));
-			}
-			//Check in which stages the readers are now
-			unsigned char curr_stage0, curr_stage1;
-			if (buffer0[0]) {
-				switch (prev_stage0) {
-				case STAGE_NONE: curr_stage0 = STAGE_UBUF; break;
-				case STAGE_UBUF: curr_stage0 = STAGE_UBUF; break;
-				case STAGE_BODY: curr_stage0 = STAGE_DBUF; break;
-				case STAGE_DBUF: curr_stage0 = STAGE_DBUF; break;
-				}
-			} else curr_stage0 = STAGE_BODY;
-			if (buffer1[0]) {
-				switch (prev_stage1) {
-				case STAGE_NONE: curr_stage1 = STAGE_UBUF; break;
-				case STAGE_UBUF: curr_stage1 = STAGE_UBUF; break;
-				case STAGE_BODY: curr_stage1 = STAGE_DBUF; break;
-				case STAGE_DBUF: curr_stage1 = STAGE_DBUF; break;
-				}
-			} else curr_stage1 = STAGE_BODY;
-			//Check if stage has changed?
-			bool changedStatus = (prev_stage0 != curr_stage0) + (prev_stage1 != curr_stage1);
-			// f0 is upBUF / f1 is BODY
-			if (curr_stage0 == STAGE_UBUF && curr_stage1 == STAGE_BODY) {
-				// update hamming distances
-				update_distances_and_write_record(fp, hdr, line0, line1);
-			}
-			// f1 is upBUF / f0 is BODY
-			else if (curr_stage1 == STAGE_UBUF && curr_stage0 == STAGE_BODY) {
-				update_distances_and_write_record(fp, hdr, line1, line0);
-			}
-			// f0 is dwBUF / f1 is BODY
-			else if (curr_stage0 == STAGE_DBUF && curr_stage1 == STAGE_BODY) {
-				// update switching if necessary
-				if (changedStatus) {
-					vrb.title("Chunk " + stb.str(++chunk_counter) + " from position [" + stb.str(position) + "]");
-					int nc = update_switching();
-					vrb.bullet("#switches=" + stb.str(nc));
-				}
-				// write F1 using current switching
-				write_record(fp, hdr, line1);
-			}
-			// f1 is dwBUF / f0 is BODY
-			else if (curr_stage1 == STAGE_DBUF && curr_stage0 == STAGE_BODY) {
-				// update switching if necessary
-				if (changedStatus) {
-					vrb.title("Chunk " + stb.str(++chunk_counter) + " from position [" + stb.str(position) + "]");
-					int nc = update_switching();
-					vrb.bullet("#switches=" + stb.str(nc));
-				}
-				// write F0 using current switching
-				write_record(fp, hdr, line0);
-			}
-			//IMPOSSIBLE CASE
-			else vrb.error("Problematic overlapping between chunks): " + stb.str(curr_stage0) + " " + stb.str(curr_stage1));
-			//Update the stages in which the readers are now
-			current_stages[active_readers[0]] = curr_stage0;
-			current_stages[active_readers[1]] = curr_stage1;
-		}
-		//Store current readers
-		prev_readers = active_readers;
-		//
-		n_variants++;
+        int ret = bcf_read(fp, hdr, line);
+		if ( ret!=0 ) vrb.error("Empty file detected: " + filenames[f] +".");
+        else
+        {
+            int chrid = bcf_hdr_id2int(out_hdr,BCF_DT_CTG,bcf_seqname(hdr,line));
+            start_pos[f] = chrid==prev_chrid ? line->pos : -1;
+            prev_chrid = chrid;
+        }
+        bcf_hdr_destroy(hdr);
+        if ( hts_close(fp)!=0 ) vrb.error("Close failed: " + filenames[f] + ".");
 	}
-	//Close file descriptors & free arrays
-	free(body_hs_fields);
-	free(buffer_hs_fields);
-	bcf_hdr_destroy(hdr);
+
+    for (int i=1; i<nfiles; i++) if ( start_pos[i-1]!=-1 && start_pos[i]!=-1 && start_pos[i]<start_pos[i-1] ) vrb.error("The files not in ascending order");
+    int i = 0, nrm = 0;
+    /*
+    while ( i<out_hdr->nhrec )
+    {
+    	bcf_hrec_t *hrec = out_hdr->hrec[i];
+		// remove everything in INFO and FORMAT except INFO/AC, INFO/AN and FORMAT/GT
+    	const std::string strk(hrec->key);
+    	if (strk != "INFO" && strk!="FORMAT") { i++; continue; }
+
+		int id = bcf_hrec_find_key(hrec, "ID");
+		if ( id>=0 )
+		{
+			if (strk=="FORMAT" && std::string(hrec->vals[id])=="GT" ) { i++; continue; }
+			if (strk=="INFO" && (std::string(hrec->vals[id])=="AC" || std::string(hrec->vals[id])=="AN") ) { i++; continue; }
+
+			vdict_t *d = (vdict_t*)out_hdr->dict[BCF_DT_ID];
+			khint_t k = kh_get(vdict, d, out_hdr->hrec[i]->vals[id]);
+			kh_val(d, k).hrec[2] = NULL;
+			kh_val(d, k).info[2] |= 0xf;
+
+	        nrm++;
+	        out_hdr->nhrec--;
+	        if ( i < out_hdr->nhrec ) memmove(&out_hdr->hrec[i],&out_hdr->hrec[i+1],(out_hdr->nhrec-i)*sizeof(bcf_hrec_t*));
+	        bcf_hrec_destroy(hrec);
+		}
+    }
+    if ( nrm ) if (bcf_hdr_sync(out_hdr) < 0) vrb.error("Failed to update header");
+    */
+	nsamples = bcf_hdr_nsamples(out_hdr);
+
+	nswap = {0,0};
+	swap_phase = {std::vector<bool>(nsamples, false), std::vector<bool>(nsamples, false)};
+	nmatch = std::vector < int > (nsamples, 0);
+	nmism = std::vector < int > (nsamples, 0);
+
+	GTa = GTb = NULL;
+	mGTa = 0, mGTb=0;
+
+	htsFile * out_fp = hts_open(fname.c_str(),file_format.c_str());
+	if ( out_fp == NULL ) vrb.error("Can't write to " + fname + ".");
+	if (n_threads > 1) hts_set_opt(out_fp, HTS_OPT_THREAD_POOL, sr->p);
+	bcf_hdr_add_sample(out_hdr, NULL);
+	if (bcf_hdr_write(out_fp, out_hdr)) vrb.error("Failed to write header to output file");
+
+	int n_variants = 0;
+	int n_variants_at_start_cnk = 0;
+	line = bcf_init();
+	int chunk_counter=0;
+	int n_sites_buff = 0;
+
+	int prev_readers_size = 0;
+    std::string prev_chr = "";
+    std::array<int,2> prev_pos = {0,0};
+    int first_pos = 0;
+    int ifname = 0;
+
+	vrb.bullet("#samples = " + stb.str(nsamples));
+	vrb.print("");
+	tac.clock();
+
+    // keep only two open files at a time
+    while ( ifname < nfiles )
+    {
+        int new_file = 0;
+        while ( sr->nreaders < 2 && ifname < nfiles )
+        {
+            if ( !bcf_sr_add_reader (sr, filenames[ifname].c_str())) vrb.error("Failed to open " + filenames[ifname] + ".");
+            new_file = 1;
+            ifname++;
+            if ( start_pos[ifname-1]==-1 ) break;   // new chromosome, start with only one file open
+            if ( ifname < nfiles && start_pos[ifname]==-1 ) break; // next file starts on a different chromosome
+        }
+
+        // is there a line from the previous run? Seek the newly opened reader to that position
+        int seek_pos = -1;
+        int seek_chr = -1;
+        if ( bcf_sr_has_line(sr,0) )
+        {
+            bcf1_t *line0 = bcf_sr_get_line(sr,0);
+            bcf_sr_seek(sr, bcf_seqname(sr->readers[0].header,line0), line0->pos);
+            seek_pos = line0->pos;
+            seek_chr = bcf_hdr_name2id(out_hdr, bcf_seqname(sr->readers[0].header,line0));
+        }
+        else if ( new_file ) bcf_sr_seek(sr,NULL,0);  // set to start
+
+        int nret;
+        while ( (nret = bcf_sr_next_line(sr)) )
+        {
+            if ( !bcf_sr_has_line(sr,0) ) if ( bcf_sr_region_done(sr,0) )  bcf_sr_remove_reader(sr, 0);
+
+            // Get a line to learn about current position
+            for (i=0; i<sr->nreaders; i++) if ( bcf_sr_has_line(sr,i) ) break;
+            bcf1_t *line = bcf_sr_get_line(sr,i);
+
+            // This can happen after bcf_sr_seek: indel may start before the coordinate which we seek to.
+            if ( seek_chr>=0 && seek_pos>line->pos && seek_chr==bcf_hdr_name2id(out_hdr, bcf_seqname(sr->readers[i].header,line)) ) continue;
+            seek_pos = seek_chr = -1;
+
+            //  Check if the position overlaps with the next, yet unopened, reader
+            int must_seek = 0;
+            while ( ifname < nfiles && start_pos[ifname]!=-1 && line->pos >= start_pos[ifname] )
+            {
+                must_seek = 1;
+                if ( !bcf_sr_add_reader(sr, filenames[ifname].c_str())) vrb.error("Failed to open " + filenames[ifname] + ".");
+                if  (sr->nreaders>2) vrb.error("Three files overlapping at position: " + std::to_string(line->pos+1));
+                ifname++;
+            }
+            if ( must_seek )
+            {
+                bcf_sr_seek(sr, bcf_seqname(sr->readers[i].header,line), line->pos);
+                seek_pos = line->pos;
+                seek_chr = bcf_hdr_name2id(out_hdr, bcf_seqname(sr->readers[i].header,line));
+                continue;
+            }
+
+            if ( sr->nreaders>1 && ((!bcf_sr_has_line(sr,0) && !bcf_sr_region_done(sr,0)) || (!bcf_sr_has_line(sr,1) && !bcf_sr_region_done(sr,1))) )
+            {
+            	const bool uphalf = !bcf_sr_has_line(sr,0);
+            	line = bcf_sr_get_line(sr,uphalf);
+				write_record(out_fp, out_hdr, sr->readers[0].header, line,uphalf);
+                prev_pos[uphalf]=line->pos;
+                prev_readers_size = sr->nreaders;
+				n_variants++;
+            	continue;
+            }
+
+            if (sr->nreaders<2)
+            {
+            	if (prev_readers_size == 0)
+            	{
+            		n_variants_at_start_cnk = n_variants;
+            		prev_chr = std::string(bcf_seqname(sr->readers[i].header,line));
+            		first_pos = (int)bcf_sr_get_line(sr,i)->pos + 1;
+            		vrb.wait("Cnk " + stb.str(ifname-1) + " [" + prev_chr + ":" + stb.str(first_pos) + "-]");
+            	}
+            	else if (prev_readers_size == 2)
+    			{
+            		n_variants_at_start_cnk = n_variants;
+            		prev_chr = std::string(bcf_seqname(sr->readers[i].header,line));
+            		first_pos = (int)bcf_sr_get_line(sr,i)->pos + 1;
+    				vrb.wait("Cnk " + stb.str(ifname-1) + " [" + prev_chr + ":" + stb.str(first_pos) + "-]");
+            		//after a buffer we go back to one reader. Chunk 1 is now chunk 0.
+    				n_sites_buff = 0;
+            		nswap[0]=nswap[1];
+            		swap_phase[0] = swap_phase[1];
+    			}
+				line = bcf_sr_get_line(sr,i);
+    			write_record(out_fp, out_hdr, sr->readers[0].header, line,i);
+            	prev_pos[i]=line->pos;
+            }
+            else
+            {
+            	if (n_sites_buff==0)
+            	{
+            		prev_chr = std::string(bcf_seqname(sr->readers[i].header,line));
+    				vrb.print("Cnk " + stb.str(ifname-2) + " [" + prev_chr + ":" + stb.str(first_pos) + "-" + stb.str(prev_pos[0] + 1) + "] [L=" + stb.str(n_variants-n_variants_at_start_cnk) + "]" );
+            		scan_overlap(ifname, bcf_seqname(sr->readers[i].header,line), line->pos);
+            	}
+
+				const bool uphalf = n_sites_buff >= nsites_buff_d2.back();
+				line = bcf_sr_get_line(sr,uphalf);
+				write_record(out_fp, out_hdr, sr->readers[uphalf].header, line, uphalf);
+				++n_sites_buff;
+	            prev_pos[0]=prev_pos[1]=line->pos;
+            }
+            prev_readers_size = sr->nreaders;
+    		n_variants++;
+        }
+        if ( sr->nreaders ) while ( sr->nreaders ) bcf_sr_remove_reader(sr, 0);
+    }
+	vrb.print("Cnk " + stb.str(ifname-1) + " [" + prev_chr + ":" + stb.str(first_pos) + "-" + stb.str(prev_pos[0] + 1) + "] [L=" + stb.str(n_variants-n_variants_at_start_cnk) + "]" );
+
+	if (hts_close(out_fp)) vrb.error("Non zero status when closing VCF/BCF file descriptor");
+	bcf_hdr_destroy(out_hdr);
 	bcf_sr_destroy(sr);
-	if (hts_close(fp)) vrb.error("Non zero status when closing VCF/BCF file descriptor");
+	if (line) bcf_destroy(line);
+	free(GTa);
+    free(GTb);
 
-	//Last verbose
 	if (n_variants == 0) vrb.error("No variants to be phased in files");
-
 	vrb.title("Writing completed [L=" + stb.str(n_variants) + "] (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
-	vrb.title("Creating index");
-	//create index using htslib (csi, using default bcftools option 14)
-	if (!bcf_index_build3(string(options["output"].as < string > ()).c_str(), NULL, 14, options["thread"].as < int > ())) vrb.print("Index successfully created");
-	else vrb.warning("Problem building the index for the output file. Try to build it using tabix/bcftools.");
+
+	if (options.count("index"))
+	{
+		vrb.title("Creating index");
+		//create index using htslib (csi, using default bcftools option 14)
+		if (!bcf_index_build3(std::string(options["output"].as < std::string > ()).c_str(), NULL, 14, options["thread"].as < int > ())) vrb.print("Index successfully created");
+		else vrb.warning("Problem building the index for the output file. This can indicate a problem during ligation. Try to build the index using tabix/bcftools.");
+	}
 }
 

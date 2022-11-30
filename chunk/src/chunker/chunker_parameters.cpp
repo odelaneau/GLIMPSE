@@ -1,6 +1,8 @@
 /*******************************************************************************
- * Copyright (C) 2020 Olivier Delaneau, University of Lausanne
- * Copyright (C) 2020 Simone Rubinacci, University of Lausanne
+ * Copyright (C) 2022-2023 Simone Rubinacci
+ * Copyright (C) 2022-2023 Olivier Delaneau
+ *
+ * MIT Licence
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -29,44 +31,56 @@ void chunker::declare_options() {
 	opt_base.add_options()
 			("help", "Produce help message")
 			("seed", bpo::value<int>()->default_value(15052011), "Seed of the random number generator")
-			("thread", bpo::value<int>()->default_value(1), "Number of threads");
+			("threads", bpo::value<int>()->default_value(1), "Number of threads");
 
-	bpo::options_description opt_input ("Input files");
+	bpo::options_description opt_input ("Input parameters");
 	opt_input.add_options()
-			("input,I", bpo::value< string >(), "Reference or target dataset at all variable positions in VCF/BCF format. The GT field is not required.")
-			("region", bpo::value< string >(), "Chromosome or region to be splitted");
+			("input,I", bpo::value< std::string >(), "Reference or target dataset at all variable positions in VCF/BCF format. The GT field is not required")
+			("region", bpo::value< std::string >(), "Chromosome or region to be split")
+			("map,M", bpo::value < std::string >(), "Genetic map")
+			("sparse-maf", bpo::value<float>()->default_value(0.001f), "Expert setting: rare variant threshold");
 
-	bpo::options_description opt_algo ("Parameters");
-	opt_algo.add_options()
-			("window-size", bpo::value<int>()->default_value(1000000), "Minimal Window size in bp")
+	bpo::options_description opt_param ("Parameters");
+	opt_param.add_options()
+			("window-cm", bpo::value<float>()->default_value(4.0), "Minimal Window size in cM")
+			("window-mb", bpo::value<float>()->default_value(4.0), "Minimal Window size in Mb")
 			("window-count", bpo::value<int>()->default_value(1000), "Minimal window size in #variants")
-			("buffer-size", bpo::value<int>()->default_value(200000), "Minimal buffer size in bp")
-			("buffer-count", bpo::value<int>()->default_value(100), "Minimal buffer size in #variants");
+			("buffer-cm", bpo::value<float>()->default_value(0.5), "Minimal buffer size in cM")
+			("buffer-mb", bpo::value<float>()->default_value(0.5), "Minimal buffer size in Mb")
+			("buffer-count", bpo::value<int>()->default_value(125), "Minimal buffer size in #variants")
+			("report-common-variants", "Report number of common variants. Requires AC/AN defined");
+
+	bpo::options_description opt_algo ("Model parameters");
+	opt_algo.add_options()
+			("recursive", "Recursive algorithm")
+			("sequential", "Sequential algorithm");
 
 	bpo::options_description opt_output ("Output files");
 	opt_output.add_options()
-			("output,O", bpo::value< string >(), "Coordinate files for driving GLIMPSE phase runs")
-			("log", bpo::value< string >(), "Log file");
+			("output,O", bpo::value< std::string >(), "Coordinate files for phasing and imputation")
+			("log", bpo::value< std::string >(), "Log file");
 
-	descriptions.add(opt_base).add(opt_input).add(opt_algo).add(opt_output);
+	descriptions.add(opt_base).add(opt_input).add(opt_param).add(opt_algo).add(opt_output);
 }
 
-void chunker::parse_command_line(vector < string > & args) {
+void chunker::parse_command_line(std::vector < std::string > & args) {
 	try {
 		bpo::store(bpo::command_line_parser(args).options(descriptions).run(), options);
 		bpo::notify(options);
-	} catch ( const boost::program_options::error& e ) { cerr << "Error parsing command line arguments: " << string(e.what()) << endl; exit(0); }
+	} catch ( const boost::program_options::error& e ) { std::cerr << "Error parsing command line arguments: " << std::string(e.what()) << std::endl; exit(0); }
 
-	if (options.count("log") && !vrb.open_log(options["log"].as < string > ()))
-		vrb.error("Impossible to create log file [" + options["log"].as < string > () +"]");
+	if (options.count("log") && !vrb.open_log(options["log"].as < std::string > ()))
+		vrb.error("Impossible to create log file [" + options["log"].as < std::string > () +"]");
 
-	vrb.title("[GLIMPSE] Split chromosomes into chunks");
-	vrb.bullet("Author        : Simone RUBINACCI & Olivier DELANEAU, University of Lausanne");
-	vrb.bullet("Contact       : simone.rubinacci@unil.ch & olivier.delaneau@unil.ch");
-	vrb.bullet("Version       : " + string(CHUNK_VERSION));
-	vrb.bullet("Run date      : " + tac.date());
+	vrb.title("[GLIMPSE2] Split chromosomes into chunks");
+	vrb.bullet("Authors              : Simone RUBINACCI & Olivier DELANEAU, University of Lausanne");
+	vrb.bullet("Contact              : simone.rubinacci@unil.ch & olivier.delaneau@unil.ch");
+	vrb.bullet("Version       	 : GLIMPSE2_chunk v" + std::string(CHUNK_VERSION) + " / commit = " + std::string(__COMMIT_ID__) + " / release = " + std::string (__COMMIT_DATE__));
+	vrb.bullet("Citation	         : BiorXiv, (2022). DOI: https://doi.org/10.1101/2022.11.28.518213");
+	vrb.bullet("        	         : Nature Genetics 53, 120–126 (2021). DOI: https://doi.org/10.1038/s41588-020-00756-0");
+	vrb.bullet("Run date      	 : " + tac.date());
 
-	if (options.count("help")) { cout << descriptions << endl; exit(0); }
+	if (options.count("help")) { std::cout << descriptions << std::endl; exit(0); }
 }
 
 void chunker::check_options() {
@@ -82,22 +96,55 @@ void chunker::check_options() {
 	if (options.count("seed") && options["seed"].as < int > () < 0)
 		vrb.error("Random number generator needs a positive seed value");
 
-	if (options["thread"].as < int > () < 1)
+	if (options["threads"].as < int > () < 1)
 		vrb.error("Number of threads is a strictly positive number.");
+
+	if (options["window-cm"].as < float > () <= 0)
+		vrb.error("Window size in cM must be positive");
+	if (options["window-mb"].as < float > () <= 0)
+		vrb.error("Window size in Mb must be positive");
+	if (options["window-count"].as < int > () <= 0)
+		vrb.error("Window size in number of markers must be positive");
+
+	if (options["buffer-cm"].as < float > () <= 0)
+		vrb.error("Buffer size in cM must be positive");
+	if (options["buffer-mb"].as < float > () <= 0)
+		vrb.error("Buffer size in Mb must be positive");
+	if (options["buffer-count"].as < int > () <= 0)
+		vrb.error("Buffer size in number of markers must be positive");
+
+	float s_maf = options["sparse-maf"].as < float > ();
+	if (s_maf >= 0.5 || s_maf < 0) vrb.error("The sparse MAF parameter should not be set too high or low. Ideally within the range [0.01-0.001] 0.001 MAF is the recommended setting]");
+
+	if (options.count("recursive") && options.count("sequential"))
+		vrb.error("One of the two algorithms must be selected. Please choose one between recursive and sequential");
+	if (!options.count("recursive") && !options.count("sequential"))
+		vrb.error("One of the two algorithms must be selected. Please choose one between recursive and sequential");
+
 }
 
 void chunker::verbose_files() {
 	vrb.title("Files:");
-	vrb.bullet("Input VCF      : [" + options["input"].as < string > () + "]");
-	vrb.bullet("Chromosome     : [" + options["region"].as < string > () + "]");
-	vrb.bullet("Output file    : [" + options["output"].as < string > () + "]");
-	if (options.count("log")) vrb.bullet("Output LOG    : [" + options["log"].as < string > () + "]");
+	vrb.bullet("Input VCF            : [" + options["input"].as < std::string > () + "]");
+	vrb.bullet("Region               : [" + options["region"].as < std::string > () + "]");
+	if (options.count("map"))
+		vrb.bullet("Genetic Map          : [" + options["map"].as < std::string > () + "]");
+	vrb.bullet("Output file          : [" + options["output"].as < std::string > () + "]");
+	if (options.count("log")) vrb.bullet("Output LOG           : [" + options["log"].as < std::string > () + "]");
 }
 
 void chunker::verbose_options() {
+	std::string opt_algo = options.count("sequential") ? "Sequential" : "Recursive";
+	std::string opt_map = options.count("map") ? "Given by genetic map" : "Constant rate of 1cM/Mb";
+
 	vrb.title("Parameters:");
-	vrb.bullet("Seed             : " + stb.str(options["seed"].as < int > ()));
-	vrb.bullet("#Threads   : " + stb.str(options["thread"].as < int > ()));
-	vrb.bullet("Min. Window size : " + stb.str(options["window-size"].as < int > ()) + "bp / " + stb.str(options["window-count"].as < int > ()) + " variants");
-	vrb.bullet("Min. Buffer size : " + stb.str(options["buffer-size"].as < int > ()) + "bp / " + stb.str(options["buffer-count"].as < int > ()) + " variants");
+	vrb.bullet("Sparse MAF           : [" + stb.str(options["sparse-maf"].as < float > ()) + "]");
+	vrb.bullet("Algorithm            : [" + opt_algo + "]");
+	vrb.bullet("Recombination rates  : [" + opt_map + "]");
+	vrb.bullet("Min. Window size     : [" + stb.str(options["window-cm"].as < float > ()) + "cM | " + stb.str(options["window-mb"].as < float > ()) + "Mb | " + stb.str(options["window-count"].as < int > ()) + " variants]");
+	vrb.bullet("Min. Buffer size     : [" + stb.str(options["buffer-cm"].as < float > ()) + "cM | " + stb.str(options["buffer-mb"].as < float > ()) + "Mb | " + stb.str(options["buffer-count"].as < int > ()) + " variants]");
+
+	vrb.title("Other parameters");
+	vrb.bullet("Seed                 : [" + stb.str(options["seed"].as < int > ()) + "]");
+	vrb.bullet("#Threads             : [" + stb.str(options["threads"].as < int > ()) + "]");
 }

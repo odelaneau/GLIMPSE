@@ -1,6 +1,8 @@
 /*******************************************************************************
- * Copyright (C) 2020 Olivier Delaneau, University of Lausanne
- * Copyright (C) 2020 Simone Rubinacci, University of Lausanne
+ * Copyright (C) 2022-2023 Simone Rubinacci
+ * Copyright (C) 2022-2023 Olivier Delaneau
+ *
+ * MIT Licence
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,8 +27,8 @@
 #include <ligater/ligater_header.h>
 
 int main(int argc, char ** argv) {
-	vector < string > args;
-	for (int a = 1 ; a < argc ; a ++) args.push_back(string(argv[a]));
+	std::vector < std::string > args;
+	for (int a = 1 ; a < argc ; a ++) args.push_back(std::string(argv[a]));
 	ligater().ligate(args);
 	return EXIT_SUCCESS;
 }

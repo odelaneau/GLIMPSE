@@ -1,0 +1,55 @@
+code.highlighter-rouge.language-plaintext {
+  background-color: #F5F5F5 !important;
+  color: #5c5962 !important;
+  border-color: white;
+  font-size: 0.9em;
+  font-weight: 900 !important;
+}
+
+/* $turq-001: #33b3a6 !default; */
+/* $turq-002: #2d9d92 !default; */
+/* $turq-003: #26867d !default; */
+
+$turq-001: #C8693C !default;
+$turq-002: #615043 !default;
+$turq-003: #26867d !default;
+
+$link-color: $turq-002;
+
+/* .nav-list-link { color: $turq-002 !important } */
+
+$btn-primary-color: $turq-002;
+
+/* $code-background-color: $grey-dk-200; */
+$code-background-color: #303030;
+
+
+/*
+
+.highlighter-rouge {
+  color: #26867d;
+}
+
+.highlight .n {
+  background-color: black !important;
+  color: white !important;
+}
+*/
+
+
+/*
+
+https://github.com/pmarsceill/just-the-docs/blob/master/_sass/support/_variables.scss
+
+$body-background-color: $grey-dk-300;
+$sidebar-color: $grey-dk-300;
+$border-color: $grey-dk-200;
+$body-text-color: $grey-lt-300;
+$body-heading-color: $grey-lt-000;
+$nav-child-link-color: $grey-dk-000;
+$search-result-preview-color: $grey-dk-000;
+$base-button-color: $grey-dk-250;
+$search-background-color: $grey-dk-250;
+$table-background-color: $grey-dk-250;
+$feedback-color: darken($sidebar-color, 3%);
+*/

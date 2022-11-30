@@ -1,6 +1,8 @@
 /*******************************************************************************
- * Copyright (C) 2020 Olivier Delaneau, University of Lausanne
- * Copyright (C) 2020 Simone Rubinacci, University of Lausanne
+ * Copyright (C) 2022-2023 Simone Rubinacci
+ * Copyright (C) 2022-2023 Olivier Delaneau
+ *
+ * MIT Licence
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,12 +28,6 @@
 
 #include <utils/otools.h>
 
-#define STAGE_NONE	0
-#define STAGE_UBUF	1
-#define STAGE_DBUF	2
-#define STAGE_BODY	3
-#define STAGE_DONE	4
-
 class ligater {
 public:
 	//COMMAND LINE OPTIONS
@@ -40,22 +36,22 @@ public:
 
 	//FILE DATA
 	int nfiles;
-	vector < string > filenames;
-	vector < unsigned char > current_stages;
-	vector < int > prev_readers;
+
+	std::vector < std::string > filenames;
+	std::vector < int > prev_readers;
 
 	//SAMPLE DATA
-	int nmain;
-	int nsamples;
-	vector < string > sampleIDs;
-	vector < bool > switching;
-	vector < int > distances;
-	int * body_hs_fields, * buffer_hs_fields;
 
-	int fploidy;
-	std::vector< int > ploidy;
-	int n_haploid = 0, 	n_diploid = 0, max_ploidy = 0;
-	std::vector< int > diploid_idx;
+	int nsamples;
+
+	std::array<int,2> nswap;
+	std::array<std::vector<bool>,2> swap_phase;
+	std::vector < int > nmatch;
+	std::vector < int > nmism;
+
+	std::vector < int > nsites_buff_d2;
+
+	int32_t *GTa, *GTb, mGTa, mGTb;
 
 	//CONSTRUCTOR
 	ligater();
@@ -63,22 +59,28 @@ public:
 
 	//PARAMETERS
 	void declare_options();
-	void parse_command_line(vector < string > &);
+	void parse_command_line(std::vector < std::string > &);
 	void check_options();
 	void verbose_options();
 	void verbose_files();
 
 	//FILE I/O
 	void read_files_and_initialise();
-	void ligate(vector < string > &);
+	void ligate(std::vector < std::string > &);
 	void ligate();
 	void write_files_and_finalise();
+	//void scan_chunks();
+	void scan_overlap(const int ifname,const char* seek_chr, int seek_pos);
+
 
 	//FUNCTIONS
 	void updateHS(int *);
 	int update_switching();
-	void update_distances_and_write_record(htsFile *, bcf_hdr_t * , bcf1_t *, bcf1_t *);
-	void write_record(htsFile *, bcf_hdr_t * , bcf1_t *);
+	void update_distances();
+	void phase_update(bcf_hdr_t *hdr, bcf1_t *line, const bool uphalf);
+	void remove_info(bcf_hdr_t *hdr, bcf1_t *line);
+	void remove_format(bcf_hdr_t *hdr, bcf1_t *line);
+	void write_record(htsFile *, bcf_hdr_t * ,  bcf_hdr_t * ,bcf1_t *, const bool uphalf);
 
 };
 

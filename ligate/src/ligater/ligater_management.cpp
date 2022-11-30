@@ -1,6 +1,8 @@
 /*******************************************************************************
- * Copyright (C) 2020 Olivier Delaneau, University of Lausanne
- * Copyright (C) 2020 Simone Rubinacci, University of Lausanne
+ * Copyright (C) 2022-2023 Simone Rubinacci
+ * Copyright (C) 2022-2023 Olivier Delaneau
+ *
+ * MIT Licence
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,16 +25,15 @@
 
 #include <ligater/ligater_header.h>
 
-ligater::ligater() {
-	body_hs_fields = NULL;
-	buffer_hs_fields = NULL;
-	fploidy=2;
+ligater::ligater()
+{
 }
 
-ligater::~ligater() {
+ligater::~ligater()
+{
 }
 
-void ligater::ligate(vector < string > & args) {
+void ligater::ligate(std::vector < std::string > & args) {
 	declare_options();
 	parse_command_line(args);
 	check_options();

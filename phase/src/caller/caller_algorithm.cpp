@@ -1,7 +1,8 @@
-
 /*******************************************************************************
- * Copyright (C) 2020 Olivier Delaneau, University of Lausanne
- * Copyright (C) 2020 Simone Rubinacci, University of Lausanne
+ * Copyright (C) 2022-2023 Simone Rubinacci
+ * Copyright (C) 2022-2023 Olivier Delaneau
+ *
+ * MIT Licence
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -37,30 +38,31 @@ void * phase_callback(void * ptr) {
 		id_job = S->i_jobs ++;
 		if (id_job <= n_ind) vrb.progress("  * HMM imputation", id_job*prog_step);
 		pthread_mutex_unlock(&S->mutex_workers);
-		if (id_job < S->G.n_ind) S->phase_individual(id_worker, id_job);
+		if (id_job < n_ind) S->phase_individual(id_worker, id_job);
 		else pthread_exit(NULL);
 	}
+	return nullptr;
 }
 
 void caller::phase_individual(const int id_worker, const int id_job) {
 	const int ploidy = G.vecG[id_job]->ploidy;
-	if (current_stage == STAGE_INIT) {
-		COND[id_worker]->selectRandom(id_job, options["init-states"].as < int > ());
-		G.vecG[id_job]->initHaplotypeLikelihoods(HLC[id_worker]);
-	} else {
-		//if (ploidy > 1) DMM[id_worker]->rephaseHaplotypes(G.vecG[id_job]->H0, G.vecG[id_job]->H1);
-		COND[id_worker]->selectPBWT(id_job, options["init-states"].as < int > ());
-		if (ploidy > 1) G.vecG[id_job]->makeHaplotypeLikelihoods(HLC[id_worker], true);
-		else G.vecG[id_job]->initHaplotypeLikelihoods(HLC[id_worker]);
+
+	COND[id_worker]->select(id_job, current_stage);
+
+	if (current_stage == STAGE_INIT) G.vecG[id_job]->initHaplotypeLikelihoods(HLC[id_worker],min_gl);
+	else
+	{
+		if (ploidy > 1) G.vecG[id_job]->makeHaplotypeLikelihoods(HLC[id_worker], true,min_gl);
+		else G.vecG[id_job]->initHaplotypeLikelihoods(HLC[id_worker],min_gl);
 	}
-	HMM[id_worker]->computePosteriors(HLC[id_worker], HP0[id_worker]);
+	HMM[id_worker]->computePosteriors(HLC[id_worker], G.vecG[id_job]->flat, HP0[id_worker]);
 	G.vecG[id_job]->sampleHaplotypeH0(HP0[id_worker]);
 	if (ploidy > 1)
 	{
-		G.vecG[id_job]->makeHaplotypeLikelihoods(HLC[id_worker], false);
-		HMM[id_worker]->computePosteriors(HLC[id_worker], HP1[id_worker]);
+		G.vecG[id_job]->makeHaplotypeLikelihoods(HLC[id_worker], false,min_gl);
+		HMM[id_worker]->computePosteriors(HLC[id_worker], G.vecG[id_job]->flat, HP1[id_worker]);
 		G.vecG[id_job]->sampleHaplotypeH1(HP1[id_worker]);
-		DMM[id_worker]->rephaseHaplotypes(G.vecG[id_job]->H0, G.vecG[id_job]->H1);
+		DMM[id_worker]->rephaseHaplotypes(G.vecG[id_job]->H0, G.vecG[id_job]->H1, G.vecG[id_job]->flat);
 	}
 
 	if (current_stage == STAGE_MAIN)
@@ -69,15 +71,15 @@ void caller::phase_individual(const int id_worker, const int id_job) {
 		else G.vecG[id_job]->storeGenotypePosteriorsAndHaplotypes(HP0[id_worker]);
 	}
 
-	if (options["thread"].as < int > () > 1) pthread_mutex_lock(&mutex_workers);
+	if (options["threads"].as < int > () > 1) pthread_mutex_lock(&mutex_workers);
 	statH.push(COND[id_worker]->n_states*1.0);
-	statC.push(COND[id_worker]->n_sites * 100.0/COND[id_worker]->Hmono.size());
-	if (options["thread"].as < int > () > 1) pthread_mutex_unlock(&mutex_workers);
+	statC.push(COND[id_worker]->polymorphic_sites.size() * 100.0/COND[id_worker]->n_tot_sites);
+	if (options["threads"].as < int > () > 1) pthread_mutex_unlock(&mutex_workers);
 }
 
 void caller::phase_iteration() {
 	tac.clock();
-	int n_thread = options["thread"].as < int > ();
+	int n_thread = options["threads"].as < int > ();
 	i_workers = 0; i_jobs = 0;
 	statH.clear();
 	statC.clear();
@@ -88,7 +90,8 @@ void caller::phase_iteration() {
 	if (n_thread > 1) {
 		for (int t = 0 ; t < n_thread ; t++) pthread_create( &id_workers[t] , NULL, phase_callback, static_cast<void *>(this));
 		for (int t = 0 ; t < n_thread ; t++) pthread_join( id_workers[t] , NULL);
-	} else for (int i = 0 ; i < G.n_ind ; i ++) {
+	} else for (int i = 0 ; i < G.n_ind ; i ++)
+	{
 		phase_individual(0, i);
 		prog_bar+=prog_step;
 		vrb.progress("  * HMM imputation", prog_bar);
@@ -100,15 +103,27 @@ void caller::phase_loop() {
 	//First Iteration
 	current_stage = STAGE_INIT;
 	vrb.title("Initializing iteration");
+
+	H.initRareTar(G,V);
+	H.performSelection_RARE_INIT_GL(V); //not parallel
+
 	phase_iteration();
+
+	H.init_states.clear();
+	H.init_states.shrink_to_fit();
 
 	//Burn-in 0
 	current_stage = STAGE_BURN;
 	int nBurnin = options["burnin"].as < int > ();
-	for (int iter = 0 ; iter < nBurnin ; iter ++) {
+	for (int iter = 0 ; iter < nBurnin ; iter ++)
+	{
 		vrb.title("Burn-in iteration [" + stb.str(iter+1) + "/" + stb.str(nBurnin) + "]");
 		H.updateHaplotypes(G);
-		H.updatePositionalBurrowWheelerTransform();
+		H.transposeRareTar();
+		H.matchHapsFromCompressedPBWTSmall(V, false);
+		current_stage = STAGE_RESTRICT;
+		phase_iteration();
+		current_stage = STAGE_BURN;
 		phase_iteration();
 	}
 
@@ -118,14 +133,15 @@ void caller::phase_loop() {
 	for (int iter = 0 ; iter < nMain ; iter ++) {
 		vrb.title("Main iteration [" + stb.str(iter+1) + "/" + stb.str(nMain) + "]");
 		H.updateHaplotypes(G);
-		H.updatePositionalBurrowWheelerTransform();
+		H.transposeRareTar();
+		H.matchHapsFromCompressedPBWTSmall(V, true);
 		phase_iteration();
 	}
 
 	//Finalization
-	vrb.title("Finalization");
+	//vrb.title("Finalization");
 	for (int i = 0 ; i < G.vecG.size() ; i ++)
 		 G.vecG[i]->sortAndNormAndInferGenotype();
 
-	vrb.bullet("done");
+	//vrb.bullet("done");
 }

@@ -1,6 +1,8 @@
 /*******************************************************************************
- * Copyright (C) 2020 Olivier Delaneau, University of Lausanne
- * Copyright (C) 2020 Simone Rubinacci, University of Lausanne
+ * Copyright (C) 2022-2023 Simone Rubinacci
+ * Copyright (C) 2022-2023 Olivier Delaneau
+ *
+ * MIT Licence
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,12 +25,7 @@
 
 #include <checker/checker_header.h>
 
-void checker::write_files_and_finalise() {
-	vrb.title("Finalization:");
-
+void checker::write_files_and_finalise(const std::string gp_filter) {
 	//step1: writting output
-	D.writeData(options["output"].as < string > ());
-
-	//step2: Measure overall running time
-	vrb.bullet("Total running time = " + stb.str(tac.abs_time()) + " seconds");
+	D.writeData(options["output"].as < std::string > () + gp_filter);
 }

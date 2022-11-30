@@ -1,5 +1,8 @@
 /*******************************************************************************
- * Copyright (C) 2018 Olivier Delaneau, University of Lausanne
+ * Copyright (C) 2022-2023 Simone Rubinacci
+ * Copyright (C) 2022-2023 Olivier Delaneau
+ *
+ * MIT Licence
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,15 +22,19 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  ******************************************************************************/
+
 #ifndef _VERSION_H
 #define _VERSION_H
 
-#define CHUNK_VERSION "1.1.1"
-#define CONCORDANCE_VERSION "1.1.1"
-#define LIGATE_VERSION "1.1.1"
-#define PHASE_VERSION "1.1.1"
-#define SAMPLE_VERSION "1.1.1"
-#define SNPARRAY_VERSION "1.0.0"
-#define STATS_VERSION "1.0.0"
+#define CALL_VERSION "2.0.0"
+#define CHUNK_VERSION "2.0.0"
+#define CONCORDANCE_VERSION "2.0.0"
+#define LIGATE_VERSION "2.0.0"
+#define PHASE_VERSION "2.0.0"
+#define SPLIT_REFERENCE_VERSION "2.0.0"
+#define SIMULATE_BAMS_VERSION "2.0.0"
+#define SAMPLE_VERSION "2.0.0"
+#define SNPARRAY_VERSION "2.0.0"
+#define STATS_VERSION "2.0.0"
 
 #endif

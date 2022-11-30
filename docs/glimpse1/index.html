@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+	<!-- Global site tag (gtag.js) - Google Analytics -->
+	<script async src="https://www.googletagmanager.com/gtag/js?id=G-2TSEMF47BK"></script>
+	<script>
+		window.dataLayer = window.dataLayer || [];
+		function gtag(){dataLayer.push(arguments);}
+		gtag('js', new Date());
+		gtag('config', 'G-2TSEMF47BK');
+	</script>
+
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+		
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="">
+    <meta name="author" content="srubinac" >
+
+    <title>GLIMPSE1</title>
+    <link rel="icon" href="images/branding/glimpse_icon.png">
+    
+     <!-- Bootstrap core CSS -->
+    <link href="./css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap theme -->
+    <link href="./css/bootstrap-theme.min.css" rel="stylesheet">
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <link href="./css/ie10-viewport-bug-workaround.css" rel="stylesheet">
+    <!-- JQuery -->
+    <script type="text/javascript" src="./script/jquery-1.12.4.min.js"></script>
+    <script type="text/javascript" src="./script/bootstrap.min.js"></script>
+    <script type="text/javascript" src="./script/docs.min.js"></script>
+    <!-- chart JS -->
+   	<script type="text/javascript" src="script/Chart.min.js"></script>
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <script type="text/javascript" src="./script/ie10-viewport-bug-workaround.js"></script>
+	<!-- Custom styles for this template -->
+    <link href="./css/theme.css" rel="stylesheet">
+    <!-- Script to load navbar code -->
+	<script>
+		$(function() {
+			$("#navbarbox").load("navbar.html");
+		});
+    </script> 
+</head>
+
+<body>
+
+	<!-- NAVBAR -->
+	<nav class="navbar navbar-inverse navbar-fixed-top">
+	<div class="container" id="navbarbox"></div>
+    </nav>
+    
+    <!-- CONTENT -->
+    <div class="container theme-showcase" role="main">
+		<div class="page-header">
+			<div style="text-align: center;">
+				<img src="images/branding/glimpse_logo_300dpi.png" style="width: 50%;" alt="GLIMPSE1">	    	
+				<br>
+				<p><h1><b><font color="red">G</font></b>enotype <b><font color="red">L</font></b>ikelihoods <b><font color="red">IM</font></b>putation and <b><font color="red">P</font></b>ha<b><font color="red">S</font></b>ing m<b><font color="red">E</font></b>thod</h1></p>
+				<p><h4><font color="grey"  style="font-variant: small-caps">Version 1</font><h4></p>	
+			</div>
+		</div>
+		
+		<div class="page-header">
+	      <div class="panel-body">
+			<div class="alert alert-warning" role="alert">
+	        	27/11/2022: This page describes the <b>GLIMPSE1</b> method. <b>GLIMPSE1</b> is recommended to the users who want to use the joint model, for imputation of >1x data and a moderate sized reference panels. For large reference panels and lower coverages, we recommend the use of the <a href="https://github.com/odelaneau/GLIMPSE"><b>GLIMPSE2</b> method</a>
+	      		</div>
+		      <span style="font-size: larger;">
+					<p><b>GLIMPSE1</b> is a phasing and imputation method for large-scale low-coverage sequencing studies.</p>
+					<p>Main features of the method:</p>
+					<ol>
+						<li><b>Accurate imputed genotype calls.</b> Our method takes advantage of reference panels to produce high quality genotype calls.</li>
+						<li><b>Accurate phasing.</b> GLIMPSE1 outputs accurate phased haplotypes for the low-coverage sequenced dataset.</li>
+						<li><b>Low-coverage sequencing outperforms SNP arrays.</b> 
+							Imputation using low-coverage sequencing data is competitive to SNP array imputation. 
+							Results for <a href="rsquare_eur.html">European</a> and <a href="rsquare_asw.html">African-American</a> populations are interactively available on the website. 
+						<li><b>A cost-effective paradigm.</b> GLIMPSE1 realises whole genome imputation from the HRC reference panel for less than 1$.</li>
+						<li><b>An easy-to-use framework for diploid, haploid and mixed ploidy imputation.</b> Our method is able to perform imputation of samples with different ploidy without the need to split the data.</li>
+					</ol>
+					<p>GLIMPSE1 is available under the <a href="https://en.wikipedia.org/wiki/MIT_License">MIT licence</a> on the Github repository <a href="https://github.com/odelaneau/GLIMPSE">https://github.com/odelaneau/GLIMPSE</a>.</p>	
+		 			<br>
+		 			<p>If you use the GLIMPSE1 in your research work, please cite the following paper:</p>
+					<p><a href="https://www.nature.com/articles/s41588-020-00756-0">Simone Rubinacci, Diogo Ribeiro, Robin Hofmeister, Olivier Delaneau. Efficient phasing and imputation of low-coverage sequencing data using large reference panels. Nature Genetics 53.1 (2021): 120-126.</a></p>
+					<br>
+					<p>GLIMPSE1 is developed by Simone Rubinacci and Olivier Delaneau at the University of Lausanne, Switzerland.</p>
+				</span>
+				<br>
+				<div class="row">
+	 				<div class="col-sm-4">		
+			 			<div style="text-align: center;"><a href="https://www.unil.ch/index.html"><img src="images/lausanne_logo.jpg" height="50"></a></div>
+					</div> 	
+					<div class="col-sm-4">		
+		 				<div style="text-align: center;"><a href="https://www.sib.swiss/"><img src="images/sib_logo.jpg" height="50"></a></div>
+					</div> 
+	 				<div class="col-sm-4">		
+		 				<div style="text-align: center;"><a href="http://www.snf.ch/en/Pages/default.aspx"><img src="images/snf.gif" height="50"></a></div>
+					</div> 	
+				</div>
+			</div>
+		</div>
+		
+		<div class="page-header">
+			<h3>GLIMPSE1 tools</h3>		
+<!-- 			<div class="panel-body">
+				<div style="text-align: center;">
+					<p>GLIMPSE1 is composed by four main tools:</p>
+					<p>
+						<a href="#chunk" class="btn btn-success">GLIMPSE1 chunk</a>
+						<a href="#phase" class="btn btn-info">GLIMPSE1 phase</a>
+						<a href="#ligate" class="btn btn-primary">GLIMPSE1 ligate</a>
+						<a href="#sample" class="btn btn-warning">GLIMPSE1 sample</a>
+					</p>
+				</div>
+			</div> -->
+			
+			<div class="row">
+		      <div class="col-sm-3">
+			      <div class="panel panel-success">
+				      <div class="panel-heading">
+								<h3 class="panel-title">GLIMPSE1 chunk</h3>
+				      </div>
+				      <div class="panel-body">
+				      	<p><b>Version 1.1.1</b></p>
+					      <p>Defines chunks where to run phasing and imputation.</p>
+					      <p><a href="commands.html#chunk">Documentation</a></p>
+				      </div>
+			      </div>
+		      </div><!-- /.col-sm-4 -->
+		      <div class="col-sm-3">
+			      <div class="panel panel-primary">
+				      <div class="panel-heading">
+							<h3 class="panel-title">GLIMPSE1 phase</h3>
+				      </div>
+				      <div class="panel-body">
+				      	<p><b>Version 1.1.1</b></p>
+					      <p>Performs phasing and imputation refining genotype likelihoods.</p>
+					      <p><a href="commands.html#phase">Documentation</a></p>
+				      </div>
+			      </div>
+		      </div><!-- /.col-sm-4 -->
+		      <div class="col-sm-3">
+			      <div class="panel panel-info">
+				      <div class="panel-heading">
+							<h3 class="panel-title">GLIMPSE1 ligate</h3>
+				      </div>
+				      <div class="panel-body">
+				      	<p><b>Version 1.1.1</b></p>
+					      <p>Concatenates chunks ligating phased information.</p>
+					      <p><a href="commands.html#ligate">Documentation</a></p>
+				      </div>
+			      </div>
+		      </div><!-- /.col-sm-4 -->
+		      <div class="col-sm-3">
+			      <div class="panel panel-warning">
+				      <div class="panel-heading">
+							<h3 class="panel-title">GLIMPSE1 sample</h3>
+				      </div>
+				      <div class="panel-body">
+				      	<p><b>Version 1.1.1</b></p>
+					      <p>Generates haplotype calls by sampling haplotypes.</p>
+					      <p><a href="commands.html#sample">Documentation</a></p>
+				      </div>
+			      </div>
+		      </div><!-- /.col-sm-4 -->
+		   </div>
+	   </div>
+ 
+
+		<div class="page-header">
+		<h3>Dashboard</h3>
+			<div class="alert alert-success" role="alert">
+	        	<a href="https://github.com/odelaneau/GLIMPSE" target="Github" name="Github"><strong>21/05/2021: Version 1.1.1 is available on Github!</strong></a> An updated version of GLIMPSE1 is now available! 
+	      </div>
+	      <div class="well" role="alert">
+	        07/01/2021: The manuscript describing GLIMPSE1 is now published in 	<strong><a href="https://www.nature.com/articles/s41588-020-00756-0">Nature Genetics!</a> </strong> 
+	      </div>
+			<div class="alert alert-success" role="alert">
+	        	<a href="https://github.com/odelaneau/GLIMPSE" target="Github" name="Github"><strong>07/10/2020: Version 1.1.0 is available on Github!</strong></a> An updated version of GLIMPSE1 designed for diploid/haploid/mixed ploidy imputation is now available! 
+	      </div>
+	      <div class="well" role="alert">
+	        	07/10/2020: A tutorial for non-PAR chrX imputation is now available! Click <a href="tutorial_chrX.html">here</a> to check it out!
+	      </div>
+	      <div class="well" role="alert">
+	        	07/10/2020: A tutorial for GRCh37/hg19 assembly is now available! Click <a href="tutorial_hg19.html">here</a>!
+	      </div>
+			<div class="alert alert-success" role="alert">
+	        	<a href="https://github.com/odelaneau/GLIMPSE" target="Github" name="Github"><strong>15/04/2020: Version 1.0.0 is available on Github!</strong></a> Check our Github page to download version 1.0.0 and have a GLIMPSE1 of your data
+	      </div>
+	      <div class="well" role="alert">
+		      <strong>03/04/2020: A tutorial for GRCh38/hg38 build is now available.</strong> Click <a href="tutorial_b38.html">here</a> to start running GLIMPSE1.      </div>
+		</div>
+	</div>
+		
+	
+ <footer class="footer">
+      <div class="container" style="text-align: center;">
+        <span class="text-muted">Copyright © 2020 University of Lausanne | All Rights Reserved</span>
+      </div>
+    </footer>
+</body>
+    
