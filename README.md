@@ -8,7 +8,7 @@
 
 **Upcoming Release: 2.0.0**. Release date: Dec 05, 2022
 
-For details of past changes please see [CHANGELOG](/home/srubinac/git/GLIMPSE/docs/CHANGELOG.md).
+For details of past changes please see [CHANGELOG](docs/CHANGELOG.md).
 
 ### License
 
