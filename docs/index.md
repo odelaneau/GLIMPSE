@@ -39,7 +39,7 @@ If you use GLIMPSE in your research work, please cite the following papers:
 ## GLIMPSE1
 
 At the moment, GLIMPSE2 performs imputation only from a reference panel of samples. 
-To use the joint-model, particularly useful for many samples at higher coverages (>0.5x) and small reference panels, please visit the [GLIMPSE1 website]({% link glimpse1/index.html %}).
+To use the joint-model, particularly useful for many samples at higher coverages (>0.5x) and small reference panels, please visit the [GLIMPSE1 website](https://odelaneau.github.io/GLIMPSE/glimpse1/index.html).
 
 ## News
 

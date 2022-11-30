@@ -1,6 +1,6 @@
 # GLIMPSE2
 
-[![](docs/assets/images/brandingglimpse_logo_250x107.png)](https://odelaneau.github.io/GLIMPSE/)
+[![](docs/assets/images/branding/glimpse_logo_250x107.png)](https://odelaneau.github.io/GLIMPSE/)
 
 [![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 

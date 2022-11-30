@@ -1,4 +1,4 @@
-projects = chunk concordance ligate phase sample snparray
+projects = chunk concordance ligate phase split_reference
 
 .PHONY: all $(projects)
 
