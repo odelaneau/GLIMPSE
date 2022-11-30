@@ -24,6 +24,6 @@ GLIMPSE is a set of tools for phasing and imputation for low-coverage sequencing
 
 ### Documentation and tutorials
 
-Please visit our website for tutorials, documentation and installation instructions:
+Visit our website for tutorials, documentation and installation instructions:
 
 https://odelaneau.github.io/GLIMPSE/
