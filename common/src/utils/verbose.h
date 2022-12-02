@@ -124,5 +124,12 @@ public:
 			}
 		}
 	}
+
+	void progress(const std::string prefix) {
+		if (verbose_on_screen) {
+			std::cout << prefix << " ...\r";
+			std::cout.flush();
+		}
+	}
 };
 #endif

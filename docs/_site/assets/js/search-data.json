@@ -210,10 +210,10 @@
     "relUrl": "/docs/glossary/"
   },"35": {
     "doc": "Home",
-    "title": "GLIMPSE2",
+    "title": "GLIMPSE",
     "content": "A tool for low-coverage whole-genome sequencing imputation . Website under construction. A complete release of GLIMPSE2 will be available by the 5th of December 2022. ",
-    "url": "/GLIMPSE/#glimpse2",
-    "relUrl": "/#glimpse2"
+    "url": "/GLIMPSE/#glimpse",
+    "relUrl": "/#glimpse"
   },"36": {
     "doc": "Home",
     "title": "About",
@@ -253,7 +253,7 @@
   },"42": {
     "doc": "Home",
     "title": "About the project",
-    "content": "GLIMPSE is developed by Simone Rubinacci &amp; Olivier Delaneau. License . GLIMPSE is distributed with MIT license. Organisations . Contributing . GLIMPSE is an open source project and we very much welcome new contributors. To make the contribution quickly accepted, please first discuss the change you wish to make via issue, email, or any other method with the owners of this repository before making a change. Thank you to the contributors of GLIMPSE2! . We thank the Just the Docs developers, who made this awesome theme for Jekyll. ",
+    "content": "GLIMPSE is developed by Simone Rubinacci &amp; Olivier Delaneau. License . GLIMPSE is distributed with MIT license. Organisations . Contributing . GLIMPSE is an open source project and we very much welcome new contributors. To make the contribution quickly accepted, please first discuss the change you wish to make via issue, email, or any other method with the owners of this repository before making a change. Thank you to the contributors of GLIMPSE! . We thank the Just the Docs developers, who made this awesome theme for Jekyll. ",
     "url": "/GLIMPSE/#about-the-project",
     "relUrl": "/#about-the-project"
   },"43": {

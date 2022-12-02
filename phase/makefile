@@ -7,11 +7,11 @@ dummy_build_folder_bin := $(shell mkdir -p bin)
 dummy_build_folder_obj := $(shell mkdir -p obj)
 
 #COMPILER & LINKER FLAGS
-CXXFLAG=-O3 -mavx2 -mfma -Wno-ignored-attributes
-LDFLAG=-O3
+#CXXFLAG=-O3 -mavx2 -mfma -Wno-ignored-attributes
+#LDFLAG=-O3
 
-#CXXFLAG=-O0 -g -mavx2 -mfma -Wno-ignored-attributes
-#LDFLAG=-O0
+CXXFLAG=-O0 -g -mavx2 -mfma -Wno-ignored-attributes
+LDFLAG=-O0
 
 #DYNAMIC LIBRARIES
 DYN_LIBS=-lz -lpthread -lbz2 -llzma -lcurl -lcrypto

@@ -32,7 +32,6 @@ chunker::chunker() {
 	buffer_cm = 0;
 	buffer_mb = 0;
 	buffer_count = 0;
-	report_common_variants=false;
 }
 
 chunker::~chunker() {

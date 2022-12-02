@@ -28,7 +28,7 @@
 void chunker::readData(std::string fmain, std::string region, int nthreads) {
 	tac.clock();
 	vrb.title("Reading input files");
-	vrb.bullet("Reading file         : [" + fmain + "]");
+	vrb.progress("  * Reading              : [" + fmain + "]");
 
 
 	bcf_srs_t * sr =  bcf_sr_init();
@@ -63,27 +63,27 @@ void chunker::readData(std::string fmain, std::string region, int nthreads) {
 			rAN = bcf_get_info_int32(sr->readers[0].header, line_main, "AN", &vAN, &nAN);
 			if ((nAC!=1)||(nAN!=1)) vrb.error("VCF/BCF needs AC/AN INFO fields to be present");
 			//Classify variant
-			double MAF = std::min(((vAN[0] - vAC[0])*1.0f)/(vAN[0]), (vAN[0]*1.0f)/(vAN[0]));
+			double MAF = std::min(((vAN[0] - vAC[0])*1.0f)/(vAN[0]), (vAC[0]*1.0f)/(vAN[0]));
 			const bool is_common = MAF >= sparse_maf;
 
 			positions_all_mb.push_back(line_main->pos + 1);
 			map_positions_all.insert(std::pair < int , int> (line_main->pos + 1, positions_all_mb.size()-1));
+			all2common.push_back(n_comm_variants_cnt);
 			if (is_common)
 			{
-				n_comm_variants_cnt++;
 				positions_common_mb.push_back(line_main->pos + 1);
 				common2all.push_back(positions_all_mb.size()-1);
-				map_positions_common.insert(std::pair < int , int> (line_main->pos + 1, positions_common_mb.size()-1));
+				n_comm_variants_cnt++;
+				//map_positions_common.insert(std::pair < int , int> (line_main->pos + 1, positions_common_mb.size()-1));
 			}
-
 		}
 	}
 	bcf_sr_destroy(sr);
 	if (itmp) free(itmp);
 	if (vAC) free(vAC);
 	if (vAN) free(vAN);
-	if (report_common_variants)
-		vrb.bullet("#variants            : [ " + stb.str(n_variants) + " | #common variants = " + stb.str(n_comm_variants_cnt) + "] (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
-	else
-		vrb.bullet("#variants            : [" + stb.str(n_variants) + "] (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
+	vrb.bullet("Input file read      : [" + fmain + "] (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
+	vrb.bullet("#variants            : [" + stb.str(n_variants) + " total | " +  stb.str(n_variants-n_comm_variants_cnt) + " rare | " +  stb.str(n_comm_variants_cnt) +" common]");
+	//vrb.bullet("#rare variants       : [" + stb.str(n_comm_variants_cnt) + "]");
+	//vrb.bullet("#common variants     : [" + stb.str(n_comm_variants_cnt) + "]");
 }

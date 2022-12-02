@@ -30,7 +30,7 @@ int chunker::interpolateCentiMorgan(const std::vector < int > & pos_bp, const st
 	while (i_locus<positions_mb.size() && positions_mb[i_locus] < pos_bp[0]) {
 		base = pos_cM[0];
 		dist = (pos_bp[0] - positions_mb[i_locus]);
-		positions_cm[i_locus] = base - mean_rate * dist;
+		positions_cm[i_locus] = std::max(0.0,base - mean_rate * dist);
 		n_interpolated ++;
 		i_locus ++;
 	}
@@ -74,7 +74,7 @@ void chunker::setGeneticMap(const gmap_reader & readerGM, const std::multimap < 
 	positions_cm = std::vector<float>(positions_mb.size(), -1);
 	int n_set = setCentiMorgan(readerGM.pos_bp, readerGM.pos_cm, map_positions, positions_cm);
 	int n_interpolated = interpolateCentiMorgan(readerGM.pos_bp, readerGM.pos_cm, map_positions, positions_mb, positions_cm);
-	vrb.bullet("cM interpolation [s=" + stb.str(n_set) + " / i=" + stb.str(n_interpolated) + "] (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
+	vrb.bullet("Map cM interpolation : [s=" + stb.str(n_set) + " / i=" + stb.str(n_interpolated) + "] (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
 }
 
 void chunker::setGeneticMap(const std::multimap < int, int >& map_positions, const std::vector<int>& positions_mb, std::vector<float>& positions_cm) {
@@ -85,5 +85,6 @@ void chunker::setGeneticMap(const std::multimap < int, int >& map_positions, con
 	const float baseline = std::max(positions_cm[0] - 1e-9,1e-9);
 	positions_cm[0] = 0;
 	for (int l = 1 ; l < positions_mb.size() ; l ++) positions_cm[l] = (positions_mb[l] * 1.0f / 1e6) - baseline;
-	vrb.bullet("cM constant [1cM=1Mb] (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
+	vrb.bullet("Genetic map          : [Not provided]");
+	vrb.bullet("Map cM constant      : [1cM=1Mb] (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
 }

@@ -44,11 +44,10 @@ void chunker::declare_options() {
 	opt_param.add_options()
 			("window-cm", bpo::value<float>()->default_value(4.0), "Minimal Window size in cM")
 			("window-mb", bpo::value<float>()->default_value(4.0), "Minimal Window size in Mb")
-			("window-count", bpo::value<int>()->default_value(1000), "Minimal window size in #variants")
+			("window-count", bpo::value<int>()->default_value(30000), "Minimal window size in #variants")
 			("buffer-cm", bpo::value<float>()->default_value(0.5), "Minimal buffer size in cM")
 			("buffer-mb", bpo::value<float>()->default_value(0.5), "Minimal buffer size in Mb")
-			("buffer-count", bpo::value<int>()->default_value(125), "Minimal buffer size in #variants")
-			("report-common-variants", "Report number of common variants. Requires AC/AN defined");
+			("buffer-count", bpo::value<int>()->default_value(3000), "Minimal buffer size in #variants");
 
 	bpo::options_description opt_algo ("Model parameters");
 	opt_algo.add_options()

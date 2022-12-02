@@ -27,7 +27,7 @@
 #define _CHUNKER_H
 
 #include <utils/otools.h>
-#include <containers/variant_map.h>
+#include <io/gmap_reader.h>
 
 class chunker {
 public:
@@ -46,10 +46,17 @@ public:
 	std::vector < float > positions_common_cm;
 	std::vector < int > positions_common_mb;
 
+	std::vector < int > all2common;
 	std::vector < int > common2all;
 
 	std::multimap < int, int > map_positions_all;	//associative container of variant with position in bp
-	std::multimap < int, int > map_positions_common;	//associative container of variant with position in bp
+
+	std::vector<float> chunk_cm_length;
+	std::vector<int> chunk_mb_length;
+	std::vector<int> chunk_common_count;
+
+
+	//std::multimap < int, int > map_positions_common;	//associative container of variant with position in bp
 
 	//std::vector < int > counterR;
 
@@ -61,8 +68,6 @@ public:
 	float buffer_cm;
 	float buffer_mb;
 	int buffer_count;
-
-	bool report_common_variants;
 
 	//CONSTRUCTOR
 	chunker();
@@ -79,7 +84,9 @@ public:
 	void verbose_files();
 
 	//FILE I/O
-	void split(output_file &, int &, std::string &, int, int);
+	void split_recursive(output_file &, int &, std::string &, int, int);
+	void split_sequential(output_file &, int &, std::string &, int, int, const bool);
+	void add_buffer(const int, const int, int&, int&);
 	void chunk();
 	void chunk(std::vector < std::string > &);
 

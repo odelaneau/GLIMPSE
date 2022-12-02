@@ -61,5 +61,5 @@ void gmap_reader::readGeneticMapFile(const std::string fmap) {
 	if (line_used < 2) vrb.error("Error parsing genetic file: not enough lines detected. GLIMPSE accepts only files a header line and at least two map entries. Please make sure you have at least three lines in your map file.");
 	if (line_used != line) vrb.warning("There are lines in the map file that have been excluded due to wrong formatting (not three columns?). Please check your map file carefully.");
 	fd_gmap.close();
-	vrb.bullet("GMAP parsing [n=" + stb.str(line_used) + "] (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
+	vrb.bullet("Genetic map          : [n=" + stb.str(line_used) + "] (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
 }
