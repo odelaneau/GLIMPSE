@@ -57,7 +57,7 @@ void caller::declare_options() {
 			("ne", bpo::value<int>()->default_value(100000), "Effective diploid population size")
 			("min-gl", bpo::value<float>()->default_value(1e-10f), "Expert option. Minimum haploid GL")
 			("err-imp", bpo::value<float>()->default_value(1e-12f), "Expert option. Imputation HMM error rate")
-			("err-phase", bpo::value<float>()->default_value(0.0001f), "Expert option. Imputation HMM error rate");
+			("err-phase", bpo::value<float>()->default_value(0.0001f), "Expert option. Phasing HMM error rate");
 
 	bpo::options_description opt_selection ("Selection parameters");
 	opt_selection.add_options()

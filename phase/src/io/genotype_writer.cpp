@@ -89,6 +89,7 @@ void genotype_writer::writeGenotypes(const std::string fname, OutputFormat outpu
 	float * posteriors = (float*)malloc(bcf_hdr_nsamples(hdr)*(H.max_ploidy+1)*sizeof(float));
 	//int * haplotypes = (int*)malloc(bcf_hdr_nsamples(hdr)*sizeof(int));
 
+	std::map<float,float*> map_ps;
 	const std::size_t nsites = V.vec_pos.size();
 	float prog_step = 1.0/nsites;
 	float prog_bar = 0.0;
@@ -146,19 +147,29 @@ void genotype_writer::writeGenotypes(const std::string fname, OutputFormat outpu
 				ptr_gps[i] ++;
 			}
 
-			// Store DS + GP rounded 4 decimals
-			dosages[i] = roundf(ds * 1000.0) / 1000.0;
-			posteriors[(H.max_ploidy+1)*i+0] = roundf(gp0 * 1000.0) / 1000.0;
-			posteriors[(H.max_ploidy+1)*i+1] = roundf(gp1 * 1000.0) / 1000.0;
+			// Store DS + GP rounded
+			dosages[i] = std::roundf(ds * 1000.0) / 1000.0;
+			posteriors[(H.max_ploidy+1)*i+0] = floorf(gp0 * 1000.0) / 1000.0;
+			posteriors[(H.max_ploidy+1)*i+1] = floorf(gp1 * 1000.0) / 1000.0;
+			map_ps.clear();
+			map_ps.insert(std::make_pair(1.0f-(gp0-posteriors[(H.max_ploidy+1)*i+0]),&posteriors[(H.max_ploidy+1)*i+0]));
+			map_ps.insert(std::make_pair(1.0f-(gp1-posteriors[(H.max_ploidy+1)*i+1]),&posteriors[(H.max_ploidy+1)*i+1]));
+
 			if (H.max_ploidy>1)
 			{
-				if (G.vecG[i]->ploidy > 1) posteriors[(H.max_ploidy+1)*i+2] = roundf(gp2 * 1000.0) / 1000.0;
+				if (G.vecG[i]->ploidy > 1)
+				{
+					posteriors[(H.max_ploidy+1)*i+2] = floorf(std::max(1.0f - (posteriors[(H.max_ploidy+1)*i+0]+posteriors[(H.max_ploidy+1)*i+1]), 0.0f)*1000.0)/1000.0;
+					map_ps.insert(std::make_pair(1.0f-(gp2-posteriors[(H.max_ploidy+1)*i+2]),&posteriors[(H.max_ploidy+1)*i+2]));
+				}
 				else
 				{
 					genotypes[H.max_ploidy*i+1] = bcf_int32_vector_end;
 					bcf_float_set(&posteriors[(H.max_ploidy+1)*i+2], bcf_float_vector_end);
 				}
 			}
+			for (auto iter = map_ps.begin(); iter != map_ps.end() && std::accumulate(std::next(posteriors,(H.max_ploidy+1)*i+0), std::next(posteriors,(H.max_ploidy+1)*i+G.vecG[i]->ploidy+1), 0.0f)<0.9999f; ++iter) *iter->second += 0.001f;
+
 			// Compute INFO/INFO statistics
 			ds_sum += ds;
 			if (H.fploidy == 2)

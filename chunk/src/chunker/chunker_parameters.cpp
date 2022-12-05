@@ -52,7 +52,8 @@ void chunker::declare_options() {
 	bpo::options_description opt_algo ("Model parameters");
 	opt_algo.add_options()
 			("recursive", "Recursive algorithm")
-			("sequential", "Sequential algorithm");
+			("sequential", "Sequential algorithm")
+			("uniform-number-variants","Try to uniform the number of variants in the sequential algorithm");
 
 	bpo::options_description opt_output ("Output files");
 	opt_output.add_options()

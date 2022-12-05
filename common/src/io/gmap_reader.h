@@ -27,7 +27,6 @@
 #define _GMAP_DATA_H
 
 #include <utils/otools.h>
-#include <io/gmap_reader.h>
 
 class gmap_reader {
 public:

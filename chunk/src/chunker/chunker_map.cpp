@@ -70,7 +70,7 @@ int chunker::interpolateCentiMorgan(const std::vector < int > & pos_bp, const st
 
 void chunker::setGeneticMap(const gmap_reader & readerGM, const std::multimap < int, int >& map_positions, const std::vector<int>& positions_mb, std::vector<float>& positions_cm) {
 	tac.clock();
-	if (positions_mb.size() == 0) vrb.error("No variant in common between reference and target panel. This can indicate a problem in the input files or during the parsing.");
+	if (positions_mb.size() == 0) vrb.error("No variant found in region.");
 	positions_cm = std::vector<float>(positions_mb.size(), -1);
 	int n_set = setCentiMorgan(readerGM.pos_bp, readerGM.pos_cm, map_positions, positions_cm);
 	int n_interpolated = interpolateCentiMorgan(readerGM.pos_bp, readerGM.pos_cm, map_positions, positions_mb, positions_cm);
@@ -79,7 +79,7 @@ void chunker::setGeneticMap(const gmap_reader & readerGM, const std::multimap < 
 
 void chunker::setGeneticMap(const std::multimap < int, int >& map_positions, const std::vector<int>& positions_mb, std::vector<float>& positions_cm) {
 	tac.clock();
-	if (positions_mb.size() == 0) vrb.error("No variant in common between reference and target panel. This can indicate a problem in the input files or during the parsing.");
+	if (positions_mb.size() == 0) vrb.error("No variant found in region.");
 	positions_cm = std::vector<float>(positions_mb.size(), -1);
 	positions_cm[0] = positions_mb[0] * 1.0f / 1e6;
 	const float baseline = std::max(positions_cm[0] - 1e-9,1e-9);

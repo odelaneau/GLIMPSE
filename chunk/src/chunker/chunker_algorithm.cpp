@@ -188,6 +188,8 @@ void chunker::chunk() {
 	if (positions_all_mb.size() == 0) vrb.error("No markers in region: " + options["region"].as < std::string > () + ". Check chromosome name and start/end positions.");
 
 	int cidx = 0;
+	int cidx_uniform=0;
+
 	vrb.title("Splitting data into chunks and writting to [" + options["output"].as < std::string > () + "]");
 	output_file fd(options["output"].as < std::string > ());
 
@@ -213,21 +215,56 @@ void chunker::chunk() {
 		}
 		if (i==10000)
 		{
-			vrb.bullet("Could not find a sequential solutution to the problem. Running recursive algorithm.");
+			vrb.bullet("Could not find a sequential solution to the problem. Running recursive algorithm.");
 			split_recursive(fd, cidx, chrID, 0, positions_all_mb.size() - 1);
 		}
 		else
 		{
-			vrb.bullet("Solution found. Writing chunks to file.");
+			vrb.bullet("Solution found ["+ stb.str(i) + "/10000]. Writing chunks to file.");
 			chunk_cm_length.clear();
 			chunk_mb_length.clear();
 			chunk_common_count.clear();
 			cidx=0;
 			split_sequential(fd, cidx, chrID, 0, positions_all_mb.size() - 1, true);
+
+			if (options.count("uniform-number-variants"))
+			{
+				fd.close();
+				output_file fd(options["output"].as < std::string > () + "_uniform");
+				for (int j=0; j<chunk_common_count.size(); ++j) if (chunk_common_count[j] > window_count) window_count=chunk_common_count[j];
+				cidx_uniform=0;
+				i=0;
+
+				split_sequential(fd, cidx_uniform, chrID, 0, positions_all_mb.size() - 1, false);
+
+				while ((chunk_cm_length.back() < window_cm || chunk_mb_length.back() < window_mb) && i<10000)
+				{
+					chunk_cm_length.clear();
+					chunk_mb_length.clear();
+					chunk_common_count.clear();
+					window_count+=100;
+					cidx_uniform=0;
+					vrb.progress("First solution failed. Trying again: [" + stb.str(window_cm) + " cM | " + stb.str(window_mb/1e6) + " Mb | " + stb.str(window_count) + " common variants]" + "\tAttempt " + stb.str(i+1) + "/10000.", i/10000);
+					split_sequential(fd, cidx_uniform, chrID, 0, positions_all_mb.size() - 1, false);
+					++i;
+				}
+				if (i==10000) vrb.bullet("Could not find a sequential solution to the problem for the uniform pass.");
+				else
+				{
+					vrb.bullet("Uniform solution found ["+ stb.str(i) + "/10000]. Writing chunks to file.");
+					chunk_cm_length.clear();
+					chunk_mb_length.clear();
+					chunk_common_count.clear();
+					cidx_uniform=0;
+					split_sequential(fd, cidx_uniform, chrID, 0, positions_all_mb.size() - 1, true);
+				}
+			}
 		}
 	}
 
 	vrb.bullet("#chunks = " + stb.str(cidx));
+	if (options.count("uniform-number-variants")) vrb.bullet("#chunks uniform soluation = " + stb.str(cidx_uniform));
+
 	fd.close();
 
 	//Finalize
