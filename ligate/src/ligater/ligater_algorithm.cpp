@@ -140,7 +140,7 @@ void ligater::scan_overlap(const int ifname, const char * seek_chr, int seek_pos
 	sr->collapse = COLLAPSE_NONE;
 	sr->max_unpack = BCF_UN_FMT;
 
-	int n_threads = options["thread"].as < int > ();
+	int n_threads = options["threads"].as < int > ();
 	if (n_threads > 1) bcf_sr_set_threads(sr, n_threads);
 
 	if (!bcf_sr_add_reader (sr, filenames[ifname-2].c_str())) vrb.error("Problem opening/creating index file for [" + filenames[ifname-2] + "]");
@@ -222,7 +222,7 @@ void ligater::ligate() {
 	if (fname.size() > 3 && fname.substr(fname.size()-3) == "bcf") { file_format = "wb"; file_type = OFILE_BCFC; }
 	bcf_srs_t * sr =  bcf_sr_init();
 	sr->require_index = 1;
-	int n_threads = options["thread"].as < int > ();
+	int n_threads = options["threads"].as < int > ();
 	if (n_threads > 1) if (bcf_sr_set_threads(sr, n_threads) < 0) vrb.error("Failed to create threads");
 
 	bcf_hdr_t * out_hdr = NULL;
@@ -433,11 +433,11 @@ void ligater::ligate() {
 	if (n_variants == 0) vrb.error("No variants to be phased in files");
 	vrb.title("Writing completed [L=" + stb.str(n_variants) + "] (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
 
-	if (options.count("index"))
+	if (!options.count("no-index"))
 	{
 		vrb.title("Creating index");
 		//create index using htslib (csi, using default bcftools option 14)
-		if (!bcf_index_build3(std::string(options["output"].as < std::string > ()).c_str(), NULL, 14, options["thread"].as < int > ())) vrb.print("Index successfully created");
+		if (!bcf_index_build3(std::string(options["output"].as < std::string > ()).c_str(), NULL, 14, options["threads"].as < int > ())) vrb.print("Index successfully created");
 		else vrb.warning("Problem building the index for the output file. This can indicate a problem during ligation. Try to build the index using tabix/bcftools.");
 	}
 }

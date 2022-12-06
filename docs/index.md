@@ -17,7 +17,7 @@ A tool for low-coverage whole-genome sequencing imputation
 <br>
 
 {: .highlight }
-Website under construction. A complete release of GLIMPSE2 will be available by the 5th of December 2022.
+Website under construction. A complete release of GLIMPSE2 will be available by the 7th of December 2022.
 
 ## About
 
@@ -45,7 +45,7 @@ To use the joint-model, particularly useful for many samples at higher coverages
 
 {: .new }
 > **Version `2.0.0` will be soon available!**
-> See [the CHANGELOG](https://github.com/odelaneau/GLIMPSE/blob/main/docs/CHANGELOG.md) for details.
+> See [the CHANGELOG](https://github.com/odelaneau/GLIMPSE/blob/master/docs/CHANGELOG.md) for details.
 
 ## Description
 
@@ -77,7 +77,7 @@ GLIMPSE is developed by Simone Rubinacci & Olivier Delaneau.
 
 ### License
 
-GLIMPSE is distributed with [MIT license](https://github.com/odelaneau/GLIMPSE/blob/main/LICENSE).
+GLIMPSE is distributed with [MIT license](https://github.com/odelaneau/GLIMPSE/blob/master/LICENSE).
 
 ### Organisations
 

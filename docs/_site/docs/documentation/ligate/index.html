@@ -15,13 +15,13 @@
   <link rel="stylesheet" href="/GLIMPSE/assets/css/just-the-docs-default.css">
 
   
-    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-162723563-1"></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-2TSEMF47BK"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
 
-      gtag('config', 'UA-162723563-1', { 'anonymize_ip': true });
+      gtag('config', 'G-2TSEMF47BK', { 'anonymize_ip': true });
     </script>
 
   
@@ -206,7 +206,7 @@
       </h1>
     
 
-<p class="highlight">Website under construction. A complete release of GLIMPSE2 will be available by the 5th of December 2022.</p>
+<p class="highlight">Website under construction. A complete release of GLIMPSE2 will be available by the 7th of December 2022.</p>
       <h2 class="no_toc text-delta" id="table-of-contents">
         
         
@@ -222,8 +222,6 @@
   <li><a href="#command-line-options" id="markdown-toc-command-line-options">Command line options</a>    <ol>
       <li><a href="#basic-options" id="markdown-toc-basic-options">Basic options</a></li>
       <li><a href="#input-files" id="markdown-toc-input-files">Input files</a></li>
-      <li><a href="#parameters-1" id="markdown-toc-parameters-1">Parameters 1</a></li>
-      <li><a href="#parameters-2" id="markdown-toc-parameters-2">Parameters 2</a></li>
       <li><a href="#output-files" id="markdown-toc-output-files">Output files</a></li>
     </ol>
   </li>
@@ -248,7 +246,10 @@
 <p>Simple run</p>
 
 <div class="code-example">
-  <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+  <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c">#ls -1v in order to keep the order within the chromosome</span>
+<span class="nb">ls</span> <span class="nt">-1v</span> chr20/<span class="k">*</span>.imputed.bcf <span class="o">&gt;</span> list_imputed_files_chr20.txt
+
+GLIMPSE2_ligate <span class="nt">--input</span> list_imputed_files_chr20.txt <span class="nt">--output</span> ligated_chr20.bcf <span class="nt">--threads</span> 2
 </code></pre></div>  </div>
 </div><hr />
       <h3 id="command-line-options">
@@ -268,8 +269,36 @@
       </h4>
     
 
-<p>| Option name 	       | Argument| Default  | Description |
-|:———————|:——–|:———|:————————————-|</p>
+<div class="table-wrapper"><table>
+  <thead>
+    <tr>
+      <th style="text-align: left">Option name</th>
+      <th style="text-align: left">Argument</th>
+      <th style="text-align: left">Default</th>
+      <th style="text-align: left">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left">--help</td>
+      <td style="text-align: left">NA</td>
+      <td style="text-align: left">NA</td>
+      <td style="text-align: left">Produces help message</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">--seed</td>
+      <td style="text-align: left">INT</td>
+      <td style="text-align: left">15052011</td>
+      <td style="text-align: left">Seed of the random number generator</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">-T [ --thread ]</td>
+      <td style="text-align: left">INT</td>
+      <td style="text-align: left">1</td>
+      <td style="text-align: left">Number of threads</td>
+    </tr>
+  </tbody>
+</table></div>
       <h4 id="input-files">
         
         
@@ -279,30 +308,24 @@
       </h4>
     
 
-<p>| Option name 	       | Argument| Default  | Description |
-|:———————|:——–|:———|:————————————-|</p>
-      <h4 id="parameters-1">
-        
-        
-          <a href="#parameters-1" class="anchor-heading" aria-labelledby="parameters-1"><svg viewBox="0 0 16 16" aria-hidden="true"><use xlink:href="#svg-link"></use></svg></a> Parameters 1
-        
-        
-      </h4>
-    
-
-<p>| Option name 	      | Argument|  Default  | Description |
-|:——————–|:——–|:———-|:————————————-|</p>
-      <h4 id="parameters-2">
-        
-        
-          <a href="#parameters-2" class="anchor-heading" aria-labelledby="parameters-2"><svg viewBox="0 0 16 16" aria-hidden="true"><use xlink:href="#svg-link"></use></svg></a> Parameters 2
-        
-        
-      </h4>
-    
-
-<p>| Option name 	      | Argument|  Default  | Description |
-|:——————–|:——–|:———-|:————————————-|</p>
+<div class="table-wrapper"><table>
+  <thead>
+    <tr>
+      <th style="text-align: left">Option name</th>
+      <th style="text-align: left">Argument</th>
+      <th style="text-align: left">Default</th>
+      <th style="text-align: left">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left">-I [--input ]</td>
+      <td style="text-align: left">STRING</td>
+      <td style="text-align: left">NA</td>
+      <td style="text-align: left">Text file containing all VCF/BCF to ligate, one file per line</td>
+    </tr>
+  </tbody>
+</table></div>
       <h4 id="output-files">
         
         
@@ -312,8 +335,36 @@
       </h4>
     
 
-<p>| Option name 	       | Argument| Default  | Description |
-|:———————|:——–|:———|:————————————-|</p>
+<div class="table-wrapper"><table>
+  <thead>
+    <tr>
+      <th style="text-align: left">Option name</th>
+      <th style="text-align: left">Argument</th>
+      <th style="text-align: left">Default</th>
+      <th style="text-align: left">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left">-O [--output ]</td>
+      <td style="text-align: left">STRING</td>
+      <td style="text-align: left">NA</td>
+      <td style="text-align: left">Phased and imputed haplotypes in VCF/BCF format</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">--no-index</td>
+      <td style="text-align: left">STRING</td>
+      <td style="text-align: left">NA</td>
+      <td style="text-align: left">If specified, the ligated VCF/BCF is not indexed by GLIMPSE2 for random access to genomic regions</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">--log</td>
+      <td style="text-align: left">STRING</td>
+      <td style="text-align: left">NA</td>
+      <td style="text-align: left">Log file</td>
+    </tr>
+  </tbody>
+</table></div>
 
         
 
@@ -327,7 +378,7 @@
               <p><a href="#top" id="back-to-top">Back to top</a></p>
             
 
-            <p class="text-small text-grey-dk-100 mb-0">Copyright &copy; 2022-2023 Simone Rubinacci & Olivier Delaneau | All Rights Reserved | Distributed by an <a href="https://github.com/srubinacci/ideal-barnacle/tree/main/LICENSE.txt">MIT license.</a></p>
+            <p class="text-small text-grey-dk-100 mb-0">Copyright &copy; 2022-2023 Simone Rubinacci & Olivier Delaneau | All Rights Reserved | Distributed by an <a href="https://github.com/odelaneau/GLIMPSE/blob/master/LICENSE">MIT license.</a></p>
 
             
               <div class="d-flex mt-2">

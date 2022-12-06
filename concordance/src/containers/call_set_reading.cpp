@@ -56,7 +56,7 @@ void call_set::readData(std::vector < std::string > & ftruth, std::vector < std:
 	const bool out_rej_sites = options.count("out-rej-sites");
 	const bool out_conc_sites =  options.count("out-conc-sites");
 	const bool out_disc_sites =  options.count("out-disc-sites");
-	int nthreads = options["thread"].as < int > ();
+	int nthreads = options["threads"].as < int > ();
 	fploidy=2;
 
 	stats2D r2_variant;
@@ -87,7 +87,7 @@ void call_set::readData(std::vector < std::string > & ftruth, std::vector < std:
 			{
 				if (sr->errnum != idx_load_failed) vrb.error("Failed to open file: " + fnames[reader_id] + "");
 				bcf_sr_remove_reader (sr, reader_id);
-				int ret = bcf_index_build3(fnames[reader_id].c_str(), NULL, 14, options["thread"].as < int > ());
+				int ret = bcf_index_build3(fnames[reader_id].c_str(), NULL, 14, options["threads"].as < int > ());
 
 				if (ret != 0)
 				{

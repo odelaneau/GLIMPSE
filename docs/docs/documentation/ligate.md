@@ -8,7 +8,7 @@ parent: Documentation
 {: .no_toc .text-center }
 
 {: .highlight }
-Website under construction. A complete release of GLIMPSE2 will be available by the 5th of December 2022.
+Website under construction. A complete release of GLIMPSE2 will be available by the 7th of December 2022.
 
 ## Table of contents
 {: .no_toc .text-delta }
@@ -26,7 +26,10 @@ Simple run
 
 <div class="code-example" markdown="1">
 ```bash
+#ls -1v in order to keep the order within the chromosome
+ls -1v chr20/*.imputed.bcf > list_imputed_files_chr20.txt
 
+GLIMPSE2_ligate --input list_imputed_files_chr20.txt --output ligated_chr20.bcf --threads 2
 ```
 </div>
 
@@ -38,29 +41,21 @@ Simple run
 
 | Option name 	       | Argument| Default  | Description |
 |:---------------------|:--------|:---------|:-------------------------------------|
-
+| \-\-help             | NA      | NA       | Produces help message |
+| \-\-seed             | INT     | 15052011 | Seed of the random number generator  |
+| \-T \[ \-\-thread \] | INT     | 1        | Number of threads |
 
 #### Input files
 
 | Option name 	       | Argument| Default  | Description |
 |:---------------------|:--------|:---------|:-------------------------------------|
-
-
-
-#### Parameters 1
-
-| Option name 	      | Argument|  Default  | Description |
-|:--------------------|:--------|:----------|:-------------------------------------|
-
-
-#### Parameters 2
-
-| Option name 	      | Argument|  Default  | Description |
-|:--------------------|:--------|:----------|:-------------------------------------|
-
+| \-I \[\-\-input \]   | STRING  | NA       | Text file containing all VCF/BCF to ligate, one file per line |
 
 #### Output files
 
 | Option name 	       | Argument| Default  | Description |
 |:---------------------|:--------|:---------|:-------------------------------------|
+| \-O \[\-\-output \]  | STRING  | NA       | Phased and imputed haplotypes in VCF/BCF format |
+| \-\-no-index         | STRING  | NA       | If specified, the ligated VCF/BCF is not indexed by GLIMPSE2 for random access to genomic regions |
+| \-\-log              | STRING  | NA       | Log file  |
 

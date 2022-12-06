@@ -31,7 +31,7 @@ void ligater::declare_options() {
 	opt_base.add_options()
 			("help", "Produce help message")
 			("seed", bpo::value<int>()->default_value(15052011), "Seed of the random number generator")
-			("thread", bpo::value<int>()->default_value(1), "Number of threads");
+			("threads", bpo::value<int>()->default_value(1), "Number of threads");
 
 	bpo::options_description opt_input ("Input files");
 	opt_input.add_options()
@@ -40,7 +40,7 @@ void ligater::declare_options() {
 	bpo::options_description opt_output ("Output files");
 	opt_output.add_options()
 			("output,O", bpo::value< std::string >(), "Output ligated file in VCF/BCF format")
-			("index", "Whether to index the ligated output (csi format)");
+			("no-index", "Whether to index the ligated output (csi format)");
 			("log", bpo::value< std::string >(), "Log file");
 
 	descriptions.add(opt_base).add(opt_input).add(opt_output);
@@ -76,7 +76,7 @@ void ligater::check_options() {
 	if (options.count("seed") && options["seed"].as < int > () < 0)
 		vrb.error("Random number generator needs a positive seed value");
 
-	if (options["thread"].as < int > () < 1)
+	if (options["threads"].as < int > () < 1)
 		vrb.error("Number of threads is a strictly positive number.");
 }
 
@@ -86,12 +86,12 @@ void ligater::verbose_files() {
 	vrb.title("Files:");
 	vrb.bullet("Input LIST     : [" + options["input"].as < std::string > () + "]");
 	vrb.bullet("Output VCF     : [" + options["output"].as < std::string > () + "]");
-	vrb.bullet("Index output   : [" + no_yes[options.count("index")] + "]");
+	vrb.bullet("Index output   : [" + no_yes[!options.count("no-index")] + "]");
 	if (options.count("log")) vrb.bullet("Output LOG    : [" + options["log"].as < std::string > () + "]");
 }
 
 void ligater::verbose_options() {
 	vrb.title("Parameters:");
 	vrb.bullet("Seed           : [" + stb.str(options["seed"].as < int > ()) + "]");
-	vrb.bullet("#Threads       : [" + stb.str(options["thread"].as < int > ()) + "]");
+	vrb.bullet("#Threads       : [" + stb.str(options["threads"].as < int > ()) + "]");
 }

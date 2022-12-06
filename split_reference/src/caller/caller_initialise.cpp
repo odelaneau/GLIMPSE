@@ -39,9 +39,9 @@ void caller::read_files_and_initialise() {
 
 	//step0: Initialize seed & other
 	rng.setSeed(options["seed"].as < int > ());
-	if (options["thread"].as < int > () > 1) {
+	if (options["threads"].as < int > () > 1) {
 		i_workers = 0; i_jobs = 0;
-		id_workers = std::vector < pthread_t > (options["thread"].as < int > ());
+		id_workers = std::vector < pthread_t > (options["threads"].as < int > ());
 		pthread_mutex_init(&mutex_workers, NULL);
 	}
 
@@ -70,7 +70,7 @@ void caller::read_files_and_initialise() {
 		std::replace( reg_out.begin(), reg_out.end(), '-', '_');
 
 		ref_genotype_reader readerG(H,V, input_gregion[i], options["sparse-maf"].as < float > (), options.count("keep-monomorphic-ref-sites"));
-		readerG.readRefPanel(options["reference"].as<std::string>(),options["thread"].as < int > () );
+		readerG.readRefPanel(options["reference"].as<std::string>(),options["threads"].as < int > () );
 
 		if (readerGM.pos_cm.size() > 1) V.setGeneticMap(readerGM);
 		else V.setGeneticMap();

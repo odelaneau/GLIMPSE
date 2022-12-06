@@ -15,13 +15,13 @@
   <link rel="stylesheet" href="/GLIMPSE/assets/css/just-the-docs-default.css">
 
   
-    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-162723563-1"></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-2TSEMF47BK"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
 
-      gtag('config', 'UA-162723563-1', { 'anonymize_ip': true });
+      gtag('config', 'G-2TSEMF47BK', { 'anonymize_ip': true });
     </script>
 
   
@@ -206,7 +206,7 @@
       </h1>
     
 
-<p class="highlight">Website under construction. A complete release of GLIMPSE2 will be available by the 5th of December 2022.</p>
+<p class="highlight">Website under construction. A complete release of GLIMPSE2 will be available by the 7th of December 2022.</p>
       <h2 class="no_toc text-delta" id="table-of-contents">
         
         
@@ -219,12 +219,9 @@
 <ol id="markdown-toc">
   <li><a href="#description" id="markdown-toc-description">Description</a></li>
   <li><a href="#usage" id="markdown-toc-usage">Usage</a></li>
-  <li><a href="#command-line-options" id="markdown-toc-command-line-options">Command line options</a></li>
-  <li><a href="#command-line-options-1" id="markdown-toc-command-line-options-1">Command line options</a>    <ol>
+  <li><a href="#command-line-options" id="markdown-toc-command-line-options">Command line options</a>    <ol>
       <li><a href="#basic-options" id="markdown-toc-basic-options">Basic options</a></li>
-      <li><a href="#input-files" id="markdown-toc-input-files">Input files</a></li>
-      <li><a href="#parameters-1" id="markdown-toc-parameters-1">Parameters 1</a></li>
-      <li><a href="#parameters-2" id="markdown-toc-parameters-2">Parameters 2</a></li>
+      <li><a href="#input-parameters" id="markdown-toc-input-parameters">Input parameters</a></li>
       <li><a href="#output-files" id="markdown-toc-output-files">Output files</a></li>
     </ol>
   </li>
@@ -249,21 +246,13 @@
 <p>Simple run</p>
 
 <div class="code-example">
-  <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+  <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>GLIMPSE2_split_reference <span class="nt">--input-region</span> chr20:7702567-12266861 <span class="nt">--output-region</span> chr20:7952603-12016861 <span class="nt">--output</span> binary_reference_panel <span class="nt">--reference</span> reference_panel_full_chr20.bcf <span class="nt">--map</span> chr20.b38.gmap.gz <span class="nt">--threads</span> 4
 </code></pre></div>  </div>
 </div><hr />
       <h3 id="command-line-options">
         
         
           <a href="#command-line-options" class="anchor-heading" aria-labelledby="command-line-options"><svg viewBox="0 0 16 16" aria-hidden="true"><use xlink:href="#svg-link"></use></svg></a> Command line options
-        
-        
-      </h3>
-    
-      <h3 id="command-line-options-1">
-        
-        
-          <a href="#command-line-options-1" class="anchor-heading" aria-labelledby="command-line-options-1"><svg viewBox="0 0 16 16" aria-hidden="true"><use xlink:href="#svg-link"></use></svg></a> Command line options
         
         
       </h3>
@@ -277,41 +266,93 @@
       </h4>
     
 
-<p>| Option name 	       | Argument| Default  | Description |
-|:———————|:——–|:———|:————————————-|</p>
-      <h4 id="input-files">
+<div class="table-wrapper"><table>
+  <thead>
+    <tr>
+      <th style="text-align: left">Option name</th>
+      <th style="text-align: left">Argument</th>
+      <th style="text-align: left">Default</th>
+      <th style="text-align: left">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left">--help</td>
+      <td style="text-align: left">NA</td>
+      <td style="text-align: left">NA</td>
+      <td style="text-align: left">Produces help message</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">--seed</td>
+      <td style="text-align: left">INT</td>
+      <td style="text-align: left">15052011</td>
+      <td style="text-align: left">Seed of the random number generator</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">-T [ --thread ]</td>
+      <td style="text-align: left">INT</td>
+      <td style="text-align: left">1</td>
+      <td style="text-align: left">Number of threads</td>
+    </tr>
+  </tbody>
+</table></div>
+      <h4 id="input-parameters">
         
         
-          <a href="#input-files" class="anchor-heading" aria-labelledby="input-files"><svg viewBox="0 0 16 16" aria-hidden="true"><use xlink:href="#svg-link"></use></svg></a> Input files
+          <a href="#input-parameters" class="anchor-heading" aria-labelledby="input-parameters"><svg viewBox="0 0 16 16" aria-hidden="true"><use xlink:href="#svg-link"></use></svg></a> Input parameters
         
         
       </h4>
     
 
-<p>| Option name 	       | Argument| Default  | Description |
-|:———————|:——–|:———|:————————————-|</p>
-      <h4 id="parameters-1">
-        
-        
-          <a href="#parameters-1" class="anchor-heading" aria-labelledby="parameters-1"><svg viewBox="0 0 16 16" aria-hidden="true"><use xlink:href="#svg-link"></use></svg></a> Parameters 1
-        
-        
-      </h4>
-    
-
-<p>| Option name 	      | Argument|  Default  | Description |
-|:——————–|:——–|:———-|:————————————-|</p>
-      <h4 id="parameters-2">
-        
-        
-          <a href="#parameters-2" class="anchor-heading" aria-labelledby="parameters-2"><svg viewBox="0 0 16 16" aria-hidden="true"><use xlink:href="#svg-link"></use></svg></a> Parameters 2
-        
-        
-      </h4>
-    
-
-<p>| Option name 	      | Argument|  Default  | Description |
-|:——————–|:——–|:———-|:————————————-|</p>
+<div class="table-wrapper"><table>
+  <thead>
+    <tr>
+      <th style="text-align: left">Option name</th>
+      <th style="text-align: left">Argument</th>
+      <th style="text-align: left">Default</th>
+      <th style="text-align: left">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left">--input-region</td>
+      <td style="text-align: left">STRING</td>
+      <td style="text-align: left">NA</td>
+      <td style="text-align: left">Imputation region with buffers</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">--output-region</td>
+      <td style="text-align: left">STRING</td>
+      <td style="text-align: left">NA</td>
+      <td style="text-align: left">Imputation region without buffers</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">-R [ --reference ]</td>
+      <td style="text-align: left">FILE</td>
+      <td style="text-align: left">NA</td>
+      <td style="text-align: left">Reference panel of haplotypes in VCF/BCF format</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">-M [ --map ]</td>
+      <td style="text-align: left">FILE</td>
+      <td style="text-align: left">NA</td>
+      <td style="text-align: left">Genetic map</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">--sparse-maf</td>
+      <td style="text-align: left">FLOAT</td>
+      <td style="text-align: left">=0.001</td>
+      <td style="text-align: left">Expert setting: rare variant threshold</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">--keep-monomorphic-ref-sites</td>
+      <td style="text-align: left">NA</td>
+      <td style="text-align: left">NA</td>
+      <td style="text-align: left">Keeps monomorphic markers in the reference panel, that are removed by default</td>
+    </tr>
+  </tbody>
+</table></div>
       <h4 id="output-files">
         
         
@@ -321,8 +362,30 @@
       </h4>
     
 
-<p>| Option name 	       | Argument| Default  | Description |
-|:———————|:——–|:———|:————————————-|</p>
+<div class="table-wrapper"><table>
+  <thead>
+    <tr>
+      <th style="text-align: left">Option name</th>
+      <th style="text-align: left">Argument</th>
+      <th style="text-align: left">Default</th>
+      <th style="text-align: left">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left">-O [--output ]</td>
+      <td style="text-align: left">STRING</td>
+      <td style="text-align: left">NA</td>
+      <td style="text-align: left">Prefix of the output file (region and extension are automatically added)</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">--log</td>
+      <td style="text-align: left">STRING</td>
+      <td style="text-align: left">NA</td>
+      <td style="text-align: left">Log file</td>
+    </tr>
+  </tbody>
+</table></div>
 
         
 
@@ -336,7 +399,7 @@
               <p><a href="#top" id="back-to-top">Back to top</a></p>
             
 
-            <p class="text-small text-grey-dk-100 mb-0">Copyright &copy; 2022-2023 Simone Rubinacci & Olivier Delaneau | All Rights Reserved | Distributed by an <a href="https://github.com/srubinacci/ideal-barnacle/tree/main/LICENSE.txt">MIT license.</a></p>
+            <p class="text-small text-grey-dk-100 mb-0">Copyright &copy; 2022-2023 Simone Rubinacci & Olivier Delaneau | All Rights Reserved | Distributed by an <a href="https://github.com/odelaneau/GLIMPSE/blob/master/LICENSE">MIT license.</a></p>
 
             
               <div class="d-flex mt-2">

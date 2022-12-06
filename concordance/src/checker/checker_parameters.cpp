@@ -31,17 +31,17 @@ void checker::declare_options() {
 	opt_base.add_options()
 			("help", "Produce help message")
 			("seed", bpo::value<int>()->default_value(15052011), "Seed of the random number generator")
-			("thread", bpo::value<int>()->default_value(1), "Number of threads");
+			("threads", bpo::value<int>()->default_value(1), "Number of threads");
 
-	bpo::options_description opt_input ("Input files");
+	bpo::options_description opt_input ("Input parameters");
 	opt_input.add_options()
-			("input", bpo::value< std::string >(), "File listing True, Imputed, Frequencies and Regions")
+			("input", bpo::value< std::string >(), "File listing in order: regions frequencies validation and imputed dataset. For genome-wide concordance, add more lines specifying different chromosomes.")
 			("samples", bpo::value< std::string >(), "List of samples to process, one sample ID per line")
 			("gt-val", "Uses hard called genotypes rather than phread-scaled likelihoods for the validation dataset, reading them from FORMAT/GT field.")
 			("gt-tar", "Uses FORMAT/GT field to determine the best-guess genotype rather than the higher FORMAT/GP (default). FORMAT/DS are FORMAT/GP fields are still required for calibration and rsquared calculations.");
 
 
-	bpo::options_description opt_algo ("Parameters");
+	bpo::options_description opt_algo ("Other parameters");
 	opt_algo.add_options()
 			("af-tag", bpo::value< std::string >()->default_value("AF"), "Allele frequency INFO tag to use for binning. By default the allele frequency is estimated from the INFO/AF tag.")
 			("use-alt-af", "If specified, the metrics work on the ALT allele frequency (range [0,1]), rather than minor allele frequency (range [0,0.5]).")
@@ -59,7 +59,7 @@ void checker::declare_options() {
 
 	bpo::options_description opt_output ("Output files");
 	opt_output.add_options()
-			("output,O", bpo::value< std::string >(), "Report files")
+			("output,O", bpo::value< std::string >(), "Prefix of the output files (extensions are automatically added)")
 			("log", bpo::value< std::string >(), "Log file");
 
 	descriptions.add(opt_base).add(opt_input).add(opt_algo).add(opt_output);
@@ -95,7 +95,7 @@ void checker::check_options() {
 	if ((options.count("bins")+options.count("allele-counts")+options.count("ac-bins"))+options.count("groups") != 1)
 		vrb.error("You must specify only one of --bins or --ac-bins or --allele-counts or --groups");
 
-	if (options["thread"].as < int > () < 1)
+	if (options["threads"].as < int > () < 1)
 		vrb.error("Number of threads is a strictly positive number.");
 
 	//if (options.count("min-tar-gp") &&  options.count("gt-tar"))
@@ -129,7 +129,7 @@ void checker::verbose_options() {
 	vrb.title("Parameters:");
 	vrb.bullet("Output            : " + options["output"].as < std::string > ());
 	vrb.bullet("Seed              : " + stb.str(options["seed"].as < int > ()));
-	vrb.bullet("#Threads          : " + stb.str(options["thread"].as < int > ()));
+	vrb.bullet("#Threads          : " + stb.str(options["threads"].as < int > ()));
 	if (!options.count("gt-val"))
 	{
 		vrb.bullet("Min validation GL : " + stb.str(options["min-val-gl"].as < double > ()));

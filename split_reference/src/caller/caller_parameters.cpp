@@ -32,13 +32,12 @@ void caller::declare_options() {
 	opt_base.add_options()
 			("help", "Produce help message")
 			("seed", bpo::value<int>()->default_value(15052011), "Seed of the random number generator")
-			("thread", bpo::value<int>()->default_value(1), "Number of threads");
+			("threads", bpo::value<int>()->default_value(1), "Number of threads");
 
 	bpo::options_description opt_input ("Input parameters");
 	opt_input.add_options()
-			("input-file", bpo::value < std::string >(), "Text file containing chunks (output of GLIMPSE_chunk)")
-			("input-region", bpo::value < std::string >(), "Region to be scanned (buffers included)")
-			("output-region", bpo::value < std::string >(), "Phased genomic region to output (same as --input-region but without buffers)")
+			("input-region", bpo::value < std::string >(), "Imputation region with buffers")
+			("output-region", bpo::value < std::string >(), "Imputation region without buffers")
 			("reference,R", bpo::value < std::string >(), "Reference panel of haplotypes in VCF/BCF format")
 			("map,M", bpo::value < std::string >(), "Genetic map")
 			("sparse-maf", bpo::value<float>()->default_value(0.001f), "Expert setting: sites below this MAF are represented/processed using sparse data structures when using VCF/BCF reference panel. Please do not change if not necessary: performance of the software is highly dependent on this parameter.")
@@ -46,7 +45,7 @@ void caller::declare_options() {
 
 	bpo::options_description opt_output ("Output parameters");
 	opt_output.add_options()
-			("output,O", bpo::value< std::string >(), "Prefix of the output file [region and extension is automatically added]")
+			("output,O", bpo::value< std::string >(), "Prefix of the output file [region and extension are automatically added]")
 			("log", bpo::value< std::string >(), "Log file");
 
 	descriptions.add(opt_base).add(opt_input).add(opt_output);
@@ -73,11 +72,8 @@ void caller::parse_command_line(std::vector < std::string > & args) {
 }
 
 void caller::check_options() {
-	if (!options.count("input-file") && !(options.count("input-region") && options.count("output-region")))
-			vrb.error("You must specify input files using one of the following options: --input-file or both --input-region / --output-region");
-
-	if (options.count("input-file") && options.count("input-region") > 1)
-			vrb.error("You must specify only input parameter between --input-file, --input-region");
+	if (!(options.count("input-region") && options.count("output-region")))
+			vrb.error("You must specify input files using both --input-region / --output-region");
 
 	if (!options.count("output"))
 		vrb.error("You must specify a output file with --output");
@@ -88,7 +84,7 @@ void caller::check_options() {
 	if (options.count("seed") && options["seed"].as < int > () < 0)
 		vrb.error("Random number generator needs a positive seed value");
 
-	if (options["thread"].as < int > () < 1)
+	if (options["threads"].as < int > () < 1)
 		vrb.error("Number of threads is a strictly positive number.");
 
 	float s_maf = options["sparse-maf"].as < float > ();
@@ -98,9 +94,7 @@ void caller::check_options() {
 void caller::verbose_files() {
 	vrb.title("Files:");
 
-	if (options.count("input-file"))
-		vrb.bullet("Input chunks file    : [" + options["input-file"].as < std::string > () + "]");
-	else if(options.count("input-region") && options.count("output-region"))
+	if(options.count("input-region") && options.count("output-region"))
 	{
 		vrb.bullet("Input region         : [" + options["input-region"].as < std::string > () + "]");
 		vrb.bullet("Output region        : [" + options["output-region"].as < std::string > () + "]");
@@ -123,7 +117,7 @@ void caller::verbose_options()
 	vrb.bullet("Sparse MAF           : [" + stb.str(options["sparse-maf"].as < float > () * 100.0f) + "%]");
 	vrb.bullet("Keep monom. ref sites: [" + no_yes[options.count("keep-monomorphic-ref-sites")] + "]");
 	vrb.bullet("Seed                 : [" + stb.str(options["seed"].as < int > ()) + "]");
-	vrb.bullet("#Threads             : [" + stb.str(options["thread"].as < int > ()) + "]");
+	vrb.bullet("#Threads             : [" + stb.str(options["threads"].as < int > ()) + "]");
 
 
 }

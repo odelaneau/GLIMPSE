@@ -58,21 +58,6 @@ void caller::buildCoordinates()
 		regsI.push_back(options["input-region"].as < std::string > ());
 		regsO.push_back(options["output-region"].as < std::string > ());
 	}
-	else
-	{
-		std::string buffer;
-		input_file fd (options["input-file"].as < std::string > ());
-		std::vector<std::string> btokens(6);
-		while (getline(fd, buffer))
-		{
-			if (stb.split(buffer, btokens, " 	") != 6) vrb.error("Output of GLIMPSE_chunk is expected to have six colums.");
-			regsI.push_back(btokens[2]);
-			regsO.push_back(btokens[3]);
-
-		}
-		fd.close();
-		vrb.bullet("Read "+stb.str(regsI.size()) + " regions in file");
-	}
 
 	for (int i=0; i<regsI.size();++i)
 	{

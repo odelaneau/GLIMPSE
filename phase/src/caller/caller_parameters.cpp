@@ -85,7 +85,7 @@ void caller::declare_options() {
 
 	bpo::options_description opt_output ("Output parameters");
 	opt_output.add_options()
-			("output,O", bpo::value< std::string >(), "Phased haplotypes in VCF/BCF/BGEN format.")
+			("output,O", bpo::value< std::string >(), "Phased and imputed haplotypes in VCF/BCF/BGEN format")
 			("contigs-fai", bpo::value< std::string >(), "If specified, header contig names and their lengths are copied from the provided fasta index file (.fai). Otherwise, only the current contig (chromosome name) is printed in the VCF/BCF header.")
 			("bgen-bits", boost::program_options::value< int >()->default_value(8), "Specifies the number of bits to be used for the encoding probabilities of the output BGEN file. If the output is in the .vcf[.gz]/.bcf format, this value is ignored. Accepted values: 0 < x <= 32. Default: x=8.")
 			("bgen-compr", boost::program_options::value< std::string >()->default_value("zstd"), "Specifies the compression of the output BGEN file. If the output is in the .vcf[.gz]/.bcf format, this value is ignored. Accepted values: [no, zlib, zstd].")

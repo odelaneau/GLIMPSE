@@ -30,9 +30,7 @@ void caller::write_files_and_finalise() {
 	vrb.title("Finalization:");
 
 	//step0: multi-threading
-	if (options["thread"].as < int > () > 1) pthread_mutex_destroy(&mutex_workers);
-
-	//step1: writing best guess haplotypes in VCF/BCF file
+	if (options["threads"].as < int > () > 1) pthread_mutex_destroy(&mutex_workers);
 
 	//step2: Measure overall running time
 	vrb.bullet("Total running time = " + stb.str(tac.abs_time()) + " seconds");

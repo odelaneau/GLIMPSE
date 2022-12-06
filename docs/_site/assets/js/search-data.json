@@ -1,7 +1,7 @@
 {"0": {
     "doc": "CHANGELOG",
     "title": "CHANGELOG",
-    "content": "All notable changes to this project are documented in this file. Version 2.0.0 will be released on the 5th of December 2022. ",
+    "content": "All notable changes to this project are documented in this file. Version 2.0.0 will be released on the 7th of December 2022. ",
     "url": "/GLIMPSE/CHANGELOG/",
     "relUrl": "/CHANGELOG/"
   },"1": {
@@ -43,13 +43,13 @@
   },"7": {
     "doc": "chunk",
     "title": "phase_rare",
-    "content": "Website under construction. A complete release of GLIMPSE2 will be available by the 5th of December 2022. ",
+    "content": "Website under construction. A complete release of GLIMPSE2 will be available by the 7th of December 2022. ",
     "url": "/GLIMPSE/docs/documentation/chunk/#phase_rare",
     "relUrl": "/docs/documentation/chunk/#phase_rare"
   },"8": {
     "doc": "chunk",
     "title": "Table of contents",
-    "content": ". | Description | Usage | Command line options | Command line options . | Basic options | Input files | Parameters 1 | Parameters 2 | Output files | . | . Description . Tool to create imputation chunks. Usage . Simple run . Command line options . Command line options . Basic options . | Option name | Argument| Default | Description |:———————|:——–|:———|:————————————-| . Input files . | Option name | Argument| Default | Description |:———————|:——–|:———|:————————————-| . Parameters 1 . | Option name | Argument| Default | Description |:——————–|:——–|:———-|:————————————-| . Parameters 2 . | Option name | Argument| Default | Description |:——————–|:——–|:———-|:————————————-| . Output files . | Option name | Argument| Default | Description |:———————|:——–|:———|:————————————-| . ",
+    "content": ". | Description | Usage | Command line options . | Basic options | Input files | Window Parameters | Model Parameters | Output files | . | . Description . Tool to create imputation chunks. Usage . Simple run . GLIMPSE2_chunk --input file_chr20.bcf --map chr20.b38.gmap.gz --region chr20 --sequential --output chunks_chr20.txt . Command line options . Basic options . | Option name | Argument | Default | Description | . | --help | NA | NA | Produces help message | . | --seed | INT | 15052011 | Seed of the random number generator | . | -T [ --threads ] | INT | 1 | Number of threads | . Input files . | Option name | Argument | Default | Description | . | -I [ --input ] | FILE | NA | Reference or target dataset at all variable positions in VCF/BCF format. The GT field is not required | . | --region | STRING | NA | Chromosome or region to be split | . | -M [ --map | FILE | NA | Genetic map | . | --sparse-maf | FLOAT | =0.001 | Expert setting: rare variant threshold | . Window Parameters . | Option name | Argument | Default | Description | . | --window-cm | FLOAT | =4.0 | Minimal Window size in cM | . | --window-mb | FLOAT | =4.0 | Minimal Window size in Mb | . | --window-count | INT | =30000 | Minimal window size in #variants | . | --buffer-cm | FLOAT | =0.5 | Minimal buffer size in cM | . | --buffer-mb | FLOAT | =0.5 | Minimal buffer size in Mb | . | --buffer-count | INT | =3000 | Minimal buffer size in #variants | . Model Parameters . | Option name | Argument | Default | Description | . | --recursive | NA | NA | Recursive algorithm | . | --sequential | NA | NA | Sequential algorithm (RECOMMENDED) | . | --uniform-number-variants | NA | NA | Try to uniform the number of variants in the sequential algorithm (EXPERIMENTAL) | . Output files . | Option name | Argument | Default | Description | . | -O [--output ] | STRING | NA | Region file containing the chunks for phasing and imputation | . | --log | STRING | NA | Log file | . ",
     "url": "/GLIMPSE/docs/documentation/chunk/#table-of-contents",
     "relUrl": "/docs/documentation/chunk/#table-of-contents"
   },"9": {
@@ -79,13 +79,13 @@
   },"13": {
     "doc": "concordance",
     "title": "switch",
-    "content": "Website under construction. A complete release of GLIMPSE2 will be available by the 5th of December 2022. ",
+    "content": "Website under construction. A complete release of GLIMPSE2 will be available by the 7th of December 2022. ",
     "url": "/GLIMPSE/docs/documentation/concordance/#switch",
     "relUrl": "/docs/documentation/concordance/#switch"
   },"14": {
     "doc": "concordance",
     "title": "Table of contents",
-    "content": ". | Description | Usage | Command line options . | Basic options | Input files | Parameters 1 | Parameters 2 | Output files | . | . Description . Program to compute the genotyping error rate at the sample or marker level. Usage . Simple run . Command line options . Basic options . | Option name | Argument| Default | Description |:———————|:——–|:———|:————————————-| . Input files . | Option name | Argument| Default | Description |:———————|:——–|:———|:————————————-| . Parameters 1 . | Option name | Argument| Default | Description |:——————–|:——–|:———-|:————————————-| . Parameters 2 . | Option name | Argument| Default | Description |:——————–|:——–|:———-|:————————————-| . Output files . | Option name | Argument| Default | Description |:———————|:——–|:———|:————————————-| . ",
+    "content": ". | Description | Usage | Command line options . | Basic options | Input parameters | Other parameters | Output files | . | . Description . Program to compute the genotyping error rate at the sample or marker level. Usage . Simple run . echo \"chr20 ukb_white_british_sites.bcf validation_c20_snps.bcf imputed_ligated_c20_rp140k_1.0x.bcf\" &gt; concordance.txt GLIMPSE2_concordance --gt-val --ac-bins 1 5 10 20 50 100 200 500 1000 2000 5000 10000 20000 50000 100000 140119 --threads 2 --input concordance.txt --output concordance_c20_rp140 . Command line options . Basic options . | Option name | Argument | Default | Description | . | --help | NA | NA | Produces help message | . | --seed | INT | 15052011 | Seed of the random number generator | . | -T [ --threads ] | INT | 1 | Number of threads | . Input parameters . | Option name | Argument | Default | Description | . | --input | FILE | NA | File listing in order: regions frequencies validation and imputed dataset. For genome-wide concordance, add more lines specifying different chromosomes. | . | --samples | NA | NA | List of samples to process, one sample ID per line. | . | --gt-val | NA | NA | Uses hard called genotypes rather than phread-scaled likelihoods for the validation dataset, reading them from FORMAT/GT field. | . | --gt-tar | NA | NA | Uses FORMAT/GT field to determine the best-guess genotype rather than the higher FORMAT/GP (default). FORMAT/DS are FORMAT/GP fields are still required for calibration and rsquared calculations. | . Other parameters . | Option name | Argument | Default | Description | . | --af-tag | STRING | AF | Allele frequency INFO tag to use for binning. By default the allele frequency is estimated from the INFO/AF tag. | . | --use-alt-af | NA | NA | If specified, the metrics work on the ALT allele frequency (range [0,1]), rather than minor allele frequency (range [0,0.5]). | . | --bins | VECTOR | NA | Allele frequency bins used for rsquared computations. By default they should as MAF bins [0-0.5], while they should take the full range [0-1] if –use-ref-alt is used. | . | --ac-bins | VECTOR | NA | User-defined allele count bins used for rsquared computations. | . | --allele-counts | VECTOR | NA | Default allele count bins used for rsquared computations. AN field must be defined in the frequency file. | . | --min-val-gl | FLOAT | NA | Minimum genotype likelihood probability P(G|R) in validation data [set to zero to have no filter of if using –gt-validation] | . | --min-val-dp | INT | NA | Minimum coverage in validation data. If FORMAT/DP is missing and –minDP &gt; 0, the program exits with an error. [set to zero to have no filter of if using –gt-validation] | . | --min-tar-gp | VECTOR | NA | Minimum GP probabilities to be used as a filter. By default it looks at the GP field to specify the filter, but will try to use FORMAT/PL if gt-tar option is specified. Leave empty if no filter is used. | . | --out-r2-per-site | NA | NA | Output r2 at each site. | . | --out-rej-sites | NA | NA | Output sites where that cannot be used for the concordance. | . | --out-conc-sites | NA | NA | Output sites where all target genotypes are concordant with the truth. | . | --out-disc-sites | NA | NA | Output sites where at least one target genotype is diconcordant with the truth. | . | --groups | FILE | NA | Alternative to frequency bins: group bins are user defined, provided in a file. | . Output files . | Option name | Argument | Default | Description | . | -O [--output ] | STRING | NA | Prefix of the output files (extensions are automatically added) | . | --log | STRING | NA | Log file | . ",
     "url": "/GLIMPSE/docs/documentation/concordance/#table-of-contents",
     "relUrl": "/docs/documentation/concordance/#table-of-contents"
   },"15": {
@@ -109,7 +109,7 @@
   },"18": {
     "doc": "Documentation",
     "title": "Documentation",
-    "content": "Website under construction. A complete release of GLIMPSE2 will be available by the 5th of December 2022. Command-line documentation and usage of SHAPEIT5 . Click on a tool below to see its documentation. ",
+    "content": "Website under construction. A complete release of GLIMPSE2 will be available by the 7th of December 2022. Command-line documentation and usage of SHAPEIT5 . Click on a tool below to see its documentation. ",
     "url": "/GLIMPSE/docs/documentation",
     "relUrl": "/docs/documentation"
   },"19": {
@@ -211,7 +211,7 @@
   },"35": {
     "doc": "Home",
     "title": "GLIMPSE",
-    "content": "A tool for low-coverage whole-genome sequencing imputation . Website under construction. A complete release of GLIMPSE2 will be available by the 5th of December 2022. ",
+    "content": "A tool for low-coverage whole-genome sequencing imputation . Website under construction. A complete release of GLIMPSE2 will be available by the 7th of December 2022. ",
     "url": "/GLIMPSE/#glimpse",
     "relUrl": "/#glimpse"
   },"36": {
@@ -271,130 +271,124 @@
   },"45": {
     "doc": "ligate",
     "title": "ligate",
-    "content": "Website under construction. A complete release of GLIMPSE2 will be available by the 5th of December 2022. ",
+    "content": "Website under construction. A complete release of GLIMPSE2 will be available by the 7th of December 2022. ",
     "url": "/GLIMPSE/docs/documentation/ligate/",
     "relUrl": "/docs/documentation/ligate/"
   },"46": {
     "doc": "ligate",
     "title": "Table of contents",
-    "content": ". | Description | Usage | Command line options . | Basic options | Input files | Parameters 1 | Parameters 2 | Output files | . | . Description . Ligatation of multiple phased BCF/VCF files into a single whole chromosome file. GLIMPSE2 is run in chunks that are ligated into chromosome-wide files maintaining the phasing. Usage . Simple run . Command line options . Basic options . | Option name | Argument| Default | Description |:———————|:——–|:———|:————————————-| . Input files . | Option name | Argument| Default | Description |:———————|:——–|:———|:————————————-| . Parameters 1 . | Option name | Argument| Default | Description |:——————–|:——–|:———-|:————————————-| . Parameters 2 . | Option name | Argument| Default | Description |:——————–|:——–|:———-|:————————————-| . Output files . | Option name | Argument| Default | Description |:———————|:——–|:———|:————————————-| . ",
+    "content": ". | Description | Usage | Command line options . | Basic options | Input files | Output files | . | . Description . Ligatation of multiple phased BCF/VCF files into a single whole chromosome file. GLIMPSE2 is run in chunks that are ligated into chromosome-wide files maintaining the phasing. Usage . Simple run . #ls -1v in order to keep the order within the chromosome ls -1v chr20/*.imputed.bcf &gt; list_imputed_files_chr20.txt GLIMPSE2_ligate --input list_imputed_files_chr20.txt --output ligated_chr20.bcf --threads 2 . Command line options . Basic options . | Option name | Argument | Default | Description | . | --help | NA | NA | Produces help message | . | --seed | INT | 15052011 | Seed of the random number generator | . | -T [ --thread ] | INT | 1 | Number of threads | . Input files . | Option name | Argument | Default | Description | . | -I [--input ] | STRING | NA | Text file containing all VCF/BCF to ligate, one file per line | . Output files . | Option name | Argument | Default | Description | . | -O [--output ] | STRING | NA | Phased and imputed haplotypes in VCF/BCF format | . | --no-index | STRING | NA | If specified, the ligated VCF/BCF is not indexed by GLIMPSE2 for random access to genomic regions | . | --log | STRING | NA | Log file | . ",
     "url": "/GLIMPSE/docs/documentation/ligate/#table-of-contents",
     "relUrl": "/docs/documentation/ligate/#table-of-contents"
   },"47": {
     "doc": "phase",
-    "title": "phase_common",
-    "content": "Website under construction. A complete release of GLIMPSE2 will be available by the 5th of December 2022. ",
-    "url": "/GLIMPSE/docs/documentation/phase/#phase_common",
-    "relUrl": "/docs/documentation/phase/#phase_common"
+    "title": "phase",
+    "content": "Website under construction. A complete release of GLIMPSE2 will be available by the 7th of December 2022. ",
+    "url": "/GLIMPSE/docs/documentation/phase/",
+    "relUrl": "/docs/documentation/phase/"
   },"48": {
     "doc": "phase",
     "title": "Table of contents",
-    "content": ". | Description | Usage | Command line options . | Basic options | Input files | Parameters 1 | Parameters 2 | Output files | . | . Description . Tool for imputation and phasing. Usage . Simple run . Command line options . Basic options . | Option name | Argument| Default | Description |:———————|:——–|:———|:————————————-| . Input files . | Option name | Argument| Default | Description |:———————|:——–|:———|:————————————-| . Parameters 1 . | Option name | Argument| Default | Description |:——————–|:——–|:———-|:————————————-| . Parameters 2 . | Option name | Argument| Default | Description |:——————–|:——–|:———-|:————————————-| . Output files . | Option name | Argument| Default | Description |:———————|:——–|:———|:————————————-| . ",
+    "content": ". | Description | Usage | Command line options . | Basic options | Input parameters | Model parameters | Selection parameters | BAM/CRAM options and filters | Output parameters | . | . Description . Tool for imputation and phasing. Usage . Simple run . GLIMPSE2_phase --bam-list bams_1.0x.txt --reference binary_reference_panel_chr20_7702567_12266861.bin --output imputed_glimpse2_rp140k_1.0x_chr20_7702567_12266861.bcf --threads 4 . Command line options . Basic options . | Option name | Argument | Default | Description | . | --help | NA | NA | Produces help message | . | --seed | INT | 15052011 | Seed of the random number generator | . | -T [ --threads ] | INT | 1 | Number of threads | . Input parameters . | Option name | Argument| Default | Description |:———————|:——–|:———|:————————————-| . Model parameters . | Option name | Argument| Default | Description |:——————–|:——–|:———-|:————————————-| . Selection parameters . | Option name | Argument| Default | Description |:——————–|:——–|:———-|:————————————-| . BAM/CRAM options and filters . | Option name | Argument| Default | Description |:——————–|:——–|:———-|:————————————-| . Output parameters . | Option name | Argument | Default | Description | . | -O [--output ] | STRING | NA | Phased and imputed haplotypes in VCF/BCF/BGEN format | . | --log | STRING | NA | Log file | . ",
     "url": "/GLIMPSE/docs/documentation/phase/#table-of-contents",
     "relUrl": "/docs/documentation/phase/#table-of-contents"
   },"49": {
-    "doc": "phase",
-    "title": "phase",
-    "content": " ",
-    "url": "/GLIMPSE/docs/documentation/phase/",
-    "relUrl": "/docs/documentation/phase/"
-  },"50": {
     "doc": "Expert quick start",
     "title": "Quick Start  [for experts]",
-    "content": "Website under construction. A complete release of GLIMPSE2 will be available by the 5th of December 2022. ",
+    "content": "Website under construction. A complete release of GLIMPSE2 will be available by the 7th of December 2022. ",
     "url": "/GLIMPSE/docs/quickstart/#quick-start--for-experts",
     "relUrl": "/docs/quickstart/#quick-start--for-experts"
-  },"51": {
+  },"50": {
     "doc": "Expert quick start",
     "title": "Expert quick start",
     "content": " ",
     "url": "/GLIMPSE/docs/quickstart/",
     "relUrl": "/docs/quickstart/"
-  },"52": {
+  },"51": {
     "doc": "Required libraries",
     "title": "Required libraries",
     "content": " ",
     "url": "/GLIMPSE/docs/installation/build_from_source/required_libraries",
     "relUrl": "/docs/installation/build_from_source/required_libraries"
-  },"53": {
+  },"52": {
     "doc": "Required libraries",
     "title": "Table of contents",
     "content": ". | Required libraries . | HTSlib | Boost | Additional libraries | . | . ",
     "url": "/GLIMPSE/docs/installation/build_from_source/required_libraries#table-of-contents",
     "relUrl": "/docs/installation/build_from_source/required_libraries#table-of-contents"
-  },"54": {
+  },"53": {
     "doc": "Required libraries",
     "title": "Required libraries",
     "content": "GLIMPSE2 requires several libraries installed on the system. Here we assume most of the libraries are available, and we focus on two main libraries: . | HTSlib version &gt;= 1.7: A C library for reading/writing high-throughput sequencing data. | BOOST version &gt;= 1.65: A set of peer-reviewed portable C++ source libraries. GLIMPSE2 uses two specific BOOST libraries: iostreams and program_options. | . HTSlib . Building HTSlib is straightforward and does not require root privileges. Please refer to the HTSlib documentation for complete details. Here we provide a basic script to install HTSlib v1.16: . wget https://github.com/samtools/htslib/releases/download/1.16/htslib-1.16.tar.bz2 tar -xf htslib-1.16.tar.bz2 mv htslib-1.16 htslib cd htslib autoheader; autoconf; ./configure; #optional make . After this, you’ll find the libhts.a inside your current directory and the include files inside subdirectory: ./include/ . Boost . As GLIMPSE2 only requires few of the boost libraries, we’ll build the smallest possible boost build, without requiring root privileges. Please refer to the Boost installation instructions for complete details. Here we provide a basic script to the minimal build of Boost v1.73.0 required to run GLIMPSE2: . wget https://boostorg.jfrog.io/artifactory/main/release/1.73.0/source/boost_1_73_0.tar.bz2 tar --bzip2 -xf boost_1_73_0.tar.bz2 cd boost_1_73_0 ./bootstrap.sh --with-libraries=iostreams,program_options --prefix=../boost #where ../boost is your custom boost installation prefix ./b2 install cd ../boost #change this to the folder you used as --prefix for the bootstrap script . After this, you will also find a copy of the Boost headers in the include/ subdirectory of the installation prefix (our current directory). The Boost static libraries (libboost_iostreams.a and libboost_program_options.a) are found in the subfolder ./lib/ of your installation prefix. Additional libraries . Make sure that the following standard library flags can be used by g++ on your system: . | -lz,-lbz2 and -llzma for reading/writing compressed files. | -lm for basic math operations. | -lpthread for multi-threading | . You can do so by checking the outcome of the following commands: . locate -b '\\libz.so' locate -b '\\libbz2.so' locate -b '\\liblzma.so' locate -b '\\libm.so' locate -b '\\libpthread.so' locate -b '\\libcurl.so' . ",
     "url": "/GLIMPSE/docs/installation/build_from_source/required_libraries",
     "relUrl": "/docs/installation/build_from_source/required_libraries"
-  },"55": {
+  },"54": {
     "doc": "split_reference",
     "title": "phase_rare",
-    "content": "Website under construction. A complete release of GLIMPSE2 will be available by the 5th of December 2022. ",
+    "content": "Website under construction. A complete release of GLIMPSE2 will be available by the 7th of December 2022. ",
     "url": "/GLIMPSE/docs/documentation/split_reference/#phase_rare",
     "relUrl": "/docs/documentation/split_reference/#phase_rare"
-  },"56": {
+  },"55": {
     "doc": "split_reference",
     "title": "Table of contents",
-    "content": ". | Description | Usage | Command line options | Command line options . | Basic options | Input files | Parameters 1 | Parameters 2 | Output files | . | . Description . Tool to create a binary reference panel for quick reading time. Usage . Simple run . Command line options . Command line options . Basic options . | Option name | Argument| Default | Description |:———————|:——–|:———|:————————————-| . Input files . | Option name | Argument| Default | Description |:———————|:——–|:———|:————————————-| . Parameters 1 . | Option name | Argument| Default | Description |:——————–|:——–|:———-|:————————————-| . Parameters 2 . | Option name | Argument| Default | Description |:——————–|:——–|:———-|:————————————-| . Output files . | Option name | Argument| Default | Description |:———————|:——–|:———|:————————————-| . ",
+    "content": ". | Description | Usage | Command line options . | Basic options | Input parameters | Output files | . | . Description . Tool to create a binary reference panel for quick reading time. Usage . Simple run . GLIMPSE2_split_reference --input-region chr20:7702567-12266861 --output-region chr20:7952603-12016861 --output binary_reference_panel --reference reference_panel_full_chr20.bcf --map chr20.b38.gmap.gz --threads 4 . Command line options . Basic options . | Option name | Argument | Default | Description | . | --help | NA | NA | Produces help message | . | --seed | INT | 15052011 | Seed of the random number generator | . | -T [ --thread ] | INT | 1 | Number of threads | . Input parameters . | Option name | Argument | Default | Description | . | --input-region | STRING | NA | Imputation region with buffers | . | --output-region | STRING | NA | Imputation region without buffers | . | -R [ --reference ] | FILE | NA | Reference panel of haplotypes in VCF/BCF format | . | -M [ --map ] | FILE | NA | Genetic map | . | --sparse-maf | FLOAT | =0.001 | Expert setting: rare variant threshold | . | --keep-monomorphic-ref-sites | NA | NA | Keeps monomorphic markers in the reference panel, that are removed by default | . Output files . | Option name | Argument | Default | Description | . | -O [--output ] | STRING | NA | Prefix of the output file (region and extension are automatically added) | . | --log | STRING | NA | Log file | . ",
     "url": "/GLIMPSE/docs/documentation/split_reference/#table-of-contents",
     "relUrl": "/docs/documentation/split_reference/#table-of-contents"
-  },"57": {
+  },"56": {
     "doc": "split_reference",
     "title": "split_reference",
     "content": " ",
     "url": "/GLIMPSE/docs/documentation/split_reference/",
     "relUrl": "/docs/documentation/split_reference/"
-  },"58": {
+  },"57": {
     "doc": "Static binaries",
     "title": "Static binaries",
     "content": "A complete installation from source is often non necessary as we provide static binaries at the release link: . https://github.com/odelaneau/glimpse/releases . The executable files only support a 64-bit operating system on the x86_64 CPU platform and require AVX2 support. The files are released under the MIT license. If your system does not support the provided binaries, please look at the docker package provided with GLIMPSE2 . ",
     "url": "/GLIMPSE/docs/installation/static_binaries",
     "relUrl": "/docs/installation/static_binaries"
-  },"59": {
+  },"58": {
     "doc": "System requirements",
     "title": "System requirements",
     "content": " ",
     "url": "/GLIMPSE/docs/installation/build_from_source/system_requirements",
     "relUrl": "/docs/installation/build_from_source/system_requirements"
-  },"60": {
+  },"59": {
     "doc": "System requirements",
     "title": "Table of contents",
     "content": ". | System requirements | . ",
     "url": "/GLIMPSE/docs/installation/build_from_source/system_requirements#table-of-contents",
     "relUrl": "/docs/installation/build_from_source/system_requirements#table-of-contents"
-  },"61": {
+  },"60": {
     "doc": "System requirements",
     "title": "System requirements",
     "content": "GLIMPSE2 is a set of C++ tools covering the process of haplotype phasing in large datasets. In order to compile, we require a modern Linux operating system and a version of GCC &gt; 4.4. We recommend to use the latest available version for your system. For example running the following instruction on Ubuntu 20.04 focal: . sudo apt install build-essential . will install the GNU g++ compiler version 9.2. To check the version of your g++ compiler, simply run: . g++ --version . ",
     "url": "/GLIMPSE/docs/installation/build_from_source/system_requirements",
     "relUrl": "/docs/installation/build_from_source/system_requirements"
-  },"62": {
+  },"61": {
     "doc": "Tutorials",
     "title": "Tutorials",
-    "content": "Website under construction. A complete release of GLIMPSE2 will be available by the 5th of December 2022. We provide tutorials to help you to get used with GLIMPSE2 . ",
+    "content": "Website under construction. A complete release of GLIMPSE2 will be available by the 7th of December 2022. We provide tutorials to help you to get used with GLIMPSE2 . ",
     "url": "/GLIMPSE/docs/tutorials",
     "relUrl": "/docs/tutorials"
-  },"63": {
+  },"62": {
     "doc": "Phasing",
     "title": "Phasing of the UK Biobank sequencing data",
-    "content": "Website under construction. A complete release of GLIMPSE2 will be available by the 5th of December 2022. If you wish to phase the UK Biobank sequencing data and use it as a reference panel, you can use SHAPEIT5 and follow this tutorial. ",
+    "content": "Website under construction. A complete release of GLIMPSE2 will be available by the 7th of December 2022. If you wish to phase the UK Biobank sequencing data and use it as a reference panel, you can use SHAPEIT5 and follow this tutorial. ",
     "url": "/GLIMPSE/docs/tutorials/ukb_phasing/#phasing-of-the-uk-biobank-sequencing-data",
     "relUrl": "/docs/tutorials/ukb_phasing/#phasing-of-the-uk-biobank-sequencing-data"
-  },"64": {
+  },"63": {
     "doc": "Phasing",
     "title": "Phasing",
     "content": " ",
     "url": "/GLIMPSE/docs/tutorials/ukb_phasing/",
     "relUrl": "/docs/tutorials/ukb_phasing/"
-  },"65": {
+  },"64": {
     "doc": "UK Biobank WGS data",
     "title": "UK Biobank WGS data",
-    "content": "Website under construction. A complete release of GLIMPSE2 will be available by the 5th of December 2022. ",
+    "content": "Website under construction. A complete release of GLIMPSE2 will be available by the 7th of December 2022. ",
     "url": "/GLIMPSE/docs/tutorials/ukb_wgs/",
     "relUrl": "/docs/tutorials/ukb_wgs/"
-  },"66": {
+  },"65": {
     "doc": "UK Biobank WGS data",
     "title": "Table of contents",
     "content": ". ",
