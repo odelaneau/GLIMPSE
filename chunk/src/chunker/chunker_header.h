@@ -55,13 +55,12 @@ public:
 	std::vector<int> chunk_mb_length;
 	std::vector<int> chunk_common_count;
 
-
-	//std::multimap < int, int > map_positions_common;	//associative container of variant with position in bp
-
-	//std::vector < int > counterR;
-
-
 	//PARAMETERS
+	std::string gregion;
+	int start;
+	int stop;
+	bool whole_chr;
+
 	float window_cm;
 	float window_mb;
 	int window_count;
@@ -89,6 +88,9 @@ public:
 	void add_buffer(const int, const int, int&, int&);
 	void chunk();
 	void chunk(std::vector < std::string > &);
+	void buildCoordinates();
+	void parseRegion();
+
 
 	std::vector < int > getByPos(const int, const std::multimap < int, int >& map_positions);
 	void setGeneticMap(const gmap_reader&, const std::multimap < int, int >&, const std::vector<int>& positions_mb, std::vector<float>& positions_cm);

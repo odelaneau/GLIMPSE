@@ -130,7 +130,25 @@ void chunker::split_sequential(output_file & fd, int & cidx, std::string & chr, 
 		{
 			add_buffer(curr_window_start_idx, curr_window_stop_idx, left_idx, right_idx);
 			vrb.bullet("Terminal window [" + stb.str(cidx) + "] -buffer:[" + chr + ":" + stb.str(positions_all_mb[curr_window_start_idx]) + "-" + stb.str(positions_all_mb[curr_window_stop_idx]) + "] / +buffer:[" + chr +  ":" + stb.str(positions_all_mb[left_idx]) + "-" + stb.str(positions_all_mb[right_idx]) + "] / L=" + stb.str(curr_window_cm_size) + "cM / L=" + stb.str(curr_window_mb_size) + "bp / C=" + stb.str(curr_window_count));
-			fd << cidx << "\t" << chr << "\t" << chr << ":"<< positions_all_mb[left_idx] << "-" << positions_all_mb[right_idx] << "\t" << chr << ":" << positions_all_mb[curr_window_start_idx] << "-" << positions_all_mb[curr_window_stop_idx] << "\t" << curr_window_cm_size << "\t" << curr_window_mb_size << "\t" << curr_window_count <<"\t" << curr_window_common_count << std::endl;
+			int buf_start=positions_all_mb[left_idx];
+			int chk_start=positions_all_mb[curr_window_start_idx];
+			int buf_stop=positions_all_mb[right_idx];
+			int chk_stop=positions_all_mb[curr_window_stop_idx];
+			if (whole_chr)
+			{
+				if (i == start_idx)
+				{
+					buf_start=1;
+					chk_start=1;
+				}
+				if (i == stop_idx-1)
+				{
+					buf_stop+=10000000;
+					chk_stop+=10000000;
+				}
+
+			}
+			fd << cidx << "\t" << chr << "\t" << chr << ":"<< buf_start << "-" << buf_stop << "\t" << chr << ":" << chk_start << "-" << chk_stop << "\t" << curr_window_cm_size << "\t" << curr_window_mb_size << "\t" << curr_window_count <<"\t" << curr_window_common_count << std::endl;
 		}
 
 		i = curr_window_stop_idx;
@@ -174,6 +192,8 @@ void chunker::chunk() {
 	buffer_cm = options["buffer-cm"].as < float > ();
 	buffer_mb = (int) (options["buffer-mb"].as < float > ()*1e6);
 	buffer_count = options["buffer-count"].as < int > ();
+
+	buildCoordinates();
 
 	//Read input data (overlapping coordinates)
 	readData(options["input"].as < std::string > (), options["region"].as < std::string > (), options["threads"].as <int> ());

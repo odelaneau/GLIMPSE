@@ -26,12 +26,17 @@
 #include <chunker/chunker_header.h>
 
 chunker::chunker() {
+	gregion = "";
+	start=0;
+	stop=0;
+	whole_chr=false;
 	window_cm = 0;
 	window_mb = 0;
 	window_count = 0;
 	buffer_cm = 0;
 	buffer_mb = 0;
 	buffer_count = 0;
+	sparse_maf=0.001;
 }
 
 chunker::~chunker() {
@@ -44,4 +49,45 @@ void chunker::chunk(std::vector < std::string > & args) {
 	verbose_files();
 	verbose_options();
 	chunk();
+}
+
+void chunker::buildCoordinates()
+{
+	gregion = options["region"].as < std::string > ();
+	parseRegion();
+}
+
+void chunker::parseRegion()
+{
+	std::vector < std::string > t1, t2;
+	int ret = stb.split(gregion, t1, ":");
+	if (ret < 1 || ret > 2) vrb.error("Region needs to be specified as chrN or chrN:Y-, or chrN:Y-Z (chromosome ID cannot be extracted)");
+
+	start=0;
+	stop=2147483647;
+
+	if  (ret > 1)
+	{
+
+		if (t1[1].find('-') == std::string::npos) vrb.error("Region needs to be specified as chrN or chrN:Y-, or chrN:Y-Z (start and stop regions cannot be extracted)");
+		ret = stb.split(t1[1], t2, "-");
+		if (ret == 1)
+		{
+			start = atoi(t2[0].c_str());
+			if (start < 0) vrb.error("Genomic region coordinates are incorrect (input_start < 0)");
+			gregion+=stb.str(2147483647);
+		}
+		else if (ret == 2)
+		{
+			start = atoi(t2[0].c_str());
+			stop = atoi(t2[1].c_str());
+			if (start > stop) vrb.error("Genomic region coordinates are incorrect (start > stop)");
+			if (start < 0) vrb.error("Genomic region coordinates are incorrect (start < 0)");
+		}
+		else vrb.error("Region needs to be specified as chrN or chrN:Y-, or chrN:Y-Z (start and stop regions cannot be extracted)");
+	} else if (ret==1)
+	{
+		if (t1[0].size()!=gregion.size()) vrb.error("Region needs to be specified as chrN or chrN:Y-, or chrN:Y-Z (start and stop regions cannot be extracted)");
+		whole_chr=true;
+	}
 }

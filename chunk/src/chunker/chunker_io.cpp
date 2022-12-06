@@ -74,7 +74,6 @@ void chunker::readData(std::string fmain, std::string region, int nthreads) {
 				positions_common_mb.push_back(line_main->pos + 1);
 				common2all.push_back(positions_all_mb.size()-1);
 				n_comm_variants_cnt++;
-				//map_positions_common.insert(std::pair < int , int> (line_main->pos + 1, positions_common_mb.size()-1));
 			}
 		}
 	}
@@ -84,6 +83,4 @@ void chunker::readData(std::string fmain, std::string region, int nthreads) {
 	if (vAN) free(vAN);
 	vrb.bullet("Input file read      : [" + fmain + "] (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
 	vrb.bullet("#variants            : [" + stb.str(n_variants) + " total | " +  stb.str(n_variants-n_comm_variants_cnt) + " rare | " +  stb.str(n_comm_variants_cnt) +" common]");
-	//vrb.bullet("#rare variants       : [" + stb.str(n_comm_variants_cnt) + "]");
-	//vrb.bullet("#common variants     : [" + stb.str(n_comm_variants_cnt) + "]");
 }
