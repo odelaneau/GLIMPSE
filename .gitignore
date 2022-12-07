@@ -85,5 +85,5 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
-docs/.jekyll-cache
+docs/.jekyll-cache/
 3rd_party/
