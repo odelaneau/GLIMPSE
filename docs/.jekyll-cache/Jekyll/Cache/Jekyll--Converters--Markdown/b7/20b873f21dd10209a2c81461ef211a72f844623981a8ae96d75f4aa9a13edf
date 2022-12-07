@@ -1,7 +1,0 @@
-I"R<p>SNP array is a DNA microarray which is used to detect common SNPs within a population. In the context of GWAS, SNP array data is often imputed using a reference panel of haplotypes (e.g. using <a href="https://www.dropbox.com/sh/mwnceyhir8yze2j/AADbzP6QuAFPrj0Z9_I1RSmla?dl=0">IMPUTE5</a></p>
-
-<p>Resources:</p>
-<ul>
-  <li>IMPUTE5 for SNP array data <a href="https://www.dropbox.com/sh/mwnceyhir8yze2j/AADbzP6QuAFPrj0Z9_I1RSmla?dl=0" target="_blank" rel="noopener">[Website]</a> <a href="https://journals.plos.org/plosgenetics/article?id=10.1371/journal.pgen.1009049">[Paper]</a></li>
-</ul>
-:ET
