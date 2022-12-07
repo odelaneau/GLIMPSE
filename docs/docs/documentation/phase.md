@@ -47,18 +47,19 @@ GLIMPSE2_phase --bam-list bams_1.0x.txt --reference binary_reference_panel_chr20
 
 | Option name 	       | Argument| Default  | Description |
 |:---------------------|:--------|:---------|:-------------------------------------|
-| \-\-bam-file         | FILE    | NA       | Input BAM/CRAM file containing low-coverage sequencing reads. Only one of the following options: --bam-file, --input-gl, --bam-list can be declared.|
-| \-\-bam-list         | FILE    | NA       | List (.txt file) of input BAM/CRAM files containing BAM/CRAM file containing low-coverage sequencing reads. One file per line. A second column (space separated) can be used to specify the sample name, otherwise the name of the file is used. Only one of the following options: --bam-file, --input-gl, --bam-list can be declared.|
-| \-\-input-gl         | FILE    | NA       | VCF/BCF file containing the genotype likelihoods. Only one of the following options: --bam-file, --input-gl, --bam-list can be declared.|
-| \-R \[\-\-reference\]| FILE    | NA       | Reference panel of haplotypes in VCF/BCF format |
+| \-\-bam-file         | FILE    | NA       | Input BAM/CRAM file containing low-coverage sequencing reads. Only one of the following options can be declared: \-\-input-gl, \-\-bam-file, \-\-bam-list.|
+| \-\-bam-list         | FILE    | NA       | List (.txt file) of input BAM/CRAM files containing BAM/CRAM file containing low-coverage sequencing reads. One file per line. A second column (space separated) can be used to specify the sample name, otherwise the name of the file is used. Only one of the following options can be declared: \-\-input-gl, \-\-bam-file, \-\-bam-list.|
+| \-\-input-gl         | FILE    | NA       | VCF/BCF file containing the genotype likelihoods. Only one of the following options can be declared: \-\-input-gl, \-\-bam-file, \-\-bam-list.|
+| \-R \[\-\-reference\]| FILE    | NA       | Haplotype reference in VCF/BCF or binary format |
 | \-M \[ \-\-map \]    | FILE    | NA       | Genetic map |
 | \-\-input-region     | STRING  | NA       | Imputation region with buffers |
 | \-\-output-region    | STRING  | NA       | Imputation region without buffers |
 | \-\-sparse-maf       | FLOAT   | 0.001   | **Expert setting.** Rare variant threshold |
 | \-\-samples-file     | STRING  | NA       | File with sample names and ploidy information. One sample per line with a mandatory second column indicating ploidy (1 or 2). Sample names that are not present are assumed to have ploidy 2 (diploids). If the parameter is omitted, all samples are assumed to be diploid. GLIMPSE does NOT handle the use of sex (M/F) instead of ploidy.|
-| \-\-ind-name         | STRING  | NA       | Only used toghether with \-\-bam-file. Name of the sample to be processed. If not specified the prefix of the BAM/CRAM file (\-\-bam-file) is used.|
-| \-\-keep-monomorphic-ref-sites | NA       | NA       | **Expert setting.** Keeps monomorphic markers in the reference panel, that are removed by default |
-| \-\-impute-reference-only-variants | NA       | NA       | Only used toghether with \-\-input-gl. Allows imputation at variants only present in the reference panel (no GL called at these positions). The use of this option is intended only to allow imputation at sporadic missing variants. If the number of missing variants is non-sporadic, please re-run the genotype likelihood computation at all reference variants and avoid using this option, since data from the reads should be  used. A warning is thrown if reference-only variants are found.|
+| \-\-ind-name         | STRING  | NA       | Only used together with \-\-bam-file. Name of the sample to be processed. If not specified the prefix of the BAM/CRAM file (\-\-bam-file) is used.|
+| \-\-keep-monomorphic-ref-sites | NA       | NA       | **Expert setting.** Keeps monomorphic markers in the reference panel (removed by default) |
+| \-\-impute-reference-only-variants | NA       | NA       | Only used together with \-\-input-gl. Allows imputation at variants only present in the reference panel (no GL called at these positions). The use of this option is intended only to allow imputation at sporadic missing variants. If the number of missing variants is non-sporadic, please re-run the genotype likelihood computation at all reference variants and avoid using this option, since data from the reads should be  used. A warning is thrown if reference-only variants are found.|
+| \-\-input-field-gl   | NA       | NA       | Only used together with \-\-input-gl. Use FORMAT/GL field instead of FORMAT/PL to read genotyope likelihoods |
 
 #### Model parameters
 
@@ -104,8 +105,8 @@ GLIMPSE2_phase --bam-list bams_1.0x.txt --reference binary_reference_panel_chr20
 |:---------------------|:--------|:---------|:-------------------------------------|
 | \-O \[\-\-output \]  | FILE    | NA       | Phased and imputed haplotypes in VCF/BCF/BGEN format |
 | \-\-contigs-fai      | FILE    | NA       | If specified, header contig names and their lengths are copied from the  provided fasta index file (.fai). This allows to create imputed whole-genome files as contigs are present and can be easily merged by bcftools |
-| \-\-bgen-bits        | INT     | 8        | **Expert setting.** Only used toghether when the output is in BGEN file format. Specifies the number of bits to be used for the encoding probabilities of the output BGEN file. If the output is in the .vcf\[.gz\]/.bcf format, this value is ignored. Accepted values: 1-32. |
-| \-\-bgen-compr       | STRING  | zstd     | **Expert setting.** Only used toghether when the output is in BGEN file format. Specifies the compression of the output BGEN file. If the output is in the .vcf\[.gz\]/.bcf format, this value is ignored.  Accepted values: \[no,zlib,zstd\] |
+| \-\-bgen-bits        | INT     | 8        | **Expert setting.** Only used together when the output is in BGEN file format. Specifies the number of bits to be used for the encoding probabilities of the output BGEN file. If the output is in the .vcf\[.gz\]/.bcf format, this value is ignored. Accepted values: 1-32. |
+| \-\-bgen-compr       | STRING  | zstd     | **Expert setting.** Only used together when the output is in BGEN file format. Specifies the compression of the output BGEN file. If the output is in the .vcf\[.gz\]/.bcf format, this value is ignored.  Accepted values: \[no,zlib,zstd\] |
 | \-\-log              | FILE    | NA       | Log file  |
 
 

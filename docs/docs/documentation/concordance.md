@@ -48,10 +48,10 @@ GLIMPSE2_concordance --gt-val --ac-bins 1 5 10 20 50 100 200 500 1000 2000 5000 
 
 | Option name 	       | Argument| Default  | Description |
 |:---------------------|:--------|:---------|:-------------------------------------|
-| \-\-input            | FILE    | NA       | File listing in order: regions frequencies validation and imputed dataset. For genome-wide concordance, add more lines specifying different chromosomes. |
+| \-\-input            | FILE    | NA       | File with four columns listing in order: regions frequencies validation and imputed dataset. For genome-wide concordance, add more lines specifying different chromosomes. |
 | \-\-samples          | NA      | NA       | List of samples to process, one sample ID per line. |
 | \-\-gt-val           | NA      | NA       | Uses hard called genotypes rather than phread-scaled likelihoods for the validation dataset, reading them from FORMAT/GT field. |
-| \-\-gt-tar           | NA      | NA       | Uses FORMAT/GT field to determine the best-guess genotype rather than the higher FORMAT/GP (default). FORMAT/DS are FORMAT/GP fields are still required for calibration and rsquared calculations. |
+| \-\-gt-tar           | NA      | NA       | Uses FORMAT/GT field to determine the best-guess genotype rather than the FORMAT/GP (default). FORMAT/DS are FORMAT/GP fields are still required for calibration and rsquared calculations. |
 
 
 #### Other parameters

@@ -49,12 +49,12 @@ GLIMPSE2_split_reference --input-region chr20:7702567-12266861 --output-region c
 
 | Option name 	       | Argument| Default  | Description |
 |:---------------------|:--------|:---------|:-------------------------------------|
-| \-R \[\-\-reference\]| FILE    | NA       | Reference panel of haplotypes in VCF/BCF format |
+| \-R \[\-\-reference\]| FILE    | NA       | Haplotype reference panel in VCF/BCF format |
 | \-M \[ \-\-map \]    | FILE    | NA       | Genetic map |
 | \-\-input-region     | STRING  | NA       | Imputation region with buffers |
 | \-\-output-region    | STRING  | NA       | Imputation region without buffers |
 | \-\-sparse-maf       | FLOAT   | 0.001   | **Expert setting.** Rare variant threshold |
-| \-\-keep-monomorphic-ref-sites | NA       | NA       | **Expert setting.** Keeps monomorphic markers in the reference panel, that are removed by default |
+| \-\-keep-monomorphic-ref-sites | NA       | NA       | **Expert setting.** Keeps monomorphic markers in the reference panel (removed by default) |
 
 #### Output files
 
