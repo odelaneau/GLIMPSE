@@ -29,18 +29,18 @@
 void ligater::declare_options() {
 	bpo::options_description opt_base ("Basic options");
 	opt_base.add_options()
-			("help", "Produce help message")
+			("help", "Produces help message")
 			("seed", bpo::value<int>()->default_value(15052011), "Seed of the random number generator")
 			("threads", bpo::value<int>()->default_value(1), "Number of threads");
 
 	bpo::options_description opt_input ("Input files");
 	opt_input.add_options()
-			("input", bpo::value < std::string >(), "Text file containing all VCF/BCF to ligate");
+			("input", bpo::value < std::string >(), "Text file containing all VCF/BCF to ligate, one file per line");
 
 	bpo::options_description opt_output ("Output files");
 	opt_output.add_options()
-			("output,O", bpo::value< std::string >(), "Output ligated file in VCF/BCF format")
-			("no-index", "Whether to index the ligated output (csi format)");
+			("output,O", bpo::value< std::string >(), "Output ligated (phased) file in VCF/BCF format")
+			("no-index", "If specified, the ligated VCF/BCF is not indexed by GLIMPSE2 for random access to genomic regions");
 			("log", bpo::value< std::string >(), "Log file");
 
 	descriptions.add(opt_base).add(opt_input).add(opt_output);

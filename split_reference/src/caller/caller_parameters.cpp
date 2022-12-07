@@ -30,22 +30,22 @@
 void caller::declare_options() {
 	bpo::options_description opt_base ("Basic parameters");
 	opt_base.add_options()
-			("help", "Produce help message")
+			("help", "Produces help message")
 			("seed", bpo::value<int>()->default_value(15052011), "Seed of the random number generator")
 			("threads", bpo::value<int>()->default_value(1), "Number of threads");
 
 	bpo::options_description opt_input ("Input parameters");
 	opt_input.add_options()
+			("reference,R", bpo::value < std::string >(), "Haplotype reference panel in VCF/BCF format")
+			("map,M", bpo::value < std::string >(), "Genetic map")
 			("input-region", bpo::value < std::string >(), "Imputation region with buffers")
 			("output-region", bpo::value < std::string >(), "Imputation region without buffers")
-			("reference,R", bpo::value < std::string >(), "Reference panel of haplotypes in VCF/BCF format")
-			("map,M", bpo::value < std::string >(), "Genetic map")
-			("sparse-maf", bpo::value<float>()->default_value(0.001f), "Expert setting: sites below this MAF are represented/processed using sparse data structures when using VCF/BCF reference panel. Please do not change if not necessary: performance of the software is highly dependent on this parameter.")
-			("keep-monomorphic-ref-sites", "Keeps monomorphic markers in the reference panel, that are removed by default.");
+			("sparse-maf", bpo::value<float>()->default_value(0.001f), "(Expert setting) Rare variant threshold.")
+			("keep-monomorphic-ref-sites", "(Expert setting) Keeps monomorphic markers in the reference panel (removed by default)");
 
 	bpo::options_description opt_output ("Output parameters");
 	opt_output.add_options()
-			("output,O", bpo::value< std::string >(), "Prefix of the output file [region and extension are automatically added]")
+			("output,O", bpo::value< std::string >(), "Prefix of the output file (region and extension are automatically added)")
 			("log", bpo::value< std::string >(), "Log file");
 
 	descriptions.add(opt_base).add(opt_input).add(opt_output);

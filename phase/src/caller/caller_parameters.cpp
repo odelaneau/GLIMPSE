@@ -30,65 +30,65 @@
 void caller::declare_options() {
 	bpo::options_description opt_base ("Basic parameters");
 	opt_base.add_options()
-			("help", "Produce help message")
+			("help", "Produces help message")
 			("seed", bpo::value<int>()->default_value(15052011), "Seed of the random number generator")
 			("threads", bpo::value<int>()->default_value(1), "Number of threads");
 
 	bpo::options_description opt_input ("Input parameters");
 	opt_input.add_options()
-			("bam-file", bpo::value < std::string >(), "Input BAM/CRAM file containing the sequencing reads. Only one of the following options: --bam --input-gl, --bam-list can be declared.")
-			("bam-list", bpo::value < std::string >(), "List of input BAM/CRAM files containing the sequencing reads. Only one of the following options: --bam --input-gl, --bam-list can be declared.")
-			("input-gl", bpo::value < std::string >(), "Genotype likelihoods file. Only one of the following options: --bam --input-gl, --bam-list can be declared.")
-			("reference,R", bpo::value < std::string >(), "Reference panel of haplotypes in VCF/BCF format")
+			("bam-file", bpo::value < std::string >(), "Input BAM/CRAM file containing low-coverage sequencing reads. Only one of the following options can be declared: --input-gl, --bam-file, --bam-list.")
+			("bam-list", bpo::value < std::string >(), "List (.txt file) of input BAM/CRAM files containing low-coverage sequencing reads. One file per line. A second column (space separated) can be used to specify the sample name, otherwise the name of the file is used. Only one of the following options can be declared: --input-gl, --bam-file, --bam-list.")
+			("input-gl", bpo::value < std::string >(), "VCF/BCF file containing the genotype likelihoods. Only one of the following options can be declared: --input-gl, --bam-file, --bam-list.")
+			("reference,R", bpo::value < std::string >(), "Haplotype reference in VCF/BCF or binary format")
 			("map,M", bpo::value < std::string >(), "Genetic map")
+			("input-region", bpo::value < std::string >(), "Imputation region with buffers")
+			("output-region", bpo::value < std::string >(), "Imputation region without buffers")
+			("sparse-maf", bpo::value<float>()->default_value(0.001f), "(Expert setting) Rare variant threshold")
 			("samples-file",  bpo::value < std::string >(), "File with sample names and ploidy information. One sample per line with a mandatory second column indicating ploidy (1 or 2). Sample names that are not present are assumed to have ploidy 2 (diploids). If the parameter is omitted, all samples are assumed to be diploid. GLIMPSE does NOT handle the use of sex (M/F) instead of ploidy.")
-			("input-region", bpo::value < std::string >(), "Whole genomic region to be phased (including left/right buffers). Required only if the reference panel in in VCF/BCF format.")
-			("output-region", bpo::value < std::string >(), "Phased genomic region to output. Required only if the reference panel in in VCF/BCF format.")
-			("sparse-maf", bpo::value<float>()->default_value(0.001f), "Expert setting: sites below this MAF are represented/processed using sparse data structures when using VCF/BCF reference panel. Please do not change if not necessary: performance of the software is highly dependent on this parameter. Required only if the reference panel in in VCF/BCF format.")
-			("input-field-gl", "Use FORMAT/GL field instead of FORMAT/PL to read genotyope likelihoods (Used only if --input-gl is defined)")
-			("ind-name", bpo::value < std::string >(), "Name of the sample to be processed. If not specified the prefix of the bam file (--bam) is used.")
-			("keep-monomorphic-ref-sites", "Keeps monomorphic markers in the reference panel, that are removed by default.")
-			("impute-reference-only-variants", "Allows imputation at variants only present in the reference panel. The use of this option is intended only to allow imputation at sporadic missing variants. If the number of missing variants is non-sporadic, please re-run the genotype likelihood computation at all reference variants and avoid using this option, since data from the reads should be used. A warning is thrown if reference-only variants are found. (Used only if --input-gl is defined) ");
+			("ind-name", bpo::value < std::string >(), "Only used together with --bam-file. Name of the sample to be processed. If not specified the prefix of the BAM/CRAM file (--bam-file) is used.")
+			("keep-monomorphic-ref-sites", "(Expert setting) Keeps monomorphic markers in the reference panel (removed by default)");
+			("impute-reference-only-variants", "Allows imputation at variants only present in the reference panel. The use of this option is intended only to allow imputation at sporadic missing variants. If the number of missing variants is non-sporadic, please re-run the genotype likelihood computation at all reference variants and avoid using this option, since data from the reads should be used. A warning is thrown if reference-only variants are found. (Used only if --input-gl is defined) ")
+			("input-field-gl", "Only used together with --input-gl. Use FORMAT/GL field instead of FORMAT/PL to read genotyope likelihoods");
 
 	bpo::options_description opt_algo ("Model parameters");
 	opt_algo.add_options()
-			("burnin", bpo::value<int>()->default_value(5), "Number of Burn-in iterations")
-			("main", bpo::value<int>()->default_value(15), "Each main iterations contributes to output genotypes. Haplotypes sampled for the last (max 15) iterations are stored in the HS field.")
-			("ne", bpo::value<int>()->default_value(100000), "Effective diploid population size")
-			("min-gl", bpo::value<float>()->default_value(1e-10f), "Expert option. Minimum haploid GL")
-			("err-imp", bpo::value<float>()->default_value(1e-12f), "Expert option. Imputation HMM error rate")
-			("err-phase", bpo::value<float>()->default_value(0.0001f), "Expert option. Phasing HMM error rate");
+			("burnin", bpo::value<int>()->default_value(5), "(Expert setting) Number of burn-in iterations of the Gibbs sampler")
+			("main", bpo::value<int>()->default_value(15), "(Expert setting) Number of main iterations of the Gibbs sampler")
+			("ne", bpo::value<int>()->default_value(100000), "(Expert setting) Effective diploid population size modelling recombination frequency")
+			("min-gl", bpo::value<float>()->default_value(1e-10f), "(Expert setting) Minimim haploid likelihood")
+			("err-imp", bpo::value<float>()->default_value(1e-12f), "(Expert setting) Imputation HMM error rate")
+			("err-phase", bpo::value<float>()->default_value(0.0001f), "(Expert setting) Phasing HMM error rate");
 
 	bpo::options_description opt_selection ("Selection parameters");
 	opt_selection.add_options()
-			("pbwt-depth", bpo::value<int>()->default_value(12), "Number of neighbors in the PBWT selection step (positive number).")
-			("pbwt-modulo-cm", bpo::value<float>()->default_value(0.1f), "Frequency of PBWT selection in cM (positive number).")
-			("Kinit", bpo::value<int>()->default_value(1000), "Number of selected states used for initialization. Can be set to zero only when --state-list is set, to skip the init selection.")
-			("Kpbwt", bpo::value<int>()->default_value(2000), "Maximum number of PBWT-selected states used for conditioning. Can be set to zero only when --state-list is set, to skip the PBWT selection.")
-			("state-list", bpo::value < std::string >(), "List of haplotypes always present in the copy set, independent from state selection. Not affected by other selection parameters." );
+			("pbwt-depth", bpo::value<int>()->default_value(12), "(Expert setting) Number of neighbors in the sparse PBWT selection step (positive number)")
+			("pbwt-modulo-cm", bpo::value<float>()->default_value(0.1f), "(Expert setting) Frequency of PBWT selection in cM (positive number). This parameter is automatically adjusted in case of small imputation regions")
+			("Kinit", bpo::value<int>()->default_value(1000), "(Expert setting) Number of states used for initialization (positive number). Can be set to zero only when –state-list is set, to skip the selection for the initialization step")
+			("Kpbwt", bpo::value<int>()->default_value(2000), "(Expert setting)  Maximum number of states selected from the sparse PBWT (positive number). Can be set to zero only when –state-list is set, to skip the selection for during the Gibbs iterations")
+			("state-list", bpo::value < std::string >(), "(Expert setting) List (.txt file) of haplotypes always present in the conditioning set, independent from state selection. Not affected by other selection parameters. Each row is a target haplotype (two lines per sample in case of diploid individuals) each column is a space separated list of reference haplotypes (in numberical order 0-(2N-1) ). Useful when prior knowledge of relatedness between the reference and target panel is known a priori." );
 
 
 	bpo::options_description opt_filters ("BAM/CRAM options and filters");
 	opt_filters.add_options()
-			("call-model", boost::program_options::value< std::string >()->default_value("standard"), "Model to use to call the data. Options: 'standard'")
-			("call-indels", "Perform genotype calling at indels instead of only imputing them using a haplotype scaffold assuming uniform prior. (NOT RECOMMENDED)")
-			("fasta,F", boost::program_options::value< std::string >(), "Faidx indexed reference sequence file.")
-			("mapq", boost::program_options::value< int >()->default_value(10), "Minimum mapping quality for a read to be considered. Set this to only include uniquely mapped reads.")
-			("baseq", boost::program_options::value< int >()->default_value(10), "Minimum phred quality for a base to be considered.")
-			("max-depth", boost::program_options::value< int >()->default_value(40), "Max read depth at a site. Sets the maximum number of reads desidered per site. If the number of reads exceeds this number, the reads at the sites are downsampled.")
-			("keep-orphan-reads", "Keep paired end reads where one of mates is unmapped.")
-			("ignore-orientation", "If provided the orientation of mate pairs where both mates are on the same chromosome and where the first mate is on the positive strand and the second is on the negative strand will be ignored.")
-			("check-proper-pairing", "If provided the caller discards reads that are not properly paired.")
-			("keep-failed-qc", "Keep reads that fail sequencing QC (as indicated by the sequencer). (NOT RECOMMENDED)")
-			("keep-duplicates", "Keep duplicate sequencing reads in the process. (NOT RECOMMENDED)")
-			("illumina13+", "Base quality in the Illumina-1.3 encoding (for older sequencing machines)");
+			("call-model", boost::program_options::value< std::string >()->default_value("standard"), "Model to use to call the data. Only the standard model is available at the moment.")
+			("call-indels", "(Expert setting) Use the calling model to produce genotype likelihoods at indels. However the likelihoods from low-coverage data can be miscalibrated, therefore by default GLIMPSE does only imputation into the haplotype scaffold (assuming flat likelihoods)")
+			("fasta,F", boost::program_options::value< std::string >(), "Faidx-indexed reference sequence file in the appropriate genome build. Necessary for CRAM files")
+			("mapq", boost::program_options::value< int >()->default_value(10), "Minimum mapping quality for a read to be considered")
+			("baseq", boost::program_options::value< int >()->default_value(10), "Minimum phred-scalde based quality to be considered")
+			("max-depth", boost::program_options::value< int >()->default_value(40), "(Expert setting) Max read depth at a site. If the number of reads exceeds this number, the reads at the sites are downsampled (e.g. to avoid artifactual coverage increases)")
+			("keep-orphan-reads", "(Expert setting) Keep paired end reads where one of mates is unmapped")
+			("ignore-orientation", "(Expert setting) Ignore the orientation of mate pairs")
+			("check-proper-pairing", "(Expert setting) Discard reads that are not properly paired")
+			("keep-failed-qc", "(Expert setting) Keep reads that fail sequencing QC (as indicated by the sequencer)")
+			("keep-duplicates", "(Expert setting) Keep duplicate sequencing reads in the process")
+			("illumina13+", "(Expert setting) Use illimina 1.3 encoding for the base quality (for older sequencing machines)");
 
 	bpo::options_description opt_output ("Output parameters");
 	opt_output.add_options()
 			("output,O", bpo::value< std::string >(), "Phased and imputed haplotypes in VCF/BCF/BGEN format")
-			("contigs-fai", bpo::value< std::string >(), "If specified, header contig names and their lengths are copied from the provided fasta index file (.fai). Otherwise, only the current contig (chromosome name) is printed in the VCF/BCF header.")
-			("bgen-bits", boost::program_options::value< int >()->default_value(8), "Specifies the number of bits to be used for the encoding probabilities of the output BGEN file. If the output is in the .vcf[.gz]/.bcf format, this value is ignored. Accepted values: 0 < x <= 32. Default: x=8.")
-			("bgen-compr", boost::program_options::value< std::string >()->default_value("zstd"), "Specifies the compression of the output BGEN file. If the output is in the .vcf[.gz]/.bcf format, this value is ignored. Accepted values: [no, zlib, zstd].")
+			("contigs-fai", bpo::value< std::string >(), "If specified, header contig names and their lengths are copied from the provided fasta index file (.fai). This allows to create imputed whole-genome files as contigs are present and can be easily merged by bcftools")
+			("bgen-bits", boost::program_options::value< int >()->default_value(8), "(Expert setting) Only used toghether when the output is in BGEN file format. Specifies the number of bits to be used for the encoding probabilities of the output BGEN file. If the output is in the .vcf[.gz]/.bcf format, this value is ignored. Accepted values: 1-32")
+			("bgen-compr", boost::program_options::value< std::string >()->default_value("zstd"), "(Expert setting) Only used toghether when the output is in BGEN file format. Specifies the compression of the output BGEN file. If the output is in the .vcf[.gz]/.bcf format, this value is ignored. Accepted values: [no,zlib,zstd]")
 			("log", bpo::value< std::string >(), "Log file");
 
 	descriptions.add(opt_base).add(opt_input).add(opt_algo).add(opt_selection).add(opt_filters).add(opt_output);

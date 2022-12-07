@@ -29,7 +29,7 @@
 void chunker::declare_options() {
 	bpo::options_description opt_base ("Basic options");
 	opt_base.add_options()
-			("help", "Produce help message")
+			("help", "Produces help message")
 			("seed", bpo::value<int>()->default_value(15052011), "Seed of the random number generator")
 			("threads", bpo::value<int>()->default_value(1), "Number of threads");
 
@@ -38,12 +38,12 @@ void chunker::declare_options() {
 			("input,I", bpo::value< std::string >(), "Reference or target dataset at all variable positions in VCF/BCF format. The GT field is not required")
 			("region", bpo::value< std::string >(), "Chromosome or region to be split")
 			("map,M", bpo::value < std::string >(), "Genetic map")
-			("sparse-maf", bpo::value<float>()->default_value(0.001f), "Expert setting: rare variant threshold");
+			("sparse-maf", bpo::value<float>()->default_value(0.001f), "(Expert setting) Rare variant threshold");
 
 	bpo::options_description opt_param ("Parameters");
 	opt_param.add_options()
-			("window-cm", bpo::value<float>()->default_value(4.0), "Minimal Window size in cM")
-			("window-mb", bpo::value<float>()->default_value(4.0), "Minimal Window size in Mb")
+			("window-cm", bpo::value<float>()->default_value(4.0), "Minimal window size in cM")
+			("window-mb", bpo::value<float>()->default_value(4.0), "Minimal window size in Mb")
 			("window-count", bpo::value<int>()->default_value(30000), "Minimal window size in #variants")
 			("buffer-cm", bpo::value<float>()->default_value(0.5), "Minimal buffer size in cM")
 			("buffer-mb", bpo::value<float>()->default_value(0.5), "Minimal buffer size in Mb")
@@ -52,12 +52,12 @@ void chunker::declare_options() {
 	bpo::options_description opt_algo ("Model parameters");
 	opt_algo.add_options()
 			("recursive", "Recursive algorithm")
-			("sequential", "Sequential algorithm")
-			("uniform-number-variants","Try to uniform the number of variants in the sequential algorithm");
+			("sequential", "(Recommended). Sequential algorithm")
+			("uniform-number-variants","(Experimental) Uniform the number of variants in the sequential algorithm");
 
 	bpo::options_description opt_output ("Output files");
 	opt_output.add_options()
-			("output,O", bpo::value< std::string >(), "Coordinate files for phasing and imputation")
+			("output,O", bpo::value< std::string >(), "File containing the chunks for phasing and imputation")
 			("log", bpo::value< std::string >(), "Log file");
 
 	descriptions.add(opt_base).add(opt_input).add(opt_param).add(opt_algo).add(opt_output);

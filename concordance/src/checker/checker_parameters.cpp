@@ -29,16 +29,16 @@
 void checker::declare_options() {
 	bpo::options_description opt_base ("Basic options");
 	opt_base.add_options()
-			("help", "Produce help message")
+			("help", "Produces help message")
 			("seed", bpo::value<int>()->default_value(15052011), "Seed of the random number generator")
 			("threads", bpo::value<int>()->default_value(1), "Number of threads");
 
 	bpo::options_description opt_input ("Input parameters");
 	opt_input.add_options()
-			("input", bpo::value< std::string >(), "File listing in order: regions frequencies validation and imputed dataset. For genome-wide concordance, add more lines specifying different chromosomes.")
+			("input", bpo::value< std::string >(), "File with four columns listing in order: regions frequencies validation and imputed dataset. For genome-wide concordance, add more lines specifying different chromosomes.")
 			("samples", bpo::value< std::string >(), "List of samples to process, one sample ID per line")
 			("gt-val", "Uses hard called genotypes rather than phread-scaled likelihoods for the validation dataset, reading them from FORMAT/GT field.")
-			("gt-tar", "Uses FORMAT/GT field to determine the best-guess genotype rather than the higher FORMAT/GP (default). FORMAT/DS are FORMAT/GP fields are still required for calibration and rsquared calculations.");
+			("gt-tar", "Uses FORMAT/GT field to determine the best-guess genotype rather than the FORMAT/GP (default). FORMAT/DS are FORMAT/GP fields are still required for calibration and rsquared calculations.");
 
 
 	bpo::options_description opt_algo ("Other parameters");
