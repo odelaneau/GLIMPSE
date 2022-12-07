@@ -3,7 +3,6 @@
 mkdir -p GLIMPSE_impute
 
 REF=reference_panel/split/1000GP.chr22.noNA12878
-MAP=../maps/genetic_maps.b38/chr22.b38.gmap.gz
 BAM=NA12878_1x_bam/NA12878.bam
 
 while IFS="" read -r LINE || [ -n "$LINE" ]; 
