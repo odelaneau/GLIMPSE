@@ -41,7 +41,7 @@ To use the joint-model, particularly useful for many samples at higher coverages
 ## News
 
 {: .new }
-> **Version `2.0.0` will be soon available!**
+> **Version `2.0.0` is now available!**
 > See [the CHANGELOG](https://github.com/odelaneau/GLIMPSE/blob/master/docs/CHANGELOG.md) for details.
 
 ## Description

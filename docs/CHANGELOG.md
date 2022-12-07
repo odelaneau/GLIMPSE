@@ -7,7 +7,7 @@ layout: default
 
 All notable changes to this project are documented in this file.
 
-## v2.0.0 - prerelease
+## v2.0.0
 	* Major release. Introduced speedups and accuracy improvements. Version used for the preprint. (https://doi.org/10.1101/2022.11.28.518213)
 
 ## v1.1.1

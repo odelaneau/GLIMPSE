@@ -6,7 +6,7 @@
 
 ### Versions
 
-**Upcoming Release: 2.0.0**. Release date: Dec 07, 2022
+**Current release: v2.0.0**. Release date: Dec 07, 2022
 
 For details of past changes please see [CHANGELOG](docs/CHANGELOG.md).
 
