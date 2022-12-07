@@ -41,7 +41,7 @@ GLIMPSE2_split_reference --input-region chr20:7702567-12266861 --output-region c
 |:---------------------|:--------|:---------|:-------------------------------------|
 | \-\-help             | NA      | NA       | Produces help message |
 | \-\-seed             | INT     | 15052011 | Seed of the random number generator  |
-| \-T \[ \-\-thread \] | INT     | 1        | Number of threads |
+| \-T \[ \-\-threads\] | INT     | 1        | Number of threads |
 
 
 
@@ -49,12 +49,12 @@ GLIMPSE2_split_reference --input-region chr20:7702567-12266861 --output-region c
 
 | Option name 	       | Argument| Default  | Description |
 |:---------------------|:--------|:---------|:-------------------------------------|
+| \-R \[\-\-reference\]| FILE    | NA       | Reference panel of haplotypes in VCF/BCF format |
+| \-M \[ \-\-map \]    | FILE    | NA       | Genetic map |
 | \-\-input-region     | STRING  | NA       | Imputation region with buffers |
 | \-\-output-region    | STRING  | NA       | Imputation region without buffers |
-| \-R \[ \-\-reference \] | FILE    | NA       | Reference panel of haplotypes in VCF/BCF format |
-| \-M \[ \-\-map \]    | FILE    | NA       | Genetic map |
-| \-\-sparse-maf       | FLOAT   | =0.001   | Expert setting: rare variant threshold |
-| \-\-keep-monomorphic-ref-sites | NA       | NA       | Keeps monomorphic markers in the reference panel, that are removed by default |
+| \-\-sparse-maf       | FLOAT   | 0.001   | **Expert setting.** Rare variant threshold |
+| \-\-keep-monomorphic-ref-sites | NA       | NA       | **Expert setting.** Keeps monomorphic markers in the reference panel, that are removed by default |
 
 #### Output files
 

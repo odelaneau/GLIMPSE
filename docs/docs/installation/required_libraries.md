@@ -21,7 +21,7 @@ permalink: /docs/installation/build_from_source/required_libraries
 GLIMPSE2 requires several libraries installed on the system. Here we assume most of the libraries are available, and we focus on two main libraries:
 
 - HTSlib version >= 1.7: A C library for reading/writing high-throughput sequencing data.
-- BOOST version >= 1.65: A set of peer-reviewed portable C++ source libraries. GLIMPSE2 uses two specific BOOST libraries: `iostreams` and `program_options`.
+- BOOST version >= 1.65: A set of peer-reviewed portable C++ source libraries. GLIMPSE2 uses three specific BOOST libraries: `iostreams`, `program_options` and `serialization`.
 
 ### HTSlib
 Building HTSlib is straightforward and does not require root privileges. Please refer to the [HTSlib](http://www.htslib.org/) documentation for complete details. Here we provide a basic script to install HTSlib v1.16:
