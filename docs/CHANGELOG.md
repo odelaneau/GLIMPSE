@@ -7,10 +7,7 @@ layout: default
 
 All notable changes to this project are documented in this file.
 
-{: .highlight }
-Version 2.0.0 will be released on the 7th of December 2022.
-
-## v2.0.0
+## v2.0.0 - prerelease
 	* Major release. Introduced speedups and accuracy improvements. Version used for the preprint. (https://doi.org/10.1101/2022.11.28.518213)
 
 ## v1.1.1

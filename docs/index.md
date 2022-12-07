@@ -16,9 +16,6 @@ A tool for low-coverage whole-genome sequencing imputation
 <br>
 <br>
 
-{: .highlight }
-Website under construction. A complete release of GLIMPSE2 will be available by the 7th of December 2022.
-
 ## About
 
 [GLIMPSE2](https://www.biorxiv.org/content/10.1101/2022.11.28.518213v1) is a set of tools for low-coverage whole genome sequencing imputation. GLIMPSE2 is based on the <a href="https://www.nature.com/articles/s41588-020-00756-0">GLIMPSE model</a> and designed for reference panels containing hundreads of thousands of reference samples, with a special focus on rare variants. 

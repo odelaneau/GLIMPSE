@@ -7,9 +7,6 @@ permalink: /docs/documentation
 ---
 # Documentation
 
-{: .highlight }
-Website under construction. A complete release of GLIMPSE2 will be available by the 7th of December 2022.
-
 Command-line documentation and usage of SHAPEIT5
 {: .fs-6 .fw-300 }
 
