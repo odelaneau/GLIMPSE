@@ -46,7 +46,7 @@ void caller::declare_options() {
 			("sparse-maf", bpo::value<float>()->default_value(0.001f), "(Expert setting) Rare variant threshold")
 			("samples-file",  bpo::value < std::string >(), "File with sample names and ploidy information. One sample per line with a mandatory second column indicating ploidy (1 or 2). Sample names that are not present are assumed to have ploidy 2 (diploids). If the parameter is omitted, all samples are assumed to be diploid. GLIMPSE does NOT handle the use of sex (M/F) instead of ploidy.")
 			("ind-name", bpo::value < std::string >(), "Only used together with --bam-file. Name of the sample to be processed. If not specified the prefix of the BAM/CRAM file (--bam-file) is used.")
-			("keep-monomorphic-ref-sites", "(Expert setting) Keeps monomorphic markers in the reference panel (removed by default)");
+			("keep-monomorphic-ref-sites", "(Expert setting) Keeps monomorphic markers in the reference panel (removed by default)")
 			("impute-reference-only-variants", "Allows imputation at variants only present in the reference panel. The use of this option is intended only to allow imputation at sporadic missing variants. If the number of missing variants is non-sporadic, please re-run the genotype likelihood computation at all reference variants and avoid using this option, since data from the reads should be used. A warning is thrown if reference-only variants are found. (Used only if --input-gl is defined) ")
 			("input-field-gl", "Only used together with --input-gl. Use FORMAT/GL field instead of FORMAT/PL to read genotyope likelihoods");
 
