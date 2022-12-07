@@ -54,7 +54,7 @@ cd ../boost #change this to the folder you used as --prefix for the bootstrap sc
 ```
 </div>
 
-After this, you will also find a copy of the Boost headers in the include/ subdirectory of the installation prefix (our current directory). The Boost static libraries (`libboost_iostreams.a` and `libboost_program_options.a`) are found in the subfolder `./lib/` of your installation prefix.
+After this, you will also find a copy of the Boost headers in the include/ subdirectory of the installation prefix (our current directory). The Boost static libraries (`libboost_iostreams.a`, `libboost_program_options.a` and `libboost_serialization.a`) are found in the subfolder `./lib/` of your installation prefix.
 
 ### Additional libraries
 
