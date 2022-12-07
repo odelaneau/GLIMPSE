@@ -92,4 +92,12 @@ docs/.jekyll-metadata
 docs/.bundle/
 docs/vendor/
 
+tutorial/reference_panel/
+tutorial/chunks.chr22.txt
+tutorial/GLIMPSE_ligate/
+tutorial/GLIMPSE_impute/
+tutorial/GLIMPSE_concordance/
+tutorial/bin/
+tutorial/*.vcf.gz*
+
 3rd_party/
