@@ -59,6 +59,15 @@ endif
 
 #CONDITIONAL PATH DEFINITON
 
+docker: HTSSRC=/usr/local
+docker: HTSLIB_INC=$(HTSSRC)/include/htslib
+docker: HTSLIB_LIB=$(HTSSRC)/lib/libhts.a
+docker: BOOST_INC=/usr/include
+docker: BOOST_LIB_IO=/usr/local/lib/libboost_iostreams.a
+docker: BOOST_LIB_PO=/usr/local/lib/libboost_program_options.a
+docker: BOOST_LIB_SE=/usr/local/lib/libboost_serialization.a
+docker: $(BFILE)
+
 system: DYN_LIBS=-lz -lpthread -lbz2 -llzma
 system: HTSSRC=/usr/local
 system: HTSLIB_INC=$(HTSSRC)/include/htslib
