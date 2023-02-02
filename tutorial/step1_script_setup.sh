@@ -18,7 +18,8 @@ ln -s ../../phase/bin/GLIMPSE2_phase bin/GLIMPSE2_phase
 ln -s ../../ligate/bin/GLIMPSE2_ligate bin/GLIMPSE2_ligate
 ln -s ../../concordance/bin/GLIMPSE2_concordance bin/GLIMPSE2_concordance
 
-chmod u+x bin/GLIMPSE_chunk
-chmod u+x bin/GLIMPSE_phase
-chmod u+x bin/GLIMPSE_ligate
-chmod u+x bin/GLIMPSE_concordance
+chmod u+x bin/GLIMPSE2_chunk
+chmod u+x bin/GLIMPSE2_split_reference
+chmod u+x bin/GLIMPSE2_phase
+chmod u+x bin/GLIMPSE2_ligate
+chmod u+x bin/GLIMPSE2_concordance
