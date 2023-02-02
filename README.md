@@ -31,3 +31,30 @@ https://odelaneau.github.io/GLIMPSE/
 ### GLIMPSE1
 
 At the moment, GLIMPSE2 performs imputation only from a reference panel of samples. To use the joint-model, particularly useful for many samples at higher coverages (>0.5x) and small reference panels, please visit the GLIMPSE1 website and checkout the [GLIMPSE1 branch](https://github.com/odelaneau/GLIMPSE/tree/glimpse1).
+
+
+### Installation
+
+To build the source code, please refer to the [step-by-step guide on the website](https://odelaneau.github.io/GLIMPSE/docs/installation).
+
+To run and test the pre-made docker images, you can run the following:
+
+
+
+#### GLIMPSE v2.0.0:
+```
+wget https://github.com/odelaneau/GLIMPSE/releases/download/v2.0.0/glimpse_v2.0.0-27-g0919952_20221207.tar.gz
+docker load < glimpse_v2.0.0-27-g0919952_20221207.tar.gz
+# test docker run using -it
+docker run -it glimpse:v2.0.0-27-g0919952_20221207
+```
+To run the tools you can use 'GLIMPSE2_[tool name]' (e.g. GLIMPSE2_phase) inside the docker run (-it) session 
+
+#### GLIMPSE v1.1.1:
+```
+wget https://github.com/odelaneau/GLIMPSE/releases/download/v1.1.1/glimpse_v1.1.1-c27e90d_20210521.tar.gz
+docker load < glimpse_v1.1.1-c27e90d_20210521.tar.gz
+# test docker run using -it
+docker run -it glimpse:v1.1.1-c27e90d_20210521
+```
+To run the tools you can use 'GLIMPSE_[tool name]_v1.1.1' (e.g. GLIMPSE_phase_v1.1.1) inside the docker run (-it) session 
