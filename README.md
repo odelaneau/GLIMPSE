@@ -45,11 +45,15 @@ At the moment, GLIMPSE2 performs imputation only from a reference panel of sampl
 
 To build the source code, please refer to the [step-by-step guide on the website](https://odelaneau.github.io/GLIMPSE/docs/installation).
 
-To run and test the pre-made docker images, you can run the following:
+#### Docker images
 
+##### Dockerhub
+You can find GLIMPSE on docker hub at this link:
+https://hub.docker.com/r/simrub/glimpse/
 
+##### Local download from Github releases
 
-#### GLIMPSE v2.0.0:
+###### GLIMPSE v2.0.0:
 ```
 wget https://github.com/odelaneau/GLIMPSE/releases/download/v2.0.0/glimpse_v2.0.0-27-g0919952_20221207.tar.gz
 docker load < glimpse_v2.0.0-27-g0919952_20221207.tar.gz
@@ -58,7 +62,7 @@ docker run -it glimpse:v2.0.0-27-g0919952_20221207
 ```
 To run the tools you can use 'GLIMPSE2_[tool name]' (e.g. GLIMPSE2_phase) inside the docker run (-it) session 
 
-#### GLIMPSE v1.1.1:
+###### GLIMPSE v1.1.1:
 ```
 wget https://github.com/odelaneau/GLIMPSE/releases/download/v1.1.1/glimpse_v1.1.1-c27e90d_20210521.tar.gz
 docker load < glimpse_v1.1.1-c27e90d_20210521.tar.gz
