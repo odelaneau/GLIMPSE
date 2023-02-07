@@ -1,8 +1,16 @@
-# GLIMPSE
+<p align="center">
+  <a href="https://odelaneau.github.io/GLIMPSE/">
+    <img height="150" src="docs/assets/images/branding/glimpse_logo_400x171.png">
+  </a>
+  <h1 align="center">GLIMPSE</h1>
+</p>
 
-[![](docs/assets/images/branding/glimpse_logo_250x107.png)](https://odelaneau.github.io/GLIMPSE/)
+[![GitHub license](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/odelaneau/GLIMPSE/blob/master/LICENSE)
+[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat-square)](http://bioconda.github.io/recipes/glimpse-bio/README.html)
+[![Anaconda-Server Badge](https://anaconda.org/bioconda/glimpse-bio/badges/downloads.svg)](https://anaconda.org/bioconda/glimpse-bio)
+[![Docker hub](https://img.shields.io/docker/pulls/simrub/glimpse)](https://hub.docker.com/r/simrub/glimpse/)
+[![GitHub Releases](https://img.shields.io/github/v/release/odelaneau/GLIMPSE)](https://github.com/odelaneau/GLIMPSE/releases)
 
-[![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 ### Versions
 
