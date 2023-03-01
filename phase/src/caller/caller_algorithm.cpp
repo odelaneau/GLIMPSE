@@ -121,8 +121,8 @@ void caller::phase_loop() {
 		H.updateHaplotypes(G);
 		H.transposeRareTar();
 		H.matchHapsFromCompressedPBWTSmall(V, false);
-		current_stage = STAGE_RESTRICT;
-		phase_iteration();
+		//current_stage = STAGE_RESTRICT;
+		//phase_iteration();
 		current_stage = STAGE_BURN;
 		phase_iteration();
 	}
