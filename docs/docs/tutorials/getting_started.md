@@ -108,9 +108,11 @@ We now define the chunks where to run imputation and phasing. This step is not t
 We use GLIMPSE2_chunk to generate imputation regions for the full chromosome 22, modifying few default parameters in this way:
 <div class="code-example" markdown="1">
 ```bash
-./bin/GLIMPSE2_chunk --input reference_panel/1000GP.chr22.noNA12878.sites.vcf.gz --region chr22 --output chunks.chr22.txt
+./bin/GLIMPSE2_chunk --input reference_panel/1000GP.chr22.noNA12878.sites.vcf.gz --region chr22 --output chunks.chr22.txt --map ../maps/genetic_maps.b38/chr22.b38.gmap.gz
 ```
 </div>
+<b> NB: please provide the map file if possible!</b>
+ 
 This generates a file containing the imputation chunks and larger chunks including buffers that we will use to run GLIMPSE2_split_reference and GLIMPSE2_phase.
 
 ## 4. Create binary reference panel
