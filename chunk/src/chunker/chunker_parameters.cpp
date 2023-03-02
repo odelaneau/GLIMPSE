@@ -42,8 +42,8 @@ void chunker::declare_options() {
 
 	bpo::options_description opt_param ("Parameters");
 	opt_param.add_options()
-			("window-cm", bpo::value<float>()->default_value(4.0), "Minimal window size in cM")
-			("window-mb", bpo::value<float>()->default_value(4.0), "Minimal window size in Mb")
+			("window-cm", bpo::value<float>()->default_value(2.0), "Minimal window size in cM")
+			("window-mb", bpo::value<float>()->default_value(2.0), "Minimal window size in Mb")
 			("window-count", bpo::value<int>()->default_value(30000), "Minimal window size in #variants")
 			("buffer-cm", bpo::value<float>()->default_value(0.5), "Minimal buffer size in cM")
 			("buffer-mb", bpo::value<float>()->default_value(0.5), "Minimal buffer size in Mb")
@@ -129,6 +129,8 @@ void chunker::verbose_files() {
 	vrb.bullet("Region               : [" + options["region"].as < std::string > () + "]");
 	if (options.count("map"))
 		vrb.bullet("Genetic Map          : [" + options["map"].as < std::string > () + "]");
+	else vrb.warning("No genetic map provided. Please provide a map if available. Setting 1cM = 1Mb");
+
 	vrb.bullet("Output file          : [" + options["output"].as < std::string > () + "]");
 	if (options.count("log")) vrb.bullet("Output LOG           : [" + options["log"].as < std::string > () + "]");
 }
