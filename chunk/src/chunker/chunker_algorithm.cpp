@@ -102,7 +102,13 @@ void chunker::split_sequential(output_file & fd, int & cidx, std::string & chr, 
 		right_idx = -1;
 
 		if (curr_start_common_idx < (positions_common_mb.size() - window_count))
-			curr_window_stop_idx = common2all[curr_start_common_idx + window_count - 1];//condition 1 met
+		{
+			if (curr_start_common_idx + window_count < common2all.size())
+				curr_window_stop_idx = common2all[curr_start_common_idx + window_count - 1];//condition 1 met
+			else
+				curr_window_stop_idx = positions_all_mb.size()-2;
+
+		}
 		else curr_window_stop_idx=positions_all_mb.size()-2;
 
 		do {
@@ -210,7 +216,7 @@ void chunker::chunk() {
 	int cidx = 0;
 	int cidx_uniform=0;
 
-	vrb.title("Splitting data into chunks and writting to [" + options["output"].as < std::string > () + "]");
+	vrb.title("Splitting data into chunks and writing to [" + options["output"].as < std::string > () + "]");
 	output_file fd(options["output"].as < std::string > ());
 
 	if (options.count("recursive"))
@@ -220,9 +226,10 @@ void chunker::chunk() {
 	else if (options.count("sequential"))
 	{
 		split_sequential(fd, cidx, chrID, 0, positions_all_mb.size() - 1, false);
+		bool reg_small = chunk_cm_length.size()==1;
 
 		int i=0;
-		while ((chunk_cm_length.back() < window_cm || chunk_mb_length.back() < window_mb) && i<10000)
+		while ((chunk_cm_length.back() < window_cm || chunk_mb_length.back() < window_mb) && i<10000 && !reg_small)
 		{
 			chunk_cm_length.clear();
 			chunk_mb_length.clear();
@@ -233,7 +240,18 @@ void chunker::chunk() {
 			split_sequential(fd, cidx, chrID, 0, positions_all_mb.size() - 1, false);
 			++i;
 		}
-		if (i==10000)
+
+		chunk_cm_length.clear();
+		chunk_mb_length.clear();
+		chunk_common_count.clear();
+		cidx=0;
+
+		if (reg_small)
+		{
+			vrb.bullet("Region appears to small to find a sequential solution (only one chunk detected). Check your parameters if this is not a desired behavior.");
+			split_recursive(fd, cidx, chrID, 0, positions_all_mb.size() - 1);
+		}
+		else if (i==10000)
 		{
 			vrb.bullet("Could not find a sequential solution to the problem. Running recursive algorithm.");
 			split_recursive(fd, cidx, chrID, 0, positions_all_mb.size() - 1);
@@ -283,7 +301,7 @@ void chunker::chunk() {
 	}
 
 	vrb.bullet("#chunks = " + stb.str(cidx));
-	if (options.count("uniform-number-variants")) vrb.bullet("#chunks uniform soluation = " + stb.str(cidx_uniform));
+	if (options.count("uniform-number-variants")) vrb.bullet("#chunks uniform solution = " + stb.str(cidx_uniform));
 
 	fd.close();
 
