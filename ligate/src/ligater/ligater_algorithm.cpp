@@ -169,8 +169,8 @@ void ligater::scan_overlap(const int ifname, const char * seek_chr, int seek_pos
 		//bcf_unpack(line1,BCF_UN_FMT);
 		int nGTsa = bcf_get_genotypes(sr->readers[0].header, line0, &GTa, &mGTa);
 		int nGTsb = bcf_get_genotypes(sr->readers[1].header, line1, &GTb, &mGTb);
-		if ( nGTsa != 2*nsamples || nGTsb != 2*nsamples )
-			vrb.error("Non-diploid samples found in overlap at position: " + std::to_string(line0->pos + 1));
+		if ( nGTsa <= 0 || nGTsb <= 0 )
+			vrb.error("GT field is not present in overlap at position: " + std::to_string(line0->pos + 1));
 
 		update_distances();
 		last_pos = line0->pos;
