@@ -42,12 +42,12 @@ void chunker::declare_options() {
 
 	bpo::options_description opt_param ("Parameters");
 	opt_param.add_options()
-			("window-cm", bpo::value<float>()->default_value(2.0), "Minimal window size in cM")
+			("window-cm", bpo::value<float>()->default_value(2.5), "Minimal window size in cM")
 			("window-mb", bpo::value<float>()->default_value(2.0), "Minimal window size in Mb")
-			("window-count", bpo::value<int>()->default_value(30000), "Minimal window size in #variants")
+			("window-count", bpo::value<int>()->default_value(20000), "Minimal window size in # common variants")
 			("buffer-cm", bpo::value<float>()->default_value(0.5), "Minimal buffer size in cM")
-			("buffer-mb", bpo::value<float>()->default_value(0.5), "Minimal buffer size in Mb")
-			("buffer-count", bpo::value<int>()->default_value(3000), "Minimal buffer size in #variants");
+			("buffer-mb", bpo::value<float>()->default_value(0.4), "Minimal buffer size in Mb")
+			("buffer-count", bpo::value<int>()->default_value(2000), "Minimal buffer size in # common variants");
 
 	bpo::options_description opt_algo ("Model parameters");
 	opt_algo.add_options()
