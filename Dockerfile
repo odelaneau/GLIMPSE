@@ -10,7 +10,7 @@ LABEL org.opencontainers.image.authors="simone.rubinacci@unil.ch"
 WORKDIR /docker_build/
 
 # Install required packages
-RUN apt-get update && apt-get install -y build-essential libbz2-dev libcurl4-openssl-dev autoconf libssl-dev wget zlib1g-dev liblzma-dev
+RUN apt-get update && apt-get install -y build-essential libbz2-dev libcurl4-openssl-dev autoconf libssl-dev wget zlib1g-dev liblzma-dev libdeflate-dev
 
 # Download and build boost program_options and iostreams
 RUN wget https://boostorg.jfrog.io/artifactory/main/release/1.78.0/source/boost_1_78_0.tar.gz && \
@@ -48,10 +48,11 @@ COPY makefile GLIMPSE/makefile
 
 # Download and build GLIMPSE
 RUN cd GLIMPSE && \
+make clean && \
 make COMPILATION_ENV=docker && \
 cd .. && \
-mkdir /GLIMPSE && \
-mv GLIMPSE/chunk/bin/GLIMPSE2_chunk GLIMPSE/split_reference/bin/GLIMPSE2_split_reference GLIMPSE/phase/bin/GLIMPSE2_phase GLIMPSE/ligate/bin/GLIMPSE2_ligate GLIMPSE/concordance/bin/GLIMPSE2_concordance /GLIMPSE && \
-rm -r GLIMPSE
+mv GLIMPSE/chunk/bin/GLIMPSE2_chunk GLIMPSE/split_reference/bin/GLIMPSE2_split_reference GLIMPSE/phase/bin/GLIMPSE2_phase GLIMPSE/ligate/bin/GLIMPSE2_ligate GLIMPSE/concordance/bin/GLIMPSE2_concordance /bin && \
+chmod +x /bin/GLIMPSE2* && \
+rm -rf GLIMPSE
 
 WORKDIR /
