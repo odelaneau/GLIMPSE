@@ -79,7 +79,8 @@ void chunker::split_recursive(output_file & fd, int & cidx, std::string & chr, i
 		int left_idx = -1; int right_idx=-1;
 		add_buffer(start_idx, stop_idx, left_idx, right_idx);
 		vrb.bullet("Terminal window [" + stb.str(cidx) + "] -buffer:[" + chr + ":" + stb.str(positions_all_mb[start_idx]) + "-" + stb.str(positions_all_mb[stop_idx]) + "] / +buffer:[" + chr +  ":" + stb.str(positions_all_mb[left_idx]) + "-" + stb.str(positions_all_mb[right_idx]) + "] / L=" + stb.str(curr_window_cm_size) + "cM / L=" + stb.str(curr_window_mb_size) + "bp / C=" + stb.str(curr_window_count));
-		fd << cidx << "\t" << chr << "\t" << chr << ":"<< positions_all_mb[left_idx] << "-" << positions_all_mb[right_idx] << "\t" << chr << ":" << positions_all_mb[start_idx] << "-" << positions_all_mb[stop_idx] << "\t" << curr_window_cm_size << "\t" << curr_window_mb_size << "\t" << curr_window_count <<"\t" << curr_window_common_count << std::endl;
+		cnk_info.add_chunk(positions_all_mb[left_idx], positions_all_mb[right_idx], positions_all_mb[start_idx], positions_all_mb[stop_idx], curr_window_cm_size, curr_window_mb_size, curr_window_count, curr_window_common_count);
+		//fd << cidx << "\t" << chr << "\t" << chr << ":"<< positions_all_mb[left_idx] << "-" << positions_all_mb[right_idx] << "\t" << chr << ":" << positions_all_mb[start_idx] << "-" << positions_all_mb[stop_idx] << "\t" << curr_window_cm_size << "\t" << curr_window_mb_size << "\t" << curr_window_count <<"\t" << curr_window_common_count << std::endl;
 		cidx ++;
 	}
 }
@@ -152,36 +153,7 @@ void chunker::split_sequential(output_file & fd, int & cidx, std::string & chr, 
 				chk_stop+=10000000;
 			}
 		}
-
 		cnk_info.add_chunk(buf_start, buf_stop, chk_start, chk_stop, curr_window_cm_size, curr_window_mb_size, curr_window_count, curr_window_common_count);
-
-		/*
-		if (output_to_file)
-		{
-			add_buffer(curr_window_start_idx, curr_window_stop_idx, left_idx, right_idx);
-			vrb.bullet("Terminal window [" + stb.str(cidx) + "] -buffer:[" + chr + ":" + stb.str(positions_all_mb[curr_window_start_idx]) + "-" + stb.str(positions_all_mb[curr_window_stop_idx]) + "] / +buffer:[" + chr +  ":" + stb.str(positions_all_mb[left_idx]) + "-" + stb.str(positions_all_mb[right_idx]) + "] / L=" + stb.str(curr_window_cm_size) + "cM / L=" + stb.str(curr_window_mb_size) + "bp / C=" + stb.str(curr_window_count));
-			int buf_start=positions_all_mb[left_idx];
-			int chk_start=positions_all_mb[curr_window_start_idx];
-			int buf_stop=positions_all_mb[right_idx];
-			int chk_stop=positions_all_mb[curr_window_stop_idx];
-
-			if (whole_chr)
-			{
-				if (i == start_idx)
-				{
-					buf_start=1;
-					chk_start=1;
-				}
-				if (i == stop_idx-1)
-				{
-					buf_stop+=10000000;
-					chk_stop+=10000000;
-				}
-			}
-
-			fd << cidx << "\t" << chr << "\t" << chr << ":"<< buf_start << "-" << buf_stop << "\t" << chr << ":" << chk_start << "-" << chk_stop << "\t" << curr_window_cm_size << "\t" << curr_window_mb_size << "\t" << curr_window_count <<"\t" << curr_window_common_count << std::endl;
-		}
-		*/
 
 		i = curr_window_stop_idx;
 		cidx++;
@@ -239,7 +211,7 @@ void chunker::chunk() {
 	vrb.bullet("Region spans " + stb.str(positions_all_mb.back() - positions_all_mb[0] + 1) + " bp and " + stb.str(positions_all_cm.back() - positions_all_cm[0] + 1, 2) + " cM");
 	if (positions_all_mb.size() == 0) vrb.error("No markers in region: " + options["region"].as < std::string > () + ". Check chromosome name and start/end positions.");
 
-	cnk_info = chunk_info(chrID);
+	cnk_info.chr = chrID;
 
 	int cidx = 0;
 	int cidx_uniform=0;
@@ -250,6 +222,7 @@ void chunker::chunk() {
 	if (options.count("recursive"))
 	{
 		split_recursive(fd, cidx, chrID, 0, positions_all_mb.size() - 1);
+		cnk_info.output_to_file(fd);
 	}
 	else if (options.count("sequential"))
 	{
@@ -269,18 +242,21 @@ void chunker::chunk() {
 			++i;
 		}
 
-		chunk_cm_length.clear();
-		chunk_mb_length.clear();
-		chunk_common_count.clear();
-		cidx=0;
-
 		if (reg_small)
 		{
+			chunk_cm_length.clear();
+			chunk_mb_length.clear();
+			chunk_common_count.clear();
+			cidx=0;
 			vrb.bullet("Region appears to small to find a sequential solution (only one chunk detected). Check your parameters if this is not a desired behavior.");
 			split_recursive(fd, cidx, chrID, 0, positions_all_mb.size() - 1);
 		}
 		else if (i==10000)
 		{
+			chunk_cm_length.clear();
+			chunk_mb_length.clear();
+			chunk_common_count.clear();
+			cidx=0;
 			vrb.bullet("Could not find a sequential solution to the problem. Running recursive algorithm.");
 			split_recursive(fd, cidx, chrID, 0, positions_all_mb.size() - 1);
 		}
@@ -315,11 +291,8 @@ void chunker::chunk() {
 				else
 				{
 					vrb.bullet("Uniform solution found ["+ stb.str(i) + "/10000]. Writing chunks to file.");
-					chunk_cm_length.clear();
-					chunk_mb_length.clear();
-					chunk_common_count.clear();
-					cidx_uniform=0;
-					split_sequential(fd, cidx_uniform, chrID, 0, positions_all_mb.size() - 1, true);
+					cnk_info.output_to_file(fd);
+					//split_sequential(fd, cidx_uniform, chrID, 0, positions_all_mb.size() - 1, true);
 				}
 			}
 		}
