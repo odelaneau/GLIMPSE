@@ -129,7 +129,8 @@ void chunker::verbose_files() {
 	vrb.bullet("Region               : [" + options["region"].as < std::string > () + "]");
 	if (options.count("map"))
 		vrb.bullet("Genetic Map          : [" + options["map"].as < std::string > () + "]");
-	else vrb.warning("No genetic map provided. Please provide a map if available. Setting 1cM = 1Mb");
+	else
+		vrb.warning("No genetic map provided. Please provide a map if available. Setting 1cM = 1Mb\n\x1B[33mWARNING:\033[0m The parameters --window-cm and --buffer-cm should be set to zero if no map is available.\n");
 
 	vrb.bullet("Output file          : [" + options["output"].as < std::string > () + "]");
 	if (options.count("log")) vrb.bullet("Output LOG           : [" + options["log"].as < std::string > () + "]");
