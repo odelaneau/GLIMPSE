@@ -89,6 +89,7 @@ void chunker::split_sequential(output_file & fd, int & cidx, std::string & chr, 
 	// Compute current window properties
 	assert(stop_idx>start_idx);
 	int left_idx = -1; int right_idx=-1;
+	cnk_info.reset();
 
 	for (int i =start_idx; i<stop_idx; ++i)
 	{
@@ -132,6 +133,29 @@ void chunker::split_sequential(output_file & fd, int & cidx, std::string & chr, 
 		chunk_mb_length.push_back(curr_window_mb_size);
 		chunk_common_count.push_back(curr_window_common_count);
 
+		add_buffer(curr_window_start_idx, curr_window_stop_idx, left_idx, right_idx);
+		int buf_start=positions_all_mb[left_idx];
+		int chk_start=positions_all_mb[curr_window_start_idx];
+		int buf_stop=positions_all_mb[right_idx];
+		int chk_stop=positions_all_mb[curr_window_stop_idx];
+
+		if (whole_chr)
+		{
+			if (i == start_idx)
+			{
+				buf_start=1;
+				chk_start=1;
+			}
+			if (i == stop_idx-1)
+			{
+				buf_stop+=10000000;
+				chk_stop+=10000000;
+			}
+		}
+
+		cnk_info.add_chunk(buf_start, buf_stop, chk_start, chk_stop, curr_window_cm_size, curr_window_mb_size, curr_window_count, curr_window_common_count);
+
+		/*
 		if (output_to_file)
 		{
 			add_buffer(curr_window_start_idx, curr_window_stop_idx, left_idx, right_idx);
@@ -140,6 +164,7 @@ void chunker::split_sequential(output_file & fd, int & cidx, std::string & chr, 
 			int chk_start=positions_all_mb[curr_window_start_idx];
 			int buf_stop=positions_all_mb[right_idx];
 			int chk_stop=positions_all_mb[curr_window_stop_idx];
+
 			if (whole_chr)
 			{
 				if (i == start_idx)
@@ -152,10 +177,11 @@ void chunker::split_sequential(output_file & fd, int & cidx, std::string & chr, 
 					buf_stop+=10000000;
 					chk_stop+=10000000;
 				}
-
 			}
+
 			fd << cidx << "\t" << chr << "\t" << chr << ":"<< buf_start << "-" << buf_stop << "\t" << chr << ":" << chk_start << "-" << chk_stop << "\t" << curr_window_cm_size << "\t" << curr_window_mb_size << "\t" << curr_window_count <<"\t" << curr_window_common_count << std::endl;
 		}
+		*/
 
 		i = curr_window_stop_idx;
 		cidx++;
@@ -213,6 +239,8 @@ void chunker::chunk() {
 	vrb.bullet("Region spans " + stb.str(positions_all_mb.back() - positions_all_mb[0] + 1) + " bp and " + stb.str(positions_all_cm.back() - positions_all_cm[0] + 1, 2) + " cM");
 	if (positions_all_mb.size() == 0) vrb.error("No markers in region: " + options["region"].as < std::string > () + ". Check chromosome name and start/end positions.");
 
+	cnk_info = chunk_info(chrID);
+
 	int cidx = 0;
 	int cidx_uniform=0;
 
@@ -259,11 +287,8 @@ void chunker::chunk() {
 		else
 		{
 			vrb.bullet("Solution found ["+ stb.str(i) + "/10000]. Writing chunks to file.");
-			chunk_cm_length.clear();
-			chunk_mb_length.clear();
-			chunk_common_count.clear();
-			cidx=0;
-			split_sequential(fd, cidx, chrID, 0, positions_all_mb.size() - 1, true);
+			//split_sequential(fd, cidx, chrID, 0, positions_all_mb.size() - 1, true);
+			cnk_info.output_to_file(fd);
 
 			if (options.count("uniform-number-variants"))
 			{
