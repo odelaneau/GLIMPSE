@@ -85,6 +85,11 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
+# Genetics files
+*.vcf.gz*
+*.bcf*
+*_coverage.txt.gz
+
 docs/.jekyll-cache/
 docs/_site/
 docs/.sass-cache/
@@ -98,6 +103,5 @@ tutorial/GLIMPSE_ligate/
 tutorial/GLIMPSE_impute/
 tutorial/GLIMPSE_concordance/
 tutorial/bin/
-tutorial/*.vcf.gz*
 
 3rd_party/
