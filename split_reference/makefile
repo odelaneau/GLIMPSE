@@ -126,7 +126,7 @@ docker: BOOST_LIB_PO=/usr/local/lib/libboost_program_options.a
 docker: BOOST_LIB_SE=/usr/local/lib/libboost_serialization.a
 docker: $(BFILE)
 
-unil-dcsr: DYN_LIBS=-lz -lpthread -lcrypto $(XZ_ROOT)/lib/liblzma.so $(BZIP2_ROOT)/lib/libbz2.so $(CURL_ROOT)/lib/libcurl.so
+unil-dcsr: DYN_LIBS=-lz -lpthread -lcrypto $(XZ_ROOT)/lib/liblzma.so $(BZIP2_ROOT)/lib/libbz2.so $(CURL_ROOT)/lib/libcurl.so /dcsrsoft/spack/arolle/v1.0/spack/opt/spack/linux-rhel8-zen2/gcc-10.4.0/libdeflate-1.10-c5y7elzscnxjeh75hignyp23u5iprhl3/lib/libdeflate.a
 unil-dcsr: HTSSRC=$(HTSLIB_ROOT)
 unil-dcsr: HTSLIB_INC=$(HTSSRC)/include
 unil-dcsr: HTSLIB_LIB=$(HTSSRC)/lib/libhts.a

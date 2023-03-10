@@ -60,7 +60,7 @@ void caller::read_files_and_initialise() {
 	{
 		buildCoordinates();
 
-		genotype_reader readerG(H, G, V, M, options["sparse-maf"].as < float > (), options.count("input-field-gl"),options.count("impute-reference-only-variants"), options.count("keep-monomorphic-ref-sites"));
+		genotype_reader readerG(H, G, V, M, options["sparse-maf"].as < float > (), options.count("input-field-gl"),options.count("impute-reference-only-variants"), options.count("keep-monomorphic-ref-sites"), options.count("use-gl-indels"));
 		if (options.count("samples-file")) readerG.readSamplesFilePloidy(options["samples-file"].as < std::string > ());
 
 		if (options.count("input-gl"))
@@ -84,18 +84,22 @@ void caller::read_files_and_initialise() {
 		tac.clock();
 		{
 			std::ifstream ifs(reference_filename, std::ios::binary | std::ios_base::in);
-			if (!ifs.good()) vrb.error("Reading binary reference panel file: [" + reference_filename + "]");
-			boost::archive::binary_iarchive ia(ifs);
-			ia >> H;
-			ia >> V;
-
-			if (H.Ypacked.size()==0) vrb.error("Problem reading binary file format [v2.0.0]");
+			if (!ifs.good()) vrb.error("Reading binary reference panel file: [" + reference_filename + "]. File not good(): eofbit, failbit or badbit set or file not found.");
+			try
+			{
+				boost::archive::binary_iarchive ia(ifs);
+				ia >> H;
+				ia >> V;
+			} catch (std::exception& e ) {
+				vrb.error("problems reading the binary reference panel (exception triggered by boost archive). Please ensure you are using the same GLIMPSE and boost library version");
+			}
+			if (H.Ypacked.size()==0) vrb.error("Problem reading binary file format. Empty PBWT detected.");
 
 			vrb.bullet("Binary reference panel parsing [done] (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
 			print_ref_panel_info("Binary");
 		}
 
-		genotype_reader readerG(H, G, V, M, H.sparse_maf, options.count("input-field-gl"),options.count("impute-reference-only-variants"), options.count("keep-monomorphic-ref-sites"));
+		genotype_reader readerG(H, G, V, M, H.sparse_maf, options.count("input-field-gl"),options.count("impute-reference-only-variants"), options.count("keep-monomorphic-ref-sites"),options.count("use-gl-indels"));
 		if (options.count("samples-file")) readerG.readSamplesFilePloidy(options["samples-file"].as < std::string > ());
 
 		if (options.count("input-gl"))

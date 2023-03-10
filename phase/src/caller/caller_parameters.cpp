@@ -46,9 +46,14 @@ void caller::declare_options() {
 			("sparse-maf", bpo::value<float>()->default_value(0.001f), "(Expert setting) Rare variant threshold")
 			("samples-file",  bpo::value < std::string >(), "File with sample names and ploidy information. One sample per line with a mandatory second column indicating ploidy (1 or 2). Sample names that are not present are assumed to have ploidy 2 (diploids). If the parameter is omitted, all samples are assumed to be diploid. GLIMPSE does NOT handle the use of sex (M/F) instead of ploidy.")
 			("ind-name", bpo::value < std::string >(), "Only used together with --bam-file. Name of the sample to be processed. If not specified the prefix of the BAM/CRAM file (--bam-file) is used.")
-			("keep-monomorphic-ref-sites", "(Expert setting) Keeps monomorphic markers in the reference panel (removed by default)")
-			("impute-reference-only-variants", "Allows imputation at variants only present in the reference panel. The use of this option is intended only to allow imputation at sporadic missing variants. If the number of missing variants is non-sporadic, please re-run the genotype likelihood computation at all reference variants and avoid using this option, since data from the reads should be used. A warning is thrown if reference-only variants are found. (Used only if --input-gl is defined) ")
-			("input-field-gl", "Only used together with --input-gl. Use FORMAT/GL field instead of FORMAT/PL to read genotyope likelihoods");
+			("keep-monomorphic-ref-sites", "(Expert setting) Keeps monomorphic markers in the reference panel (removed by default)");
+
+
+	bpo::options_description opt_vcf_input ("VCF/BCF genotype likelihoods input parameters");
+	opt_vcf_input.add_options()
+			("impute-reference-only-variants", "Only used together with --input-gl. Allows imputation at variants only present in the reference panel. The use of this option is intended only to allow imputation at sporadic missing variants. If the number of missing variants is non-sporadic, please re-run the genotype likelihood computation at all reference variants and avoid using this option, since data from the reads should be used. A warning is thrown if reference-only variants are found.")
+			("input-field-gl", "Only used together with --input-gl. Use FORMAT/GL field instead of FORMAT/PL to read genotype likelihoods")
+			("use-gl-indels", "(Expert setting) Only used together with --input-gl. Use genotype likelihoods at indels from the VCF/BCF file. By default GLIMPSE assumes flat likelihoods at non-SNP variants, as genotype likelihoods from low-coverage data are often miscalibrated, potentially affecting neighbouring variants.");
 
 	bpo::options_description opt_algo ("Model parameters");
 	opt_algo.add_options()
@@ -91,7 +96,7 @@ void caller::declare_options() {
 			("bgen-compr", boost::program_options::value< std::string >()->default_value("zstd"), "(Expert setting) Only used toghether when the output is in BGEN file format. Specifies the compression of the output BGEN file. If the output is in the .vcf[.gz]/.bcf format, this value is ignored. Accepted values: [no,zlib,zstd]")
 			("log", bpo::value< std::string >(), "Log file");
 
-	descriptions.add(opt_base).add(opt_input).add(opt_algo).add(opt_selection).add(opt_filters).add(opt_output);
+	descriptions.add(opt_base).add(opt_input).add(opt_vcf_input).add(opt_algo).add(opt_selection).add(opt_filters).add(opt_output);
 }
 
 void caller::parse_command_line(std::vector < std::string > & args) {
@@ -106,7 +111,7 @@ void caller::parse_command_line(std::vector < std::string > & args) {
 	vrb.title("[GLIMPSE2] Phase and impute low coverage sequencing data");
 	vrb.bullet("Authors              : Simone RUBINACCI & Olivier DELANEAU, University of Lausanne");
 	vrb.bullet("Contact              : simone.rubinacci@unil.ch & olivier.delaneau@unil.ch");
-	vrb.bullet("Version       	 : GLIMPSE2_phase v" + std::string(LIGATE_VERSION) + " / commit = " + std::string(__COMMIT_ID__) + " / release = " + std::string (__COMMIT_DATE__));
+	vrb.bullet("Version       	 : GLIMPSE2_phase v" + std::string(PHASE_VERSION) + " / commit = " + std::string(__COMMIT_ID__) + " / release = " + std::string (__COMMIT_DATE__));
 	vrb.bullet("Citation	         : BiorXiv, (2022). DOI: https://doi.org/10.1101/2022.11.28.518213");
 	vrb.bullet("        	         : Nature Genetics 53, 120–126 (2021). DOI: https://doi.org/10.1038/s41588-020-00756-0");
 	vrb.bullet("Run date      	 : " + tac.date());
@@ -154,7 +159,8 @@ void caller::check_options() {
 	else input_fmt = InputFormat::GLIMPSE; //any extension except vcf/bcf/vcf.gz
 
 	//output
-	ext0 = stb.get_extension(options["output"].as<std::string>());
+	std::string output_filename = options["output"].as<std::string>();
+	ext0 = stb.get_extension(output_filename);
 	if (ext0 == "bcf" || ext0 == "vcf")
 	{
 		if (ext0 == "vcf")
@@ -170,10 +176,10 @@ void caller::check_options() {
 	}
 	else if (ext0 =="gz")
 	{
-		auto position = reference_filename.find_last_of ( '.' );
+		auto position = output_filename.find_last_of ( '.' );
 		if ( position != std::string::npos )
 		{
-			std::string str0 (reference_filename.substr(0, position) );
+			std::string str0 (output_filename.substr(0, position) );
 			std::string ext1 = stb.get_extension(str0);
 			if (ext1 == "vcf")
 			{
@@ -358,6 +364,10 @@ void caller::verbose_options()
 		vrb.bullet("Check pairing        : [" + no_yes[options.count("check-proper-pairing")] + "]");
 		vrb.bullet("Ignore orientation   : [" + no_yes[options.count("ignore-orientation")] + "]");
 		vrb.bullet("Illumina-1.3+        : [" + no_yes[options.count("illumina13")] + "]");
+	}
+	else
+	{
+		vrb.bullet("use-gl-indels         : [" + options.count("call-indels") ? "Use PLs]" : "Haplotype scaffold]");
 	}
 
 	vrb.title("Other parameters");

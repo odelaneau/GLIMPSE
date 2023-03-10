@@ -38,10 +38,11 @@ genotype_reader::genotype_reader(
 		const float _sparse_maf,
 		const bool _inputGL,
 		const bool _impute_refonly,
-		const bool _keep_mono) :
+		const bool _keep_mono,
+		const bool _use_gl_indels) :
 				H(_H), G(_G), V(_V), M(_M),
 				sparse_maf(_sparse_maf),
-				inputGL(_inputGL), impute_refonly(_impute_refonly), n_ref_samples(0), keep_mono(_keep_mono)
+				inputGL(_inputGL), impute_refonly(_impute_refonly), n_ref_samples(0), keep_mono(_keep_mono), use_gl_indels(_use_gl_indels)
 {
 	H.sparse_maf = _sparse_maf;
 }
@@ -330,6 +331,9 @@ void genotype_reader::readTarGenotypes(std::string fmain, int nthreads)
 		else
 		{
 			line_main = bcf_sr_get_line(sr_parse, 0);
+
+			//request: switch on/off indel calling from gl file
+			if (bcf_get_variant_types(line_main)!=VCF_SNP && !use_gl_indels) { ++i_site; continue;}
 
 			if (inputGL)
 			{
