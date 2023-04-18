@@ -37,6 +37,7 @@ chunker::chunker() {
 	buffer_mb = 0;
 	buffer_count = 0;
 	sparse_maf=0.001;
+	contig_len =1248956422;
 }
 
 chunker::~chunker() {

@@ -30,8 +30,8 @@ void chunker::declare_options() {
 	bpo::options_description opt_base ("Basic options");
 	opt_base.add_options()
 			("help", "Produces help message")
-			("seed", bpo::value<int>()->default_value(15052011), "Seed of the random number generator")
-			("threads", bpo::value<int>()->default_value(1), "Number of threads");
+			("seed", bpo::value<long int>()->default_value(15052011), "Seed of the random number generator")
+			("threads", bpo::value<long int>()->default_value(1), "Number of threads");
 
 	bpo::options_description opt_input ("Input parameters");
 	opt_input.add_options()
@@ -44,10 +44,10 @@ void chunker::declare_options() {
 	opt_param.add_options()
 			("window-cm", bpo::value<float>()->default_value(2.5), "Minimal window size in cM")
 			("window-mb", bpo::value<float>()->default_value(2.0), "Minimal window size in Mb")
-			("window-count", bpo::value<int>()->default_value(20000), "Minimal window size in # common variants")
+			("window-count", bpo::value<long int>()->default_value(20000), "Minimal window size in # common variants")
 			("buffer-cm", bpo::value<float>()->default_value(0.5), "Minimal buffer size in cM")
 			("buffer-mb", bpo::value<float>()->default_value(0.4), "Minimal buffer size in Mb")
-			("buffer-count", bpo::value<int>()->default_value(2000), "Minimal buffer size in # common variants");
+			("buffer-count", bpo::value<long int>()->default_value(2000), "Minimal buffer size in # common variants");
 
 	bpo::options_description opt_algo ("Model parameters");
 	opt_algo.add_options()
@@ -93,24 +93,24 @@ void chunker::check_options() {
 	if (!options.count("output"))
 		vrb.error("You must specify a phased output file with --output");
 
-	if (options.count("seed") && options["seed"].as < int > () < 0)
+	if (options.count("seed") && options["seed"].as < long int > () < 0)
 		vrb.error("Random number generator needs a positive seed value");
 
-	if (options["threads"].as < int > () < 1)
+	if (options["threads"].as < long int > () < 1)
 		vrb.error("Number of threads is a strictly positive number.");
 
 	if (options["window-cm"].as < float > () <= 0)
 		vrb.error("Window size in cM must be positive");
 	if (options["window-mb"].as < float > () <= 0)
 		vrb.error("Window size in Mb must be positive");
-	if (options["window-count"].as < int > () <= 0)
+	if (options["window-count"].as < long int > () <= 0)
 		vrb.error("Window size in number of markers must be positive");
 
 	if (options["buffer-cm"].as < float > () <= 0)
 		vrb.error("Buffer size in cM must be positive");
 	if (options["buffer-mb"].as < float > () <= 0)
 		vrb.error("Buffer size in Mb must be positive");
-	if (options["buffer-count"].as < int > () <= 0)
+	if (options["buffer-count"].as < long int > () <= 0)
 		vrb.error("Buffer size in number of markers must be positive");
 
 	float s_maf = options["sparse-maf"].as < float > ();
@@ -144,10 +144,10 @@ void chunker::verbose_options() {
 	vrb.bullet("Sparse MAF           : [" + stb.str(options["sparse-maf"].as < float > ()) + "]");
 	vrb.bullet("Algorithm            : [" + opt_algo + "]");
 	vrb.bullet("Recombination rates  : [" + opt_map + "]");
-	vrb.bullet("Min. Window size     : [" + stb.str(options["window-cm"].as < float > ()) + "cM | " + stb.str(options["window-mb"].as < float > ()) + "Mb | " + stb.str(options["window-count"].as < int > ()) + " variants]");
-	vrb.bullet("Min. Buffer size     : [" + stb.str(options["buffer-cm"].as < float > ()) + "cM | " + stb.str(options["buffer-mb"].as < float > ()) + "Mb | " + stb.str(options["buffer-count"].as < int > ()) + " variants]");
+	vrb.bullet("Min. Window size     : [" + stb.str(options["window-cm"].as < float > ()) + "cM | " + stb.str(options["window-mb"].as < float > ()) + "Mb | " + stb.str(options["window-count"].as < long int > ()) + " variants]");
+	vrb.bullet("Min. Buffer size     : [" + stb.str(options["buffer-cm"].as < float > ()) + "cM | " + stb.str(options["buffer-mb"].as < float > ()) + "Mb | " + stb.str(options["buffer-count"].as < long int > ()) + " variants]");
 
 	vrb.title("Other parameters");
-	vrb.bullet("Seed                 : [" + stb.str(options["seed"].as < int > ()) + "]");
-	vrb.bullet("#Threads             : [" + stb.str(options["threads"].as < int > ()) + "]");
+	vrb.bullet("Seed                 : [" + stb.str(options["seed"].as < long int > ()) + "]");
+	vrb.bullet("#Threads             : [" + stb.str(options["threads"].as < long int > ()) + "]");
 }

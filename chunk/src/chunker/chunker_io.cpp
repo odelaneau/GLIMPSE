@@ -25,7 +25,7 @@
 
 #include <chunker/chunker_header.h>
 
-void chunker::readData(std::string fmain, std::string region, int nthreads) {
+void chunker::readData(std::string fmain, std::string region, long int nthreads) {
 	tac.clock();
 	vrb.title("Reading input files");
 	vrb.progress("  * Reading              : [" + fmain + "]");
@@ -42,6 +42,44 @@ void chunker::readData(std::string fmain, std::string region, int nthreads) {
 		//we do not build an index here, as the target and reference panel could be accessed in parallel
 		if (sr->errnum != idx_load_failed) vrb.error("Failed to open file: " + fmain + "");
 		else vrb.error("Failed to load index of the file: " + fmain + "");
+	}
+
+	if (whole_chr)
+	{
+		const char **seq;
+		int i, nseq;
+		tbx_t *tbx = NULL;
+		hts_idx_t *idx = NULL;
+
+		if ( hts_get_format(sr->readers[0].file)->format==vcf )
+		{
+			tbx = tbx_index_load(fmain.c_str());
+			if ( !tbx ) { vrb.error("Could not load index for VCF: " + fmain); }
+		}
+		else if ( hts_get_format(sr->readers[0].file)->format==bcf )
+		{
+			idx = bcf_index_load(fmain.c_str());
+			if ( !idx ) { vrb.error("Could not load index for BCF: " + fmain); }
+		}
+		else  vrb.error("Could not detect the file type as VCF or BCF: " + fmain);
+
+		seq = tbx ? tbx_seqnames(tbx, &nseq) : bcf_index_seqnames(idx, sr->readers[0].header, &nseq);
+		//uint64_t sum = 0;
+		for (i=0; i<nseq; i++)
+		{
+			if (seq[i] != region) continue;
+	        bcf_hrec_t *hrec = sr ? bcf_hdr_get_hrec(sr->readers[0].header, BCF_HL_CTG, "ID", seq[i], NULL) : NULL;
+	        int hkey = hrec ? bcf_hrec_find_key(hrec, "length") : -1;
+	        //printf("%s\t%s\t", seq[i], hkey<0?".":hrec->vals[hkey]);
+
+			if (hkey>=0) contig_len = atol(hrec->vals[hkey]);
+			if (contig_len <= 0) contig_len = 1248956422;
+			break;
+		}
+		free(seq);
+		if (tbx) tbx_destroy(tbx);
+		if (idx) hts_idx_destroy(idx);
+
 	}
 
 	int n_variants = 0;
