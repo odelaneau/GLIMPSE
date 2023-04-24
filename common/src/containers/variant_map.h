@@ -62,8 +62,8 @@ public :
 	void push(variant *);
 	void setGeneticMap(const gmap_reader&);
 	void setGeneticMap();
-	int setCentiMorgan(const std::vector < int > & pos_bp, const std::vector < double > & pos_cM);
-	int interpolateCentiMorgan(const std::vector < int > & pos_bp, const std::vector < double > & pos_cM);
+	int setCentiMorgan(const std::vector < long int > & pos_bp, const std::vector < double > & pos_cM);
+	int interpolateCentiMorgan(const std::vector < long int > & pos_bp, const std::vector < double > & pos_cM);
 	unsigned int length() const;
 	double lengthcM() const;
 

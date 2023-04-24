@@ -68,7 +68,7 @@ void variant_map::push(variant * v) {
 	map_pos.insert(std::pair < int , variant * > (v->bp, v));
 }
 
-int variant_map::setCentiMorgan(const std::vector < int > & pos_bp, const std::vector < double > & pos_cM) {
+int variant_map::setCentiMorgan(const std::vector < long int > & pos_bp, const std::vector < double > & pos_cM) {
 	int cpt = 0;
 	for (int l = 0 ; l < pos_cM.size() ; l ++) {
 		std::vector  < variant * > vecS = getByPos(pos_bp[l]);
@@ -80,7 +80,7 @@ int variant_map::setCentiMorgan(const std::vector < int > & pos_bp, const std::v
 	return cpt;
 }
 
-int variant_map::interpolateCentiMorgan(const std::vector < int > & pos_bp, const std::vector < double > & pos_cM) {
+int variant_map::interpolateCentiMorgan(const std::vector < long int > & pos_bp, const std::vector < double > & pos_cM) {
 	float prog_step = 1.0/vec_pos.size();
 	float prog_bar = 0.0;
 	int n_interpolated = 0, i_locus = 0;
