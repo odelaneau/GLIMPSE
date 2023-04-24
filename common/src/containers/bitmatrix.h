@@ -26,6 +26,7 @@
 #ifndef _BITMATRIX_H
 #define _BITMATRIX_H
 
+#include <cstdlib>
 #include <utils/otools.h>
 #include "boost/serialization/serialization.hpp"
 #include "boost/serialization/array.hpp"
@@ -38,7 +39,7 @@ inline static unsigned int abracadabra(const unsigned int &i1, const unsigned in
 class bitmatrix
 {
 public:
-	unsigned long int n_bytes, n_cols, n_rows, startAddr;
+	unsigned long int n_bytes, n_cols, n_rows;
 	unsigned char * bytes;
 
 	bitmatrix();
@@ -64,12 +65,11 @@ public:
 		ar & n_bytes;
 		ar & n_cols;
 		ar & n_rows;
-		ar & startAddr;
 
 		if (Archive::is_loading::value)
 		{
 			assert(bytes == nullptr);
-			bytes = new unsigned char[n_bytes];
+			bytes = (unsigned char*)std::malloc(n_bytes*sizeof(unsigned char));
 		}
 		ar & boost::serialization::make_array<unsigned char>(bytes, n_bytes);
 	}
@@ -86,7 +86,7 @@ void bitmatrix::set(unsigned int row, unsigned int col, unsigned char bit) {
 
 inline
 void bitmatrix::set(unsigned int row, unsigned char bit) {
-	memset(&bytes[(unsigned long)row * (n_cols/8)], bit * 255, n_cols/8);
+	std::memset(&bytes[(unsigned long)row * (n_cols/8)], bit * 255, n_cols/8);
 }
 
 inline

@@ -32,10 +32,10 @@ bitmatrix::bitmatrix() {
 	bytes = nullptr;
 }
 
-bitmatrix::~bitmatrix() {
-	n_bytes = 0;
-	if (bytes != nullptr) free(bytes);
-	bytes = nullptr;
+bitmatrix::~bitmatrix() {	
+	n_bytes=0;
+	if (bytes) std::free(bytes);
+	bytes=NULL;
 }
 
 
@@ -46,7 +46,7 @@ void bitmatrix::subset(bitmatrix & BM, std::vector < unsigned int > rows) {
 	bytes = (unsigned char*)realloc(bytes, n_bytes*sizeof(unsigned char));
 	unsigned long offset_addr = 0;
 	for (int r = 0 ; r < rows.size() ; r ++) {
-		memcpy(&bytes[offset_addr], &BM.bytes[((unsigned long)rows[r]) * (BM.n_cols/8)], n_cols/8);
+		std::memcpy(&bytes[offset_addr], &BM.bytes[((unsigned long)rows[r]) * (BM.n_cols/8)], n_cols/8);
 		offset_addr += n_cols/8;
 	}
 }
@@ -78,15 +78,15 @@ void bitmatrix::allocate(unsigned int nrow, unsigned int ncol) {
 	n_rows = nrow + ((nrow%8)?(8-(nrow%8)):0);
 	n_cols = ncol + ((ncol%8)?(8-(ncol%8)):0);
 	n_bytes = (n_cols/8) * (unsigned long)n_rows;
-	bytes = (unsigned char*)malloc(n_bytes*sizeof(unsigned char));
-	memset(bytes, 0, n_bytes);
+	bytes = (unsigned char*)std::malloc(n_bytes*sizeof(unsigned char));
+	std::memset(bytes, 0, n_bytes);
 }
 
 void bitmatrix::reallocate(unsigned int nrow, unsigned int ncol) {
 	n_rows = nrow + ((nrow%8)?(8-(nrow%8)):0);
 	n_cols = ncol + ((ncol%8)?(8-(ncol%8)):0);
 	unsigned long int new_n_bytes = (n_cols/8) * (unsigned long)n_rows;
-	if (new_n_bytes > n_bytes) bytes = (unsigned char*)realloc(bytes, new_n_bytes*sizeof(unsigned char));
+	if (new_n_bytes > n_bytes) bytes = (unsigned char*)std::realloc(bytes, new_n_bytes*sizeof(unsigned char));
 	n_bytes = new_n_bytes;
 }
 

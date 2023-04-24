@@ -49,9 +49,9 @@ COPY makefile GLIMPSE/makefile
 # Download and build GLIMPSE
 RUN cd GLIMPSE && \
 make clean && \
-make COMPILATION_ENV=docker && \
-cd .. && \
-mv GLIMPSE/chunk/bin/GLIMPSE2_chunk GLIMPSE/split_reference/bin/GLIMPSE2_split_reference GLIMPSE/phase/bin/GLIMPSE2_phase GLIMPSE/ligate/bin/GLIMPSE2_ligate GLIMPSE/concordance/bin/GLIMPSE2_concordance /bin && \
+make COMPILATION_ENV=docker
+
+RUN mv GLIMPSE/chunk/bin/GLIMPSE2_chunk GLIMPSE/split_reference/bin/GLIMPSE2_split_reference GLIMPSE/phase/bin/GLIMPSE2_phase GLIMPSE/ligate/bin/GLIMPSE2_ligate GLIMPSE/concordance/bin/GLIMPSE2_concordance /bin && \
 chmod +x /bin/GLIMPSE2* && \
 rm -rf GLIMPSE
 

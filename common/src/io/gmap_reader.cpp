@@ -29,7 +29,7 @@ gmap_reader::gmap_reader() {
 }
 
 gmap_reader::~gmap_reader() {
-	std::vector < int > ().swap(pos_bp);
+	std::vector < long int > ().swap(pos_bp);
 	std::vector < double > ().swap(pos_cm);
 }
 
