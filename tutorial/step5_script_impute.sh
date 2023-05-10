@@ -14,5 +14,5 @@ do
 	REGS=$(echo ${IRG} | cut -d":" -f 2 | cut -d"-" -f1)
 	REGE=$(echo ${IRG} | cut -d":" -f 2 | cut -d"-" -f2)
 	OUT=GLIMPSE_impute/NA12878_imputed
-	./bin/GLIMPSE2_phase --bam-file ${BAM} --reference ${REF}_${CHR}_${REGS}_${REGE}.bin --output ${OUT}_${CHR}_${REGS}_${REGE}.bcf
+	./bin/GLIMPSE2_phase --bam-file ${BAM} --reference ${REF}_${CHR}_${REGS}_${REGE}.bin --output ${OUT}_${CHR}_${REGS}_${REGE}.vcf.gz
 done < chunks.chr22.txt
