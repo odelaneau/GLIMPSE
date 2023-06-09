@@ -216,7 +216,7 @@ void call_set::writeData(std::string fout) {
 		vrb.bullet("Concordance by frequency bin: [" + fout + ".error.grp.txt.gz]");
 		fd1<<"#Genotype concordance by allele frequency bin (SNPs)\n";
 		fd1 << "#GCsSAF" << " ";
-		if (ploidy > 1) fd1 << "id n_genotypes mean_AF #val_gt_RR #val_gt_RA #val_gt_AA filtered_gp RR_hom_matches RA_het_matches AA_hom_matches RR_hom_mismatches RA_het_mismatches AA_hom_mismatches RR_hom_mismatches_rate_percent RA_het_mismatches_rate_percent AA_hom_mimatches_rate_percent\n";
+		if (ploidy > 1) fd1 << "id n_genotypes mean_AF #val_gt_RR #val_gt_RA #val_gt_AA filtered_gp RR_hom_matches RA_het_matches AA_hom_matches RR_hom_mismatches RA_het_mismatches AA_hom_mismatches RR_hom_mismatches_rate_percent RA_het_mismatches_rate_percent AA_hom_mimatches_rate_percent best_gt_rsquared imputed_ds_rsquared\n";
 		else fd1 << "id n_genotypes mean_AF #val_gt_R #val_gt_A filtered_gp R_matches A_matches R_mismatches A_mismatches R_mismatches_rate_percent A_mismatches_rate_percent best_gt_rsquared imputed_ds_rsquared\n";
 
 
@@ -253,7 +253,7 @@ void call_set::writeData(std::string fout) {
 
 		fd1<<"#Genotype concordance by allele frequency bin (indels)\n";
 		fd1 << "#GCsIAF" << " ";
-		if (ploidy > 1) fd1 << "id n_genotypes mean_AF #val_gt_RR #val_gt_RA #val_gt_AA filtered_gp RR_hom_matches RA_het_matches AA_hom_matches RR_hom_mismatches RA_het_mismatches AA_hom_mismatches RR_hom_mismatches_rate_percent RA_het_mismatches_rate_percent AA_hom_mimatches_rate_percent\n";
+		if (ploidy > 1) fd1 << "id n_genotypes mean_AF #val_gt_RR #val_gt_RA #val_gt_AA filtered_gp RR_hom_matches RA_het_matches AA_hom_matches RR_hom_mismatches RA_het_mismatches AA_hom_mismatches RR_hom_mismatches_rate_percent RA_het_mismatches_rate_percent AA_hom_mimatches_rate_percent best_gt_rsquared imputed_ds_rsquared\n";
 		else fd1 << "id n_genotypes mean_AF #val_gt_R #val_gt_A filtered_gp R_matches A_matches R_mismatches A_mismatches R_mismatches_rate_percent A_mismatches_rate_percent best_gt_rsquared imputed_ds_rsquared\n";
 
 		for (int b = 0 ; b < L ; b++)
@@ -289,7 +289,7 @@ void call_set::writeData(std::string fout) {
 
 		fd1<<"#Genotype concordance by allele frequency bin (Variants: SNPs + indels)\n";
 		fd1 << "#GCsVAF" << " ";
-		if (ploidy > 1) fd1 << "id n_genotypes mean_AF #val_gt_RR #val_gt_RA #val_gt_AA filtered_gp RR_hom_matches RA_het_matches AA_hom_matches RR_hom_mismatches RA_het_mismatches AA_hom_mismatches RR_hom_mismatches_rate_percent RA_het_mismatches_rate_percent AA_hom_mimatches_rate_percent\n";
+		if (ploidy > 1) fd1 << "id n_genotypes mean_AF #val_gt_RR #val_gt_RA #val_gt_AA filtered_gp RR_hom_matches RA_het_matches AA_hom_matches RR_hom_mismatches RA_het_mismatches AA_hom_mismatches RR_hom_mismatches_rate_percent RA_het_mismatches_rate_percent AA_hom_mimatches_rate_percent best_gt_rsquared imputed_ds_rsquared\n";
 		else fd1 << "id n_genotypes mean_AF #val_gt_R #val_gt_A filtered_gp R_matches A_matches R_mismatches A_mismatches R_mismatches_rate_percent A_mismatches_rate_percent best_gt_rsquared imputed_ds_rsquared\n";
 
 		for (int b = 0 ; b < L ; b++)
