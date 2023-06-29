@@ -1,0 +1,9 @@
+These files provides two possible chunking of the human genome b38.
+The 4cM lengths are designed for SHAPEIT5 phase_rare and GLIMPSE2.
+This chunking has been used to phase the UK Biobank interim release of 200k WGS.
+
+Each file contains 4 columns:
+1. Chunk index
+2. Chromosome/contig ID
+3. Chunk coordinates including right and left buffers. These overlap with flanking chunks. 
+4. Chunk coordinates NOT including right and left buffers. These do NOT overlap with flanking chunks.
