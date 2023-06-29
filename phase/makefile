@@ -35,7 +35,7 @@ ifeq ($(NAME),phase)
 endif
 
 COMMIT_VERS=3bed6d9
-COMMIT_DATE=2022-12-07
+COMMIT_DATE=2023-04-24
 ifneq ($(MAKECMDGOALS),clean)
  ifneq (, $(shell which git))
   COMMIT_VERS_GIT=$(shell git rev-parse --short HEAD 2>/dev/null)
@@ -91,8 +91,8 @@ endif
 
 system: DYN_LIBS=-lz -lpthread -lbz2 -llzma
 system: HTSSRC=/home/srubinac/git
-system: HTSLIB_INC=$(HTSSRC)/htslib
-system: HTSLIB_LIB=$(HTSSRC)/htslib/libhts.a
+system: HTSLIB_INC=$(HTSSRC)/htslib-1.17
+system: HTSLIB_LIB=$(HTSSRC)/htslib-1.17/libhts.a
 system: BOOST_INC=/usr/include
 system: BOOST_LIB_IO=/usr/lib/x86_64-linux-gnu/libboost_iostreams.a
 system: BOOST_LIB_PO=/usr/lib/x86_64-linux-gnu/libboost_program_options.a
@@ -100,8 +100,8 @@ system: BOOST_LIB_SE=/usr/lib/x86_64-linux-gnu/libboost_serialization.a
 system: $(BFILE)
 
 desktop: HTSSRC=/home/srubinac/git
-desktop: HTSLIB_INC=$(HTSSRC)/htslib
-desktop: HTSLIB_LIB=$(HTSSRC)/htslib/libhts.a
+desktop: HTSLIB_INC=$(HTSSRC)/htslib-1.17
+desktop: HTSLIB_LIB=$(HTSSRC)/htslib-1.17/libhts.a
 desktop: BOOST_INC=/usr/include
 desktop: BOOST_LIB_IO=/usr/lib/x86_64-linux-gnu/libboost_iostreams.a
 desktop: BOOST_LIB_PO=/usr/lib/x86_64-linux-gnu/libboost_program_options.a

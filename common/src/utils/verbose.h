@@ -115,10 +115,16 @@ public:
 
 	void progress(const std::string prefix, const float percent) {
 		if (verbose_on_screen) {
-			int curr_percent = int(percent * 100.0f);
-			if (prev_percent > curr_percent) prev_percent = -1;
+			int curr_percent = int(std::round(percent*10)*10.0f);
+			if (prev_percent > curr_percent)
+			{
+				std::cout << prefix << "\t[" << 0.0 << "%]\r";
+				std::cout.flush();
+				prev_percent = 0.0;
+				return;
+			}
 			if (curr_percent > prev_percent + 9.99) {
-				std::cout << prefix << " [" << curr_percent << "%]\r";
+				std::cout << prefix << "\t[" << curr_percent << "%]\r";
 				std::cout.flush();
 				prev_percent = curr_percent;
 			}
@@ -127,7 +133,7 @@ public:
 
 	void progress(const std::string prefix) {
 		if (verbose_on_screen) {
-			std::cout << prefix << " ...\r";
+			std::cout << prefix << "\t...\r";
 			std::cout.flush();
 		}
 	}
