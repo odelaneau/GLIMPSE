@@ -27,6 +27,8 @@
 #include <io/gmap_reader.h>
 
 void chunker::split_recursive(output_file & fd, long int & cidx, std::string & chr, long int start_idx, long int stop_idx) {
+	cnk_info.reset();
+
 	// Compute current window properties
 	assert(stop_idx>start_idx);
 	long int curr_window_count = stop_idx - start_idx + 1;
@@ -252,6 +254,7 @@ void chunker::chunk() {
 			cidx=0;
 			vrb.bullet("Region appears to small to find a sequential solution (only one chunk detected). Check your parameters if this is not a desired behavior.");
 			split_recursive(fd, cidx, chrID, 0, positions_all_mb.size() - 1);
+			cnk_info.output_to_file(fd);
 		}
 		else if (i==10000)
 		{
@@ -261,6 +264,7 @@ void chunker::chunk() {
 			cidx=0;
 			vrb.bullet("Could not find a sequential solution to the problem. Running recursive algorithm.");
 			split_recursive(fd, cidx, chrID, 0, positions_all_mb.size() - 1);
+			cnk_info.output_to_file(fd);
 		}
 		else
 		{
