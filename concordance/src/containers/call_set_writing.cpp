@@ -484,7 +484,7 @@ void call_set::writeData(std::string fout) {
 	{
 		double rsq_gt = rsquared_spl_gt_all[i].corrXY();
 		double rsq_ds = rsquared_spl_ds_all[i].corrXY();
-		fd5 << samples[i] << " " << rsq_gt << " " << rsq_ds << std::endl;
+		fd5 << samples[i] << " " << rsq_gt*rsq_gt << " " << rsq_ds*rsq_ds << std::endl;
 	}
 	fd5.close();
 }
