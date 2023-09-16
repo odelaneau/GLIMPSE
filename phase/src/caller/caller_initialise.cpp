@@ -45,6 +45,10 @@ void caller::read_files_and_initialise() {
 	//step0: Initialize seed & other
 	rng.setSeed(options["seed"].as < int > ());
 	const int nthreads =  options["threads"].as < int > ();
+	iterations_per_stage[STAGE_INIT] = 1;
+	iterations_per_stage[STAGE_BURN] = options["burnin"].as < int > ();
+	iterations_per_stage[STAGE_MAIN] = options["main"].as < int > ();
+
 	if (nthreads < 1) vrb.error("Error defining the number of threads. Only positive values are accepted.");
 
 	if (nthreads > 1) {

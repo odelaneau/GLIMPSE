@@ -24,6 +24,12 @@
  ******************************************************************************/
 
 #include <caller/caller_header.h>
+#include "boost/serialization/serialization.hpp"
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/serialization/set.hpp>
+
+const std::string stage_names[3] = {"Init", "Burn-in", "Main"};
 
 void * phase_callback(void * ptr) {
 	caller * S = static_cast< caller * >(ptr);
@@ -78,6 +84,18 @@ void caller::phase_individual(const int id_worker, const int id_job) {
 }
 
 void caller::phase_iteration() {
+	if (current_stage == STAGE_INIT) {
+		vrb.title("Initializing iteration");
+
+		H.initRareTar(G,V);
+		H.performSelection_RARE_INIT_GL(V); //not parallel
+	} else {
+		vrb.title(stb.str(stage_names[current_stage]) + " iteration [" + stb.str(current_iteration+1) + "/" + stb.str(iterations_per_stage[current_stage]) + "]");
+		H.updateHaplotypes(G);
+		H.transposeRareTar();
+		H.matchHapsFromCompressedPBWTSmall(V, current_stage == STAGE_MAIN);
+	}
+
 	tac.clock();
 	int n_thread = options["threads"].as < int > ();
 	i_workers = 0; i_jobs = 0;
@@ -97,45 +115,85 @@ void caller::phase_iteration() {
 		vrb.progress("  * HMM imputation", prog_bar);
 	}
 	vrb.bullet("HMM imputation [#states=" + stb.str(statH.mean(), 1) + " / %poly=" + stb.str(statC.mean(), 1) + "%] (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
+
+
+	write_checkpoint();
+
+	if (current_stage == STAGE_INIT) {
+		H.init_states.clear();
+		H.init_states.shrink_to_fit();
+	}
+}
+
+void caller::increment_iteration() {
+	current_iteration++;
+	if (current_iteration == iterations_per_stage[current_stage]) {
+		current_stage++;
+		current_iteration = 0;
+	}
+}
+
+void caller::write_checkpoint() {
+	if (options.count("checkpoint-file-out")) {
+		
+		vrb.bullet("writing out checkpoint");
+		std::string cp_filename = options["checkpoint-file-out"].as < std::string > ();
+		std::string tmp_cp_filename = cp_filename + ".tmp";
+		std::ofstream ofs(tmp_cp_filename, std::ios::binary | std::ios_base::out);
+		boost::archive::binary_oarchive oa(ofs);
+		tac.clock();
+		oa << current_stage;
+		oa << current_iteration;
+		oa << G.vecG.size();  //n_samples
+		std::cout<<"G.vecG.size()=="<<G.vecG.size()<<std::endl;
+		std::cout<<"current_stage="<<current_stage<<std::endl;
+		std::cout<<"current_iteration="<<current_iteration<<std::endl;
+		for (size_t i =0; i < G.vecG.size(); i++)
+		{
+			oa << G.vecG[i]->stored_cnt;
+			oa << G.vecG[i]->stored_data;
+
+			oa << G.vecG[i]->H0;
+			oa << G.vecG[i]->H1;
+		}
+		std::rename(tmp_cp_filename.c_str(), cp_filename.c_str());
+		vrb.bullet("checkpoint completed (" + stb.str(tac.rel_time(), 2) + "ms)");
+	}
+}
+
+void caller::read_checkpoint_if_available() {
+	if (options.count("checkpoint-file-in")) {
+		vrb.bullet("reading checkpoint");
+		std::string cp_filename = options["checkpoint-file-in"].as < std::string > ();
+		std::ifstream ifs(cp_filename, std::ios::binary | std::ios_base::in);
+		boost::archive::binary_iarchive ia(ifs);
+		ia >> current_stage;
+		ia >> current_iteration;
+		size_t n_samples; 
+		ia >> n_samples;
+		for (size_t i=0; i < n_samples; i++) {
+			ia >> G.vecG[i]->stored_cnt;
+			ia >> G.vecG[i]->stored_data;
+
+			ia >> G.vecG[i]->H0;
+			ia >> G.vecG[i]->H1;
+		}
+		vrb.bullet("checkpoint read");
+	}
 }
 
 void caller::phase_loop() {
-	//First Iteration
+	//steup iteration counters
 	current_stage = STAGE_INIT;
-	vrb.title("Initializing iteration");
+	current_iteration = -1; //increment will make current_iteration 0 if no checkpoint loaded
 
-	H.initRareTar(G,V);
-	H.performSelection_RARE_INIT_GL(V); //not parallel
+	read_checkpoint_if_available();
 
-	phase_iteration();
+	increment_iteration();
 
-	H.init_states.clear();
-	H.init_states.shrink_to_fit();
-
-	//Burn-in 0
-	current_stage = STAGE_BURN;
-	int nBurnin = options["burnin"].as < int > ();
-	for (int iter = 0 ; iter < nBurnin ; iter ++)
-	{
-		vrb.title("Burn-in iteration [" + stb.str(iter+1) + "/" + stb.str(nBurnin) + "]");
-		H.updateHaplotypes(G);
-		H.transposeRareTar();
-		H.matchHapsFromCompressedPBWTSmall(V, false);
-		//current_stage = STAGE_RESTRICT;
-		//phase_iteration();
-		current_stage = STAGE_BURN;
+	while (current_stage <= STAGE_MAIN) {
 		phase_iteration();
-	}
-
-	//Main
-	current_stage = STAGE_MAIN;
-	int nMain = options["main"].as < int > ();
-	for (int iter = 0 ; iter < nMain ; iter ++) {
-		vrb.title("Main iteration [" + stb.str(iter+1) + "/" + stb.str(nMain) + "]");
-		H.updateHaplotypes(G);
-		H.transposeRareTar();
-		H.matchHapsFromCompressedPBWTSmall(V, true);
-		phase_iteration();
+		increment_iteration();
 	}
 
 	//Finalization
@@ -145,3 +203,4 @@ void caller::phase_loop() {
 
 	//vrb.bullet("done");
 }
+

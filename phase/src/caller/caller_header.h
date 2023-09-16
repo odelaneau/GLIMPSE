@@ -63,6 +63,8 @@ public:
 
 	//COMPUTE DATA
 	int current_stage;
+	int current_iteration;
+	int iterations_per_stage[3];
 	stats1D statH;
 	stats1D statC;
 	std::vector < std::vector < float > > HP0;			// Haplotype posteriors 0
@@ -82,6 +84,7 @@ public:
 	void phase_individual(const int, const int);
 	void phase_iteration();
 	void phase_loop();
+	void increment_iteration();
 
 	//PARAMETERS
 	void declare_options();
@@ -95,12 +98,17 @@ public:
 	void read_files_and_initialise();
 	void setup_mpileup();
 	void read_BAMs();
+	
 
 	void phase(std::vector < std::string > &);
 	void write_files_and_finalise();
 
 	//REGION
 	void buildCoordinates();
+
+	//CHECKPOINTING
+	void write_checkpoint();
+	void read_checkpoint_if_available();
 };
 
 

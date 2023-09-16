@@ -27,6 +27,7 @@
 #define _GENOTYPE_H
 
 #include <utils/otools.h>
+#include "boost/serialization/serialization.hpp"
 
 #define _SET32(n,i)	((n) |= 1U << (i))
 #define _CLR32(n,i)	((n) &= ~(1U << (i)));
@@ -37,6 +38,10 @@ struct inferred_genotype {
 	float gp0, gp1;
 	bool hds;
 	int32_t idx;
+
+	inferred_genotype() : idx(0), gp0(0), gp1(0), hds(0)
+	{
+	}
 
 	inferred_genotype(const int _idx, const float _gp0, const float _gp1, const bool _hds) : idx(_idx), gp0(_gp0), gp1(_gp1), hds(_hds) {
 	}
@@ -59,6 +64,16 @@ struct inferred_genotype {
 
 	bool infer_haploid() const {
 		return gp1 > gp0;
+	}
+
+	friend class boost::serialization::access;
+	template<class Archive>
+	void serialize(Archive & ar, const unsigned int version)
+	{
+		ar & gp0;
+		ar & gp1;
+		ar & hds;
+		ar & idx;
 	}
 };
 

@@ -26,7 +26,7 @@
 #include <caller/caller_header.h>
 
 caller::caller():
-		i_workers(0), i_jobs(0), current_stage(0), min_gl(1e-10),
+		i_workers(0), i_jobs(0), current_stage(0), current_iteration(0), min_gl(1e-10),
 		input_fmt(InputFormat::BCF), output_fmt(OutputFormat::BCF), output_compr(OutputCompression::ZLIB), bgen_bits(8)
 {
 }
