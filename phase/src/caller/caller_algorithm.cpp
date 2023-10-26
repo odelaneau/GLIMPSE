@@ -28,6 +28,7 @@
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/serialization/set.hpp>
+#include <filesystem>
 
 const std::string stage_names[3] = {"Init", "Burn-in", "Main"};
 
@@ -156,7 +157,7 @@ void caller::write_checkpoint() {
 			oa << G.vecG[i]->H0;
 			oa << G.vecG[i]->H1;
 		}
-		std::rename(tmp_cp_filename.c_str(), cp_filename.c_str());
+		std::filesystem::rename(tmp_cp_filename.c_str(), cp_filename.c_str());
 		vrb.bullet("checkpoint completed (" + stb.str(tac.rel_time(), 2) + "ms)");
 	}
 }
