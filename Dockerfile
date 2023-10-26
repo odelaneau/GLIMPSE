@@ -43,6 +43,7 @@ COPY concordance GLIMPSE/concordance/
 COPY ligate GLIMPSE/ligate/
 COPY phase GLIMPSE/phase/
 COPY split_reference GLIMPSE/split_reference/
+COPY extract_num_sites_from_reference_chunk GLIMPSE/extract_num_sites_from_reference_chunk/
 COPY versions GLIMPSE/versions/
 COPY makefile GLIMPSE/makefile
 
@@ -51,7 +52,7 @@ RUN cd GLIMPSE && \
 make clean && \
 make COMPILATION_ENV=docker
 
-RUN mv GLIMPSE/chunk/bin/GLIMPSE2_chunk GLIMPSE/split_reference/bin/GLIMPSE2_split_reference GLIMPSE/phase/bin/GLIMPSE2_phase GLIMPSE/ligate/bin/GLIMPSE2_ligate GLIMPSE/concordance/bin/GLIMPSE2_concordance /bin && \
+RUN mv GLIMPSE/chunk/bin/GLIMPSE2_chunk GLIMPSE/split_reference/bin/GLIMPSE2_split_reference GLIMPSE/phase/bin/GLIMPSE2_phase GLIMPSE/ligate/bin/GLIMPSE2_ligate GLIMPSE/concordance/bin/GLIMPSE2_concordance GLIMPSE/extract_num_sites_from_reference_chunk/bin/GLIMPSE2_extract_num_sites_from_reference_chunk /bin && \
 chmod +x /bin/GLIMPSE2* && \
 rm -rf GLIMPSE
 
