@@ -1,4 +1,4 @@
-projects = chunk concordance ligate phase split_reference extract_num_sites_from_reference_chunk
+projects = chunk concordance ligate phase split_reference
 
 .PHONY: all $(projects)
 
