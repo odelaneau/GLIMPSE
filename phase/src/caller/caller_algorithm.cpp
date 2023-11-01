@@ -128,7 +128,7 @@ void caller::phase_iteration() {
 
 void caller::increment_iteration() {
 	current_iteration++;
-	if (current_iteration == iterations_per_stage[current_stage]) {
+	while (current_iteration >= iterations_per_stage[current_stage] && current_stage<=STAGE_MAIN) {
 		current_stage++;
 		current_iteration = 0;
 	}
