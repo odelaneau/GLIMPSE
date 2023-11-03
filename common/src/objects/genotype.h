@@ -115,7 +115,7 @@ public:
 	void storeGenotypePosteriorsAndHaplotypes(const std::vector < float > &, const std::vector < float > &);
 	void sortAndNormAndInferGenotype();
 
-	void update_checksum(checksum crc)
+	void update_checksum(checksum &crc)
 	{
 		crc.process_data(name);
 		crc.process_data(index);
