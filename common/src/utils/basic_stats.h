@@ -27,6 +27,7 @@
 #define _BASIC_STATS_H
 
 #include <vector>
+#include <utils/checksum_utils.h>
 
 class stats2D {
 protected:
@@ -205,6 +206,15 @@ public:
 
 	double sd() const {
 		return sqrt( variance() );
+	}
+
+	void update_checksum(checksum &crc)
+	{
+		crc.process_data(m_n);
+		crc.process_data(m_oldM);
+		crc.process_data(m_newM);
+		crc.process_data(m_oldS);
+		crc.process_data(m_newS);
 	}
 };
 

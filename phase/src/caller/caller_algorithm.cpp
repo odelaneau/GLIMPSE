@@ -146,9 +146,6 @@ void caller::write_checkpoint() {
 		oa << current_stage;
 		oa << current_iteration;
 		oa << G.vecG.size();  //n_samples
-		std::cout<<"G.vecG.size()=="<<G.vecG.size()<<std::endl;
-		std::cout<<"current_stage="<<current_stage<<std::endl;
-		std::cout<<"current_iteration="<<current_iteration<<std::endl;
 		for (size_t i =0; i < G.vecG.size(); i++)
 		{
 			oa << G.vecG[i]->stored_cnt;

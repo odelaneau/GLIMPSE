@@ -27,6 +27,7 @@
 #define _GENOTYPE_H
 
 #include <utils/otools.h>
+#include <utils/checksum_utils.h>
 #include "boost/serialization/serialization.hpp"
 
 #define _SET32(n,i)	((n) |= 1U << (i))
@@ -113,6 +114,17 @@ public:
 	void storeGenotypePosteriorsAndHaplotypes(const std::vector < float > &);
 	void storeGenotypePosteriorsAndHaplotypes(const std::vector < float > &, const std::vector < float > &);
 	void sortAndNormAndInferGenotype();
+
+	void update_checksum(checksum crc)
+	{
+		crc.process_data(name);
+		crc.process_data(index);
+		crc.process_data(n_variants);
+		crc.process_data(ploidy);
+		crc.process_data(hapid);
+		crc.process_data(GL);
+		crc.process_data(flat);
+	}
 };
 
 #endif

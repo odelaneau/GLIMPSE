@@ -27,6 +27,7 @@
 #define _VARIANT_H
 
 #include <utils/otools.h>
+#include <utils/checksum_utils.h>
 #include "boost/serialization/serialization.hpp"
 
 class variant {
@@ -71,6 +72,19 @@ public :
 		ar & LQ;
 	}
 
+	void update_checksum(checksum &crc)
+	{
+		crc.process_data(bp);
+		crc.process_data(id);
+		crc.process_data(ref);
+		crc.process_data(alt);
+		crc.process_data(type);
+		crc.process_data(idx);
+		crc.process_data(cref);
+		crc.process_data(calt);
+		crc.process_data(cm);
+		crc.process_data(LQ);
+	}
 };
 
 #endif

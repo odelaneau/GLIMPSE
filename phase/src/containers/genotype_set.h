@@ -27,6 +27,7 @@
 #define _GENOTYPE_SET_H
 
 #include <utils/otools.h>
+#include <utils/checksum_utils.h>
 
 #include <objects/genotype.h>
 #include <containers/variant_map.h>
@@ -34,6 +35,14 @@
 struct stats_cov {
 	std::vector<stats1D> cov_ind;
 	std::vector<std::vector<int>> depth_count;
+
+	void update_checksum(checksum &crc)
+		{
+			for (const stats1D cov_stat : cov_ind) {
+				checksum = cov_stat.update_checksum(crc);
+			}
+			checksum = crc.process_data(depth_count);
+		}
 };
 
 class genotype_set {
@@ -49,6 +58,16 @@ public:
 	genotype_set();
 	~genotype_set();
 
+	void update_checksum(checksum &crc)
+	{
+		crc.process_data(n_site);
+		crc.process_data(n_ind);
+		crc.process_data(n_hap);
+		for (const genotype * G : vecG) {
+			G->update_checksum(crc);
+		}
+		stats.update_checksum(crc);
+	}
 };
 
 #endif

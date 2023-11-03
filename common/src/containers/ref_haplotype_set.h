@@ -27,6 +27,7 @@
 #define _REF_HAPLOTYPE_SET_H
 
 #include <utils/otools.h>
+#include <utils/checksum_utils.h>
 
 #include <containers/variant_map.h>
 #include <containers/bitmatrix.h>
@@ -156,6 +157,22 @@ public:
 		ar & HvarRef;
 		ar & Ypacked;
 		ar & A_small_idx;
+	}
+
+	void update_checksum(checksum &crc)
+	{
+		crc.process_data(n_tot_sites);
+		crc.process_data(n_rar_sites);
+		crc.process_data(n_com_sites);
+		crc.process_data(n_com_sites_hq);
+		crc.process_data(n_ref_haps);
+		crc.prcoess_data(flag_common);
+		crc.process_data(major_alleles);
+		crc.process_data(common2tot);
+		crc.process_data(ShapRef);
+		HvarRef.update_checksum(crc);
+		crc.process_data(Ypacked);
+		crc.process_data(A_small_idx);
 	}
 };
 

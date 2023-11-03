@@ -30,6 +30,7 @@
 #include <utils/otools.h>
 #include "boost/serialization/serialization.hpp"
 #include "boost/serialization/array.hpp"
+#include <zlib.h>
 
 
 inline static unsigned int abracadabra(const unsigned int &i1, const unsigned int &i2) {
@@ -43,6 +44,7 @@ public:
 	unsigned char * bytes;
 
 	bitmatrix();
+	bitmatrix(std::vector<bool> vec); 
 	virtual ~bitmatrix();
 
 
@@ -72,6 +74,14 @@ public:
 			bytes = (unsigned char*)std::malloc(n_bytes*sizeof(unsigned char));
 		}
 		ar & boost::serialization::make_array<unsigned char>(bytes, n_bytes);
+	}
+
+	void update_checksum(checksum &crc)
+	{
+		crc.process_data(n_bytes);
+		crc.process_data(n_cols);
+		crc.process_data(n_rows);
+		crc.process_data(bytes, n_bytes);
 	}
 };
 

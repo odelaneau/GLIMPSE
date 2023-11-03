@@ -27,6 +27,7 @@
 #define _SNP_SET_H
 
 #include <utils/otools.h>
+#include <utils/checksum_utils.h>
 #include <objects/variant.h>
 #include <io/gmap_reader.h>
 #include "boost/serialization/serialization.hpp"
@@ -80,6 +81,19 @@ public :
 		ar & output_gregion;
 		ar & vec_pos;
 		ar & map_pos;
+	}
+
+	void update_checksum(checksum &crc)
+	{
+		crc.process_data(chrid);
+		crc.process_data(input_start);
+		crc.process_data(input_stop);
+		crc.process_data(output_start);
+		crc.process_data(output_stop);
+		crc.process_data(input_gregion);
+		crc.process_data(output_gregion);
+		crc.process_data(vec_pos);
+		crc.process_data(map_pos);
 	}
 };
 
