@@ -36,13 +36,21 @@ struct stats_cov {
 	std::vector<stats1D> cov_ind;
 	std::vector<std::vector<int>> depth_count;
 
+	friend class boost::serialization::access;
+	template<class Archive>
+	void serialize(Archive & ar, const unsigned int version)
+	{
+		ar & cov_ind;
+		ar & depth_count;
+	}
+
 	void update_checksum(checksum &crc)
-		{
-			for (const stats1D cov_stat : cov_ind) {
-				checksum = cov_stat.update_checksum(crc);
-			}
-			checksum = crc.process_data(depth_count);
+	{
+		for (const stat1D cov : cov_ind) {
+			cov.update_checksum(crc);
 		}
+		crc.process_data(depth_count);
+	}
 };
 
 class genotype_set {
@@ -58,14 +66,36 @@ public:
 	genotype_set();
 	~genotype_set();
 
+	template<class Archive>
+	void serialize_original_data_to_archive(Archive &ar) const
+	{
+		ar << n_site;
+		ar << n_ind;
+		ar << n_hap;
+		const size_t vec_size = vecG.size();
+		ar << vec_size;
+		for (int i=0; i<vec_size; i++) {
+			vecG[i]->serialize_original_data_to_archive(ar);
+		}
+		ar & stats;
+	}
+
+	template<class Archive>
+	void serialize_checkpoint_data(Archive &ar)
+	{
+		size_t vec_size = vecG.size();
+		ar & vec_size;
+		for (int i=0; i<vec_size; i++) {
+			vecG[i]->serialize_checkpoint_data(ar);
+		}
+	}
+
 	void update_checksum(checksum &crc)
 	{
 		crc.process_data(n_site);
 		crc.process_data(n_ind);
 		crc.process_data(n_hap);
-		for (const genotype * G : vecG) {
-			G->update_checksum(crc);
-		}
+		crc.process_data(vecG);
 		stats.update_checksum(crc);
 	}
 };

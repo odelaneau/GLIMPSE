@@ -208,6 +208,17 @@ public:
 		return sqrt( variance() );
 	}
 
+	friend class boost::serialization::access;
+	template<class Archive>
+	void serialize(Archive & ar, const unsigned int version)
+	{
+		ar & m_n;
+		ar & m_oldM;
+		ar & m_newM;
+		ar & m_oldS;
+		ar & m_newS;
+	}
+
 	void update_checksum(checksum &crc)
 	{
 		crc.process_data(m_n);

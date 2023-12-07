@@ -28,6 +28,7 @@
 
 #include <cstdlib>
 #include <utils/otools.h>
+#include <utils/checksum_utils.h>
 #include "boost/serialization/serialization.hpp"
 #include "boost/serialization/array.hpp"
 #include <zlib.h>
@@ -81,7 +82,7 @@ public:
 		crc.process_data(n_bytes);
 		crc.process_data(n_cols);
 		crc.process_data(n_rows);
-		crc.process_data(bytes, n_bytes);
+		crc.process_data(bytes, n_bytes*sizeof(unsigned char));
 	}
 };
 

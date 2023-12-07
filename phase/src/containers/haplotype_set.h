@@ -145,13 +145,34 @@ public:
 	void select_common_pd_fg(const int k, const int l_hq, const int l_all, const int ref_rac_l, const int prev_ref_rac_l);
 	void select_rare_pd_fg(const int k, const int ref_rac_l);
 
+//ADD BACK IN!!!!
+	// friend class boost::serialization::access;
+	// template<class Archive>
+	// void serialize(Archive & ar, const unsigned int version)
+	// {
+	// 	ar & boost::serialization::base_object<ref_haplotype_set>(*this);
+	// 	ar & n_tot_haps;
+	// 	ar & n_tar_haps;
+	// 	ar & n_tar_samples;
+	// 	ar & HvarTar;
+	// 	ar & ShapTar;
+	// 	ar & SvarTar;
+	// 	ar & SindTarGL;
+	// 	ar & cm_pos;
+	// 	ar & fploidy;
+	// 	ar & max_ploidy;
+	// 	ar & tar_ploidy;
+	// 	ar & tar_ind2hapid;
+	// 	ar & tar_hapid2ind;
+	// }
+
 	void update_checksum(checksum &crc)
 	{
 		ref_haplotype_set::update_checksum(crc);
 		crc.process_data(n_tot_haps);
 		crc.process_data(n_tar_haps);
 		crc.process_data(n_tar_samples);
-		HvarTar.update_checksum(crc)
+		HvarTar.update_checksum(crc);
 		crc.process_data(ShapTar);
 		crc.process_data(SvarTar);
 		crc.process_data(SindTarGL);

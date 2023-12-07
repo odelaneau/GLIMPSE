@@ -27,6 +27,7 @@
 #define _CALLER_H
 
 #include <utils/otools.h>
+#include <utils/checksum_utils.h>
 
 #include <containers/genotype_set.h>
 #include <containers/haplotype_set.h>
@@ -42,6 +43,8 @@ public:
 	//COMMAND LINE OPTIONS
 	bpo::options_description descriptions;
 	bpo::variables_map options;
+	//CHECKSUM FOR CHECKPOINTING
+	checksum crc;
 
 	//INTERNAL DATA
 	haplotype_set H;

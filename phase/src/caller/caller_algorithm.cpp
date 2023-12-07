@@ -143,17 +143,19 @@ void caller::write_checkpoint() {
 		std::ofstream ofs(tmp_cp_filename, std::ios::binary | std::ios_base::out);
 		boost::archive::binary_oarchive oa(ofs);
 		tac.clock();
+		oa << crc.get_value();
 		oa << current_stage;
 		oa << current_iteration;
-		oa << G.vecG.size();  //n_samples
-		for (size_t i =0; i < G.vecG.size(); i++)
-		{
-			oa << G.vecG[i]->stored_cnt;
-			oa << G.vecG[i]->stored_data;
-
-			oa << G.vecG[i]->H0;
-			oa << G.vecG[i]->H1;
-		}
+		oa << iterations_per_stage[STAGE_BURN];
+		oa << options["ne"].as<int>();
+		oa << options["min-gl"].as<float>();
+		oa << options["err-imp"].as<float>();
+		oa << options["err-phase"].as<float>();
+		oa << options["pbwt-depth"].as<int>();
+		oa << options["pbwt-modulo-cm"].as<float>();
+		oa << options["Kinit"].as<int>();
+		oa << options["Kpbwt"].as<int>();
+		G.serialize_checkpoint_data(oa);
 		std::filesystem::rename(tmp_cp_filename.c_str(), cp_filename.c_str());
 		vrb.bullet("checkpoint completed (" + stb.str(tac.rel_time(), 2) + "ms)");
 	}
@@ -165,17 +167,41 @@ void caller::read_checkpoint_if_available() {
 		std::string cp_filename = options["checkpoint-file-in"].as < std::string > ();
 		std::ifstream ifs(cp_filename, std::ios::binary | std::ios_base::in);
 		boost::archive::binary_iarchive ia(ifs);
+		unsigned long long checkpoint_crc;
+		ia >> checkpoint_crc;
+		if (checkpoint_crc != crc.get_value()) {
+			vrb.error("Input data checksum in checkpoint file does not match "
+			"checksum of input data for this run.");
+		}
 		ia >> current_stage;
 		ia >> current_iteration;
-		size_t n_samples; 
-		ia >> n_samples;
-		for (size_t i=0; i < n_samples; i++) {
-			ia >> G.vecG[i]->stored_cnt;
-			ia >> G.vecG[i]->stored_data;
-
-			ia >> G.vecG[i]->H0;
-			ia >> G.vecG[i]->H1;
+		int checkpoint_burnin_iterations;
+		ia >> checkpoint_burnin_iterations;
+		if (current_iteration >= iterations_per_stage[current_stage]) {
+			std::stringstream err_str;
+			err_str<<"Checkpoint file has already run "<<current_iteration + 1<<" iterations "
+			"for stage"<<stage_names[current_stage]<<", and this run only calls for "<<iterations_per_stage[current_stage]<< 
+			". This run must call for at least a many iterations as the checkpoint file already ran in order "
+			"to use this checkpoint file.";
+			vrb.error(err_str.str());
 		}
+		if (current_iteration == STAGE_MAIN && checkpoint_burnin_iterations != iterations_per_stage[STAGE_BURN]) {
+			std::stringstream err_str;
+			err_str<<"Checkpoint file is in Main stage, and ran "<<checkpoint_burnin_iterations<<" burn-in iterations, while "
+			"this run calls for "<<iterations_per_stage[STAGE_BURN]<<" burn-in iterations.  These values must be "
+			"equal to use this checkpoint file.";
+			vrb.error(err_str.str());
+		}
+		confirm_checkpoint_param<int>(ia, "ne");
+		confirm_checkpoint_param<float>(ia, "min-gl");
+		confirm_checkpoint_param<float>(ia, "err-imp");
+		confirm_checkpoint_param<float>(ia, "err-phase");
+		confirm_checkpoint_param<int>(ia, "pbwt-depth");
+		confirm_checkpoint_param<float>(ia, "pbwt-modulo-cm");
+		confirm_checkpoint_param<int>(ia, "Kinit");
+		confirm_checkpoint_param<int>(ia, "Kpbwt");
+		ia >> G.vecG;
+		//G.serialize_checkpoint_data(ia);
 		vrb.bullet("checkpoint read");
 	}
 }

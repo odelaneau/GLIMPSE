@@ -159,14 +159,14 @@ public:
 		ar & A_small_idx;
 	}
 
-	void update_checksum(checksum &crc)
+	void update_checksum(checksum &crc) 
 	{
 		crc.process_data(n_tot_sites);
 		crc.process_data(n_rar_sites);
 		crc.process_data(n_com_sites);
 		crc.process_data(n_com_sites_hq);
 		crc.process_data(n_ref_haps);
-		crc.prcoess_data(flag_common);
+		crc.process_data(flag_common);
 		crc.process_data(major_alleles);
 		crc.process_data(common2tot);
 		crc.process_data(ShapRef);

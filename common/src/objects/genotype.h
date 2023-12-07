@@ -115,15 +115,34 @@ public:
 	void storeGenotypePosteriorsAndHaplotypes(const std::vector < float > &, const std::vector < float > &);
 	void sortAndNormAndInferGenotype();
 
-	void update_checksum(checksum &crc)
+	// template<class Archive>
+	// void serialize_original_data_to_archive(Archive &ar) const
+	// {
+	// 	ar << name;
+	// 	ar << index;
+	// 	ar << n_variants;
+	// 	ar << ploidy;
+	// 	ar << hapid;
+	// 	ar << GL;
+	// 	ar << flat;
+	// }
+
+	// template<class Archive>
+	// void serialize_checkpoint_data(Archive &ar)
+	// {
+	// 	ar & stored_cnt;
+	// 	ar & stored_data;
+	// 	ar & H0;
+	// 	ar & H1;
+	// }
+
+	template<class Archive>
+	void serialize(Archive &ar)
 	{
-		crc.process_data(name);
-		crc.process_data(index);
-		crc.process_data(n_variants);
-		crc.process_data(ploidy);
-		crc.process_data(hapid);
-		crc.process_data(GL);
-		crc.process_data(flat);
+		ar & stored_cnt;
+		ar & stored_data;
+		ar & H0;
+		ar & H1;
 	}
 };
 

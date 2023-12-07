@@ -27,27 +27,81 @@
 #define _CHECKSUM_UTILS_H
 
 #include <vector>
-#include <containers/bitmatrix.h>
+#include <map>
 #include <zlib.h>
+#include <boost/archive/text_oarchive.hpp>
+#include <fstream>
+#include <cstdlib>
+#include <ctime>
+#include <sstream>
+#include <functional>
 
 class checksum {
     protected:
         unsigned long value;
+        std::string tmp_filename;
+        bool new_data;
     
     public:
         checksum() {
+            //new_data=false;
             value = crc32(0L, Z_NULL, 0);
+            // const char* tmp_dir = std::getenv("TMPDIR");
+            // if (tmp_dir == nullptr) {
+            //     tmp_dir = ""; // Fallback directory for Unix-like systems.
+            // }
+            // std::ostringstream tmp_filename_stream;
+            // tmp_filename_stream << tmp_dir << "/tempfile_" << std::time(nullptr);
+            // tmp_filename = tmp_filename_stream.str();
         }
 
-        unsigned long value() {
+        unsigned long get_value() {
+            // if (new_data) {
+            //     std::ifstream ifs(tmp_filename);
+            //     char buffer[1024];
+            //     while (ifs.read(buffer, sizeof(buffer))) {
+            //         value = crc32(value, reinterpret_cast<const Bytef*>(buffer), ifs.gcount());
+            //     }
+
+            //     ifs.close();
+            //     std::remove(tmp_filename.c_str());
+            // }
             return value;
         }
+
+        // template<class T> 
+        // void process_data(const T& object) {
+        //     new_data=true;
+        //     std::ofstream ofs(tmp_filename, std::ios_base::app);
+        //     boost::archive::text_oarchive oa(ofs);
+
+        //     oa << object;
+        //     ofs.close();            
+        // }
+
+        // template<class T, class Func>
+        // void process_data(const T& object, Func serialize_func) {
+        //     new_data=true;
+        //     std::ofstream ofs(tmp_filename, std::ios_base::app);
+        //     boost::archive::text_oarchive oa(ofs);
+        //     serialize_func(object, oa);
+        //     ofs.close();
+        // }
+
+        // void process_data(const genotype_set& G)
+        // {
+        //     new_data=true;
+        //     std::ofstream ofs(tmp_filename, std::ios_base::app);
+        //     boost::archive::text_archive oa(ofs);
+        //     G.serialize_original_data(oa)
+        //     ofs.close();
+        // }
 
         template<typename T>
         void process_data(const T *buf, unsigned int nbytes)
         {
             static_assert(std::is_fundamental_v<T>);
-            value = crc32(value, static_cast<const uint8_t*>buf, nbytes);
+            value = crc32(value, reinterpret_cast<const Bytef*>(buf), nbytes);
         }
 
         template<typename T>
@@ -56,19 +110,17 @@ class checksum {
             process_data(&obj, sizeof(T));
         }
 
-        template<>
         void process_data(const std::string str) {
-            process_data(str.data(), str.size())
+            process_data(str.data(), str.size());
         }
 
         template <typename T> 
         void process_data(std::vector<T> const &vec)
         {
-            process_data(vec.data(), sizeof(T)*vec.size())
+            process_data(vec.data(), sizeof(T)*vec.size());
         }
 
         //we need this because specialization of vector<bool> means that it is not guaranteed to be in contiguous memory, as other vectors are.
-        template <>
         void process_data(std::vector<bool> const &vec)
         {
             for(bool b : vec) {
