@@ -155,7 +155,7 @@ void caller::write_checkpoint() {
 		oa << options["pbwt-modulo-cm"].as<float>();
 		oa << options["Kinit"].as<int>();
 		oa << options["Kpbwt"].as<int>();
-		G.serialize_checkpoint_data(oa);
+		oa << G.vecG;
 		std::filesystem::rename(tmp_cp_filename.c_str(), cp_filename.c_str());
 		vrb.bullet("checkpoint completed (" + stb.str(tac.rel_time(), 2) + "ms)");
 	}

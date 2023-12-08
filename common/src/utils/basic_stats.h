@@ -219,7 +219,7 @@ public:
 		ar & m_newS;
 	}
 
-	void update_checksum(checksum &crc)
+	const void update_checksum(checksum &crc)
 	{
 		crc.process_data(m_n);
 		crc.process_data(m_oldM);

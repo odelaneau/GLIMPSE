@@ -102,6 +102,7 @@ public:
 
 	//CORE METHODS
 	genotype(const std::string _name, const int _index, const int _n_variants, const int _ploidy, const int _hapid);
+	genotype();
 	~genotype();
 	void allocate();
 	void free();
@@ -137,12 +138,23 @@ public:
 	// }
 
 	template<class Archive>
-	void serialize(Archive &ar)
+	void serialize(Archive &ar, const unsigned int version)
 	{
 		ar & stored_cnt;
 		ar & stored_data;
 		ar & H0;
 		ar & H1;
+	}
+
+	const void update_checksum(checksum &crc)
+	{
+		crc.process_data(name);
+		crc.process_data(index);
+		crc.process_data(n_variants);
+		crc.process_data(ploidy);
+		crc.process_data(hapid);
+		crc.process_data(GL);
+		crc.process_data(flat);
 	}
 };
 

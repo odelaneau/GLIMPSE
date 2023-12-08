@@ -92,8 +92,13 @@ public :
 		crc.process_data(output_stop);
 		crc.process_data(input_gregion);
 		crc.process_data(output_gregion);
-		crc.process_data(vec_pos);
-		crc.process_data(map_pos);
+		for (variant * var : vec_pos) {
+			var->update_checksum(crc);
+		}
+		for (const auto pair : map_pos) {
+			crc.process_data(pair.first);
+			pair.second->update_checksum(crc);
+		}
 	}
 };
 

@@ -44,9 +44,9 @@ struct stats_cov {
 		ar & depth_count;
 	}
 
-	void update_checksum(checksum &crc)
+	const void update_checksum(checksum &crc)
 	{
-		for (const stat1D cov : cov_ind) {
+		for (stats1D cov : cov_ind) {
 			cov.update_checksum(crc);
 		}
 		crc.process_data(depth_count);
@@ -66,36 +66,38 @@ public:
 	genotype_set();
 	~genotype_set();
 
-	template<class Archive>
-	void serialize_original_data_to_archive(Archive &ar) const
-	{
-		ar << n_site;
-		ar << n_ind;
-		ar << n_hap;
-		const size_t vec_size = vecG.size();
-		ar << vec_size;
-		for (int i=0; i<vec_size; i++) {
-			vecG[i]->serialize_original_data_to_archive(ar);
-		}
-		ar & stats;
-	}
+	// template<class Archive>
+	// void serialize_original_data_to_archive(Archive &ar) const
+	// {
+	// 	ar << n_site;
+	// 	ar << n_ind;
+	// 	ar << n_hap;
+	// 	const size_t vec_size = vecG.size();
+	// 	ar << vec_size;
+	// 	for (int i=0; i<vec_size; i++) {
+	// 		vecG[i]->serialize_original_data_to_archive(ar);
+	// 	}
+	// 	ar & stats;
+	// }
 
-	template<class Archive>
-	void serialize_checkpoint_data(Archive &ar)
-	{
-		size_t vec_size = vecG.size();
-		ar & vec_size;
-		for (int i=0; i<vec_size; i++) {
-			vecG[i]->serialize_checkpoint_data(ar);
-		}
-	}
+	// template<class Archive>
+	// void serialize(Archive &ar)
+	// {
+	// 	size_t vec_size = vecG.size();
+	// 	ar & vec_size;
+	// 	for (int i=0; i<vec_size; i++) {
+	// 		vecG[i]->serialize_checkpoint_data(ar);
+	// 	}
+	// }
 
-	void update_checksum(checksum &crc)
+	const void update_checksum(checksum &crc)
 	{
 		crc.process_data(n_site);
 		crc.process_data(n_ind);
 		crc.process_data(n_hap);
-		crc.process_data(vecG);
+		for (genotype * G : vecG) {
+			G->update_checksum(crc);
+		}
 		stats.update_checksum(crc);
 	}
 };

@@ -112,6 +112,20 @@ public:
 	//CHECKPOINTING
 	void write_checkpoint();
 	void read_checkpoint_if_available();
+	
+	template <typename T, class Archive>
+	void confirm_checkpoint_param(Archive &ar, std::string param_name) {
+		T checkpoint_value;
+		ar >> checkpoint_value;
+		T current_value = options[param_name].as<T>();
+		if (checkpoint_value != current_value) {
+			std::stringstream err_str;
+			err_str<<"Checkpoint value was run with "<<param_name<<" set to "<<checkpoint_value<<" and "
+			"this run has "<<param_name<<" set to "<<current_value<<".  You must set "<<param_name<<" "
+			"to "<<checkpoint_value<<" in order to use this checkpoint file.";
+			vrb.error(err_str.str());
+		}
+	}
 };
 
 
