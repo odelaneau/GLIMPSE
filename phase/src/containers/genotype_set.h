@@ -44,7 +44,7 @@ struct stats_cov {
 		ar & depth_count;
 	}
 
-	const void update_checksum(checksum &crc)
+	void update_checksum(checksum &crc) const
 	{
 		for (stats1D cov : cov_ind) {
 			cov.update_checksum(crc);
