@@ -66,29 +66,24 @@ public:
 	genotype_set();
 	~genotype_set();
 
-	// template<class Archive>
-	// void serialize_original_data_to_archive(Archive &ar) const
-	// {
-	// 	ar << n_site;
-	// 	ar << n_ind;
-	// 	ar << n_hap;
-	// 	const size_t vec_size = vecG.size();
-	// 	ar << vec_size;
-	// 	for (int i=0; i<vec_size; i++) {
-	// 		vecG[i]->serialize_original_data_to_archive(ar);
-	// 	}
-	// 	ar & stats;
-	// }
-
-	// template<class Archive>
-	// void serialize(Archive &ar)
-	// {
-	// 	size_t vec_size = vecG.size();
-	// 	ar & vec_size;
-	// 	for (int i=0; i<vec_size; i++) {
-	// 		vecG[i]->serialize_checkpoint_data(ar);
-	// 	}
-	// }
+	template<class Archive>
+	void serialize_checkpoint_data(Archive &ar)
+	{
+		size_t vec_size = vecG.size();
+		ar & vec_size;
+		if (Archive::is_loading::value) {
+			if (vec_size != vecG.size()) {
+				// this really shouldn't happen, as would be caught earlier by checksums.  
+				// But at least if we somehow get here we can say something slightly helpful.
+				std::stringstream err_str;
+				err_str<<"Checkpoint file attemtping to load checkpoint with vecG size mismatch.  Possible data corruption?";
+				vrb.error(err_str.str());
+			}
+		}
+		for (int i=0; i<vec_size; i++) {
+			vecG[i]->serialize_checkpoint_data(ar);
+		}
+	}
 
 	const void update_checksum(checksum &crc)
 	{

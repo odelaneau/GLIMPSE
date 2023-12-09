@@ -67,7 +67,6 @@ struct inferred_genotype {
 		return gp1 > gp0;
 	}
 
-	friend class boost::serialization::access;
 	template<class Archive>
 	void serialize(Archive & ar, const unsigned int version)
 	{
@@ -102,7 +101,6 @@ public:
 
 	//CORE METHODS
 	genotype(const std::string _name, const int _index, const int _n_variants, const int _ploidy, const int _hapid);
-	genotype();
 	~genotype();
 	void allocate();
 	void free();
@@ -116,29 +114,8 @@ public:
 	void storeGenotypePosteriorsAndHaplotypes(const std::vector < float > &, const std::vector < float > &);
 	void sortAndNormAndInferGenotype();
 
-	// template<class Archive>
-	// void serialize_original_data_to_archive(Archive &ar) const
-	// {
-	// 	ar << name;
-	// 	ar << index;
-	// 	ar << n_variants;
-	// 	ar << ploidy;
-	// 	ar << hapid;
-	// 	ar << GL;
-	// 	ar << flat;
-	// }
-
-	// template<class Archive>
-	// void serialize_checkpoint_data(Archive &ar)
-	// {
-	// 	ar & stored_cnt;
-	// 	ar & stored_data;
-	// 	ar & H0;
-	// 	ar & H1;
-	// }
-
 	template<class Archive>
-	void serialize(Archive &ar, const unsigned int version)
+	void serialize_checkpoint_data(Archive &ar)
 	{
 		ar & stored_cnt;
 		ar & stored_data;

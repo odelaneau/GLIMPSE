@@ -35,16 +35,6 @@ genotype::genotype(const std::string _name, const int _index, const int _n_varia
 {
 }
 
-genotype::genotype() :
-		name(""),
-		index(0),
-		n_variants(0),
-		ploidy(0),
-		hapid(0),
-		stored_cnt(0)
-{
-}
-
 genotype::~genotype() {
 	free();
 }

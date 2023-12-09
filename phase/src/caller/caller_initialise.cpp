@@ -92,8 +92,6 @@ void caller::read_files_and_initialise() {
 			try
 			{
 				boost::archive::binary_iarchive ia(ifs);
-				//H.ref_haplotype_set::serialize(ia, 0);
-				//ref_haplotype_set * H_ref = &H;
 				ia >> H;
 				ia >> V;
 			} catch (std::exception& e ) {
@@ -169,12 +167,6 @@ void caller::read_files_and_initialise() {
 
 	//checksum
 	if(options.count("checkpoint-file-in") || options.count("checkpoint-file-out")) {
-		// crc.process_data(H);
-		// crc.process_data(G, [](const genotype_set& gs, boost::archive::text_oarchive& oa) -> void {
-		// 		gs.serialize_original_data_to_archive(oa);
-		// 	}
-		// );
-		// crc.process_data(V);
 		H.update_checksum(crc);
 		G.update_checksum(crc);
 		V.update_checksum(crc);

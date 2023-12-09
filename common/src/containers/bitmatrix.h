@@ -31,7 +31,6 @@
 #include <utils/checksum_utils.h>
 #include "boost/serialization/serialization.hpp"
 #include "boost/serialization/array.hpp"
-#include <zlib.h>
 
 
 inline static unsigned int abracadabra(const unsigned int &i1, const unsigned int &i2) {
@@ -45,7 +44,6 @@ public:
 	unsigned char * bytes;
 
 	bitmatrix();
-	bitmatrix(std::vector<bool> vec); 
 	virtual ~bitmatrix();
 
 

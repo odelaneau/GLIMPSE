@@ -27,7 +27,6 @@
 #include "boost/serialization/serialization.hpp"
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/archive/binary_iarchive.hpp>
-#include <boost/serialization/set.hpp>
 #include <filesystem>
 
 const std::string stage_names[3] = {"Init", "Burn-in", "Main"};
@@ -155,7 +154,7 @@ void caller::write_checkpoint() {
 		oa << options["pbwt-modulo-cm"].as<float>();
 		oa << options["Kinit"].as<int>();
 		oa << options["Kpbwt"].as<int>();
-		oa << G.vecG;
+		G.serialize_checkpoint_data(oa);
 		std::filesystem::rename(tmp_cp_filename.c_str(), cp_filename.c_str());
 		vrb.bullet("checkpoint completed (" + stb.str(tac.rel_time(), 2) + "ms)");
 	}
@@ -185,7 +184,7 @@ void caller::read_checkpoint_if_available() {
 			"to use this checkpoint file.";
 			vrb.error(err_str.str());
 		}
-		if (current_iteration == STAGE_MAIN && checkpoint_burnin_iterations != iterations_per_stage[STAGE_BURN]) {
+		if (current_stage == STAGE_MAIN && checkpoint_burnin_iterations != iterations_per_stage[STAGE_BURN]) {
 			std::stringstream err_str;
 			err_str<<"Checkpoint file is in Main stage, and ran "<<checkpoint_burnin_iterations<<" burn-in iterations, while "
 			"this run calls for "<<iterations_per_stage[STAGE_BURN]<<" burn-in iterations.  These values must be "
@@ -200,8 +199,7 @@ void caller::read_checkpoint_if_available() {
 		confirm_checkpoint_param<float>(ia, "pbwt-modulo-cm");
 		confirm_checkpoint_param<int>(ia, "Kinit");
 		confirm_checkpoint_param<int>(ia, "Kpbwt");
-		ia >> G.vecG;
-		//G.serialize_checkpoint_data(ia);
+		G.serialize_checkpoint_data(ia);
 		vrb.bullet("checkpoint read");
 	}
 }
