@@ -83,7 +83,7 @@ public :
 		ar & map_pos;
 	}
 
-	void update_checksum(checksum &crc)
+	void update_checksum(checksum &crc) const
 	{
 		crc.process_data(chrid);
 		crc.process_data(input_start);

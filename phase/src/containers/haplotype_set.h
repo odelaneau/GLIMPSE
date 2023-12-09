@@ -145,7 +145,7 @@ public:
 	void select_common_pd_fg(const int k, const int l_hq, const int l_all, const int ref_rac_l, const int prev_ref_rac_l);
 	void select_rare_pd_fg(const int k, const int ref_rac_l);
 
-	void update_checksum(checksum &crc)
+	void update_checksum(checksum &crc) const
 	{
 		ref_haplotype_set::update_checksum(crc);
 		crc.process_data(n_tot_haps);

@@ -159,7 +159,7 @@ public:
 		ar & A_small_idx;
 	}
 
-	void update_checksum(checksum &crc) 
+	void update_checksum(checksum &crc) const
 	{
 		crc.process_data(n_tot_sites);
 		crc.process_data(n_rar_sites);

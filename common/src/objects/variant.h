@@ -72,7 +72,7 @@ public :
 		ar & LQ;
 	}
 
-	void update_checksum(checksum &crc)
+	void update_checksum(checksum &crc) const
 	{
 		crc.process_data(bp);
 		crc.process_data(id);

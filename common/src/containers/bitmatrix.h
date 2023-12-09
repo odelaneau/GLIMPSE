@@ -75,7 +75,7 @@ public:
 		ar & boost::serialization::make_array<unsigned char>(bytes, n_bytes);
 	}
 
-	const void update_checksum(checksum &crc)
+	void update_checksum(checksum &crc) const
 	{
 		crc.process_data(n_bytes);
 		crc.process_data(n_cols);

@@ -123,7 +123,7 @@ public:
 		ar & H1;
 	}
 
-	const void update_checksum(checksum &crc)
+	void update_checksum(checksum &crc) const
 	{
 		crc.process_data(name);
 		crc.process_data(index);

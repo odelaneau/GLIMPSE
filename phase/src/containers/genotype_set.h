@@ -85,7 +85,7 @@ public:
 		}
 	}
 
-	const void update_checksum(checksum &crc)
+	void update_checksum(checksum &crc) const
 	{
 		crc.process_data(n_site);
 		crc.process_data(n_ind);

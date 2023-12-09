@@ -47,7 +47,7 @@ class checksum {
             value = crc32(0L, Z_NULL, 0);
         }
 
-        unsigned long get_value() {
+        unsigned long get_value() const {
             return value;
         }
 
