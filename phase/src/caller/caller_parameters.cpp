@@ -46,8 +46,8 @@ void caller::declare_options() {
 			("sparse-maf", bpo::value<float>()->default_value(0.001f), "(Expert setting) Rare variant threshold")
 			("samples-file",  bpo::value < std::string >(), "File with sample names and ploidy information. One sample per line with a mandatory second column indicating ploidy (1 or 2). Sample names that are not present are assumed to have ploidy 2 (diploids). If the parameter is omitted, all samples are assumed to be diploid. GLIMPSE does NOT handle the use of sex (M/F) instead of ploidy.")
 			("ind-name", bpo::value < std::string >(), "Only used together with --bam-file. Name of the sample to be processed. If not specified the prefix of the BAM/CRAM file (--bam-file) is used.")
-			("keep-monomorphic-ref-sites", "(Expert setting) Keeps monomorphic markers in the reference panel (removed by default)");
-
+			("keep-monomorphic-ref-sites", "(Expert setting) Keeps monomorphic markers in the reference panel (removed by default)")
+			("checkpoint-file-in", bpo::value < std::string >(), "File to read in checkpoint from");
 
 	bpo::options_description opt_vcf_input ("VCF/BCF genotype likelihoods input parameters");
 	opt_vcf_input.add_options()
@@ -94,7 +94,8 @@ void caller::declare_options() {
 			("contigs-fai", bpo::value< std::string >(), "If specified, header contig names and their lengths are copied from the provided fasta index file (.fai). This allows to create imputed whole-genome files as contigs are present and can be easily merged by bcftools")
 			("bgen-bits", boost::program_options::value< int >()->default_value(8), "(Expert setting) Only used toghether when the output is in BGEN file format. Specifies the number of bits to be used for the encoding probabilities of the output BGEN file. If the output is in the .vcf[.gz]/.bcf format, this value is ignored. Accepted values: 1-32")
 			("bgen-compr", boost::program_options::value< std::string >()->default_value("zstd"), "(Expert setting) Only used toghether when the output is in BGEN file format. Specifies the compression of the output BGEN file. If the output is in the .vcf[.gz]/.bcf format, this value is ignored. Accepted values: [no,zlib,zstd]")
-			("log", bpo::value< std::string >(), "Log file");
+			("log", bpo::value< std::string >(), "Log file")
+			("checkpoint-file-out", bpo::value < std::string >(), "File to save checkpoint info in.");
 
 	descriptions.add(opt_base).add(opt_input).add(opt_vcf_input).add(opt_algo).add(opt_selection).add(opt_filters).add(opt_output);
 }

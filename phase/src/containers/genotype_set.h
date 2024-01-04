@@ -27,6 +27,7 @@
 #define _GENOTYPE_SET_H
 
 #include <utils/otools.h>
+#include <utils/checksum_utils.h>
 
 #include <objects/genotype.h>
 #include <containers/variant_map.h>
@@ -34,6 +35,22 @@
 struct stats_cov {
 	std::vector<stats1D> cov_ind;
 	std::vector<std::vector<int>> depth_count;
+
+	friend class boost::serialization::access;
+	template<class Archive>
+	void serialize(Archive & ar, const unsigned int version)
+	{
+		ar & cov_ind;
+		ar & depth_count;
+	}
+
+	void update_checksum(checksum &crc) const
+	{
+		for (stats1D cov : cov_ind) {
+			cov.update_checksum(crc);
+		}
+		crc.process_data(depth_count);
+	}
 };
 
 class genotype_set {
@@ -49,6 +66,35 @@ public:
 	genotype_set();
 	~genotype_set();
 
+	template<class Archive>
+	void serialize_checkpoint_data(Archive &ar)
+	{
+		size_t vec_size = vecG.size();
+		ar & vec_size;
+		if (Archive::is_loading::value) {
+			if (vec_size != vecG.size()) {
+				// this really shouldn't happen, as would be caught earlier by checksums.  
+				// But at least if we somehow get here we can say something slightly helpful.
+				std::stringstream err_str;
+				err_str<<"Checkpoint file attemtping to load checkpoint with vecG size mismatch.  Possible data corruption?";
+				vrb.error(err_str.str());
+			}
+		}
+		for (int i=0; i<vec_size; i++) {
+			vecG[i]->serialize_checkpoint_data(ar);
+		}
+	}
+
+	void update_checksum(checksum &crc) const
+	{
+		crc.process_data(n_site);
+		crc.process_data(n_ind);
+		crc.process_data(n_hap);
+		for (genotype * G : vecG) {
+			G->update_checksum(crc);
+		}
+		stats.update_checksum(crc);
+	}
 };
 
 #endif

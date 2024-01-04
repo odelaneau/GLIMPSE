@@ -27,6 +27,7 @@
 #define _BASIC_STATS_H
 
 #include <vector>
+#include <utils/checksum_utils.h>
 
 class stats2D {
 protected:
@@ -205,6 +206,26 @@ public:
 
 	double sd() const {
 		return sqrt( variance() );
+	}
+
+	friend class boost::serialization::access;
+	template<class Archive>
+	void serialize(Archive & ar, const unsigned int version)
+	{
+		ar & m_n;
+		ar & m_oldM;
+		ar & m_newM;
+		ar & m_oldS;
+		ar & m_newS;
+	}
+
+	void update_checksum(checksum &crc) const
+	{
+		crc.process_data(m_n);
+		crc.process_data(m_oldM);
+		crc.process_data(m_newM);
+		crc.process_data(m_oldS);
+		crc.process_data(m_newS);
 	}
 };
 

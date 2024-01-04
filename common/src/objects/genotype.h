@@ -27,6 +27,8 @@
 #define _GENOTYPE_H
 
 #include <utils/otools.h>
+#include <utils/checksum_utils.h>
+#include "boost/serialization/serialization.hpp"
 
 #define _SET32(n,i)	((n) |= 1U << (i))
 #define _CLR32(n,i)	((n) &= ~(1U << (i)));
@@ -37,6 +39,10 @@ struct inferred_genotype {
 	float gp0, gp1;
 	bool hds;
 	int32_t idx;
+
+	inferred_genotype() : idx(0), gp0(0), gp1(0), hds(0)
+	{
+	}
 
 	inferred_genotype(const int _idx, const float _gp0, const float _gp1, const bool _hds) : idx(_idx), gp0(_gp0), gp1(_gp1), hds(_hds) {
 	}
@@ -59,6 +65,15 @@ struct inferred_genotype {
 
 	bool infer_haploid() const {
 		return gp1 > gp0;
+	}
+
+	template<class Archive>
+	void serialize(Archive & ar, const unsigned int version)
+	{
+		ar & gp0;
+		ar & gp1;
+		ar & hds;
+		ar & idx;
 	}
 };
 
@@ -98,6 +113,26 @@ public:
 	void storeGenotypePosteriorsAndHaplotypes(const std::vector < float > &);
 	void storeGenotypePosteriorsAndHaplotypes(const std::vector < float > &, const std::vector < float > &);
 	void sortAndNormAndInferGenotype();
+
+	template<class Archive>
+	void serialize_checkpoint_data(Archive &ar)
+	{
+		ar & stored_cnt;
+		ar & stored_data;
+		ar & H0;
+		ar & H1;
+	}
+
+	void update_checksum(checksum &crc) const
+	{
+		crc.process_data(name);
+		crc.process_data(index);
+		crc.process_data(n_variants);
+		crc.process_data(ploidy);
+		crc.process_data(hapid);
+		crc.process_data(GL);
+		crc.process_data(flat);
+	}
 };
 
 #endif

@@ -28,6 +28,7 @@
 
 #include <cstdlib>
 #include <utils/otools.h>
+#include <utils/checksum_utils.h>
 #include "boost/serialization/serialization.hpp"
 #include "boost/serialization/array.hpp"
 
@@ -72,6 +73,14 @@ public:
 			bytes = (unsigned char*)std::malloc(n_bytes*sizeof(unsigned char));
 		}
 		ar & boost::serialization::make_array<unsigned char>(bytes, n_bytes);
+	}
+
+	void update_checksum(checksum &crc) const
+	{
+		crc.process_data(n_bytes);
+		crc.process_data(n_cols);
+		crc.process_data(n_rows);
+		crc.process_data(bytes, n_bytes*sizeof(unsigned char));
 	}
 };
 

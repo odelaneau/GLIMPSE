@@ -45,6 +45,10 @@ void caller::read_files_and_initialise() {
 	//step0: Initialize seed & other
 	rng.setSeed(options["seed"].as < int > ());
 	const int nthreads =  options["threads"].as < int > ();
+	iterations_per_stage[STAGE_INIT] = 1;
+	iterations_per_stage[STAGE_BURN] = options["burnin"].as < int > ();
+	iterations_per_stage[STAGE_MAIN] = options["main"].as < int > ();
+
 	if (nthreads < 1) vrb.error("Error defining the number of threads. Only positive values are accepted.");
 
 	if (nthreads > 1) {
@@ -91,7 +95,10 @@ void caller::read_files_and_initialise() {
 				ia >> H;
 				ia >> V;
 			} catch (std::exception& e ) {
-				vrb.error("problems reading the binary reference panel (exception triggered by boost archive). Please ensure you are using the same GLIMPSE and boost library version");
+				std::stringstream err_str;
+				err_str <<"problems reading the binary reference panel (exception triggered by boost archive). Please ensure you are using the same GLIMPSE and boost library version";
+				err_str << e.what();
+				vrb.error(err_str.str());
 			}
 			if (H.Ypacked.size()==0) vrb.error("Problem reading binary file format. Empty PBWT detected.");
 
@@ -157,6 +164,13 @@ void caller::read_files_and_initialise() {
 
 	//step6 list states
 	if (use_list) H.read_list_states(options["state-list"].as < std::string > ());
+
+	//checksum
+	if(options.count("checkpoint-file-in") || options.count("checkpoint-file-out")) {
+		H.update_checksum(crc);
+		G.update_checksum(crc);
+		V.update_checksum(crc);
+	}
 
 }
 
