@@ -40,7 +40,6 @@ void ligater::declare_options() {
 	bpo::options_description opt_output ("Output files");
 	opt_output.add_options()
 			("output,O", bpo::value< std::string >(), "Output ligated (phased) file in VCF/BCF format")
-			("no-index", "If specified, the ligated VCF/BCF is not indexed by GLIMPSE2 for random access to genomic regions");
 			("log", bpo::value< std::string >(), "Log file");
 
 	descriptions.add(opt_base).add(opt_input).add(opt_output);
@@ -86,7 +85,6 @@ void ligater::verbose_files() {
 	vrb.title("Files:");
 	vrb.bullet("Input LIST     : [" + options["input"].as < std::string > () + "]");
 	vrb.bullet("Output VCF     : [" + options["output"].as < std::string > () + "]");
-	vrb.bullet("Index output   : [" + no_yes[!options.count("no-index")] + "]");
 	if (options.count("log")) vrb.bullet("Output LOG    : [" + options["log"].as < std::string > () + "]");
 }
 
