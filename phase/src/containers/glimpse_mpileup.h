@@ -126,6 +126,7 @@ public:
 	virtual ~glimpse_mpileup();
 
 	std::vector<std::string> bam_fnames;
+	std::vector<std::string> bai_fnames;
 	std::vector<std::string> tar_sample_names;
 
 	//samples

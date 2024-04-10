@@ -162,7 +162,11 @@ void genotype_bam_caller::call_mpileup(int i)
 	aux_data.hdr  = sam_hdr_read(aux_data.fp);
 	if ( !aux_data.hdr ) vrb.error("Failed to read header: " + mpileup_data.bam_fnames[i] + ".");
 
-	aux_data.idx = sam_index_load(aux_data.fp, mpileup_data.bam_fnames[i].c_str());
+	if (mpileup_data.bai_fnames != 0) {
+		aux_data.idx = sam_index_load2(aux_data.fp, mpileup_data.bam_fnames[i].c_str(), mpileup_data.bai_fnames.c_str());
+	} else {
+		aux_data.idx = sam_index_load(aux_data.fp, mpileup_data.bam_fnames[i].c_str());
+	}
 	if (aux_data.idx == NULL) vrb.error("Failed to load index for [" + mpileup_data.bam_fnames[i] + "]");
 	aux_data.iter = sam_itr_querys(aux_data.idx, aux_data.hdr, region.c_str());
 	if ( aux_data.iter==NULL  ) vrb.error("Failed to load region: [" + region + "] for file: [" + mpileup_data.bam_fnames[i] + "]");

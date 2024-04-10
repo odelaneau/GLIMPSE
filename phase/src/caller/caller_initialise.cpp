@@ -223,20 +223,44 @@ void caller::setup_mpileup()
 		input_file fd (options["bam-list"].as < std::string >());
 	    if (!fd.good()) vrb.error("Reading bam list: [" + options["bam-list"].as < std::string >() + "]");
 
-		std::vector<std::string> btokens(2);
+		std::vector<std::string> btokens(3);
 		std::set<std::string> sbams;
+		std::set<std::string> sbais;
 		std::set<std::string> snames;
 		while (getline(fd, buffer))
 		{
-			if (stb.split(buffer, btokens, " 	") > 2 || btokens.size() < 1) vrb.error("Bam list should contain only one or two columns");
+			if (stb.split(buffer, btokens, " 	") > 3 || btokens.size() < 1) vrb.error("Bam list should contain only one, two, or three columns");
 			auto ret0 = sbams.insert(btokens[0]);
-			if (ret0.second==false) vrb.error("Repeated filename in bam list: " + M.bam_fnames.back());
+			if (ret0.second==false) vrb.error("Repeated filename in bam list: " + btokens[0]);
 			M.bam_fnames.push_back(btokens[0]);
 
-			std::string name = btokens[btokens.size() > 1];
-			if (btokens.size() == 1) name = stb.remove_ext(stb.extract_file_name(name));
-			auto ret1 = snames.insert(name);
-			if (ret1.second==false) vrb.error("Repeated sample name in bam list: " + name);
+			std::string name;
+			std::string bai;
+			if (btokens.size == 3) {
+				bai = btokens[1]
+				name = btokens[2]
+				
+			} else if (btokens.size ==2) {
+				std::string ext = stb.get_extension(btokens[1]);
+				if (ext == ".bai" || ext == ".csi" || ext == ".crai") {
+					bai = btoken[1];
+				} else {
+					std::string name = btokens[1];
+				}
+			}
+
+			if (bai != 0) {
+				auto ret_bai = sbais.insert(bai);
+				if (ret_bai.second==false) vrb.error("Repeated filename in bai list: " + bai);
+				M.bai_fnames.push_back(bai);
+			}
+
+			if (name == 0) {
+				name = stb.remove_ext(stb.extract_file_name(btokens[1]));
+			}
+
+			auto ret1_name = snames.insert(name);
+			if (ret_name.second==false) vrb.error("Repeated sample name in bam list: " + name);
 			M.tar_sample_names.push_back(name);
 		}
 		fd.close();
@@ -250,6 +274,10 @@ void caller::setup_mpileup()
     	M.tar_sample_names = std::vector<std::string>(1);
     	if (options.count("ind-name")) M.tar_sample_names[0] = options["ind-name"].as<std::string>();
     	else M.tar_sample_names[0] = stb.remove_ext(stb.extract_file_name(M.bam_fnames[0]));
+		if (options.count("bai-file")) {
+			M.bai_fnames = std::vector<std::string>(1);
+			M.bai_fnames[0] = options["bai-file"].as<std::string>();
+		}
     }
     if (M.n_tar_samples == 0) vrb.error("No input BAM file given.");
 }

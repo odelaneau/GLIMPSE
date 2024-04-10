@@ -37,7 +37,8 @@ void caller::declare_options() {
 	bpo::options_description opt_input ("Input parameters");
 	opt_input.add_options()
 			("bam-file", bpo::value < std::string >(), "Input BAM/CRAM file containing low-coverage sequencing reads. Only one of the following options can be declared: --input-gl, --bam-file, --bam-list.")
-			("bam-list", bpo::value < std::string >(), "List (.txt file) of input BAM/CRAM files containing low-coverage sequencing reads. One file per line. A second column (space separated) can be used to specify the sample name, otherwise the name of the file is used. Only one of the following options can be declared: --input-gl, --bam-file, --bam-list.")
+			("bai-file", bpo::value < std::string >(), "Input BAI/CRAI index associated with BAM/CRAM.  Can be used to specify index if not stored next to BAM/CRAM")
+			("bam-list", bpo::value < std::string >(), "List (.txt file) of input BAM/CRAM files containing low-coverage sequencing reads. One file per line. A second column (space separated) can be used to specify the sample name, or an associated index file.  If index file is specified in second column, sample name can be specified in third column.  If sample name is not specified in second or third column, the name of the file is used. Only one of the following options can be declared: --input-gl, --bam-file, --bam-list.")
 			("input-gl", bpo::value < std::string >(), "VCF/BCF file containing the genotype likelihoods. Only one of the following options can be declared: --input-gl, --bam-file, --bam-list.")
 			("reference,R", bpo::value < std::string >(), "Haplotype reference in VCF/BCF or binary format")
 			("map,M", bpo::value < std::string >(), "Genetic map")
