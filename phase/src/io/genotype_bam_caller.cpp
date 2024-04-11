@@ -162,7 +162,7 @@ void genotype_bam_caller::call_mpileup(int i)
 	aux_data.hdr  = sam_hdr_read(aux_data.fp);
 	if ( !aux_data.hdr ) vrb.error("Failed to read header: " + mpileup_data.bam_fnames[i] + ".");
 
-	if (mpileup_data.bai_fnames.empty()) {
+	if (!mpileup_data.bai_fnames.empty()) {
 		aux_data.idx = sam_index_load2(aux_data.fp, mpileup_data.bam_fnames[i].c_str(), mpileup_data.bai_fnames[i].c_str());
 	} else {
 		aux_data.idx = sam_index_load(aux_data.fp, mpileup_data.bam_fnames[i].c_str());
