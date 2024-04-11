@@ -243,7 +243,7 @@ void caller::setup_mpileup()
 			} else if (btokens.size() ==2) {
 				std::string ext = stb.get_extension(btokens[1]);
 				if (ext == ".bai" || ext == ".csi" || ext == ".crai") {
-					bai = btoken[1];
+					bai = btokens[1];
 				} else {
 					std::string name = btokens[1];
 				}
