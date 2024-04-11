@@ -249,13 +249,13 @@ void caller::setup_mpileup()
 				}
 			}
 
-			if (bai != 0) {
+			if (!bai.empty()) {
 				auto ret_bai = sbais.insert(bai);
 				if (ret_bai.second==false) vrb.error("Repeated filename in bai list: " + bai);
 				M.bai_fnames.push_back(bai);
 			}
 
-			if (name == 0) {
+			if (name.empty()) {
 				name = stb.remove_ext(stb.extract_file_name(btokens[1]));
 			}
 
