@@ -237,8 +237,8 @@ void caller::setup_mpileup()
 			std::string name;
 			std::string bai;
 			if (btokens.size() == 3) {
-				bai = btokens[1]
-				name = btokens[2]
+				bai = btokens[1];
+				name = btokens[2];
 				
 			} else if (btokens.size() ==2) {
 				std::string ext = stb.get_extension(btokens[1]);
