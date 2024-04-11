@@ -231,16 +231,16 @@ void caller::setup_mpileup()
 		{
 			if (stb.split(buffer, btokens, " 	") > 3 || btokens.size() < 1) vrb.error("Bam list should contain only one, two, or three columns");
 			auto ret0 = sbams.insert(btokens[0]);
-			if (ret0.second==false) vrb.error("Repeated filename in bam list: " + btokens[0]);
+			if (!ret0.second) vrb.error("Repeated filename in bam list: " + btokens[0]);
 			M.bam_fnames.push_back(btokens[0]);
 
 			std::string name;
 			std::string bai;
-			if (btokens.size == 3) {
+			if (btokens.size() == 3) {
 				bai = btokens[1]
 				name = btokens[2]
 				
-			} else if (btokens.size ==2) {
+			} else if (btokens.size() ==2) {
 				std::string ext = stb.get_extension(btokens[1]);
 				if (ext == ".bai" || ext == ".csi" || ext == ".crai") {
 					bai = btoken[1];
@@ -251,7 +251,7 @@ void caller::setup_mpileup()
 
 			if (!bai.empty()) {
 				auto ret_bai = sbais.insert(bai);
-				if (ret_bai.second==false) vrb.error("Repeated filename in bai list: " + bai);
+				if (!ret_bai.second) vrb.error("Repeated filename in bai list: " + bai);
 				M.bai_fnames.push_back(bai);
 			}
 
@@ -259,8 +259,8 @@ void caller::setup_mpileup()
 				name = stb.remove_ext(stb.extract_file_name(btokens[1]));
 			}
 
-			auto ret1_name = snames.insert(name);
-			if (ret_name.second==false) vrb.error("Repeated sample name in bam list: " + name);
+			auto ret_name = snames.insert(name);
+			if (!ret_name.second) vrb.error("Repeated sample name in bam list: " + name);
 			M.tar_sample_names.push_back(name);
 		}
 		fd.close();
