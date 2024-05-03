@@ -141,8 +141,8 @@ void genotype_bam_caller::clean()
 
 void genotype_bam_caller::reset_results(int i)
 {
-	G.stats.cov_ind[i].clear()
-	std::fill(G.stats.depth_count[i].begin(), G.stats.depth_count[i].end(), 0)
+	G.stats.cov_ind[i].clear();
+	std::fill(G.stats.depth_count[i].begin(), G.stats.depth_count[i].end(), 0);
 }
 
 genotype_bam_caller::~genotype_bam_caller()
@@ -285,7 +285,7 @@ int genotype_bam_caller::glimpse_mpileup_reg(int i)
 
 	bam_plp_reset(caller.s_plp);
 	bam_plp_destroy(caller.s_plp);
-    return call.n_plp < 0 ? -1 : 0;
+    return caller.n_plp < 0 ? -1 : 0;
 }
 
 

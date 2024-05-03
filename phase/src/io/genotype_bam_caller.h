@@ -79,7 +79,7 @@ public:
 
 	void call_mpileup(int i);
 	void clean();
-	void reset_results();
+	void reset_results(int i);
 	int glimpse_mpileup_reg(int i);
 };
 
