@@ -159,13 +159,14 @@ genotype_bam_caller::~genotype_bam_caller()
 
 void genotype_bam_caller::call_mpileup(int i)
 {
-	caller.ploidy = mpileup_data.tar_ploidy[i];
+	
 
 	//Retries are not implemented in hfile_libcurl, which ends up being used if streaming from cloud location.  So implementing here. 
 	const int n_retry = 3;
 	int n_retry_remain = n_retry;
 	std::chrono::seconds delay(1);
 	for (; n_retry_remain > 0;n_retry_remain--, delay*=2) {
+		caller.ploidy = mpileup_data.tar_ploidy[i];
 		if (n_retry_remain != n_retry) {
 			std::this_thread::sleep_for(delay);
 			clean();
