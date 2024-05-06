@@ -166,11 +166,12 @@ void genotype_bam_caller::call_mpileup(int i)
 	int n_retry_remain = n_retry;
 	std::chrono::seconds delay(1);
 	for (; n_retry_remain > 0;n_retry_remain--, delay*=2) {
-		caller.ploidy = mpileup_data.tar_ploidy[i];
 		if (n_retry_remain != n_retry) {
 			std::this_thread::sleep_for(delay);
 			clean();
 		}
+		caller.ploidy = mpileup_data.tar_ploidy[i];
+
 		aux_data.fp = sam_open(mpileup_data.bam_fnames[i].c_str(), "r");
 		if (aux_data.fp == nullptr) {
 			vrb.warning("Cannot open BAM/CRAM file: [" + mpileup_data.bam_fnames[i] + "], " + std::to_string(n_retry_remain) + " retries remaining");
