@@ -24,6 +24,8 @@
  ******************************************************************************/
 
 #include <io/genotype_bam_caller.h>
+#include <thread>
+#include <chrono>
 
 static int read_bam(void *data, bam1_t *b)
 {
@@ -137,6 +139,12 @@ void genotype_bam_caller::clean()
 	caller.ploidy=0;
 }
 
+void genotype_bam_caller::reset_results(int i)
+{
+	G.stats.cov_ind[i].clear();
+	std::fill(G.stats.depth_count[i].begin(), G.stats.depth_count[i].end(), 0);
+}
+
 genotype_bam_caller::~genotype_bam_caller()
 {
 	if ( aux_data.iter) hts_itr_destroy(aux_data.iter);
@@ -151,23 +159,66 @@ genotype_bam_caller::~genotype_bam_caller()
 
 void genotype_bam_caller::call_mpileup(int i)
 {
-	caller.ploidy = mpileup_data.tar_ploidy[i];
+	
 
-	aux_data.fp = sam_open(mpileup_data.bam_fnames[i].c_str(), "r");
-	if (aux_data.fp == nullptr) vrb.error("Cannot open BAM/CRAM file: [" + mpileup_data.bam_fnames[i] + "]");
+	//Retries are not implemented in hfile_libcurl, which ends up being used if streaming from cloud location.  So implementing here. 
+	const int n_retry = 3;
+	int n_retry_remain = n_retry;
+	std::chrono::seconds delay(1);
+	for (; n_retry_remain > 0;n_retry_remain--, delay*=2) {
+		if (n_retry_remain != n_retry) {
+			std::this_thread::sleep_for(delay);
+			clean();
+		}
+		caller.ploidy = mpileup_data.tar_ploidy[i];
 
-	if (hts_set_opt(aux_data.fp, CRAM_OPT_DECODE_MD, 0)) vrb.error("Failed to set CRAM_OPT_DECODE_MD value");
-	if (!mpileup_data.fai_fname.empty()) if (hts_set_fai_filename(aux_data.fp, mpileup_data.fai_fname.c_str()) != 0)  vrb.error("Failed to process fasta");
+		aux_data.fp = sam_open(mpileup_data.bam_fnames[i].c_str(), "r");
+		if (aux_data.fp == nullptr) {
+			vrb.warning("Cannot open BAM/CRAM file: [" + mpileup_data.bam_fnames[i] + "], " + std::to_string(n_retry_remain) + " retries remaining");
+			continue;
+		}
 
-	aux_data.hdr  = sam_hdr_read(aux_data.fp);
-	if ( !aux_data.hdr ) vrb.error("Failed to read header: " + mpileup_data.bam_fnames[i] + ".");
+		if (hts_set_opt(aux_data.fp, CRAM_OPT_DECODE_MD, 0)) {
+			vrb.warning("Failed to set CRAM_OPT_DECODE_MD value, " + std::to_string(n_retry_remain) + " retries remaining");
+			continue;
+		}
+		if (!mpileup_data.fai_fname.empty()) {
+			if (hts_set_fai_filename(aux_data.fp, mpileup_data.fai_fname.c_str()) != 0)  {
+				vrb.warning("Failed to process fasta," + std::to_string(n_retry_remain) + " retries remaining");
+				continue;
+			}
+		}
 
-	aux_data.idx = sam_index_load(aux_data.fp, mpileup_data.bam_fnames[i].c_str());
-	if (aux_data.idx == NULL) vrb.error("Failed to load index for [" + mpileup_data.bam_fnames[i] + "]");
-	aux_data.iter = sam_itr_querys(aux_data.idx, aux_data.hdr, region.c_str());
-	if ( aux_data.iter==NULL  ) vrb.error("Failed to load region: [" + region + "] for file: [" + mpileup_data.bam_fnames[i] + "]");
+		aux_data.hdr  = sam_hdr_read(aux_data.fp);
+		if ( !aux_data.hdr ) {
+			vrb.warning("Failed to read header: " + mpileup_data.bam_fnames[i] + ". " + std::to_string(n_retry_remain) + " retries remaining");
+			continue;
+		}
 
-	glimpse_mpileup_reg(i);
+		aux_data.idx = sam_index_load(aux_data.fp, mpileup_data.bam_fnames[i].c_str());
+		if (aux_data.idx == NULL) {
+			vrb.warning("Failed to load index for [" + mpileup_data.bam_fnames[i] + "], " + std::to_string(n_retry_remain) + " retries remaining");
+			continue;
+		}
+
+		aux_data.iter = sam_itr_querys(aux_data.idx, aux_data.hdr, region.c_str());
+		if ( aux_data.iter==NULL  ) {
+			vrb.warning("Failed to load region: [" + region + "] for file: [" + mpileup_data.bam_fnames[i] + "], " + std::to_string(n_retry_remain) + " retries remaining");
+			continue;
+		}
+
+		if (glimpse_mpileup_reg(i) < 0) {
+			vrb.warning("Failed to perform pileup calling for file: [" + mpileup_data.bam_fnames[i] + "], " + std::to_string(n_retry_remain) + " retries remaining");
+			reset_results(i);
+			continue;
+		}
+		break;
+
+	}
+
+	if (n_retry_remain == 0) {
+		vrb.error("Max number of retries attempted.");
+	}
 	clean();
 }
 
@@ -224,6 +275,7 @@ int genotype_bam_caller::glimpse_mpileup_reg(int i)
 			++i_site;
 		}
 	}
+
 	while (i_site < n_sites_reg)
 	{
 		++G.stats.depth_count[i][0];
@@ -235,7 +287,7 @@ int genotype_bam_caller::glimpse_mpileup_reg(int i)
 
 	bam_plp_reset(caller.s_plp);
 	bam_plp_destroy(caller.s_plp);
-    return 0;
+    return caller.n_plp < 0 ? -1 : 0;
 }
 
 
