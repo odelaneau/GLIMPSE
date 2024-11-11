@@ -67,7 +67,7 @@ GEM
     terminal-table (2.0.0)
       unicode-display_width (~> 1.1, >= 1.1.1)
     unicode-display_width (1.8.0)
-    webrick (1.7.0)
+    webrick (1.8.2)
 
 PLATFORMS
   x86_64-linux
@@ -75,7 +75,7 @@ PLATFORMS
 DEPENDENCIES
   bundler (~> 2.3.5)
   just-the-docs!
-  webrick (~> 1.7)
+  webrick (~> 1.8)
 
 BUNDLED WITH
    2.3.22
