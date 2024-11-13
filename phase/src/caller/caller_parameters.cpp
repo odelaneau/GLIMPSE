@@ -350,7 +350,7 @@ void caller::verbose_options()
 	{
 		vrb.title("Genotype calling:");
 		vrb.bullet("Calling model        : [" + options["call-model"].as <std::string> () + "]");
-		vrb.bullet("Indels model         : [" + options.count("call-indels") ? "Perform calling]" : "Haplotype scaffold]");
+		vrb.bullet("Indels model         : [" + stb.str(options.count("call-indels") ? "Perform calling]" : "Haplotype scaffold]"));
 
 		vrb.title("BAM/CRAM filters and options:");
 		vrb.bullet("Min mapping quality  : [" + stb.str(options["mapq"].as <int> ()) + "]");
@@ -368,7 +368,7 @@ void caller::verbose_options()
 	}
 	else
 	{
-		vrb.bullet("use-gl-indels         : [" + options.count("call-indels") ? "Use PLs]" : "Haplotype scaffold]");
+		vrb.bullet("use-gl-indels         : [" + stb.str(options.count("call-indels") ? "Use PLs]" : "Haplotype scaffold]"));
 	}
 
 	vrb.title("Other parameters");
