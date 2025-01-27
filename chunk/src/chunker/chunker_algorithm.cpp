@@ -28,7 +28,10 @@
 
 void chunker::split_recursive(output_file & fd, long int & cidx, std::string & chr, long int start_idx, long int stop_idx) {
 	cnk_info.reset();
+	split_recursive_no_reset(fd, cidx, chr, start_idx, stop_idx);
+}
 
+void chunker::split_recursive_no_reset(output_file & fd, long int & cidx, std::string & chr, long int start_idx, long int stop_idx) {
 	// Compute current window properties
 	assert(stop_idx>start_idx);
 	long int curr_window_count = stop_idx - start_idx + 1;
@@ -75,8 +78,8 @@ void chunker::split_recursive(output_file & fd, long int & cidx, std::string & c
 	// If we can further split, recursion!
 	if (next0_window_okay && next1_window_okay) {
 		vrb.bullet("long internal window [" + chr + ":" + stb.str(positions_all_mb[start_idx]) + "-" + stb.str(positions_all_mb[stop_idx]) + "] / L=" + stb.str(curr_window_cm_size) + "cM / L=" + stb.str(curr_window_mb_size) + "bp / C=" + stb.str(curr_window_count));
-		split_recursive (fd, cidx, chr, start_idx, mid_idx);
-		split_recursive (fd, cidx, chr, mid_idx+1, stop_idx);
+		split_recursive_no_reset (fd, cidx, chr, start_idx, mid_idx);
+		split_recursive_no_reset (fd, cidx, chr, mid_idx+1, stop_idx);
 	} else {
 		long int left_idx = -1; long int right_idx=-1;
 		add_buffer(start_idx, stop_idx, left_idx, right_idx);

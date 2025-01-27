@@ -147,6 +147,7 @@ public:
 
 	//FILE I/O
 	void split_recursive(output_file &, long int &, std::string &, long int, long int);
+	void split_recursive_no_reset(output_file &, long int &, std::string &, long int, long int);
 	void split_sequential(output_file &, long int &, std::string &, long int, long int, const bool);
 	void add_buffer(const long int, const long int, long int&, long int&);
 	void chunk();
