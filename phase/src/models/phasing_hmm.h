@@ -28,7 +28,10 @@
 
 #include <utils/otools.h>
 #include <containers/conditioning_set.h>
-#include <immintrin.h>
+//#include <immintrin.h>
+//#define SIMDE_ENABLE_NATIVE_ALIASES
+#include <simde/x86/avx2.h>
+#include <simde/x86/fma.h>
 #include <boost/align/aligned_allocator.hpp>
 
 template <typename T>
@@ -43,16 +46,16 @@ using aligned_vector32 = std::vector<T, boost::alignment::aligned_allocator < T,
 #define ALLELE(hap , pos) ((hap) & (1<<(pos)))
 
 inline
-float horizontal_add (const __m256& a) //@simo: implemented horizontal add with instructions in the 4B minimum
+float horizontal_add (const simde__m256& a) //@simo: implemented horizontal add with instructions in the 4B minimum
 {
-    __m128 vlow = _mm256_castps256_ps128(a);
-    __m128 vhigh = _mm256_extractf128_ps(a, 1); // high 128
-   vlow = _mm_add_ps(vlow, vhigh);     // add the low 128
-   __m128 shuf = _mm_movehdup_ps(vlow);        // broadcast elements 3,1 to 2,0
-   __m128 sums = _mm_add_ps(vlow, shuf);
-   shuf = _mm_movehl_ps(shuf, sums); // high half -> low half
-   sums = _mm_add_ss(sums, shuf);
-   return _mm_cvtss_f32(sums);
+    simde__m128 vlow = simde_mm256_castps256_ps128(a);
+    simde__m128 vhigh = simde_mm256_extractf128_ps(a, 1); // high 128
+   vlow = simde_mm_add_ps(vlow, vhigh);     // add the low 128
+   simde__m128 shuf = simde_mm_movehdup_ps(vlow);        // broadcast elements 3,1 to 2,0
+   simde__m128 sums = simde_mm_add_ps(vlow, shuf);
+   shuf = simde_mm_movehl_ps(shuf, sums); // high half -> low half
+   sums = simde_mm_add_ss(sums, shuf);
+   return simde_mm_cvtss_f32(sums);
 }
 
 class phasing_hmm {
@@ -137,30 +140,30 @@ public:
 inline
 void phasing_hmm::INIT_PEAK_HET(int curr_het)
 {
-	const std::array <__m256, 2 > emits = {_mm256_load_ps(&EMIT0[curr_het][0]),_mm256_load_ps(&EMIT1[curr_het][0])};
-    __m256 _sum = _mm256_set1_ps(0.0f);
+	const std::array <simde__m256, 2 > emits = {simde_mm256_load_ps(&EMIT0[curr_het][0]),simde_mm256_load_ps(&EMIT1[curr_het][0])};
+    simde__m256 _sum = simde_mm256_set1_ps(0.0f);
 	for(int k = 0, i = 0 ; k != C->n_states ; ++k, i += HAP_NUMBER)
 	{
 		const bool ah = C->Hvar.get(curr_rel_locus, k);
-		_sum = _mm256_add_ps(_sum, emits[ah]);
-		_mm256_store_ps(&prob[i], emits[ah]);
+		_sum = simde_mm256_add_ps(_sum, emits[ah]);
+		simde_mm256_store_ps(&prob[i], emits[ah]);
 	}
-	_mm256_store_ps(&probSumH[0], _sum);
+	simde_mm256_store_ps(&probSumH[0], _sum);
 	probSumT = horizontal_add(_sum);
 }
 
 inline
 void phasing_hmm::INIT_PEAK_HOM(bool ag)
 {
-	const std::array <__m256, 2 > emits = {_mm256_set1_ps(1.0f),_mm256_set1_ps(C->ed_phs/C->ee_phs)};
-    __m256 _sum = _mm256_set1_ps(0.0f);
+	const std::array <simde__m256, 2 > emits = {simde_mm256_set1_ps(1.0f),simde_mm256_set1_ps(C->ed_phs/C->ee_phs)};
+    simde__m256 _sum = simde_mm256_set1_ps(0.0f);
 	for(int k = 0, i = 0 ; k != C->n_states ; ++k, i += HAP_NUMBER)
 	{
 		const bool ag_ah = C->Hvar.get(curr_rel_locus, k)!=ag;
-		_sum = _mm256_add_ps(_sum, emits[ag_ah]);
-		_mm256_store_ps(&prob[i], emits[ag_ah]);
+		_sum = simde_mm256_add_ps(_sum, emits[ag_ah]);
+		simde_mm256_store_ps(&prob[i], emits[ag_ah]);
 	}
-	_mm256_store_ps(&probSumH[0], _sum);
+	simde_mm256_store_ps(&probSumH[0], _sum);
 	probSumT = horizontal_add(_sum);
 }
 
@@ -174,108 +177,108 @@ void phasing_hmm::INIT_FLAT_HET() {
 inline
 void phasing_hmm::RUN_PEAK_HET(int curr_het)
 {
-	const __m256 _tFreq = _mm256_mul_ps(_mm256_load_ps(&probSumH[0]), _mm256_set1_ps(yt / (C->n_states * probSumT)));
-	const __m256 _nt = _mm256_set1_ps(nt / probSumT);
-	const std::array <__m256, 2 > emits = {_mm256_load_ps(&EMIT0[curr_het][0]),_mm256_load_ps(&EMIT1[curr_het][0])};
-    __m256 _sum = _mm256_set1_ps(0.0f);
+	const simde__m256 _tFreq = simde_mm256_mul_ps(simde_mm256_load_ps(&probSumH[0]), simde_mm256_set1_ps(yt / (C->n_states * probSumT)));
+	const simde__m256 _nt = simde_mm256_set1_ps(nt / probSumT);
+	const std::array <simde__m256, 2 > emits = {simde_mm256_load_ps(&EMIT0[curr_het][0]),simde_mm256_load_ps(&EMIT1[curr_het][0])};
+    simde__m256 _sum = simde_mm256_set1_ps(0.0f);
 	for(int k = 0, i = 0 ; k != C->n_states ; ++k, i += HAP_NUMBER)
 	{
 		const bool ah = C->Hvar.get(curr_rel_locus, k);
-		const __m256 _prob_curr = _mm256_mul_ps(_mm256_fmadd_ps(_mm256_load_ps(&prob[i]), _nt, _tFreq), emits[ah]);
-		_sum = _mm256_add_ps(_sum, _prob_curr);
-		_mm256_store_ps(&prob[i], _prob_curr);
+		const simde__m256 _prob_curr = simde_mm256_mul_ps(simde_mm256_fmadd_ps(simde_mm256_load_ps(&prob[i]), _nt, _tFreq), emits[ah]);
+		_sum = simde_mm256_add_ps(_sum, _prob_curr);
+		simde_mm256_store_ps(&prob[i], _prob_curr);
 	}
-	_mm256_store_ps(&probSumH[0], _sum);
+	simde_mm256_store_ps(&probSumH[0], _sum);
 	probSumT = horizontal_add(_sum);
 }
 
 inline
 void phasing_hmm::RUN_PEAK_HOM(bool ag)
 {
-	const __m256 _tFreq = _mm256_mul_ps(_mm256_load_ps(&probSumH[0]), _mm256_set1_ps(yt / (C->n_states * probSumT)));
-	const __m256 _nt = _mm256_set1_ps(nt / probSumT);
-    const __m256 _mism = _mm256_set1_ps(C->ed_phs/C->ee_phs);
-    __m256 _sum = _mm256_set1_ps(0.0f);
+	const simde__m256 _tFreq = simde_mm256_mul_ps(simde_mm256_load_ps(&probSumH[0]), simde_mm256_set1_ps(yt / (C->n_states * probSumT)));
+	const simde__m256 _nt = simde_mm256_set1_ps(nt / probSumT);
+    const simde__m256 _mism = simde_mm256_set1_ps(C->ed_phs/C->ee_phs);
+    simde__m256 _sum = simde_mm256_set1_ps(0.0f);
 	for(int k = 0, i = 0 ; k != C->n_states ; ++k, i += HAP_NUMBER)
 	{
 		const bool ah = C->Hvar.get(curr_rel_locus, k);
-		const __m256 _prob_prev = _mm256_load_ps(&prob[i]);
-		__m256 _prob_curr = _mm256_fmadd_ps(_prob_prev, _nt, _tFreq);
-		if (ag!=ah) _prob_curr = _mm256_mul_ps(_prob_curr, _mism);
-		_sum = _mm256_add_ps(_sum, _prob_curr);
-		_mm256_store_ps(&prob[i], _prob_curr);
+		const simde__m256 _prob_prev = simde_mm256_load_ps(&prob[i]);
+		simde__m256 _prob_curr = simde_mm256_fmadd_ps(_prob_prev, _nt, _tFreq);
+		if (ag!=ah) _prob_curr = simde_mm256_mul_ps(_prob_curr, _mism);
+		_sum = simde_mm256_add_ps(_sum, _prob_curr);
+		simde_mm256_store_ps(&prob[i], _prob_curr);
 	}
-	_mm256_store_ps(&probSumH[0], _sum);
+	simde_mm256_store_ps(&probSumH[0], _sum);
 	probSumT = horizontal_add(_sum);
 }
 
 inline
 void phasing_hmm::RUN_FLAT_HET()
 {
-	const __m256 _tFreq = _mm256_mul_ps(_mm256_load_ps(&probSumH[0]), _mm256_set1_ps(yt / (C->n_states * probSumT)));
-	const __m256 _nt = _mm256_set1_ps(nt / probSumT);
-    __m256 _sum = _mm256_set1_ps(0.0f);
+	const simde__m256 _tFreq = simde_mm256_mul_ps(simde_mm256_load_ps(&probSumH[0]), simde_mm256_set1_ps(yt / (C->n_states * probSumT)));
+	const simde__m256 _nt = simde_mm256_set1_ps(nt / probSumT);
+    simde__m256 _sum = simde_mm256_set1_ps(0.0f);
 	for(int k = 0, i = 0 ; k != C->n_states ; ++k, i += HAP_NUMBER)
 	{
-		const __m256 _prob_curr = _mm256_fmadd_ps(_mm256_load_ps(&prob[i]), _nt, _tFreq);
-		_sum = _mm256_add_ps(_sum, _prob_curr);
-		_mm256_store_ps(&prob[i], _prob_curr);
+		const simde__m256 _prob_curr = simde_mm256_fmadd_ps(simde_mm256_load_ps(&prob[i]), _nt, _tFreq);
+		_sum = simde_mm256_add_ps(_sum, _prob_curr);
+		simde_mm256_store_ps(&prob[i], _prob_curr);
 	}
-	_mm256_store_ps(&probSumH[0], _sum);
+	simde_mm256_store_ps(&probSumH[0], _sum);
 	probSumT = horizontal_add(_sum);
 }
 
 inline
 void phasing_hmm::COLLAPSE_PEAK_HET(int curr_het)
 {
-	const __m256 _tFreq = _mm256_mul_ps(_mm256_load_ps(&probSumH[0]), _mm256_set1_ps(yt / (C->n_states * probSumT)));
-	const __m256 _nt = _mm256_set1_ps(nt / probSumT);
-	const std::array <__m256, 2 > emits = {_mm256_load_ps(&EMIT0[curr_het][0]),_mm256_load_ps(&EMIT1[curr_het][0])};
-    __m256 _sum = _mm256_set1_ps(0.0f);
+	const simde__m256 _tFreq = simde_mm256_mul_ps(simde_mm256_load_ps(&probSumH[0]), simde_mm256_set1_ps(yt / (C->n_states * probSumT)));
+	const simde__m256 _nt = simde_mm256_set1_ps(nt / probSumT);
+	const std::array <simde__m256, 2 > emits = {simde_mm256_load_ps(&EMIT0[curr_het][0]),simde_mm256_load_ps(&EMIT1[curr_het][0])};
+    simde__m256 _sum = simde_mm256_set1_ps(0.0f);
 	for(int k = 0, i = 0 ; k != C->n_states ; ++k, i += HAP_NUMBER)
 	{
 		const bool ah = C->Hvar.get(curr_rel_locus, k);
-		const __m256 _prob_curr = _mm256_mul_ps(_mm256_fmadd_ps(_mm256_set1_ps(probSumK[k]), _nt, _tFreq), emits[ah]);
-		_sum = _mm256_add_ps(_sum, _prob_curr);
-		_mm256_store_ps(&prob[i], _prob_curr);
+		const simde__m256 _prob_curr = simde_mm256_mul_ps(simde_mm256_fmadd_ps(simde_mm256_set1_ps(probSumK[k]), _nt, _tFreq), emits[ah]);
+		_sum = simde_mm256_add_ps(_sum, _prob_curr);
+		simde_mm256_store_ps(&prob[i], _prob_curr);
 	}
-	_mm256_store_ps(&probSumH[0], _sum);
+	simde_mm256_store_ps(&probSumH[0], _sum);
 	probSumT = horizontal_add(_sum);
 }
 
 inline
 void phasing_hmm::COLLAPSE_PEAK_HOM(bool ag)
 {
-	const __m256 _tFreq = _mm256_mul_ps(_mm256_load_ps(&probSumH[0]), _mm256_set1_ps(yt / (C->n_states * probSumT)));
-   	const __m256 _nt = _mm256_set1_ps(nt / probSumT);
-    __m256 _sum = _mm256_set1_ps(0.0f);
-    const __m256 _mism = _mm256_set1_ps(C->ed_phs/C->ee_phs);
+	const simde__m256 _tFreq = simde_mm256_mul_ps(simde_mm256_load_ps(&probSumH[0]), simde_mm256_set1_ps(yt / (C->n_states * probSumT)));
+   	const simde__m256 _nt = simde_mm256_set1_ps(nt / probSumT);
+    simde__m256 _sum = simde_mm256_set1_ps(0.0f);
+    const simde__m256 _mism = simde_mm256_set1_ps(C->ed_phs/C->ee_phs);
 
    	for(int k = 0, i = 0 ; k != C->n_states ; ++k, i += HAP_NUMBER)
    	{
    		const bool ah = C->Hvar.get(curr_rel_locus, k);
-   		__m256 _prob_curr = _mm256_fmadd_ps(_mm256_set1_ps(probSumK[k]), _nt, _tFreq);
-		if (ag!=ah) _prob_curr = _mm256_mul_ps(_prob_curr, _mism);
-   		_sum = _mm256_add_ps(_sum, _prob_curr);
-   		_mm256_store_ps(&prob[i], _prob_curr);
+   		simde__m256 _prob_curr = simde_mm256_fmadd_ps(simde_mm256_set1_ps(probSumK[k]), _nt, _tFreq);
+		if (ag!=ah) _prob_curr = simde_mm256_mul_ps(_prob_curr, _mism);
+   		_sum = simde_mm256_add_ps(_sum, _prob_curr);
+   		simde_mm256_store_ps(&prob[i], _prob_curr);
    	}
-   	_mm256_store_ps(&probSumH[0], _sum);
+   	simde_mm256_store_ps(&probSumH[0], _sum);
    	probSumT = horizontal_add(_sum);
 }
 
 inline
 void phasing_hmm::COLLAPSE_FLAT_HET ()
 {
-	const __m256 _tFreq = _mm256_mul_ps(_mm256_load_ps(&probSumH[0]), _mm256_set1_ps(yt / (C->n_states * probSumT)));
-	const __m256 _nt = _mm256_set1_ps(nt / probSumT);
-    __m256 _sum = _mm256_set1_ps(0.0f);
+	const simde__m256 _tFreq = simde_mm256_mul_ps(simde_mm256_load_ps(&probSumH[0]), simde_mm256_set1_ps(yt / (C->n_states * probSumT)));
+	const simde__m256 _nt = simde_mm256_set1_ps(nt / probSumT);
+    simde__m256 _sum = simde_mm256_set1_ps(0.0f);
 	for(int k = 0, i = 0 ; k != C->n_states ; ++k, i += HAP_NUMBER)
 	{
-   		__m256 _prob_curr = _mm256_fmadd_ps(_mm256_set1_ps(probSumK[k]), _nt, _tFreq);
-		_sum = _mm256_add_ps(_sum, _prob_curr);
-		_mm256_store_ps(&prob[i], _prob_curr);
+   		simde__m256 _prob_curr = simde_mm256_fmadd_ps(simde_mm256_set1_ps(probSumK[k]), _nt, _tFreq);
+		_sum = simde_mm256_add_ps(_sum, _prob_curr);
+		simde_mm256_store_ps(&prob[i], _prob_curr);
 	}
-	_mm256_store_ps(&probSumH[0], _sum);
+	simde_mm256_store_ps(&probSumH[0], _sum);
 	probSumT = horizontal_add(_sum);
 }
 
@@ -283,7 +286,7 @@ void phasing_hmm::COLLAPSE_FLAT_HET ()
 inline
 void phasing_hmm::SUMK() {
 	for(int k = 0, i = 0 ; k != C->n_states ; ++k, i += HAP_NUMBER)
-		probSumK[k] = horizontal_add(_mm256_load_ps(&prob[i]));
+		probSumK[k] = horizontal_add(simde_mm256_load_ps(&prob[i]));
 }
 
 inline
@@ -293,18 +296,18 @@ bool phasing_hmm::TRANS_HAP()
 	sumHProbs = 0.0f;
 	yt = C->getTransition(VAR_ABS[curr_idx_locus], VAR_ABS[curr_idx_locus+1]);
 	nt = 1.0f - yt;
-	const __m256 _fact2 = _mm256_set1_ps( nt / probSumT);
+	const simde__m256 _fact2 = simde_mm256_set1_ps( nt / probSumT);
 	int h1 = 0, j=0;
 	for (; h1 < HAP_NUMBER ; h1++, j += HAP_NUMBER)
 	{
-		const __m256 _fact1 = _mm256_set1_ps((probSumH[h1]/probSumT) * yt / C->n_states);
-		__m256 _sum = _mm256_set1_ps(0.0f);
+		const simde__m256 _fact1 = simde_mm256_set1_ps((probSumH[h1]/probSumT) * yt / C->n_states);
+		simde__m256 _sum = simde_mm256_set1_ps(0.0f);
 		for(int k=0, i=0; k != C->n_states ; ++k, i += HAP_NUMBER)
 		{
-			const __m256 _prob0 = _mm256_fmadd_ps(_mm256_set1_ps(prob[i+h1]), _fact2, _fact1);
-			_sum = _mm256_add_ps(_sum, _mm256_mul_ps(_prob0, _mm256_load_ps(&phasingProb[(curr_segment_index+1)*states_haps+i])));
+			const simde__m256 _prob0 = simde_mm256_fmadd_ps(simde_mm256_set1_ps(prob[i+h1]), _fact2, _fact1);
+			_sum = simde_mm256_add_ps(_sum, simde_mm256_mul_ps(_prob0, simde_mm256_load_ps(&phasingProb[(curr_segment_index+1)*states_haps+i])));
 		}
-		_mm256_store_ps(&HProbs[j], _sum);
+		simde_mm256_store_ps(&HProbs[j], _sum);
 		sumHProbs += horizontal_add(_sum);
 	}
 	return (std::isnan(sumHProbs) || std::isinf(sumHProbs) || sumHProbs < std::numeric_limits<float>::min());
@@ -328,23 +331,23 @@ inline
 void phasing_hmm::IMPUTE_FLAT_HET()
 {
 	const int states_haps = C->n_states*HAP_NUMBER;
-	const __m256 _one = _mm256_set1_ps(1.0f);
-	const __m256 _zero = _mm256_set1_ps(0.0f);
-	__m256 _scaleR = _mm256_load_ps(&imputeProbSum[curr_missing_locus*HAP_NUMBER]);
-	__m256 _scaleL = _mm256_load_ps(&probSumH[0]);
-	_scaleR = _mm256_div_ps(_one, _scaleR);
-	_scaleL = _mm256_div_ps(_one, _scaleL);
-	std::array <__m256, 2 > sums = {_mm256_set1_ps(0.0f),_mm256_set1_ps(0.0f)};
+	const simde__m256 _one = simde_mm256_set1_ps(1.0f);
+	const simde__m256 _zero = simde_mm256_set1_ps(0.0f);
+	simde__m256 _scaleR = simde_mm256_load_ps(&imputeProbSum[curr_missing_locus*HAP_NUMBER]);
+	simde__m256 _scaleL = simde_mm256_load_ps(&probSumH[0]);
+	_scaleR = simde_mm256_div_ps(_one, _scaleR);
+	_scaleL = simde_mm256_div_ps(_one, _scaleL);
+	std::array <simde__m256, 2 > sums = {simde_mm256_set1_ps(0.0f),simde_mm256_set1_ps(0.0f)};
 
 	for(int k = 0, i = 0 ; k !=  C->n_states ; ++k, i += HAP_NUMBER) {
 		const bool ah = C->Hvar.get(curr_rel_locus, k);
-		const __m256 _p1 = _mm256_mul_ps(_mm256_load_ps(&imputeProb[curr_missing_locus*states_haps + i]), _scaleR);
-		const __m256 _p2 = _mm256_mul_ps(_mm256_load_ps(&prob[i]), _scaleL);
-		sums[ah] = _mm256_add_ps(sums[ah], _mm256_mul_ps(_p1,_p2));
+		const simde__m256 _p1 = simde_mm256_mul_ps(simde_mm256_load_ps(&imputeProb[curr_missing_locus*states_haps + i]), _scaleR);
+		const simde__m256 _p2 = simde_mm256_mul_ps(simde_mm256_load_ps(&prob[i]), _scaleL);
+		sums[ah] = simde_mm256_add_ps(sums[ah], simde_mm256_mul_ps(_p1,_p2));
 	}
-	const __m256 _norm_sum = _mm256_div_ps(sums[1], _mm256_add_ps(sums[0], sums[1]));
-	const __m256 _clamp = _mm256_max_ps(_zero, _mm256_min_ps(_one, _norm_sum));
-	_mm256_store_ps(&imputeProbOf1s[curr_missing_locus*HAP_NUMBER], _clamp);
+	const simde__m256 _norm_sum = simde_mm256_div_ps(sums[1], simde_mm256_add_ps(sums[0], sums[1]));
+	const simde__m256 _clamp = simde_mm256_max_ps(_zero, simde_mm256_min_ps(_one, _norm_sum));
+	simde_mm256_store_ps(&imputeProbOf1s[curr_missing_locus*HAP_NUMBER], _clamp);
 }
 
 #endif
