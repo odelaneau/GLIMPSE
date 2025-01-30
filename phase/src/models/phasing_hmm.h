@@ -61,7 +61,7 @@ private:
 	conditioning_set * C;
 
 	//EXTERNAL DATA
-	std::vector < char > VAR_TYP;
+	std::vector < signed char > VAR_TYP;
 	std::vector < bool > VAR_ALT;
 	std::vector < int > VAR_ABS;
 	std::vector < int > VAR_REL;
