@@ -74,7 +74,7 @@ void phasing_hmm::reallocate(const std::vector < bool > & H0, const std::vector 
 
 		if ((!flat[C->polymorphic_sites[l]]) && (!C->lq_flag[C->polymorphic_sites[l]])) {
 			if (a0 != a1) {
-				VAR_TYP.push_back((char)(n_het % 3));
+				VAR_TYP.push_back(n_het % 3);
 				VAR_ALT.push_back(a0);
 				VAR_ABS.push_back(C->polymorphic_sites[l]);
 				VAR_REL.push_back(l);
