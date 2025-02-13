@@ -26,16 +26,16 @@
 #include <models/imputation_hmm.h>
 
 inline
-float horizontal_add (const __m256& a)
+float horizontal_add (const simde__m256& a)
 {
-    __m128 vlow = _mm256_castps256_ps128(a);
-    __m128 vhigh = _mm256_extractf128_ps(a, 1); // high 128
-   vlow = _mm_add_ps(vlow, vhigh);     // add the low 128
-   __m128 shuf = _mm_movehdup_ps(vlow);        // broadcast elements 3,1 to 2,0
-   __m128 sums = _mm_add_ps(vlow, shuf);
-   shuf = _mm_movehl_ps(shuf, sums); // high half -> low half
-   sums = _mm_add_ss(sums, shuf);    // (no wasted instructions, and all of them are the 4B minimum)
-   return _mm_cvtss_f32(sums);
+    simde__m128 vlow = simde_mm256_castps256_ps128(a);
+    simde__m128 vhigh = simde_mm256_extractf128_ps(a, 1); // high 128
+   vlow = simde_mm_add_ps(vlow, vhigh);     // add the low 128
+   simde__m128 shuf = simde_mm_movehdup_ps(vlow);        // broadcast elements 3,1 to 2,0
+   simde__m128 sums = simde_mm_add_ps(vlow, shuf);
+   shuf = simde_mm_movehl_ps(shuf, sums); // high half -> low half
+   sums = simde_mm_add_ss(sums, shuf);    // (no wasted instructions, and all of them are the 4B minimum)
+   return simde_mm_cvtss_f32(sums);
 }
 
 imputation_hmm::imputation_hmm(conditioning_set * _C) {
@@ -78,7 +78,7 @@ void imputation_hmm::computePosteriors(const std::vector < float > & HL, std::ve
 }
 
 void imputation_hmm::forward(std::vector < bool > & flat) {
-	const __m256i _vshift_count = _mm256_set_epi32(31,30,29,28,27,26,25,24);
+	const simde__m256i _vshift_count = simde_mm256_set_epi32(31,30,29,28,27,26,25,24);
 	const unsigned int nstates = C->n_states;
 	const unsigned int nstatesMD8 = (nstates / 8) * 8;
 
@@ -96,16 +96,16 @@ void imputation_hmm::forward(std::vector < bool > & flat) {
 			{
 				const float fact1 = C->t[l-1] / nstates;
 				const float fact2 = C->nt[l-1] / AlphaSum[l-1];
-				const __m256 _fact1 = _mm256_set1_ps(fact1);
-				const __m256 _fact2 = _mm256_set1_ps(fact2);
-				__m256 _sum = _mm256_set1_ps(0.0f);
+				const simde__m256 _fact1 = simde_mm256_set1_ps(fact1);
+				const simde__m256 _fact2 = simde_mm256_set1_ps(fact2);
+				simde__m256 _sum = simde_mm256_set1_ps(0.0f);
 				int k = 0;
 				for (; k < nstatesMD8; k += 8)
 				{
-					const __m256 _prob_prev = _mm256_load_ps(&Alpha[(l-1)*modK+k]);
-					const __m256 _prob_curr = _mm256_fmadd_ps(_prob_prev, _fact2, _fact1);
-					_sum = _mm256_add_ps(_sum, _prob_curr);
-					_mm256_store_ps(&Alpha[l*modK+k], _prob_curr);
+					const simde__m256 _prob_prev = simde_mm256_load_ps(&Alpha[(l-1)*modK+k]);
+					const simde__m256 _prob_curr = simde_mm256_fmadd_ps(_prob_prev, _fact2, _fact1);
+					_sum = simde_mm256_add_ps(_sum, _prob_curr);
+					simde_mm256_store_ps(&Alpha[l*modK+k], _prob_curr);
 				}
 				if (k) AlphaSum[l] = horizontal_add(_sum);
 				for (int offset = nstatesMD8; offset < nstates ; offset ++) {
@@ -117,22 +117,22 @@ void imputation_hmm::forward(std::vector < bool > & flat) {
 		else
 		{
 			const std::array<float,2> emit = {Emissions[2*C->polymorphic_sites[l]+0], Emissions[2*C->polymorphic_sites[l]+1]};
-			const __m256 _emit0 = _mm256_set1_ps(emit[0]);
-			const __m256 _emit1 = _mm256_set1_ps(emit[1]);
+			const simde__m256 _emit0 = simde_mm256_set1_ps(emit[0]);
+			const simde__m256 _emit1 = simde_mm256_set1_ps(emit[1]);
 			if (l == 0)
 			{
 				const float fact1 = 1.0f / nstates;
-				const __m256 _fact1 = _mm256_set1_ps(fact1);
-				__m256 _sum = _mm256_set1_ps(0.0f);
+				const simde__m256 _fact1 = simde_mm256_set1_ps(fact1);
+				simde__m256 _sum = simde_mm256_set1_ps(0.0f);
 				int k = 0;
 				for (; k < nstatesMD8; k += 8)
 				{
-					const __m256i _bcst = _mm256_set1_epi32((unsigned int )C->Hvar.getByte(l, k));
-					const __m256i _mask = _mm256_sllv_epi32(_bcst, _vshift_count);
-					const __m256 _emiss = _mm256_blendv_ps (_emit0, _emit1, _mm256_castsi256_ps(_mask));
-					const __m256 _prob_curr = _mm256_mul_ps(_emiss, _fact1);
-					_sum = _mm256_add_ps(_sum, _prob_curr);
-					_mm256_store_ps(&Alpha[l*modK+k], _prob_curr);
+					const simde__m256i _bcst = simde_mm256_set1_epi32((unsigned int )C->Hvar.getByte(l, k));
+					const simde__m256i _mask = simde_mm256_sllv_epi32(_bcst, _vshift_count);
+					const simde__m256 _emiss = simde_mm256_blendv_ps (_emit0, _emit1, simde_mm256_castsi256_ps(_mask));
+					const simde__m256 _prob_curr = simde_mm256_mul_ps(_emiss, _fact1);
+					_sum = simde_mm256_add_ps(_sum, _prob_curr);
+					simde_mm256_store_ps(&Alpha[l*modK+k], _prob_curr);
 				}
 				if (k) AlphaSum[l] = horizontal_add(_sum);
 				for (int offset = nstatesMD8; offset < nstates ; offset ++)
@@ -145,20 +145,20 @@ void imputation_hmm::forward(std::vector < bool > & flat) {
 			{
 				const float fact1 = C->t[l-1] / nstates;
 				const float fact2 = C->nt[l-1] / AlphaSum[l-1];//AlphaSum2[l-1];// AlphaSum[l-1];
-				const __m256 _fact1 = _mm256_set1_ps(fact1);
-				const __m256 _fact2 = _mm256_set1_ps(fact2);
-				__m256 _sum = _mm256_set1_ps(0.0f);
+				const simde__m256 _fact1 = simde_mm256_set1_ps(fact1);
+				const simde__m256 _fact2 = simde_mm256_set1_ps(fact2);
+				simde__m256 _sum = simde_mm256_set1_ps(0.0f);
 
 				int k = 0;
 				for (; k < nstatesMD8; k += 8)
 				{
-					const __m256i _mask = _mm256_sllv_epi32(_mm256_set1_epi32((unsigned int )C->Hvar.getByte(l, k)), _vshift_count);
-					const __m256 _emiss = _mm256_blendv_ps (_emit0, _emit1, _mm256_castsi256_ps(_mask));
-					const __m256 _prob_prev = _mm256_load_ps(&Alpha[(l-1)*modK+k]);
-					const __m256 _prob_temp = _mm256_fmadd_ps(_prob_prev, _fact2, _fact1);
-					const __m256 _prob_curr = _mm256_mul_ps(_prob_temp, _emiss);
-					_sum = _mm256_add_ps(_sum, _prob_curr);
-					_mm256_store_ps(&Alpha[l*modK+k], _prob_curr);
+					const simde__m256i _mask = simde_mm256_sllv_epi32(simde_mm256_set1_epi32((unsigned int )C->Hvar.getByte(l, k)), _vshift_count);
+					const simde__m256 _emiss = simde_mm256_blendv_ps (_emit0, _emit1, simde_mm256_castsi256_ps(_mask));
+					const simde__m256 _prob_prev = simde_mm256_load_ps(&Alpha[(l-1)*modK+k]);
+					const simde__m256 _prob_temp = simde_mm256_fmadd_ps(_prob_prev, _fact2, _fact1);
+					const simde__m256 _prob_curr = simde_mm256_mul_ps(_prob_temp, _emiss);
+					_sum = simde_mm256_add_ps(_sum, _prob_curr);
+					simde_mm256_store_ps(&Alpha[l*modK+k], _prob_curr);
 				}
 				if (k) AlphaSum[l] = horizontal_add(_sum);
 				for (int offset = nstatesMD8; offset < nstates ; offset ++)
@@ -175,39 +175,39 @@ void imputation_hmm::backward(const std::vector < float > & HL, std::vector < bo
 {
 	float betaSum = 0.0f, betaSumNext = 0.0f;
 	std::array<float,2> prob_hid, prob_obs;
-	const __m256i _vshift_count = _mm256_set_epi32(31,30,29,28,27,26,25,24);
+	const simde__m256i _vshift_count = simde_mm256_set_epi32(31,30,29,28,27,26,25,24);
 	const unsigned int nstates = C->n_states;
 	const unsigned int nstatesMD8 = (nstates / 8) * 8;
-	const __m256 _zero = _mm256_set1_ps(0.0f);
-	const __m256 _one = _mm256_set1_ps(1.0f);
+	const simde__m256 _zero = simde_mm256_set1_ps(0.0f);
+	const simde__m256 _one = simde_mm256_set1_ps(1.0f);
 	fill(Beta.begin(), Beta.end(), 1.0f);
-	__m256 _sum,  _prob0, _prob1;
+	simde__m256 _sum,  _prob0, _prob1;
 	for (int l = C->polymorphic_sites.size()-1 ; l >= 0 ; l --)
 	{
 		betaSum=0.0f;
 		prob_hid[0]=0.0f;
 		prob_hid[1]=0.0f;
 
-		_sum = _mm256_set1_ps(0.0f);
-		_prob0 = _mm256_set1_ps(0.0f);
-		_prob1 = _mm256_set1_ps(0.0f);
+		_sum = simde_mm256_set1_ps(0.0f);
+		_prob0 = simde_mm256_set1_ps(0.0f);
+		_prob1 = simde_mm256_set1_ps(0.0f);
 
 		if (flat[C->polymorphic_sites[l]] || C->lq_flag[C->polymorphic_sites[l]])
 		{
 			if (l == (C->polymorphic_sites.size()-1))
 			{
 				const float fact1 = 1.0f / nstates;
-				const __m256 _fact1 = _mm256_set1_ps(fact1);
+				const simde__m256 _fact1 = simde_mm256_set1_ps(fact1);
 				int k = 0;
 				for (; k < nstatesMD8; k += 8)
 				{
-					const __m256i _mask_curr = _mm256_sllv_epi32(_mm256_set1_epi32((unsigned int )C->Hvar.getByte(l, k)), _vshift_count);
-					const __m256 _mask0 = _mm256_blendv_ps (_one, _zero, _mm256_castsi256_ps(_mask_curr));
-					const __m256 _mask1 = _mm256_blendv_ps (_zero, _one, _mm256_castsi256_ps(_mask_curr));
-					const __m256 _alphas = _mm256_load_ps(&Alpha[l*modK+k]);
-					_prob0 = _mm256_add_ps(_prob0, _mm256_mul_ps(_alphas, _mask0));
-					_prob1 = _mm256_add_ps(_prob1, _mm256_mul_ps(_alphas, _mask1));
-					_mm256_store_ps(&Beta[k], _fact1);
+					const simde__m256i _mask_curr = simde_mm256_sllv_epi32(simde_mm256_set1_epi32((unsigned int )C->Hvar.getByte(l, k)), _vshift_count);
+					const simde__m256 _mask0 = simde_mm256_blendv_ps (_one, _zero, simde_mm256_castsi256_ps(_mask_curr));
+					const simde__m256 _mask1 = simde_mm256_blendv_ps (_zero, _one, simde_mm256_castsi256_ps(_mask_curr));
+					const simde__m256 _alphas = simde_mm256_load_ps(&Alpha[l*modK+k]);
+					_prob0 = simde_mm256_add_ps(_prob0, simde_mm256_mul_ps(_alphas, _mask0));
+					_prob1 = simde_mm256_add_ps(_prob1, simde_mm256_mul_ps(_alphas, _mask1));
+					simde_mm256_store_ps(&Beta[k], _fact1);
 				}
 				if (k)
 				{
@@ -225,23 +225,23 @@ void imputation_hmm::backward(const std::vector < float > & HL, std::vector < bo
 			{
 				const float fact1 = C->t[l] / nstates;
 				const float fact2 = C->nt[l] / betaSumNext;
-				const __m256 _fact1 = _mm256_set1_ps(fact1);
-				const __m256 _fact2 = _mm256_set1_ps(fact2);
+				const simde__m256 _fact1 = simde_mm256_set1_ps(fact1);
+				const simde__m256 _fact2 = simde_mm256_set1_ps(fact2);
 
 				int k = 0;
 				for (; k < nstatesMD8; k += 8)
 				{
-					const __m256i _mask_curr = _mm256_sllv_epi32(_mm256_set1_epi32((unsigned int )C->Hvar.getByte(l, k)), _vshift_count);
-					const __m256 _mask0 = _mm256_blendv_ps (_one, _zero, _mm256_castsi256_ps(_mask_curr));
-					const __m256 _mask1 = _mm256_blendv_ps (_zero, _one, _mm256_castsi256_ps(_mask_curr));
-					const __m256 _prob_prev = _mm256_load_ps(&Beta[k]);
-					const __m256 _prob_curr = _mm256_fmadd_ps(_prob_prev, _fact2, _fact1);
-					const __m256 _alphas = _mm256_load_ps(&Alpha[l*modK+k]);
-					const __m256 _dotprod = _mm256_mul_ps(_alphas, _prob_curr);
-					_prob0 = _mm256_add_ps(_prob0, _mm256_mul_ps(_dotprod, _mask0));
-					_prob1 = _mm256_add_ps(_prob1, _mm256_mul_ps(_dotprod, _mask1));
-					_sum = _mm256_add_ps(_sum, _prob_curr);
-					_mm256_store_ps(&Beta[k], _prob_curr);
+					const simde__m256i _mask_curr = simde_mm256_sllv_epi32(simde_mm256_set1_epi32((unsigned int )C->Hvar.getByte(l, k)), _vshift_count);
+					const simde__m256 _mask0 = simde_mm256_blendv_ps (_one, _zero, simde_mm256_castsi256_ps(_mask_curr));
+					const simde__m256 _mask1 = simde_mm256_blendv_ps (_zero, _one, simde_mm256_castsi256_ps(_mask_curr));
+					const simde__m256 _prob_prev = simde_mm256_load_ps(&Beta[k]);
+					const simde__m256 _prob_curr = simde_mm256_fmadd_ps(_prob_prev, _fact2, _fact1);
+					const simde__m256 _alphas = simde_mm256_load_ps(&Alpha[l*modK+k]);
+					const simde__m256 _dotprod = simde_mm256_mul_ps(_alphas, _prob_curr);
+					_prob0 = simde_mm256_add_ps(_prob0, simde_mm256_mul_ps(_dotprod, _mask0));
+					_prob1 = simde_mm256_add_ps(_prob1, simde_mm256_mul_ps(_dotprod, _mask1));
+					_sum = simde_mm256_add_ps(_sum, _prob_curr);
+					simde_mm256_store_ps(&Beta[k], _prob_curr);
 				}
 				if (k)
 				{
@@ -268,27 +268,27 @@ void imputation_hmm::backward(const std::vector < float > & HL, std::vector < bo
 		else
 		{
 			std::array<float,2> emit = {Emissions[2*C->polymorphic_sites[l]+0], Emissions[2*C->polymorphic_sites[l]+1]};
-			const __m256 _emit0 = _mm256_set1_ps(emit[0]);
-			const __m256 _emit1 = _mm256_set1_ps(emit[1]);
+			const simde__m256 _emit0 = simde_mm256_set1_ps(emit[0]);
+			const simde__m256 _emit1 = simde_mm256_set1_ps(emit[1]);
 
 			if (l == (C->polymorphic_sites.size()-1))
 			{
 				const float fact1 = 1.0f / nstates;
-				const __m256 _fact1 = _mm256_set1_ps(fact1);
+				const simde__m256 _fact1 = simde_mm256_set1_ps(fact1);
 
 				int k = 0;
 				for (; k < nstatesMD8; k += 8)
 				{
-					const __m256i _mask_curr = _mm256_sllv_epi32(_mm256_set1_epi32((unsigned int )C->Hvar.getByte(l, k)), _vshift_count);
-					const __m256 _emiss = _mm256_blendv_ps (_emit0, _emit1, _mm256_castsi256_ps(_mask_curr));
-					const __m256 _mask0 = _mm256_blendv_ps (_one, _zero, _mm256_castsi256_ps(_mask_curr));
-					const __m256 _mask1 = _mm256_blendv_ps (_zero, _one, _mm256_castsi256_ps(_mask_curr));
-					const __m256 _alphas = _mm256_load_ps(&Alpha[l*modK+k]);
-					const __m256 _prob_next = _mm256_mul_ps(_emiss, _fact1);
-					_prob0 = _mm256_add_ps(_prob0, _mm256_mul_ps(_alphas, _mask0));
-					_prob1 = _mm256_add_ps(_prob1, _mm256_mul_ps(_alphas, _mask1));
-					_sum= _mm256_add_ps(_sum, _prob_next);
-					_mm256_store_ps(&Beta[k], _prob_next);
+					const simde__m256i _mask_curr = simde_mm256_sllv_epi32(simde_mm256_set1_epi32((unsigned int )C->Hvar.getByte(l, k)), _vshift_count);
+					const simde__m256 _emiss = simde_mm256_blendv_ps (_emit0, _emit1, simde_mm256_castsi256_ps(_mask_curr));
+					const simde__m256 _mask0 = simde_mm256_blendv_ps (_one, _zero, simde_mm256_castsi256_ps(_mask_curr));
+					const simde__m256 _mask1 = simde_mm256_blendv_ps (_zero, _one, simde_mm256_castsi256_ps(_mask_curr));
+					const simde__m256 _alphas = simde_mm256_load_ps(&Alpha[l*modK+k]);
+					const simde__m256 _prob_next = simde_mm256_mul_ps(_emiss, _fact1);
+					_prob0 = simde_mm256_add_ps(_prob0, simde_mm256_mul_ps(_alphas, _mask0));
+					_prob1 = simde_mm256_add_ps(_prob1, simde_mm256_mul_ps(_alphas, _mask1));
+					_sum= simde_mm256_add_ps(_sum, _prob_next);
+					simde_mm256_store_ps(&Beta[k], _prob_next);
 				}
 				if (k)
 				{
@@ -307,25 +307,25 @@ void imputation_hmm::backward(const std::vector < float > & HL, std::vector < bo
 			{
 				const float fact1 = C->t[l] / nstates;
 				const float fact2 = C->nt[l] / betaSumNext;
-				const __m256 _fact1 = _mm256_set1_ps(fact1);
-				const __m256 _fact2 = _mm256_set1_ps(fact2);
+				const simde__m256 _fact1 = simde_mm256_set1_ps(fact1);
+				const simde__m256 _fact2 = simde_mm256_set1_ps(fact2);
 
 				int k = 0;
 				for (; k < nstatesMD8; k += 8)
 				{
-					const __m256i _mask_curr = _mm256_sllv_epi32(_mm256_set1_epi32((unsigned int )C->Hvar.getByte(l, k)), _vshift_count);
-					const __m256 _emiss = _mm256_blendv_ps (_emit0, _emit1, _mm256_castsi256_ps(_mask_curr));
-					const __m256 _mask0 = _mm256_blendv_ps (_one, _zero, _mm256_castsi256_ps(_mask_curr));
-					const __m256 _mask1 = _mm256_blendv_ps (_zero, _one, _mm256_castsi256_ps(_mask_curr));
-					const __m256 _prob_prev = _mm256_load_ps(&Beta[k]);
-					const __m256 _alphas = _mm256_load_ps(&Alpha[l*modK+k]);
-					const __m256 _prob_curr = _mm256_fmadd_ps(_prob_prev, _fact2, _fact1);
-					const __m256 _dotprod = _mm256_mul_ps(_alphas, _prob_curr);
-					const __m256 _prob_next = _mm256_mul_ps(_prob_curr, _emiss);
-					_prob0 = _mm256_add_ps(_prob0, _mm256_mul_ps(_dotprod, _mask0));
-					_prob1 = _mm256_add_ps(_prob1, _mm256_mul_ps(_dotprod, _mask1));
-					_sum= _mm256_add_ps(_sum, _prob_next);
-					_mm256_store_ps(&Beta[k], _prob_next);
+					const simde__m256i _mask_curr = simde_mm256_sllv_epi32(simde_mm256_set1_epi32((unsigned int )C->Hvar.getByte(l, k)), _vshift_count);
+					const simde__m256 _emiss = simde_mm256_blendv_ps (_emit0, _emit1, simde_mm256_castsi256_ps(_mask_curr));
+					const simde__m256 _mask0 = simde_mm256_blendv_ps (_one, _zero, simde_mm256_castsi256_ps(_mask_curr));
+					const simde__m256 _mask1 = simde_mm256_blendv_ps (_zero, _one, simde_mm256_castsi256_ps(_mask_curr));
+					const simde__m256 _prob_prev = simde_mm256_load_ps(&Beta[k]);
+					const simde__m256 _alphas = simde_mm256_load_ps(&Alpha[l*modK+k]);
+					const simde__m256 _prob_curr = simde_mm256_fmadd_ps(_prob_prev, _fact2, _fact1);
+					const simde__m256 _dotprod = simde_mm256_mul_ps(_alphas, _prob_curr);
+					const simde__m256 _prob_next = simde_mm256_mul_ps(_prob_curr, _emiss);
+					_prob0 = simde_mm256_add_ps(_prob0, simde_mm256_mul_ps(_dotprod, _mask0));
+					_prob1 = simde_mm256_add_ps(_prob1, simde_mm256_mul_ps(_dotprod, _mask1));
+					_sum= simde_mm256_add_ps(_sum, _prob_next);
+					simde_mm256_store_ps(&Beta[k], _prob_next);
 				}
 				if (k)
 				{

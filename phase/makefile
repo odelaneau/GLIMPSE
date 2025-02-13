@@ -87,6 +87,8 @@ ifeq ($(BGEN_SUPPORT),YES)
 	CXXFLAG+= -D__BGEN__ -I$(BGEN_INC)
 endif
 
+SIMDE_INC=./src/simde
+
 #CONDITIONAL PATH DEFINITON
 
 system: DYN_LIBS=-lz -lpthread -lbz2 -llzma
@@ -156,7 +158,7 @@ $(EXEFILE): $(OFILE)
 	$(CXX) $(LDFLAG) -static -static-libgcc -static-libstdc++ -pthread -o $(EXEFILE) $^ $(HTSLIB_LIB) $(BOOST_LIB_IO) $(BOOST_LIB_PO) $(BOOST_LIB_SE) -Wl,-Bstatic $(DYN_LIBS)
 
 obj/%.o: %.cpp $(HFILE)
-	$(CXX) $(CXXFLAG) -c $< -o $@ -Isrc -I$(HTSLIB_INC) -I$(BOOST_INC)
+	$(CXX) $(CXXFLAG) -c $< -o $@ -Isrc -I$(HTSLIB_INC) -I$(BOOST_INC) -I$(SIMDE_INC)
 
 clean: 
 	rm -f obj/*.o $(BFILE)
