@@ -26,8 +26,8 @@
 #ifndef _GENOTYPE_H
 #define _GENOTYPE_H
 
-#include <utils/otools.h>
-#include <utils/checksum_utils.h>
+#include "otools.h"
+#include "checksum_utils.h"
 #include "boost/serialization/serialization.hpp"
 
 #define _SET32(n,i)	((n) |= 1U << (i))

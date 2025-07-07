@@ -26,11 +26,11 @@
 #ifndef _REF_HAPLOTYPE_SET_H
 #define _REF_HAPLOTYPE_SET_H
 
-#include <utils/otools.h>
-#include <utils/checksum_utils.h>
+#include "otools.h"
+#include "checksum_utils.h"
 
-#include <containers/variant_map.h>
-#include <containers/bitmatrix.h>
+#include "variant_map.h"
+#include "bitmatrix.h"
 #include "boost/serialization/serialization.hpp"
 #include "boost/serialization/vector.hpp"
 

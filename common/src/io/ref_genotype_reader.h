@@ -26,10 +26,10 @@
 #ifndef _REF_GENOTYPE_READER_H
 #define _REF_GENOTYPE_READER_H
 
-#include <utils/otools.h>
+#include "otools.h"
 
-#include <containers/variant_map.h>
-#include "../containers/ref_haplotype_set.h"
+#include "variant_map.h"
+#include "ref_haplotype_set.h"
 
 class ref_genotype_reader
 {

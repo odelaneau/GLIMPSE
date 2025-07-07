@@ -26,8 +26,8 @@
 #ifndef _VARIANT_H
 #define _VARIANT_H
 
-#include <utils/otools.h>
-#include <utils/checksum_utils.h>
+#include "otools.h"
+#include "checksum_utils.h"
 #include "boost/serialization/serialization.hpp"
 
 class variant {

@@ -26,10 +26,10 @@
 #ifndef _SNP_SET_H
 #define _SNP_SET_H
 
-#include <utils/otools.h>
-#include <utils/checksum_utils.h>
-#include <objects/variant.h>
-#include <io/gmap_reader.h>
+#include "otools.h"
+#include "checksum_utils.h"
+#include "variant.h"
+#include "gmap_reader.h"
 #include "boost/serialization/serialization.hpp"
 #include "boost/serialization/vector.hpp"
 #include "boost/serialization/map.hpp"

@@ -23,7 +23,7 @@
  * SOFTWARE.
  ******************************************************************************/
 
-#include <containers/variant_map.h>
+#include "variant_map.h"
 
 variant_map::variant_map() :
 	input_start(0),

@@ -24,7 +24,7 @@
  ******************************************************************************/
 
 
-#include <io/ref_genotype_reader.h>
+#include "ref_genotype_reader.h"
 
 #ifdef __XSI__
 #include "c_api.h"

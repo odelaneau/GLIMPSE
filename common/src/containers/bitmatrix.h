@@ -27,8 +27,8 @@
 #define _BITMATRIX_H
 
 #include <cstdlib>
-#include <utils/otools.h>
-#include <utils/checksum_utils.h>
+#include "otools.h"
+#include "checksum_utils.h"
 #include "boost/serialization/serialization.hpp"
 #include "boost/serialization/array.hpp"
 

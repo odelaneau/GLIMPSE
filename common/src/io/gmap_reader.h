@@ -26,7 +26,7 @@
 #ifndef _GMAP_DATA_H
 #define _GMAP_DATA_H
 
-#include <utils/otools.h>
+#include "otools.h"
 
 class gmap_reader {
 public:

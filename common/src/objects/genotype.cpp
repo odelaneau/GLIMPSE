@@ -23,7 +23,7 @@
  * SOFTWARE.
  ******************************************************************************/
 
-#include <objects/genotype.h>
+#include "genotype.h"
 
 genotype::genotype(const std::string _name, const int _index, const int _n_variants, const int _ploidy, const int _hapid) :
 		name(_name),
