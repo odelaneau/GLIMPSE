@@ -3,8 +3,6 @@ add_library(Concordance INTERFACE)
 
 # Link packages
 find_package(Boost REQUIRED COMPONENTS program_options iostreams regex)
-set(HTS_INCLUDE_DIR /usr/include)
-set(HTS_LIB /usr/lib/x86_64-linux-gnu/libhts.so)
 
 # Add directories
 add_subdirectory(src/checker)

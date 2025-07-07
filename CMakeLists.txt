@@ -28,13 +28,23 @@ configure_file(
     ${CMAKE_BINARY_DIR}/versions/versions.h
 )
 
+# Set HTS path
+set(HTS_INCLUDE_DIR /usr/include)
+set(HTS_LIB /usr/lib/x86_64-linux-gnu/libhts.so)
+
 # Create Version packages
 add_library(Version_tools INTERFACE)
 target_include_directories(Version_tools INTERFACE ${CMAKE_CURRENT_BINARY_DIR}/versions)
 
+# Add common packages
+add_subdirectory(common/src/utils)
+add_subdirectory(common/src/containers)
+add_subdirectory(common/src/io)
+add_subdirectory(common/src/objects)
 
 # Add modules
 add_subdirectory(concordance)
+add_subdirectory(split_reference)
 
 # Switch Test modules or run main
 option(TEST "DO GTEST" OFF)

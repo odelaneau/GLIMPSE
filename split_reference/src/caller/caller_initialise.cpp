@@ -23,8 +23,8 @@
  * SOFTWARE.
  ******************************************************************************/
 
-#include <caller/caller_header.h>
-#include <io/gmap_reader.h>
+#include "caller_header.h"
+#include "gmap_reader.h"
 #include "boost/serialization/serialization.hpp"
 #include <boost/archive/tmpdir.hpp>
 #include <boost/archive/binary_oarchive.hpp>

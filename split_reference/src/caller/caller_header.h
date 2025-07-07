@@ -26,11 +26,11 @@
 #ifndef _CALLER_H
 #define _CALLER_H
 
-#include <utils/otools.h>
+#include "otools.h"
 
-#include <containers/variant_map.h>
-#include <io/ref_genotype_reader.h>
-#include "../containers/ref_haplotype_set.h"
+#include "variant_map.h"
+#include "ref_genotype_reader.h"
+#include "ref_haplotype_set.h"
 
 #define STAGE_INIT	0
 #define STAGE_BURN	1
