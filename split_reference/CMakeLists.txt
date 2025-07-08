@@ -6,8 +6,13 @@ add_subdirectory(src/caller)
 
 # Add Libraries
 target_link_libraries(SPLIT_REFERENCE INTERFACE Containers
-                                                IO
-                                                Objects
-                                                SplitCaller
-                                                ${HTS_LIB}
+                                      INTERFACE IO
+                                      INTERFACE Objects
+                                      INTERFACE SplitCaller
+                                      INTERFACE Boost::serialization
+                                      INTERFACE Boost::program_options
+                                      INTERFACE Boost::iostreams
+                                      INTERFACE Boost::regex
+                                      INTERFACE z
+                                      INTERFACE ${HTS_LIB}
 )

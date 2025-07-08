@@ -25,7 +25,7 @@
 
 #ifndef _REF_GENOTYPE_READER_H
 #define _REF_GENOTYPE_READER_H
-
+#define _DECLARE_TOOLBOX_HERE
 #include "otools.h"
 
 #include "variant_map.h"

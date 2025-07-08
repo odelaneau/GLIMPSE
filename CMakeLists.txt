@@ -32,6 +32,9 @@ configure_file(
 set(HTS_INCLUDE_DIR /usr/include)
 set(HTS_LIB /usr/lib/x86_64-linux-gnu/libhts.so)
 
+# Find Boost libraries
+find_package(Boost REQUIRED COMPONENTS serialization program_options iostreams regex)
+
 # Create Version packages
 add_library(Version_tools INTERFACE)
 target_include_directories(Version_tools INTERFACE ${CMAKE_CURRENT_BINARY_DIR}/versions)

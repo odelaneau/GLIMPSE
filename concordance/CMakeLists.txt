@@ -1,9 +1,6 @@
 # Create concordance library
 add_library(Concordance INTERFACE)
 
-# Link packages
-find_package(Boost REQUIRED COMPONENTS program_options iostreams regex)
-
 # Add directories
 add_subdirectory(src/checker)
 add_subdirectory(src/containers)

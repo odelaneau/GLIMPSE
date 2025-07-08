@@ -19,7 +19,7 @@ TEST(Split_reference, test_split_ref_file)
         "--input", pos_file.string(),
         "--region", "chr1",
         "--output", "chunks.chr1.txt",
-        "--map", MAP_FOLDER + "/chr1.b38.gmap.gz"
+        "--map", std::string(MAP_FOLDER) + "/chr1.b38.gmap.gz"
     };
     caller().phase(args);
 }
