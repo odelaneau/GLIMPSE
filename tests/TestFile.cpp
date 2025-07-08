@@ -32,6 +32,18 @@ std::map<std::string, std::string> TestFile::file_menu
         "1\t200123\trs123\tG\tA\t300\tPASS\tMAF=0.3\tGT:DS\t1|1:0.2\t0|1:0.7\t1|0:1.1\n"
         "1\t250000\t.\tT\tC\t150\tPASS\tMAF=0.4\tGT:DS\t1|1:1.95\t0|0:0.05\t0|1:1.2\n"
         "1\t260000\t.\tA\tC\t150\tPASS\tMAF=0.5\tGT:DS\t0|1:1.55\t1|0:0.15\t1|1:1.5\n"
+    },
+    {"chunking_file",
+        "##fileformat=VCFv4.2\n"
+        "##INFO=<ID=AC,Number=A,Type=Integer,Description=\"Allele count in genotypes\">\n"
+        "##INFO=<ID=AN,Number=1,Type=Integer,Description=\"Total number of alleles in called genotypes\">\n"
+        "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tsample1\tsample2\n"
+        "chr1\t123456\t.\tA\tG\t100\tPASS\tAC=1;AN=4\tGT\t0/0\t0/1\n"
+        "chr1\t123789\trs123\tC\tT\t99\tPASS\tAC=2;AN=4\tGT\t0/1\t0/1\n"
+        "chr1\t200123\t.\tG\tA\t50\tPASS\tAC=0;AN=4\tGT\t0/0\t0/0\n"
+        "chr1\t250000\t.\tT\tC\t80\tPASS\tAC=3;AN=4\tGT\t1/1\t0/1\n"
+
     }
 
 };
