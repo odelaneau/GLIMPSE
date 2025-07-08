@@ -23,8 +23,8 @@
  * SOFTWARE.
  ******************************************************************************/
 
-#include <chunker/chunker_header.h>
-#include <io/gmap_reader.h>
+#include "chunker_header.h"
+#include "gmap_reader.h"
 
 void chunker::split_recursive(output_file & fd, long int & cidx, std::string & chr, long int start_idx, long int stop_idx) {
 	cnk_info.reset();

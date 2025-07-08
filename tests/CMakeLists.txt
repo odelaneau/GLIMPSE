@@ -14,6 +14,12 @@ add_executable(test_Concordance test_Concordance.cpp TestFile.cpp)
 target_link_libraries(test_Concordance GTest::gtest_main Concordance)
 add_test(NAME test_Concordance COMMAND test_Concordance)
 
+# Set up test_Chunk
+add_executable(test_Chunk test_Chunk.cpp TestFile.cpp)
+target_link_libraries(test_Chunk GTest::gtest_main Chunker)
+target_compile_definitions(test_Chunk PRIVATE MAP_FOLDER="${CMAKE_SOURCE_DIR}/maps/genetic_maps.b38")
+add_test(NAME test_Chunk COMMAND test_Chunk)
+
 # Set up test_Split_reference
 add_executable(test_Split_reference test_Split_reference.cpp TestFile.cpp)
 target_link_libraries(test_Split_reference GTest::gtest_main SPLIT_REFERENCE)

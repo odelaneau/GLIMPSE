@@ -26,8 +26,8 @@
 #ifndef _CHUNKER_H
 #define _CHUNKER_H
 
-#include <utils/otools.h>
-#include <io/gmap_reader.h>
+#include "otools.h"
+#include "gmap_reader.h"
 
 struct chunk_info
 {

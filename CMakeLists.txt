@@ -47,6 +47,7 @@ add_subdirectory(common/src/objects)
 
 # Add modules
 add_subdirectory(concordance)
+add_subdirectory(chunk)
 add_subdirectory(split_reference)
 
 # Switch Test modules or run main

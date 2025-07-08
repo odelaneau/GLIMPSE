@@ -23,8 +23,8 @@
  * SOFTWARE.
  ******************************************************************************/
 
-#include "../../versions/versions.h"
-#include <chunker/chunker_header.h>
+#include "versions.h"
+#include "chunker_header.h"
 
 void chunker::declare_options() {
 	bpo::options_description opt_base ("Basic options");

@@ -23,7 +23,7 @@
  * SOFTWARE.
  ******************************************************************************/
 
-#include <chunker/chunker_header.h>
+#include "chunker_header.h"
 
 void chunker::readData(std::string fmain, std::string region, long int nthreads) {
 	tac.clock();
