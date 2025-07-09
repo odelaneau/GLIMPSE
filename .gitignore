@@ -110,3 +110,4 @@ tutorial/bin/
 
 # Testing files
 *.txt.gz
+*chr*.txt
