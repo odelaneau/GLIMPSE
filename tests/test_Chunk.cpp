@@ -19,7 +19,10 @@ TEST(Chunk, test_chunk_ref_file)
         "--input", pos_file.string(),
         "--region", "chr1",
         "--sequential",
-        "--window-count", "2",
+        "--buffer-mb", "0.001",
+        "--window-count", "1", 
+        "--window-cm", "0.1",
+        "--window-mb", "0.0000001",
         "--output", "chunks.chr1.txt",
         "--map", std::string(MAP_FOLDER) + "/chr1.b38.gmap.gz",
     };

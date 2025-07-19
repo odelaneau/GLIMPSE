@@ -39,10 +39,12 @@ std::map<std::string, std::string> TestFile::file_menu
         "##INFO=<ID=AN,Number=1,Type=Integer,Description=\"Total number of alleles in called genotypes\">\n"
         "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n"
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tsample1\tsample2\n"
-        "chr1\t123456\t.\tA\tG\t100\tPASS\tAC=1;AN=4\tGT\t0/0\t0/1\n"
-        "chr1\t123789\trs123\tC\tT\t99\tPASS\tAC=2;AN=4\tGT\t0/1\t0/1\n"
+        "chr1\t123\t.\tA\tG\t100\tPASS\tAC=1;AN=4\tGT\t0/0\t0/1\n"
+        "chr1\t789\trs123\tC\tT\t99\tPASS\tAC=2;AN=4\tGT\t0/1\t0/1\n"
         "chr1\t200123\t.\tG\tA\t50\tPASS\tAC=0;AN=4\tGT\t0/0\t0/0\n"
         "chr1\t250000\t.\tT\tC\t80\tPASS\tAC=3;AN=4\tGT\t1/1\t0/1\n"
+        "chr1\t500123\t.\tG\tC\t50\tPASS\tAC=0;AN=4\tGT\t0/1\t1/0\n"
+        "chr1\t550000\t.\tC\tT\t80\tPASS\tAC=3;AN=4\tGT\t0/1\t0/1\n"
 
     }
 
