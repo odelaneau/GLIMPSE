@@ -45,7 +45,18 @@ std::map<std::string, std::string> TestFile::file_menu
         "chr1\t250000\t.\tT\tC\t80\tPASS\tAC=3;AN=4\tGT\t1/1\t0/1\n"
         "chr1\t500123\t.\tG\tC\t50\tPASS\tAC=0;AN=4\tGT\t0/1\t1/0\n"
         "chr1\t550000\t.\tC\tT\t80\tPASS\tAC=3;AN=4\tGT\t0/1\t0/1\n"
-
+    },
+    {"simple_split_file",
+        "##fileformat=VCFv4.2\n"
+        "##contig=<ID=1,length=1000000>\n"
+        "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n"
+        "##FORMAT=<ID=DS,Number=1,Type=Float,Description=\"Genotype Dosage\">\n"
+        "##FORMAT=<ID=GP,Number=G,Type=Float,Description=\"Genotype Probabilities\">\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tsample1\tsample2\tsample3\n"
+        "1\t123456\t.\tA\tG\t100\tPASS\t.\tGT:DS:GP\t0|0:0.0:0.33,0.33,0.34\t0|1:1.0:0.33,0.33,0.34\t1|1:2.0:0.33,0.33,0.34\n"
+        "1\t123789\t.\tC\tT\t99\tPASS\t.\tGT:DS:GP\t0|1:0.8:0.33,0.33,0.34\t0|0:0.1:0.33,0.33,0.34\t1|1:1.9:0.33,0.33,0.34\n"
+        "1\t200123\trs123\tG\tA\t300\tPASS\t.\tGT:DS:GP\t1|1:0.2:0.33,0.33,0.34\t0|1:0.7:0.33,0.33,0.34\t1|0:1.1:0.33,0.33,0.34\n"
+        "1\t250000\t.\tT\tC\t150\tPASS\t.\tGT:DS:GP\t1|1:1.95:0.33,0.33,0.34\t0|0:0.05:0.33,0.33,0.34\t0|1:1.2:0.33,0.33,0.34\n"
     }
 
 };
