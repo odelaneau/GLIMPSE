@@ -7,8 +7,10 @@ add_subdirectory(src/containers)
 add_subdirectory(src/io)
 add_subdirectory(src/models)
 
-target_link_directories(Phase INTERFACE  phase_caller
-                                         phase_containers
-                                         phase_io
-                                         phase_models
+target_link_libraries(Phase INTERFACE   phase_caller
+                                        phase_containers
+                                        phase_io
+                                        phase_models
 )
+
+target_include_directories(Phase INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})

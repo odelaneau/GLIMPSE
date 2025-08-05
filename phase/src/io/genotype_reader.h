@@ -26,11 +26,11 @@
 #ifndef _GENOTYPE_READER_H
 #define _GENOTYPE_READER_H
 
-#include <utils/otools.h>
+#include "otools.h"
 
-#include <containers/variant_map.h>
-#include <containers/haplotype_set.h>
-#include <containers/glimpse_mpileup.h>
+#include "variant_map.h"
+#include "containers/haplotype_set.h"
+#include "containers/glimpse_mpileup.h"
 
 class genotype_reader
 {

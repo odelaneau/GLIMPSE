@@ -26,8 +26,8 @@
 #ifndef _DIPLOTYPE_HMM_H
 #define _DIPLOTYPE_HMM_H
 
-#include <utils/otools.h>
-#include <containers/conditioning_set.h>
+#include "otools.h"
+#include "containers/conditioning_set.h"
 #include <immintrin.h>
 #include <boost/align/aligned_allocator.hpp>
 

@@ -6,6 +6,9 @@ add_library(phase_caller caller_algorithm.cpp
                          caller_parameters.cpp
 )
 
+## Link dependencies
+target_link_libraries(phase_caller PUBLIC Utils Objects Containers)
+
 ## Link header file
-target_include_directories(phase_caller PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(phase_caller PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/.." )
 

@@ -26,12 +26,12 @@
 #ifndef _HAPLOTYPE_SET_H
 #define _HAPLOTYPE_SET_H
 
-#include <utils/otools.h>
-#include <utils/checksum_utils.h>
+#include "otools.h"
+#include "checksum_utils.h"
 
-#include <containers/bitmatrix.h>
-#include <containers/genotype_set.h>
-#include <containers/ref_haplotype_set.h>
+#include "bitmatrix.h"
+#include "ref_haplotype_set.h"
+#include "containers/genotype_set.h"
 
 class haplotype_set : public ref_haplotype_set {
 public:

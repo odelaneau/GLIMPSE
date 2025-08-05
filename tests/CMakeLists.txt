@@ -29,4 +29,4 @@ add_test(NAME test_Split_reference COMMAND test_Split_reference)
 # Set up test_Phase
 add_executable(test_Phase test_Phase.cpp TestFile.cpp)
 target_link_libraries(test_Phase GTest::gtest_main Phase)
-dd_test(NAME test_Phase COMMAND test_Phase)
+add_test(NAME test_Phase COMMAND test_Phase)

@@ -26,17 +26,17 @@
 #ifndef _CALLER_H
 #define _CALLER_H
 
-#include <utils/otools.h>
-#include <utils/checksum_utils.h>
+#include "otools.h"
+#include "checksum_utils.h"
 
-#include <containers/genotype_set.h>
-#include <containers/haplotype_set.h>
-#include <containers/variant_map.h>
-#include <io/genotype_reader.h>
-#include <io/genotype_bam_caller.h>
+#include "containers/genotype_set.h"
+#include "containers/haplotype_set.h"
+#include "variant_map.h"
+#include "io/genotype_reader.h"
+#include "io/genotype_bam_caller.h"
 
-#include <models/phasing_hmm.h>
-#include <models/imputation_hmm.h>
+#include "models/phasing_hmm.h"
+#include "models/imputation_hmm.h"
 
 class caller {
 public:

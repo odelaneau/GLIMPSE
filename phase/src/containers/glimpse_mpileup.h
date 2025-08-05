@@ -32,8 +32,8 @@
 
 #include "htslib/hts.h"
 
-#include <utils/otools.h>
-#include <containers/variant_map.h>
+#include "otools.h"
+#include "variant_map.h"
 
 #define OFILE_VCFU	0
 #define OFILE_VCFC	1

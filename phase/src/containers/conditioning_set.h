@@ -26,9 +26,9 @@
 #ifndef _CONDITIONING_SET_H
 #define _CONDITIONING_SET_H
 
-#include <utils/otools.h>
-#include <containers/variant_map.h>
-#include <containers/haplotype_set.h>
+#include "otools.h"
+#include "variant_map.h"
+#include "containers/haplotype_set.h"
 
 //Types included in vector < char > var_type
 #define TYPE_COMMON	0

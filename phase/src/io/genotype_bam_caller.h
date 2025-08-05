@@ -26,10 +26,10 @@
 #ifndef _GENOTYPE_BAM_CALLER_H
 #define _GENOTYPE_BAM_CALLER_H
 
-#include <utils/otools.h>
-#include <containers/variant_map.h>
-#include <containers/haplotype_set.h>
-#include <containers/glimpse_mpileup.h>
+#include "otools.h"
+#include "variant_map.h"
+#include "containers/haplotype_set.h"
+#include "containers/glimpse_mpileup.h"
 
 namespace calling_utils
 {

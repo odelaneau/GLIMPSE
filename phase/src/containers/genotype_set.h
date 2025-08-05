@@ -26,11 +26,11 @@
 #ifndef _GENOTYPE_SET_H
 #define _GENOTYPE_SET_H
 
-#include <utils/otools.h>
-#include <utils/checksum_utils.h>
+#include "otools.h"
+#include "checksum_utils.h"
 
-#include <objects/genotype.h>
-#include <containers/variant_map.h>
+#include "genotype.h"
+#include "variant_map.h"
 
 struct stats_cov {
 	std::vector<stats1D> cov_ind;
