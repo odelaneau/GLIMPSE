@@ -26,12 +26,12 @@
 #ifndef _GENOTYPE_WRITER_H
 #define _GENOTYPE_WRITER_H
 
-#include <utils/otools.h>
+#include "otools.h"
 
-#include <containers/variant_map.h>
-#include <containers/haplotype_set.h>
-#include <containers/genotype_set.h>
-#include <caller/caller_header.h>
+#include "variant_map.h"
+#include "containers/haplotype_set.h"
+#include "containers/genotype_set.h"
+#include "caller/caller_header.h"
 
 #ifdef __BGEN__
 #include "genfile/bgen/bgen.hpp"

@@ -28,5 +28,6 @@ add_test(NAME test_Split_reference COMMAND test_Split_reference)
 
 # Set up test_Phase
 add_executable(test_Phase test_Phase.cpp TestFile.cpp)
+target_compile_options(test_Phase PRIVATE -Wno-ignored-attributes)            ## Ignore warning 
 target_link_libraries(test_Phase GTest::gtest_main Phase)
 add_test(NAME test_Phase COMMAND test_Phase)

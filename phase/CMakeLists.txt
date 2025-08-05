@@ -11,6 +11,5 @@ target_link_libraries(Phase INTERFACE   phase_caller
                                         phase_containers
                                         phase_io
                                         phase_models
+                                        ${HTS_LIB}
 )
-
-target_include_directories(Phase INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
