@@ -16,8 +16,8 @@ TEST(Split_reference, test_split_ref_file)
 
     // Create args string
     std::vector<std::string> args{
-        "--input-region", "chr1:1-4611812489108143365",
-        "--output-region", "chr1:1-225061",
+        "--input-region", "1:1-4611812489108143365",
+        "--output-region", "1:1-225061",
         "--output", "binary_reference_panel", 
         "--reference", simple_file.string(), 
         "--map", std::string(MAP_FOLDER) + "/chr1.b38.gmap.gz"
