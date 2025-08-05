@@ -25,3 +25,8 @@ add_executable(test_Split_reference test_Split_reference.cpp TestFile.cpp)
 target_link_libraries(test_Split_reference GTest::gtest_main SPLIT_REFERENCE)
 target_compile_definitions(test_Split_reference PRIVATE MAP_FOLDER="${CMAKE_SOURCE_DIR}/maps/genetic_maps.b38")
 add_test(NAME test_Split_reference COMMAND test_Split_reference)
+
+# Set up test_Phase
+add_executable(test_Phase test_Phase.cpp TestFile.cpp)
+target_link_libraries(test_Phase GTest::gtest_main Phase)
+dd_test(NAME test_Phase COMMAND test_Phase)

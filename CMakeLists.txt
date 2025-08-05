@@ -49,6 +49,7 @@ add_subdirectory(common/src/objects)
 add_subdirectory(concordance)
 add_subdirectory(chunk)
 add_subdirectory(split_reference)
+add_subdirectory(phase)
 
 # Switch Test modules or run main
 option(TEST "DO GTEST" OFF)
