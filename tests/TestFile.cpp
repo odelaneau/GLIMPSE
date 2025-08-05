@@ -49,14 +49,16 @@ std::map<std::string, std::string> TestFile::file_menu
     {"simple_split_file",
         "##fileformat=VCFv4.2\n"
         "##contig=<ID=1,length=1000000>\n"
+        "##INFO=<ID=AC,Number=A,Type=Integer,Description=\"Alternate Allele Count\">\n"
+        "##INFO=<ID=AN,Number=1,Type=Integer,Description=\"Total Number of Alleles\">\n"
         "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n"
         "##FORMAT=<ID=DS,Number=1,Type=Float,Description=\"Genotype Dosage\">\n"
         "##FORMAT=<ID=GP,Number=G,Type=Float,Description=\"Genotype Probabilities\">\n"
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tsample1\tsample2\tsample3\n"
-        "1\t123456\t.\tA\tG\t100\tPASS\t.\tGT:DS:GP\t0|0:0.0:0.33,0.33,0.34\t0|1:1.0:0.33,0.33,0.34\t1|1:2.0:0.33,0.33,0.34\n"
-        "1\t123789\t.\tC\tT\t99\tPASS\t.\tGT:DS:GP\t0|1:0.8:0.33,0.33,0.34\t0|0:0.1:0.33,0.33,0.34\t1|1:1.9:0.33,0.33,0.34\n"
-        "1\t200123\trs123\tG\tA\t300\tPASS\t.\tGT:DS:GP\t1|1:0.2:0.33,0.33,0.34\t0|1:0.7:0.33,0.33,0.34\t1|0:1.1:0.33,0.33,0.34\n"
-        "1\t250000\t.\tT\tC\t150\tPASS\t.\tGT:DS:GP\t1|1:1.95:0.33,0.33,0.34\t0|0:0.05:0.33,0.33,0.34\t0|1:1.2:0.33,0.33,0.34\n"
+        "1\t123456\t.\tA\tG\t100\tPASS\tAC=3;AN=6\tGT:DS:GP\t0|0:0.0:0.33,0.33,0.34\t0|1:1.0:0.33,0.33,0.34\t1|1:2.0:0.33,0.33,0.34\n"
+        "1\t123789\t.\tC\tT\t99\tPASS\tAC=3;AN=6\tGT:DS:GP\t0|1:0.8:0.33,0.33,0.34\t0|0:0.1:0.33,0.33,0.34\t1|1:1.9:0.33,0.33,0.34\n"
+        "1\t200123\trs123\tG\tA\t300\tPASS\tAC=4;AN=6\tGT:DS:GP\t1|1:0.2:0.33,0.33,0.34\t0|1:0.7:0.33,0.33,0.34\t1|0:1.1:0.33,0.33,0.34\n"
+        "1\t250000\t.\tT\tC\t150\tPASS\tAC=3;AN=6\tGT:DS:GP\t1|1:1.95:0.33,0.33,0.34\t0|0:0.05:0.33,0.33,0.34\t0|1:1.2:0.33,0.33,0.34\n"
     }
 
 };
