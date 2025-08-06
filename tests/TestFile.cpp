@@ -131,3 +131,20 @@ fs::path TestFile::get_tmp_vcf_file(std::string file_key)
 
     return temp_file;
 }
+
+
+std::string TestFile::globPattern(const std::string& pattern)
+{
+    glob_t glob_result;
+    std::string file_path;
+
+    int return_value = glob(pattern.c_str(), GLOB_TILDE, NULL, &glob_result);
+    if (return_value == 0) {
+        file_path = glob_result.gl_pathv[0];
+    } else {
+        std::cerr << "glob() failed with return code: " << return_value << std::endl;
+    }
+
+    globfree(&glob_result);
+    return file_path;
+}
