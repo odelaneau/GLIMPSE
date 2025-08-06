@@ -30,11 +30,6 @@
 #include "c_api.h"
 #endif
 
-std::map<std::string, int> mapPloidy = {
-		{"1",1},
-		{"2",2}
-};
-
 ref_genotype_reader::ref_genotype_reader(
 		ref_haplotype_set & _H,
 		variant_map & _V,

@@ -57,4 +57,9 @@ public:
 	void parseRefGenotypes(bcf_srs_t * sr, const std::string fref);
 };
 
+std::map<std::string, int> mapPloidy = {
+		{"1",1},
+		{"2",2}
+};
+
 #endif

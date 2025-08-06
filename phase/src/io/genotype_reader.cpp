@@ -24,11 +24,7 @@
  ******************************************************************************/
 
 #include <io/genotype_reader.h>
-
-std::map<std::string, int> mapPloidy = {
-		{"1",1},
-		{"2",2}
-};
+#include <ref_genotype_reader.h>
 
 genotype_reader::genotype_reader(
 		haplotype_set & _H,
