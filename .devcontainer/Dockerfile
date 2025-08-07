@@ -74,6 +74,7 @@ RUN if [ "$INSTALL_DEBUG_TOOLS" = "true" ]; then \
     apt-get install -y --no-install-recommends gdb=9.2-0ubuntu1~20.04.2 &&\
     apt-get install -y --no-install-recommends bcftools=1.10.2-2 &&\
     apt-get install -y --no-install-recommends less=551-1ubuntu0.3 &&\
+    apt-get install -y --no-install-recommends samtools=1.10-3 &&\
     apt-get install -y --no-install-recommends bash-completion=1:2.10-1ubuntu1 ;\
     fi
 
