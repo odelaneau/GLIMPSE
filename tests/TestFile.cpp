@@ -3,6 +3,9 @@
 #include <htslib/bgzf.h>
 #include <htslib/tbx.h>
 #include <iostream>
+#include <htslib/sam.h>
+#include <cstring> 
+#include <unistd.h>
 
 namespace fs = std::filesystem;
 
@@ -147,4 +150,90 @@ std::string TestFile::globPattern(const std::string& pattern)
 
     globfree(&glob_result);
     return file_path;
+}
+
+std::string TestFile::createBamFile(const std::string& basename = "mini") {
+    // 1. Create temporary BAM filename in /tmp
+    std::string template_path = "/tmp/" + basename + "_XXXXXX.bam";
+    std::string tmp_template = template_path;
+    char tmpname[tmp_template.size() + 1];
+    std::strcpy(tmpname, tmp_template.c_str());
+
+    // Remove ".bam" before calling mkstemp
+    tmpname[strlen(tmpname) - 4] = '\0';
+
+    int fd = mkstemp(tmpname);  // mkstemp creates and opens the file
+    if (fd == -1) {
+        perror("mkstemp");
+        return "";
+    }
+    close(fd); // We'll reopen with sam_open
+
+    std::string bam_path = std::string(tmpname) + ".bam";
+
+    // 2. Create header
+    sam_hdr_t* hdr = sam_hdr_init();
+    sam_hdr_add_line(hdr, "HD", "VN", "1.6", NULL);
+    sam_hdr_add_line(hdr, "SQ", "SN", "1", "LN", "1000000", NULL);
+
+    // 3. Open BAM for writing
+    htsFile* out = sam_open(bam_path.c_str(), "wb");
+    if (!out) {
+        fprintf(stderr, "Error: Cannot open output file %s\n", bam_path.c_str());
+        return "";
+    }
+    if (sam_hdr_write(out, hdr) < 0) {
+        fprintf(stderr, "Error: Cannot write BAM header\n");
+        sam_close(out);
+        return "";
+    }
+
+    // 4. Create dummy read
+    bam1_t* read = bam_init1();
+    read->core.tid = 0;
+    read->core.pos = 123456 - 1;
+    read->core.qual = 60;
+    read->core.flag = 0;
+    read->core.l_qname = 7;
+    read->core.n_cigar = 1;
+    read->core.l_qseq = 10;
+    read->core.mtid = -1;
+    read->core.mpos = -1;
+    read->core.isize = 0;
+
+    int data_len = 7 + 4 + (10 + 1)/2 + 10;
+    uint8_t* data = (uint8_t*)malloc(data_len);
+    memcpy(data, "read001", 7);
+    ((uint32_t*)(data + 7))[0] = bam_cigar_gen(10, BAM_CMATCH);
+    uint8_t* seq = data + 7 + 4;
+    seq[0] = (1<<4) | 2;
+    seq[1] = (4<<4) | 3;
+    seq[2] = (1<<4) | 2;
+    seq[3] = (4<<4) | 3;
+    seq[4] = (1<<4);
+    memcpy(seq + 5, "!!!!!!!!!!", 10);
+
+    read->data = data;
+    read->l_data = data_len;
+
+    if (sam_write1(out, hdr, read) < 0) {
+        fprintf(stderr, "Error: Cannot write read to BAM\n");
+        bam_destroy1(read);
+        sam_hdr_destroy(hdr);
+        sam_close(out);
+        return "";
+    }
+
+    // 5. Cleanup
+    bam_destroy1(read);
+    sam_hdr_destroy(hdr);
+    sam_close(out);
+
+    // 6. Create index (.bai)
+    if (sam_index_build(bam_path.c_str(), 0) != 0) {
+        std::cerr << "Failed to create BAM index\n";
+        return "";
+    }
+
+    return bam_path;
 }

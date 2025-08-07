@@ -10,11 +10,11 @@ TEST(Phase, test_impute_mmini_file)
 {
     // Find input from previous tests
     std::string reference = TestFile().globPattern(std::string(BIN_DIR) + "/binary_reference_panel*.bin");
-    std::string bam_list = TestFile().globPattern(std::string(BIN_DIR) + "/chunks.*.txt");
+    std::string bam_file = TestFile().createBamFile("mini");
 
     // Create args string
     std::vector<std::string> args{
-        "--bam-list", bam_list,
+        "--bam-file", bam_file,
         "--reference", reference,
         "--output", "imputed_glimpse2_mini.bcf", 
         "--threads", "4"
