@@ -12,7 +12,7 @@ target_link_libraries(Concordance INTERFACE ConcorChecker
                                   INTERFACE Boost::program_options
                                   INTERFACE Boost::iostreams
                                   INTERFACE Boost::regex
-                                  INTERFACE z
+                                  INTERFACE ZLIB::ZLIB
                                   INTERFACE ${HTS_LIB}
 )
 

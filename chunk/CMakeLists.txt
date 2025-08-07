@@ -13,7 +13,7 @@ target_link_libraries(Chunker PUBLIC Utils
                                      Boost::program_options
                                      Boost::iostreams
                                      Boost::regex
-                                     z
+                                     ZLIB::ZLIB
                                      ${HTS_LIB}
 )
 

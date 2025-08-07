@@ -25,11 +25,6 @@
 
 #include "call_set_header.h"
 
-std::map<std::string, int> mapPloidy = {
-		{"1",1},
-		{"2",2}
-};
-
 std::map<int, std::string> fploidy_to_msg = {
 		{-2, "Mixed haploid/diploid samples in the region"},
 		{1,"Only haploid samples in the region"},

@@ -32,8 +32,9 @@ configure_file(
 set(HTS_INCLUDE_DIR /usr/include)
 set(HTS_LIB /usr/lib/x86_64-linux-gnu/libhts.so)
 
-# Find Boost libraries
+# Find libraries
 find_package(Boost REQUIRED COMPONENTS serialization program_options iostreams regex)
+find_package(ZLIB REQUIRED)
 
 # Create Version packages
 add_library(Version_tools INTERFACE)

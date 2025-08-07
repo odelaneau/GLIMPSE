@@ -11,5 +11,9 @@ target_link_libraries(Phase INTERFACE   phase_caller
                                         phase_containers
                                         phase_io
                                         phase_models
+                                        ZLIB::ZLIB
+                                        Boost::iostreams
+                                        Boost::program_options
+                                        Boost::serialization
                                         ${HTS_LIB}
 )
