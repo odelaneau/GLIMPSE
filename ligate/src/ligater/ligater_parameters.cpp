@@ -23,7 +23,7 @@
  * SOFTWARE.
  ******************************************************************************/
 
-#include "../../versions/versions.h"
+#include "versions.h"
 #include <ligater/ligater_header.h>
 
 void ligater::declare_options() {

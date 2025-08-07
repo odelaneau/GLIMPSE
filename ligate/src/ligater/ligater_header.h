@@ -26,7 +26,7 @@
 #ifndef _LIGATER_H
 #define _LIGATER_H
 
-#include <utils/otools.h>
+#include "otools.h"
 
 class ligater {
 public:

@@ -26,8 +26,8 @@
 #include <ligater/ligater_header.h>
 #include <htslib/khash.h>
 #include <sys/stat.h>
-#include <utils/otools.h>
-#include <utils/basic_stats.h>
+#include <otools.h>
+#include <basic_stats.h>
 
 
 #define OFILE_VCFU	0

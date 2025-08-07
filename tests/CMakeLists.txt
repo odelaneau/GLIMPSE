@@ -32,3 +32,8 @@ target_compile_options(test_Phase PRIVATE -Wno-ignored-attributes)            ##
 target_link_libraries(test_Phase GTest::gtest_main Phase)
 target_compile_definitions(test_Phase PRIVATE BIN_DIR="${CMAKE_CURRENT_BINARY_DIR}")
 add_test(NAME test_Phase COMMAND test_Phase)
+
+# Set up test_Ligater
+add_executable(test_Ligater test_Ligater.cpp TestFile.cpp)
+target_link_libraries(test_Ligater GTest::gtest_main Ligater)
+add_test(NAME test_Ligater COMMAND test_Ligater)
