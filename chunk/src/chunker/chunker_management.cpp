@@ -64,8 +64,8 @@ void chunker::parseRegion()
 	int ret = stb.split(gregion, t1, ":");
 	if (ret < 1 || ret > 2) vrb.error("Region needs to be specified as chrN or chrN:Y-, or chrN:Y-Z (chromosome ID cannot be extracted)");
 
-	start=0;
-	stop=2147483647;
+	this->start=0;
+	this->stop=2147483647;
 
 	if  (ret > 1)
 	{
@@ -74,16 +74,16 @@ void chunker::parseRegion()
 		ret = stb.split(t1[1], t2, "-");
 		if (ret == 1)
 		{
-			start = atoi(t2[0].c_str());
-			if (start < 0) vrb.error("Genomic region coordinates are incorrect (input_start < 0)");
+			this->start = atoi(t2[0].c_str());
+			if (this->start < 0) vrb.error("Genomic region coordinates are incorrect (input_start < 0)");
 			gregion+=stb.str(2147483647);
 		}
 		else if (ret == 2)
 		{
-			start = atoi(t2[0].c_str());
-			stop = atoi(t2[1].c_str());
-			if (start > stop) vrb.error("Genomic region coordinates are incorrect (start > stop)");
-			if (start < 0) vrb.error("Genomic region coordinates are incorrect (start < 0)");
+			this->start = atoi(t2[0].c_str());
+			this->stop = atoi(t2[1].c_str());
+			if (this->start > this->stop) vrb.error("Genomic region coordinates are incorrect (start > stop)");
+			if (this->start < 0) vrb.error("Genomic region coordinates are incorrect (start < 0)");
 		}
 		else vrb.error("Region needs to be specified as chrN or chrN:Y-, or chrN:Y-Z (start and stop regions cannot be extracted)");
 	} else if (ret==1)

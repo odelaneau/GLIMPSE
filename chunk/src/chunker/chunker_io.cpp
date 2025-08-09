@@ -72,8 +72,8 @@ void chunker::readData(std::string fmain, std::string region, long int nthreads)
 	        int hkey = hrec ? bcf_hrec_find_key(hrec, "length") : -1;
 	        //printf("%s\t%s\t", seq[i], hkey<0?".":hrec->vals[hkey]);
 
-			if (hkey>=0) contig_len = atol(hrec->vals[hkey]);
-			if (contig_len <= 0) contig_len = 1248956422;
+			if (hkey>=0) this->contig_len = atol(hrec->vals[hkey]);
+			if (this->contig_len <= 0) this->contig_len = 1248956422;
 			break;
 		}
 		free(seq);
@@ -102,15 +102,15 @@ void chunker::readData(std::string fmain, std::string region, long int nthreads)
 			if ((nAC!=1)||(nAN!=1)) vrb.error("VCF/BCF needs AC/AN INFO fields to be present");
 			//Classify variant
 			double MAF = std::min(((vAN[0] - vAC[0])*1.0f)/(vAN[0]), (vAC[0]*1.0f)/(vAN[0]));
-			const bool is_common = MAF >= sparse_maf;
+			const bool is_common = MAF >= this->sparse_maf;
 
-			positions_all_mb.push_back(line_main->pos + 1);
-			map_positions_all.insert(std::pair < int , int> (line_main->pos + 1, positions_all_mb.size()-1));
-			all2common.push_back(n_comm_variants_cnt);
+			this->positions_all_mb.push_back(line_main->pos + 1);
+			this->map_positions_all.insert(std::pair < int , int> (line_main->pos + 1, positions_all_mb.size()-1));
+			this->all2common.push_back(n_comm_variants_cnt);
 			if (is_common)
 			{
-				positions_common_mb.push_back(line_main->pos + 1);
-				common2all.push_back(positions_all_mb.size()-1);
+				this->positions_common_mb.push_back(line_main->pos + 1);
+				this->common2all.push_back(positions_all_mb.size()-1);
 				n_comm_variants_cnt++;
 			}
 		}
