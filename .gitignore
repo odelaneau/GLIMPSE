@@ -111,3 +111,7 @@ tutorial/bin/
 # Testing files
 *.txt.gz
 *chr*.txt
+
+# Ignore docs
+docs/html
+docs/latex
