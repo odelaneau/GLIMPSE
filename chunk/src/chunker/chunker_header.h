@@ -135,7 +135,100 @@ public:
 	chunker();
 	~chunker();
 
-	//METHODS
+		/**
+	 * @brief Reads variant data from a VCF/BCF file into chunker data structures.
+	 *
+	 * This function opens the specified VCF/BCF file, restricts reading to the given genomic
+	 * region, and iterates through all biallelic variants. For each variant, it extracts allele
+	 * counts (AC) and allele numbers (AN) from the INFO fields, computes the minor allele frequency (MAF),
+	 * and classifies the variant as common or rare based on the @ref sparse_maf threshold.
+	 *
+	 * Variant positions, along with mapping tables between all variants and common variants,
+	 * are stored in the chunker's internal member variables for later use in imputation/phasing.
+	 *
+	 * If @ref whole_chr is enabled, the function will also retrieve and store the contig length
+	 * for the given chromosome from the VCF/BCF header or index. Requires the input file to have
+	 * an accompanying index (.tbi/.csi) file.
+	 *
+	 * @param fmain    Path to the input VCF or BCF file (must be indexed).
+	 * @param region   Genomic region string in format "CHR" or "CHR:START-END".
+	 * @param nthreads Number of threads to use for reading (if > 1, enables multi-threaded reading).
+	 *
+	 * @throws std::runtime_error If:
+	 *         - The file cannot be opened.
+	 *         - The index cannot be loaded.
+	 *         - The region cannot be set.
+	 *         - The AC or AN INFO fields are missing or invalid.
+	 *         - The file type is not recognized as VCF or BCF.
+	 *
+	 * @note Only biallelic variants (n_allele == 2) are processed. Multiallelic variants are skipped.
+	 * @note AC and AN must be present in the INFO field and be single integer values.
+	 * @note Positions are stored in 1-based coordinates (VCF format is 0-based).
+	 * @note Updates the following member variables:
+	 *       - positions_all_mb
+	 *       - positions_common_mb
+	 *       - map_positions_all
+	 *       - all2common
+	 *       - common2all
+	 *       - contig_len (if whole_chr is true)
+	 *       - chrID (chromosome ID of the first common variant)
+	 *
+	 * @details
+	 * **Algorithm workflow:**
+	 * 1. **Initialization**
+	 *    - Start a timer for performance logging.
+	 *    - Initialize a synchronous VCF/BCF reader (`bcf_srs_t`) from htslib.
+	 *    - Configure reader to not collapse multi-allelic sites and to require an index.
+	 *    - Enable multi-threading if `nthreads > 1`.
+	 *
+	 * 2. **Set region filter**
+	 *    - Restrict reading to the given `region` (chromosome or range).
+	 *    - Abort with an error if the region cannot be set.
+	 *
+	 * 3. **Open input file**
+	 *    - Add the file as a reader.
+	 *    - If opening or index loading fails, terminate with an error message.
+	 *
+	 * 4. **Optional: Get contig length** (only if `whole_chr == true`)
+	 *    - Detect if the file is VCF or BCF and load the appropriate index (`.tbi` or `.csi`).
+	 *    - Retrieve sequence names from the index.
+	 *    - Match the `region` chromosome and attempt to read its length from the VCF header.
+	 *    - If unavailable, assign a fallback contig length.
+	 *
+	 * 5. **Prepare buffers**
+	 *    - Initialize counters for total and common variants.
+	 *    - Allocate arrays for reading AC and AN INFO field values.
+	 *
+	 * 6. **Read and process variants**
+	 *    - Loop over all lines in the file/region:
+	 *      - Keep only **biallelic** variants (`n_allele == 2`).
+	 *      - For the first common variant, store the chromosome ID (`chrID`).
+	 *      - Retrieve AC and AN values and validate them.
+	 *      - Compute **minor allele frequency (MAF)**:
+	 *        \f[
+	 *        MAF = \min\left(\frac{AN - AC}{AN}, \frac{AC}{AN}\right)
+	 *        \f]
+	 *      - Determine if the variant is **common** (`MAF >= sparse_maf`).
+	 *      - Store the variant position (converted from 0-based to 1-based).
+	 *      - Update:
+	 *        - `positions_all_mb` with all variant positions.
+	 *        - `map_positions_all` mapping position → index.
+	 *        - `all2common` mapping all variants to common variant indices.
+	 *      - If common, also update:
+	 *        - `positions_common_mb` with positions of common variants.
+	 *        - `common2all` mapping common variant indices back to all variant indices.
+	 *
+	 * 7. **Cleanup**
+	 *    - Destroy the BCF/VCF reader.
+	 *    - Free AC/AN buffers.
+	 *
+	 * 8. **Final reporting**
+	 *    - Log total, rare, and common variant counts.
+	 *    - Log elapsed processing time.
+	 *
+	 * @see sparse_maf
+	 * @see whole_chr
+	 */
 	void readData(std::string fmain, std::string region, long int nthreads);
 
 	//PARAMETERS
