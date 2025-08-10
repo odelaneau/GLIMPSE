@@ -28,18 +28,35 @@
 
 #include "otools.h"
 
+/**
+ * @class gmap_reader
+ * @brief Class to manage genetic map data with base pair positions and corresponding centiMorgan positions.
+ * 
+ * This class stores vectors of base pair positions and their corresponding genetic map positions in centiMorgans,
+ * and provides functionality to read genetic map files.
+ */
 class gmap_reader {
 public:
-	//DATA
-	std::vector < long int > pos_bp;
-	std::vector < double > pos_cm;
+	/// Vector of base pair positions (bp)
+	std::vector<long int> pos_bp;
 
-	//CONSTRUCTOR/DESTRUCTOR
+	/// Vector of centiMorgan positions (cM) corresponding to pos_bp
+	std::vector<double> pos_cm;
+
+	/// Constructor
 	gmap_reader();
+
+	/// Destructor
 	~gmap_reader();
 
-	//IO
-	void readGeneticMapFile(const std::string);
+	/**
+	 * @brief Read genetic map data from a file.
+	 * 
+	 * Parses a genetic map file and fills pos_bp and pos_cm vectors accordingly.
+	 * 
+	 * @param filename Path to the genetic map file.
+	 */
+	void readGeneticMapFile(const std::string filename);
 };
 
 #endif
