@@ -1,26 +1,23 @@
 /*******************************************************************************
- * Copyright (C) 2022-2023 Simone Rubinacci
- * Copyright (C) 2022-2023 Olivier Delaneau
+ * @file glimpse_mpileup.h
+ * @brief Definitions and structures for GLIMPSE mpileup processing.
  *
- * MIT Licence
+ * This header contains data structures, constants, and class declarations
+ * used for mpileup processing in GLIMPSE. It includes utilities for
+ * managing BAM/CRAM inputs, pileup iteration, genotype likelihoods, 
+ * and filtering options.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
+ * The mpileup functionality is used for variant calling and genotype
+ * likelihood computation from sequencing data.
  *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
+ * @details
+ * **Main components:**
+ * - **Constants and Macros** for output file types and allele counts.
+ * - **Reference sequence container** (`ref_t`).
+ * - **BAM auxiliary structures** for pileup iteration (`aux_t`, `glimpse_bam_mplp_iter`, `glimpse_bam_plp_iter`).
+ * - **Genotype likelihood models** and their supporting structures.
+ * - **Main mpileup class** (`glimpse_mpileup`) containing input/output parameters and filter settings.
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
  ******************************************************************************/
 
 #ifndef SRC_CONTAINERS_GLIMPSE_MPILEUP_H_
@@ -29,128 +26,177 @@
 #include <math.h>
 #include <htslib/faidx.h>
 #include <htslib/regidx.h>
-
 #include "htslib/hts.h"
 
 #include "otools.h"
 #include "variant_map.h"
 
-#define OFILE_VCFU	0
-#define OFILE_VCFC	1
-#define OFILE_BCFC	2
+/**
+ * @name Output File Type Constants
+ * @{
+ */
+#define OFILE_VCFU  0   /**< Uncompressed VCF output */
+#define OFILE_VCFC  1   /**< Compressed VCF output (.vcf.gz) */
+#define OFILE_BCFC  2   /**< Compressed BCF output (.bcf) */
+/** @} */
 
+/**
+ * @brief Number of alleles supported.
+ */
 const int N_ALLELES = 4;
+
+/**
+ * @brief HTSlib position type definition (64-bit).
+ */
 typedef int64_t hts_pos_t;
 
+/**
+ * @brief Container for reference sequence metadata.
+ */
 typedef struct {
-    //char *ref[2];
-    //int ref_id[2];
-    //int ref_len[2];
-	char *ref;
-	int ref_id;
-	int ref_len;
+    char *ref;      /**< Pointer to reference sequence string. */
+    int ref_id;     /**< Reference sequence ID (e.g., chromosome index). */
+    int ref_len;    /**< Length of the reference sequence. */
 } ref_t;
 
-struct aux_t {     			// auxiliary data structure
-	samFile * fp;				// the file handle
-	hts_idx_t *idx;
-	bam_hdr_t * hdr;			// the file header
-	hts_itr_t * iter;			// NULL if a region not specified
-	int min_mapQ;				// mapQ threshold for filter
-	//ref_t *ref;
-	//faidx_t* fai;
+/**
+ * @brief Auxiliary data structure for BAM/CRAM input.
+ */
+struct aux_t {
+    samFile *fp;        /**< File handle for BAM/CRAM. */
+    hts_idx_t *idx;     /**< BAM/CRAM index. */
+    bam_hdr_t *hdr;     /**< File header. */
+    hts_itr_t *iter;    /**< Iterator for region queries; NULL if region not specified. */
+    int min_mapQ;       /**< Minimum mapping quality filter threshold. */
 
-	bool keep_orphan,check_orientation,check_proper_pair;	// parameters for filtering
-	int fflag;												// Filter flag
-	//unsigned int mtlen;										// Maximum observed fragment length
+    bool keep_orphan;       /**< Keep orphan reads flag. */
+    bool check_orientation; /**< Enforce correct read orientation flag. */
+    bool check_proper_pair; /**< Enforce proper pairing flag. */
+    int fflag;              /**< Filter flag for reads. */
 };
 
+/**
+ * @brief Multi-sample pileup iterator container.
+ */
 struct glimpse_bam_mplp_iter {
-    int n;
-    int32_t min_tid;
-    std::vector<int32_t> tid;
-    hts_pos_t min_pos;
-    std::vector<int32_t> pos;
-    std::vector<bam_plp_t> iter;
-    std::vector<int> n_plp;
-    std::vector<const bam_pileup1_t *> plp;
+    int n;                                  /**< Number of samples. */
+    int32_t min_tid;                        /**< Minimum reference ID observed. */
+    std::vector<int32_t> tid;               /**< Per-sample reference IDs. */
+    hts_pos_t min_pos;                      /**< Minimum genomic position. */
+    std::vector<int32_t> pos;               /**< Positions for each sample. */
+    std::vector<bam_plp_t> iter;            /**< Pileup iterators. */
+    std::vector<int> n_plp;                 /**< Number of pileup entries per sample. */
+    std::vector<const bam_pileup1_t *> plp; /**< Pileup entries per sample. */
 };
 
+/**
+ * @brief Single-sample pileup iterator container.
+ */
 struct glimpse_bam_plp_iter {
-    int32_t tid;
-    int pos;
-    bam_plp_t iter;
-    const bam_pileup1_t * plp;
+    int32_t tid;                            /**< Reference ID. */
+    int pos;                                /**< Genomic position. */
+    bam_plp_t iter;                         /**< Pileup iterator. */
+    const bam_pileup1_t *plp;               /**< Pointer to pileup entry. */
 };
 
+/**
+ * @brief Genotype calling model types.
+ */
+enum call_model {
+    standard,       /**< Standard diploid model. */
+    pseudohaploid   /**< Pseudohaploid model. */
+};
 
-enum call_model { standard, pseudohaploid};
-
+/**
+ * @brief Auxiliary structure for genotype likelihood calling.
+ */
 struct bcf_call_aux_t {
-    int max_dp;
-    int min_bq;
-    std::vector<uint16_t> bases;  // 5bit: unused, 6:quality, 1:is_rev, 4:2-bit base or indel allele (index to bcf_callaux_t.indel_types)
+    int max_dp;                         /**< Maximum depth. */
+    int min_bq;                         /**< Minimum base quality. */
+    std::vector<uint16_t> bases;        /**< Encoded base calls (5 bits per base). */
 };
 
-struct bcf_call_ret1_t{
-    //uint32_t ori_depth;     // ori_depth = anno[0..3] but before --min-BQ is applied
-    std::array<float,16> p;        // phred-scaled likelihood of each genotype
+/**
+ * @brief Genotype likelihood result structure.
+ */
+struct bcf_call_ret1_t {
+    std::array<float,16> p; /**< Phred-scaled likelihood for each genotype. */
 };
 
-struct sample_gl
-{
-	int read_depth;
-	int dp_ind;
-	int ref_read;
-	std::array<float,3> llk;
-
+/**
+ * @brief Per-sample genotype likelihoods and read counts.
+ */
+struct sample_gl {
+    int read_depth;                 /**< Total read depth. */
+    int dp_ind;                     /**< Depth index. */
+    int ref_read;                   /**< Number of reference-supporting reads. */
+    std::array<float,3> llk;        /**< Log-likelihoods for genotypes. */
 };
 
-struct call_t
-{
-	int ploidy;
-	sample_gl gls;
-	bcf_call_aux_t bca;
-	bcf_call_ret1_t bcr;
-	bam_plp_t s_plp;
-	const bam_pileup1_t* v_plp;
-	int n_plp;
-	bool snp_called;
+/**
+ * @brief Genotype call container for a single variant/sample.
+ */
+struct call_t {
+    int ploidy;                         /**< Sample ploidy (1 = haploid, 2 = diploid). */
+    sample_gl gls;                      /**< Genotype likelihoods and depths. */
+    bcf_call_aux_t bca;                 /**< Auxiliary likelihood data. */
+    bcf_call_ret1_t bcr;                 /**< Likelihood results. */
+    bam_plp_t s_plp;                    /**< Pileup iterator. */
+    const bam_pileup1_t* v_plp;         /**< Variant pileup entry. */
+    int n_plp;                          /**< Number of pileup entries. */
+    bool snp_called;                    /**< Whether a SNP was called. */
 };
 
+/**
+ * @brief Main class for mpileup processing in GLIMPSE.
+ */
 class glimpse_mpileup {
 public:
-	glimpse_mpileup();
-	glimpse_mpileup(const glimpse_mpileup& );
+    /**
+     * @brief Default constructor.
+     */
+    glimpse_mpileup();
 
-	virtual ~glimpse_mpileup();
+    /**
+     * @brief Copy constructor.
+     * @param other Instance to copy.
+     */
+    glimpse_mpileup(const glimpse_mpileup& other);
 
-	std::vector<std::string> bam_fnames;
-	std::vector<std::string> tar_sample_names;
+    /**
+     * @brief Destructor.
+     */
+    virtual ~glimpse_mpileup();
 
-	//samples
-	int n_tar_samples;
-	int n_tar_haps;
-	std::vector<int> tar_ploidy;
-	std::vector<int> tar_ind2gt;
-	std::vector<int> tar_ind2pl;
+    // Input BAM files and sample names
+    std::vector<std::string> bam_fnames;       /**< BAM/CRAM filenames. */
+    std::vector<std::string> tar_sample_names; /**< Target sample names. */
 
-	int n_tar_diploid;
-	int n_tar_haploid;
-	int max_ploidy;
-	int fploidy;
+    // Sample-related data
+    int n_tar_samples;                         /**< Number of target samples. */
+    int n_tar_haps;                            /**< Number of haplotypes. */
+    std::vector<int> tar_ploidy;               /**< Ploidy per sample. */
+    std::vector<int> tar_ind2gt;               /**< Sample-to-genotype index mapping. */
+    std::vector<int> tar_ind2pl;               /**< Sample-to-PL index mapping. */
 
-	//fasta
-	std::string fai_fname;
-	faidx_t* fai;
+    int n_tar_diploid;                         /**< Number of diploid samples. */
+    int n_tar_haploid;                         /**< Number of haploid samples. */
+    int max_ploidy;                            /**< Maximum ploidy among samples. */
+    int fploidy;                               /**< Forced ploidy (if set). */
 
-	///filters
-	bool keep_orphan,check_orientation,check_proper_pair;	// parameters for filtering
-	int fflag;												// Filter flag
-	bool illumina13;
-	int min_mq;
-	int min_bq;
-	int max_dp;
+    // Reference FASTA
+    std::string fai_fname;                     /**< FASTA index filename. */
+    faidx_t* fai;                              /**< FASTA index pointer. */
+
+    // Filtering parameters
+    bool keep_orphan;                          /**< Keep orphan reads flag. */
+    bool check_orientation;                    /**< Enforce correct read orientation. */
+    bool check_proper_pair;                    /**< Enforce proper pairing. */
+    int fflag;                                 /**< Filter flag for reads. */
+    bool illumina13;                           /**< Illumina 1.3+ base quality encoding. */
+    int min_mq;                                /**< Minimum mapping quality. */
+    int min_bq;                                /**< Minimum base quality. */
+    int max_dp;                                /**< Maximum depth. */
 };
 
 #endif /* SRC_CONTAINERS_GLIMPSE_MPILEUP_H_ */

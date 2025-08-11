@@ -94,15 +94,6 @@ genotype_bam_caller::genotype_bam_caller(
 		compute_llk[0] = &standard_errmod;
 		compute_llk[1] = call_indels ? &standard_errmod_indels_v : &flat_errmod_indels_v;
 	}
-	/*
-	else if(_callmodel=="pseudohaploid")
-	{
-		model = pseudohaploid;
-
-		compute_llk[0] = &pseudohaploid_errmod;
-		compute_llk[1] = &pseudohaploid_errmod_indel;
-	}
-	*/
 	else vrb.error("Model used is not supported: [" + _callmodel + "]");
 
 	aux_data.check_orientation = mpileup_data.check_orientation;
