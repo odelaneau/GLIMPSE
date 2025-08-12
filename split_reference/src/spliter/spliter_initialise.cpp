@@ -23,7 +23,7 @@
  * SOFTWARE.
  ******************************************************************************/
 
-#include "caller_header.h"
+#include "spliter_header.h"
 #include "gmap_reader.h"
 #include "boost/serialization/serialization.hpp"
 #include <boost/archive/tmpdir.hpp>
@@ -34,7 +34,7 @@
 #include <sstream>
 #include <iostream>
 
-void caller::read_files_and_initialise() {
+void spliter::read_files_and_initialise() {
 	vrb.title("Splitting reference panel:");
 
 	//step0: Initialize seed & other

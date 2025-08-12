@@ -23,67 +23,15 @@
  * SOFTWARE.
  ******************************************************************************/
 
-#ifndef _CALLER_H
-#define _CALLER_H
-
-#include "otools.h"
-
-#include "variant_map.h"
-#include "ref_genotype_reader.h"
-#include "ref_haplotype_set.h"
-
-#define STAGE_INIT	0
-#define STAGE_BURN	1
-#define STAGE_MAIN	2
-
-class caller {
-public:
-	//COMMAND LINE OPTIONS
-	bpo::options_description descriptions;
-	bpo::variables_map options;
-
-	std::vector<std::string> chrid;
-	std::vector<int> input_start;
-	std::vector<int> input_stop;
-	std::vector<std::string> input_gregion;
-	std::vector<int> output_start;
-	std::vector<int> output_stop;
-	std::vector<std::string> output_gregion;
-
-	//MULTI-THREADING
-	int i_workers, i_jobs;
-	std::vector < pthread_t > id_workers;
-	pthread_mutex_t mutex_workers;
-
-	//CONSTRUCTOR
-	caller();
-	~caller();
-
-	//METHODS
-	void phase_individual(const int, const int);
-	void phase_iteration();
-	void phase_loop();
-
-	//PARAMETERS
-	void declare_options();
-	void parse_command_line(std::vector < std::string > &);
-	void check_options();
-	void verbose_options();
-	void verbose_files();
-
-	//FILE I/O
-	void read_files_and_initialise();
-	void setup_mpileup();
-	void read_BAMs();
-
-	void phase(std::vector < std::string > &);
-	void write_files_and_finalise();
-
-	//REGION
-	void buildCoordinates();
-};
+#include "spliter_header.h"
 
 
-#endif
+void spliter::write_files_and_finalise() {
+	vrb.title("Finalization:");
 
+	//step0: multi-threading
+	if (options["threads"].as < int > () > 1) pthread_mutex_destroy(&mutex_workers);
 
+	//step2: Measure overall running time
+	vrb.bullet("Total running time = " + stb.str(tac.abs_time()) + " seconds");
+}
