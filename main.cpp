@@ -1,3 +1,4 @@
+#define BUILD_MAIN
 #include "chunker_header.h"          // chunk
 #include "spliter_header.h"          // split_ref
 #include "caller/caller_header.h"    // phase

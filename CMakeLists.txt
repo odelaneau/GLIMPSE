@@ -57,9 +57,23 @@ add_subdirectory(ligate)
 # Switch Test modules or run main
 option(TEST "DO GTEST" OFF)
 if (TEST)
+    # Workaround macro
+    set(TOOLBOX_DEFINE "#ifdef _DECLARE_TOOLBOX_HERE")
+    configure_file(
+        ${CMAKE_CURRENT_SOURCE_DIR}/supports/otools.h.in
+        ${PROJECT_BINARY_DIR}/supports/otools.h
+    )
+
     # Run tests
     add_subdirectory(tests)
 else()
+    # Workaround macro
+    set(TOOLBOX_DEFINE "#ifdef BUILD_MAIN")
+    configure_file(
+        ${CMAKE_CURRENT_SOURCE_DIR}/supports/otools.h.in
+        ${PROJECT_BINARY_DIR}/supports/otools.h
+    )
+
     # Create main exe
     add_executable(glimpse2 main.cpp)
     

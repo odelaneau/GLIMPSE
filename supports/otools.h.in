@@ -133,7 +133,7 @@ enum class OutputCompression
 };
 
 //MAKE SOME TOOLS FULLY ACCESSIBLE THROUGHOUT THE SOFTWARE
-#ifdef _DECLARE_TOOLBOX_HERE
+@TOOLBOX_DEFINE@
 	/** @brief Global random number generator instance */
 	random_number_generator rng;
 
