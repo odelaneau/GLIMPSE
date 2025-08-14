@@ -138,30 +138,6 @@ void call_set::readData(std::vector < std::string > & ftruth, std::vector < std:
 			samples.reserve(N);
 			for (int i=0; i<N;++i) samples.push_back(std::string(hdr_truth->samples[i]));
 
-/*
-			////////////////////////////////////////////////////////////////////////////////
-			// Processing samples + overlap
-			N = 0;
-			n_true_samples = bcf_hdr_nsamples(hdr_truth);
-			n_esti_samples = bcf_hdr_nsamples(hdr_estimated);
-
-			mappingT = std::vector < int > (n_true_samples, -1);
-			mappingE = std::vector < int > (n_esti_samples, -1);
-			for (int i = 0 ; i < n_true_samples ; i ++) {
-				std::string ts = std::string(sr->readers[0].header->samples[i]);
-				if (!use_subset_samples || subset_samples.count(ts)>0) {
-					for (int j = 0 ; j < n_esti_samples ; j ++) {
-						std::string es = std::string(sr->readers[1].header->samples[j]);
-						if (ts == es) {
-							mappingT[i] = N;
-							mappingE[j] = N;
-							samples.push_back(ts);
-							N ++;
-						}
-					}
-				}
-			}
-*/
 			bcf_hrec_t * header_record = bcf_hdr_get_hrec(hdr_estimated, BCF_HL_GEN, "FPLOIDY", NULL, NULL);
 			if (header_record == NULL) vrb.warning("Cannot retrieve FPLOIDY flag in VCF header [" + festimated[f] + "], used GLIMPSE version < 1.1.0? Assuming diploid genotypes [FPLOIDY=2].");
 			else fploidy = atoi(header_record->value);
@@ -492,18 +468,6 @@ void call_set::readData(std::vector < std::string > & ftruth, std::vector < std:
 								grp_bin = itG->second.first;
 								itG->second.second = true;
 							}
-							/*
-							else if (n_fields_in_group_files==5)
-							{
-								//second attempt, switch ref alt
-								std::string uuid = n_fields_in_group_files == 5 ? chr + "_" + stb.str(pos) + "_" + alt + "_" + ref : chr + "_" + stb.str(pos);
-								itG = site2grp.find(uuid);
-								if (itG != site2grp.end()) {
-									grp_bin = itG->second.first;
-									itG->second.second = true;
-								}
-							}
-							*/
 						}
 
 						// Process variant

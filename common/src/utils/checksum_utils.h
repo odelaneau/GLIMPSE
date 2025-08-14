@@ -35,70 +35,112 @@
 #include <ctime>
 #include <sstream>
 #include <functional>
+#include <type_traits>
 
 class checksum {
-    protected:
-        unsigned long value;
-        std::string tmp_filename;
-        bool new_data;
-    
-    public:
-        checksum() {
-            value = crc32(0L, Z_NULL, 0);
-        }
+protected:
+    unsigned long value;       // Current CRC32 checksum value
+    std::string tmp_filename;  // (Unused) placeholder for filename (optional)
+    bool new_data;             // (Unused) flag for new data (optional)
 
-        unsigned long get_value() const {
-            return value;
-        }
+public:
+    /**
+     * @brief Constructor initializes checksum to initial CRC32 value.
+     */
+    checksum() : value(crc32(0L, Z_NULL, 0)), new_data(false) {}
 
-        template<typename T>
-        void process_data(const T *buf, unsigned int nbytes)
-        {
-            static_assert(std::is_fundamental_v<T>);
-            value = crc32(value, reinterpret_cast<const Bytef*>(buf), nbytes);
-        }
+    /**
+     * @brief Get the current checksum value.
+     * @return CRC32 checksum as unsigned long.
+     */
+    unsigned long get_value() const {
+        return value;
+    }
 
-        template<typename T>
-        void process_data(const T &obj)
-        {
-            process_data(&obj, sizeof(T));
-        }
+    /**
+     * @brief Process raw data buffer of fundamental type T.
+     * @tparam T Fundamental type (int, float, char, etc.)
+     * @param buf Pointer to buffer to process
+     * @param nbytes Number of bytes to process
+     */
+    template<typename T>
+    void process_data(const T *buf, unsigned int nbytes)
+    {
+        static_assert(std::is_fundamental_v<T>, "process_data requires fundamental type");
+        value = crc32(value, reinterpret_cast<const Bytef*>(buf), nbytes);
+    }
 
-        void process_data(const std::string str) {
-            process_data(str.data(), str.size());
-        }
+    /**
+     * @brief Process a fundamental type object.
+     * @tparam T Fundamental type
+     * @param obj Object reference
+     */
+    template<typename T>
+    void process_data(const T &obj)
+    {
+        process_data(&obj, sizeof(T));
+    }
 
-        template <typename T> 
-        void process_data(std::vector<T> const &vec)
-        {
-            process_data(vec.data(), sizeof(T)*vec.size());
-        }
+    /**
+     * @brief Process a std::string by feeding its raw data.
+     * @param str Input string
+     */
+    void process_data(const std::string& str) {
+        process_data(str.data(), static_cast<unsigned int>(str.size()));
+    }
 
-        //we need this because specialization of vector<bool> means that it is not guaranteed to be in contiguous memory, as other vectors are.
-        void process_data(std::vector<bool> const &vec)
-        {
-            for(bool b : vec) {
-                process_data(b);
-            }
+    /**
+     * @brief Process a std::vector of fundamental types as raw contiguous bytes.
+     * @tparam T Element type
+     * @param vec Vector to process
+     */
+    template <typename T> 
+    void process_data(const std::vector<T> &vec)
+    {
+        if (!vec.empty()) {
+            process_data(vec.data(), static_cast<unsigned int>(sizeof(T) * vec.size()));
         }
+    }
 
-        template <typename T>
-        void process_data(std::vector< std::vector<T> > const &vec)
-        {
-            for (const std::vector<T> inner_vec : vec) {
-                process_data(inner_vec);
-            }
+    /**
+     * @brief Special handling for std::vector<bool> due to its non-contiguous storage.
+     * Processes each boolean individually.
+     * @param vec Vector of bool
+     */
+    void process_data(const std::vector<bool> &vec)
+    {
+        for(bool b : vec) {
+            process_data(b);
         }
+    }
 
-        template<typename K, typename V>
-        void process_data(std::multimap<K, V> const &mmap)
-        {
-            for (const auto pair : mmap) {
-                process_data(pair.first);
-                process_data(pair.second);
-            }
+    /**
+     * @brief Process a vector of vectors recursively.
+     * @tparam T Element type of inner vectors
+     * @param vec Vector of vectors
+     */
+    template <typename T>
+    void process_data(const std::vector< std::vector<T> > &vec)
+    {
+        for (const auto& inner_vec : vec) {
+            process_data(inner_vec);
         }
-        
+    }
+
+    /**
+     * @brief Process a std::multimap by processing keys and values.
+     * @tparam K Key type
+     * @tparam V Value type
+     * @param mmap Multimap to process
+     */
+    template<typename K, typename V>
+    void process_data(const std::multimap<K, V> &mmap)
+    {
+        for (const auto& pair : mmap) {
+            process_data(pair.first);
+            process_data(pair.second);
+        }
+    }
 };
 
 #endif

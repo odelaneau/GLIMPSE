@@ -35,6 +35,7 @@ set(HTS_LIB /usr/lib/x86_64-linux-gnu/libhts.so)
 # Find libraries
 find_package(Boost REQUIRED COMPONENTS serialization program_options iostreams regex)
 find_package(ZLIB REQUIRED)
+find_package(Threads REQUIRED)
 
 # Create Version packages
 add_library(Version_tools INTERFACE)
@@ -56,12 +57,36 @@ add_subdirectory(ligate)
 # Switch Test modules or run main
 option(TEST "DO GTEST" OFF)
 if (TEST)
+    # Workaround macro
+    set(TOOLBOX_DEFINE "#ifdef _DECLARE_TOOLBOX_HERE")
+    configure_file(
+        ${CMAKE_CURRENT_SOURCE_DIR}/supports/otools.h.in
+        ${PROJECT_BINARY_DIR}/supports/otools.h
+    )
+
     # Run tests
     add_subdirectory(tests)
 else()
+    # Workaround macro
+    set(TOOLBOX_DEFINE "#ifdef BUILD_MAIN")
+    configure_file(
+        ${CMAKE_CURRENT_SOURCE_DIR}/supports/otools.h.in
+        ${PROJECT_BINARY_DIR}/supports/otools.h
+    )
+
     # Create main exe
     add_executable(glimpse2 main.cpp)
     
     # Link to library
-    target_link_libraries(glimpse2  Concordance)
+    target_link_libraries(glimpse2  PRIVATE Chunker
+                                            Spliter
+                                            Phase
+                                            Ligater
+                                            Concordance
+                                            Threads::Threads
+                                            Utils
+    )
+
+    # Link to compile options
+    target_compile_options(glimpse2 PRIVATE -Wno-ignored-attributes) 
 endif()

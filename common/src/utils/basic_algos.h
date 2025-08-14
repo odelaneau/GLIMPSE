@@ -28,22 +28,40 @@
 
 #include <vector>
 
+/**
+ * @class basic_algos
+ * @brief Provides basic algorithmic utilities.
+ */
 class basic_algos {
 public:
+	/**
+	 * @brief Default constructor.
+	 */
 	basic_algos () {};
+
+	/**
+	 * @brief Destructor.
+	 */
 	~basic_algos () {};
 
-	template < class T >
-	unsigned int imax(std::vector < T > & vec) {
+	/**
+	 * @brief Finds the index of the maximum element in a vector.
+	 * @tparam T Type of elements in the vector, must support comparison operator >
+	 * @param vec Vector of elements
+	 * @return Index of the maximum element in the vector
+	 */
+	template <class T>
+	unsigned int imax(std::vector<T> & vec) {
 		T maxValue = vec[0];
 		int maxIndex = 0;
-		for (unsigned int i = 1; i < vec.size() ; i ++) if (vec[i] > maxValue) {
-			maxValue = vec[i];
-			maxIndex = i;
+		for (unsigned int i = 1; i < vec.size(); i++) {
+			if (vec[i] > maxValue) {
+				maxValue = vec[i];
+				maxIndex = i;
+			}
 		}
 		return maxIndex;
 	}
 };
 
 #endif
-

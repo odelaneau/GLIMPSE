@@ -1,11 +1,11 @@
 # Create Split_ref library
-add_library(SPLIT_REFERENCE INTERFACE)
+add_library(Spliter INTERFACE)
 
-# Add caller
-add_subdirectory(src/caller)
+# Add spliter
+add_subdirectory(src/spliter)
 
 # Add Libraries
-target_link_libraries(SPLIT_REFERENCE INTERFACE Containers
+target_link_libraries(Spliter INTERFACE Containers
                                       INTERFACE IO
                                       INTERFACE Objects
                                       INTERFACE SplitCaller

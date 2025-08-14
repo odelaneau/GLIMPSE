@@ -24,10 +24,10 @@
  ******************************************************************************/
 
 #include "versions.h"
-#include "caller_header.h"
+#include "spliter_header.h"
 
 
-void caller::declare_options() {
+void spliter::declare_options() {
 	bpo::options_description opt_base ("Basic parameters");
 	opt_base.add_options()
 			("help", "Produces help message")
@@ -51,7 +51,7 @@ void caller::declare_options() {
 	descriptions.add(opt_base).add(opt_input).add(opt_output);
 }
 
-void caller::parse_command_line(std::vector < std::string > & args) {
+void spliter::parse_command_line(std::vector < std::string > & args) {
 	try {
 		bpo::store(bpo::command_line_parser(args).options(descriptions).run(), options);
 		bpo::notify(options);
@@ -71,7 +71,7 @@ void caller::parse_command_line(std::vector < std::string > & args) {
 	if (options.count("help")) { std::cout << descriptions << std::endl; std::exit(0); }
 }
 
-void caller::check_options() {
+void spliter::check_options() {
 	if (!(options.count("input-region") && options.count("output-region")))
 			vrb.error("You must specify input files using both --input-region / --output-region");
 
@@ -91,7 +91,7 @@ void caller::check_options() {
 	if (s_maf >= 0.5 || s_maf < 0) vrb.error("The sparse MAF parameter should not be set too high or low. Ideally within the range [1%-0.001%] MAF: 0.1% MAF is the recommended setting]");
 }
 
-void caller::verbose_files() {
+void spliter::verbose_files() {
 	vrb.title("Files:");
 
 	if(options.count("input-region") && options.count("output-region"))
@@ -109,7 +109,7 @@ void caller::verbose_files() {
 	if (options.count("log")) vrb.bullet("Output LOG           : [" + options["log"].as < std::string > () + "]");
 }
 
-void caller::verbose_options()
+void spliter::verbose_options()
 {
 	std::array<std::string,2> no_yes = {"NO","YES"};
 

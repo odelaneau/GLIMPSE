@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include "TestFile.hpp"
-#include "caller_header.h"
+#include "spliter_header.h"
 
 // Map folder
 #ifndef MAP_FOLDER
@@ -22,7 +22,7 @@ TEST(Split_reference, test_split_ref_file)
         "--reference", simple_file.string(), 
         "--map", std::string(MAP_FOLDER) + "/chr1.b38.gmap.gz"
     };
-    caller().phase(args);
+    spliter().phase(args);
 
     fs::remove(simple_file);
 }

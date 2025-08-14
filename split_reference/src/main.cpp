@@ -24,12 +24,12 @@
  ******************************************************************************/
 
 #define _DECLARE_TOOLBOX_HERE
-#include <caller/caller_header.h>
+#include <spliter/spliter_header.h>
 
 int main(int argc, char ** argv) {
 	std::vector < std::string > args;
 	for (int a = 1 ; a < argc ; a ++) args.push_back(std::string(argv[a]));
-	caller().phase(args);
+	spliter().phase(args);
 	return EXIT_SUCCESS;
 }
 

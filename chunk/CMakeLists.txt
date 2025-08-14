@@ -7,14 +7,14 @@ add_library(Chunker src/chunker/chunker_management.cpp
 )
 
 # Link to packages
-target_link_libraries(Chunker PUBLIC Utils 
-                                     IO 
-                                     Version_tools
-                                     Boost::program_options
-                                     Boost::iostreams
-                                     Boost::regex
-                                     ZLIB::ZLIB
-                                     ${HTS_LIB}
+target_link_libraries(Chunker PUBLIC  Utils 
+                                      IO 
+                                      Version_tools
+                                      Boost::program_options
+                                      Boost::iostreams
+                                      Boost::regex
+                                      ZLIB::ZLIB
+                                      ${HTS_LIB}
 )
 
 # Link to header files

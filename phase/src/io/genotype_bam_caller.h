@@ -31,6 +31,26 @@
 #include "containers/haplotype_set.h"
 #include "containers/glimpse_mpileup.h"
 
+/**
+ * @namespace calling_utils
+ * @brief Utility constants for genotype likelihood and error model calculations.
+ *
+ * This namespace contains precomputed lookup tables used for genotype calling likelihood 
+ * calculations and error modeling in variant calling.
+ * 
+ * Each array contains 256 elements indexed by quality score or similar metric.
+ * These tables avoid recalculating expensive logarithmic or probability values repeatedly.
+ *
+ * Arrays include:
+ * - unphred: Conversion of phred quality scores to error probabilities (log-scale)
+ * - log10_one_minus_err: Log10 of (1 - error probability) for each quality score
+ * - log10_err_div_three: Log10 of (error probability / 3), assuming errors are equally distributed across 3 alternate alleles
+ * - log10_one_div_two_minus_err_div_three: Precomputed values used in diploid genotype likelihoods involving error terms
+ * - log10_err: Log10 error probability for each quality score
+ * - log10_one_div_two_minus_err: Other precomputed terms related to genotype likelihood calculations
+ *
+ * These tables improve efficiency by replacing runtime computations with array lookups.
+ */
 namespace calling_utils
 {
 	//equivalent to: for (int i=0; i<256; i++) unphred[i] = pow(10., -i/10.);//element zero is set to one.
@@ -42,44 +62,374 @@ namespace calling_utils
 	const static float log10_one_div_two_minus_err[256] = {-1, -1, -1, -1, -0.991857, -0.73572, -0.60413, -0.522193, -0.466596, -0.427004, -0.39794, -0.376165, -0.359614, -0.346902, -0.337063, -0.329404, -0.323415, -0.318716, -0.315019, -0.312105, -0.309804, -0.307985, -0.306545, -0.305405, -0.304502, -0.303785, -0.303217, -0.302767, -0.302409, -0.302125, -0.301899, -0.30172, -0.301578, -0.301466, -0.301376, -0.301305, -0.301248, -0.301203, -0.301168, -0.301139, -0.301117, -0.301099, -0.301085, -0.301074, -0.301065, -0.301057, -0.301052, -0.301047, -0.301044, -0.301041, -0.301039, -0.301037, -0.301035, -0.301034, -0.301033, -0.301033, -0.301032, -0.301032, -0.301031, -0.301031, -0.301031, -0.301031, -0.301031, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103, -0.30103};
 }
 
+/**
+ * @brief Minimal GLF (Genotype Likelihood Format) generator function for genotype calling.
+ * 
+ * This function processes the pileup reads at a variant position and extracts
+ * high-quality base calls to prepare data for genotype likelihood computations.
+ * It filters out low-quality bases, reference skips, and deletions.
+ * The base information is encoded into an integer containing base quality, strand,
+ * and base identity.
+ * 
+ * @param[in,out] caller A reference to the call_t object containing pileup data and storage
+ *                       for base calls and genotype likelihood statistics.
+ *                       - Uses caller.snp_called to skip processing if the variant is already called.
+ *                       - Uses caller.n_plp and caller.v_plp for the pileup reads.
+ *                       - Clears and fills caller.bca.bases with encoded bases.
+ *                       - Updates caller.gls.read_depth to the number of high-quality bases.
+ * @param[in] variant Pointer to the variant object being processed (unused in this minimal implementation).
+ * 
+ * @note The encoded integer stored in caller.bca.bases encodes information as follows:
+ *       - Bits 0-3: Base identity as integer (0=A,1=C,2=G,3=T)
+ *       - Bit 4: Reverse strand flag (1 if read aligned to reverse strand, 0 otherwise)
+ *       - Bits 5 and above: Base quality score (phred-scaled)
+ * 
+ * @details
+ * The function loops over all reads in the pileup:
+ * - Skips reads that are reference skips or deletions.
+ * - Extracts the base and base quality at the variant position.
+ * - Filters out bases not representing A, C, G, or T.
+ * - Filters out bases below the minimum base quality threshold.
+ * - Encodes and stores the base information in caller.bca.bases.
+ * - Updates the read depth metric after processing.
+ */
 void bcf_call_glfgen_min(call_t& caller, const variant* variant);
+
+/**
+ * @brief Minimal GLF generator function specialized for insertion variants.
+ * 
+ * This function processes pileup reads at an insertion variant site, filtering reads
+ * to find those supporting the specific insertion allele. It distinguishes reads
+ * matching the reference base from those supporting the insertion event, and encodes
+ * base qualities and strand information accordingly.
+ * 
+ * @param[in,out] caller Reference to the call_t object containing pileup data and storage
+ *                       for base calls and genotype likelihood statistics.
+ *                       - Uses caller.n_plp and caller.v_plp to access pileup reads.
+ *                       - Clears and fills caller.bca.bases with encoded base/indel info.
+ *                       - Updates caller.gls.read_depth with the count of informative bases.
+ * @param[in] variant Pointer to the variant object representing the insertion to be called.
+ *                    The variant's reference and alternate allele sequences are used
+ *                    to identify and validate supporting reads.
+ * 
+ * @details
+ * The function operates as follows:
+ * - If there are no pileup reads, returns immediately.
+ * - Only processes variants where the reference allele is a single base and
+ *   the alternate allele length is greater than 1 (i.e., an insertion).
+ * - Iterates over all pileup reads:
+ *   - Skips reads flagged as reference skips or deletions.
+ *   - Checks if the base in the read matches the reference base at the variant position.
+ *   - If the read has an indel (insertion/deletion) at this position:
+ *     - Validates that the indel length matches the expected insertion length.
+ *     - Verifies that the inserted sequence matches the alternate allele bases.
+ *     - Aggregates base quality scores across the inserted bases and averages them.
+ *   - Filters out reads with average base quality below the minimum threshold.
+ *   - Encodes each base/indel call into an integer with the following bits:
+ *     - Bits 0-3: Indicator flag (0 for reference, 1 for indel present)
+ *     - Bit 4: Strand information (1 if reverse strand, 0 otherwise)
+ *     - Bits 5 and above: Base quality score (phred-scaled)
+ * - Stores encoded values in caller.bca.bases.
+ * - Updates caller.gls.read_depth to the number of processed reads.
+ * 
+ * @note Encoding differs from SNP calls: the lowest bit indicates indel presence (1)
+ *       or absence (0), instead of base identity.
+ */
 void bcf_call_glfgen_min_ins(call_t& caller, const variant* variant);
+
+/**
+ * @brief Minimal GLF generator function specialized for deletion variants.
+ * 
+ * This function processes pileup reads at a deletion variant site, filtering reads
+ * that support either the reference or deletion alleles. It evaluates base matches,
+ * indel sizes, and base qualities to encode reads contributing evidence for genotype calling.
+ * 
+ * @param[in,out] caller Reference to the call_t object containing pileup data and storage
+ *                       for base calls and genotype likelihood statistics.
+ *                       - Uses caller.n_plp and caller.v_plp to access pileup reads.
+ *                       - Clears and fills caller.bca.bases with encoded base/indel info.
+ *                       - Updates caller.gls.read_depth with the count of informative bases.
+ * @param[in] variant Pointer to the variant object representing the deletion to be called.
+ *                    The variant's reference and alternate allele sequences are used
+ *                    to identify and validate supporting reads.
+ * 
+ * @details
+ * The function operates as follows:
+ * - Returns immediately if no pileup reads.
+ * - Only processes variants where the reference allele length is greater than 1
+ *   (indicating a deletion) and the alternate allele is a single base.
+ * - Iterates over all pileup reads:
+ *   - Skips reads flagged as reference skips or deletions.
+ *   - Checks if the base in the read matches the reference base at the variant position.
+ *   - If the read has no indel:
+ *     - Verifies that the bases following the variant position in the read match the
+ *       full reference allele sequence.
+ *     - Aggregates and averages base quality scores across these bases.
+ *   - If the read has an indel:
+ *     - Accepts reads with an indel length consistent with the expected deletion length.
+ *     - Skips reads with indels inconsistent with the deletion.
+ *   - Filters out reads with base quality below the minimum threshold.
+ *   - Encodes each base/indel call into an integer with the following bits:
+ *     - Bits 0-3: Indicator flag (0 for reference, 1 for indel presence)
+ *     - Bit 4: Strand information (1 if reverse strand, 0 otherwise)
+ *     - Bits 5 and above: Base quality score (phred-scaled)
+ * - Stores encoded values in caller.bca.bases.
+ * - Updates caller.gls.read_depth to the number of processed reads.
+ * 
+ * @note Encoding uses bit 0 as an indel presence flag (1 = indel, 0 = reference).
+ */
 void bcf_call_glfgen_min_del(call_t& caller, const variant* variant);
+
+/**
+ * @brief Clears the current base calls and resets read depth.
+ * 
+ * This function effectively empties any stored base information in the caller's
+ * base call array and resets the genotype likelihood read depth to zero.
+ * It can be used as a placeholder or to explicitly indicate that no
+ * bases are called for the given variant.
+ * 
+ * @param[in,out] caller Reference to the call_t object whose base calls and
+ *                      read depth will be cleared.
+ * @param[in] variant Pointer to the variant object (unused in this function,
+ *                    included for interface consistency).
+ */
 void bcf_call_void(call_t& caller, const variant* variant);
 
+/**
+ * @brief Compute genotype likelihoods for a variant using a standard sequencing error model.
+ * 
+ * This function calculates the log-likelihoods (GLs) of possible genotypes for a specific variant
+ * based on the aligned sequencing reads at that variant site. The likelihoods incorporate
+ * sequencing base qualities and model errors probabilistically to distinguish true variants
+ * from sequencing noise.
+ * 
+ * The method:
+ * 1. Extracts the encoded reference and alternate alleles from the variant.
+ * 2. Checks validity of these alleles.
+ * 3. Limits the number of reads considered for likelihood calculation if exceeding a threshold,
+ *    to avoid excessive computation.
+ * 4. Sorts the base calls from aligned reads and groups identical bases together.
+ * 5. For each group of identical bases, calculates the contribution to the likelihoods based
+ *    on base quality scores and an error model, differentiating between homozygous and 
+ *    heterozygous genotype states.
+ * 6. Updates the caller's genotype likelihoods for all genotype possibilities.
+ * 
+ * The likelihoods are represented in log10 scale, where higher values indicate greater support
+ * for a genotype given the observed reads and qualities.
+ * 
+ * @param[in,out] caller A data structure representing the current variant calling state,
+ *                      containing base calls, genotype likelihoods, read depths, and 
+ *                      intermediate computation buffers. This function updates the genotype 
+ *                      likelihoods within this object.
+ * @param[in] variant A pointer to the variant being evaluated, which contains the reference
+ *                    and alternate allele sequences.
+ * 
+ * @details
+ * - The function uses precomputed lookup tables (`calling_utils::log10_one_minus_err`, 
+ *   `calling_utils::log10_err_div_three`, etc.) to translate base quality scores into error 
+ *   probabilities in log10 space.
+ * - For diploid samples (ploidy > 1), it models all possible genotype combinations between 
+ *   the reference and alternate alleles, including homozygous reference, heterozygous, and 
+ *   homozygous alternate.
+ * - For haploid samples (ploidy = 1), it only considers homozygous genotypes.
+ * - The function also keeps track of the number of reads supporting the reference allele 
+ *   (`ref_read`) and the total depth (`dp_ind`) after filtering.
+ * - If the number of reads exceeds the maximum allowed (`caller.bca.max_dp`), a random 
+ *   subset of reads is used by shuffling to avoid bias.
+ * 
+ * @throws runtime_error If the reference or alternate alleles contain invalid bases.
+ * 
+ * @note This function assumes base calls and qualities have already been collected and filtered 
+ *       into `caller.bca.bases` before being called.
+ */
 void standard_errmod(call_t& caller, const variant* variant);
+
+/**
+ * @brief Compute genotype likelihoods for small indel variants using a simplified error model.
+ *
+ * This function calculates log-likelihoods for possible genotypes at an indel variant site 
+ * based on observed sequencing reads, considering base quality scores and read counts.
+ * It supports both haploid and diploid samples.
+ *
+ * The model:
+ * - Treats bases as either reference (0) or alternate (1).
+ * - Groups identical bases together to efficiently compute likelihood contributions.
+ * - Uses precomputed log10 error probabilities based on base quality scores.
+ * - Applies a probabilistic model to compute likelihoods for homozygous reference, 
+ *   heterozygous, and homozygous alternate genotypes (diploid), or homozygous genotypes (haploid).
+ * - Caps the maximum number of reads considered to avoid excessive computation by randomly 
+ *   sampling if necessary.
+ *
+ * @param[in,out] caller The variant calling context containing read bases, quality info, 
+ *                       genotype likelihood buffers, and ploidy information.
+ * @param[in] variant Pointer to the variant under consideration (not directly used here 
+ *                    but kept for API consistency).
+ *
+ * @details
+ * - Reads are encoded in `caller.bca.bases` with qualities and base calls packed into a uint16_t.
+ * - Reads are sorted and processed in groups of identical encoded bases.
+ * - For diploid, likelihoods for genotypes are updated as:
+ *      - homozygous genotype likelihoods are increased proportionally to error-free base quality.
+ *      - heterozygous likelihood incorporates half the error-adjusted probability.
+ * - For haploid, only two genotypes are modeled.
+ * - The depth of informative reads and number of reference-supporting reads are tracked.
+ * - If ploidy is haploid, the likelihood for a third genotype is set to a large negative value 
+ *   (effectively ignored).
+ *
+ * @note This function assumes the bases and qualities have been pre-collected and filtered.
+ */
 void standard_errmod_indels_v(call_t& caller, const variant* variant);
+
+/**
+ * @brief Reset genotype likelihoods and read counts for indel variant calling.
+ *
+ * This function clears all genotype likelihood values and resets read depth and reference 
+ * allele read counts to zero. It effectively initializes the calling context to a neutral 
+ * state without incorporating any observed data.
+ *
+ * This can be used as a placeholder or fallback error model where no data is available or 
+ * when an indel site should be treated as missing data.
+ *
+ * @param[in,out] caller The variant calling context whose genotype likelihoods and read counts 
+ *                       will be reset.
+ * @param[in] variant Pointer to the variant being evaluated (unused in this function).
+ */
 void flat_errmod_indels_v(call_t& caller, const variant* varian);
 
 
+/**
+ * @class genotype_bam_caller
+ * @brief Class to perform genotype calling from BAM files using haplotype and variant information.
+ * 
+ * This class encapsulates all necessary data structures and methods
+ * to call genotypes in a specified genomic region based on sequencing
+ * reads processed by mpileup and haplotype sets.
+ */
 class genotype_bam_caller
 {
 public:
-	haplotype_set & H;
-	genotype_set & G;
-	const variant_map& V;
-	const glimpse_mpileup& mpileup_data;
-	const std::string region;
-	const uint32_t beg;
-	const uint32_t end;
+    // References to input data
+    haplotype_set & H;                 ///< Reference to a set of haplotypes used for calling
+    genotype_set & G;                  ///< Reference to the output genotype set to be filled
+    const variant_map& V;              ///< Reference to the map of known variants
+    const glimpse_mpileup& mpileup_data; ///< Reference to mpileup data for the target region
+    const std::string region;          ///< Genomic region string (e.g., "chr1:1000-2000")
+    const uint32_t beg;                ///< Begin coordinate of the calling region (1-based)
+    const uint32_t end;                ///< End coordinate of the calling region (1-based, inclusive)
 
-	aux_t aux_data;
+    aux_t aux_data;                   ///< Auxiliary data container for intermediate calculations
 
-	//for the call
-	//stats_cov stats;
-	call_t caller;
+    // Caller object to hold state of the current genotype call
+    call_t caller;                   ///< The call state that tracks the genotype calling progress
 
-	//model
-	call_model model;
-	std::vector<std::function<void(call_t& caller, const variant* variant)>> group_reads;
-	std::vector<std::function<void(call_t& caller, const variant* variant)>> compute_llk;
+    // Model for genotype likelihood calculations
+    call_model model;                ///< Model used for calling, contains parameters and methods for likelihoods
 
+    // Vector of functions to group reads according to some criteria before calling
+    std::vector<std::function<void(call_t& caller, const variant* variant)>> group_reads;
+
+    // Vector of functions to compute log-likelihoods (LLK) for genotype calls
+    std::vector<std::function<void(call_t& caller, const variant* variant)>> compute_llk;
+
+	/**
+	 * @brief Constructs a genotype_bam_caller object for genotype calling from BAM mpileup data.
+	 * 
+	 * Initializes internal state and sets up function pointers for different
+	 * read grouping and likelihood computation models based on parameters.
+	 * 
+	 * @param _H Reference to a haplotype_set object containing haplotype data.
+	 * @param _G Reference to a genotype_set object where called genotypes will be stored.
+	 * @param _V Reference to a variant_map object describing variant positions and info.
+	 * @param _mpileup_data Reference to glimpse_mpileup object containing mpileup read data and parameters.
+	 * @param _region Genomic region string (e.g., "chr1:100000-200000") to call variants within.
+	 * @param _beg Start coordinate of the region (0-based).
+	 * @param _end End coordinate of the region (0-based, exclusive).
+	 * @param _callmodel String specifying which error model to use for genotype likelihood computation.
+	 *                   Currently only supports "standard".
+	 * @param call_indels Boolean flag indicating whether indels (insertions/deletions) should be called.
+	 * 
+	 * @throws std::runtime_error if the specified call model is not supported.
+	 * 
+	 * @details
+	 * Sets up internal buffers and parameters from mpileup data, reserves space for base qualities,
+	 * and assigns function pointers for handling SNPs and indels. Error models for likelihood
+	 * computation are set according to the chosen model and whether indels are called.
+	 */
 	genotype_bam_caller(haplotype_set & H, genotype_set & G, const variant_map& V, const glimpse_mpileup& _mpileup_data, const std::string region, const uint32_t beg, const uint32_t end, std::string callmodel, bool call_indels);
+	
+	/**
+	 * @brief Destructor for genotype_bam_caller class.
+	 * 
+	 * Cleans up and releases resources associated with BAM file reading:
+	 * closes file pointers, destroys BAM header, iterator, and index objects
+	 * if they were initialized during the caller's lifetime.
+	 */
 	virtual ~genotype_bam_caller();
 
+	/**
+	 * @brief Perform genotype calling using mpileup for the i-th BAM/CRAM file.
+	 * 
+	 * This function attempts to open and process the BAM/CRAM file for the specified sample index,
+	 * retrying up to 3 times with exponential backoff in case of failures (e.g., streaming issues).
+	 * It opens the file, sets options, reads headers, loads indexes, and queries the specified region.
+	 * Then, it calls glimpse_mpileup_reg to perform the pileup-based genotype calling.
+	 * 
+	 * If any step fails, it retries after cleaning resources and waits increasingly longer.
+	 * After max retries, the function reports a fatal error.
+	 * 
+	 * @param i Index of the sample/BAM file to process.
+	 */
 	void call_mpileup(int i);
+
+	/**
+	 * @brief Clean up and release all resources used during BAM/CRAM processing.
+	 *
+	 * This method releases any open iterators, indexes, headers, and file pointers
+	 * associated with the BAM/CRAM file being processed. It also resets internal
+	 * caller statistics such as read depth, per-individual depth, likelihoods, and ploidy.
+	 * This function is typically called after each BAM file processing attempt or
+	 * upon failure to ensure a clean state for retries or termination.
+	 */
 	void clean();
+
+	/**
+	 * @brief Reset genotype calling results for the specified sample index.
+	 *
+	 * Clears the coverage data and resets the depth counts to zero for sample `i`.
+	 * This is typically used to discard partial or failed calling results before retrying
+	 * or aborting the processing for a particular sample.
+	 *
+	 * @param i Index of the sample whose results are to be reset.
+	 */
 	void reset_results(int i);
+
+	/**
+	 * @brief Perform pileup-based genotype likelihood calculation for a single sample over a genomic region.
+	 * 
+	 * This function iterates over sequencing read pileups in the BAM/CRAM file for sample index `i`, 
+	 * matching the pileup positions to known variant sites in the region. For each variant site, it
+	 * computes genotype likelihoods (GLs) using a specified model and updates genotype and coverage statistics.
+	 * 
+	 * The method handles both SNPs and indels and supports diploid or haploid samples depending on `mpileup_data.tar_ploidy[i]`.
+	 * 
+	 * @param i Index of the sample to process.
+	 * 
+	 * @return int Returns 0 on success, or -1 on failure (e.g., pileup stream error).
+	 * 
+	 * @details
+	 * - Initializes a BAM pileup iterator over the specified region.
+	 * - For each pileup position, it synchronizes with the next variant site from `V.vec_pos`.
+	 * - If the pileup position matches a variant site, genotype likelihoods are computed using
+	 *   the configured likelihood model for SNPs or indels.
+	 * - Updates `G.vecG[i]->GL` with scaled likelihoods.
+	 * - Updates coverage statistics in `G.stats`.
+	 * - Uses likelihood scaling to store phred-scaled genotype likelihoods as unsigned chars.
+	 * - Supports multiallelic genotypes based on sample ploidy.
+	 * 
+	 * @note
+	 * - The function uses htslib pileup APIs for read iteration.
+	 * - Sites outside the region or without reads are filled with zero coverage and likelihoods.
+	 */
 	int glimpse_mpileup_reg(int i);
 };
 

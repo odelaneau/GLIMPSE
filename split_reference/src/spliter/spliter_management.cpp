@@ -23,9 +23,9 @@
  * SOFTWARE.
  ******************************************************************************/
 
-#include "caller_header.h"
+#include "spliter_header.h"
 
-caller::caller():
+spliter::spliter():
 		input_start(0),
 		input_stop(0),
 		i_workers(0),
@@ -33,12 +33,12 @@ caller::caller():
 {
 }
 
-caller::~caller()
+spliter::~spliter()
 {
 
 }
 
-void caller::phase(std::vector < std::string > & args) {
+void spliter::phase(std::vector < std::string > & args) {
 	declare_options();
 	parse_command_line(args);
 	check_options();
@@ -48,7 +48,7 @@ void caller::phase(std::vector < std::string > & args) {
 	write_files_and_finalise();
 }
 
-void caller::buildCoordinates()
+void spliter::buildCoordinates()
 {
 	vrb.title("Parsing specified genomic regions");
 	std::vector<std::string> regsI;
