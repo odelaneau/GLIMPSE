@@ -1,30 +1,27 @@
-name: Build and Deploy Doxygen
+name: Build & Deploy Docs
 
 on:
-  push:
-    branches:
-      - main  # or your default branch
+  workflow_dispatch:
 
 jobs:
-  doxygen:
+  docs:
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/${{ github.repository_owner }}/my-devcontainer:latest
 
     steps:
-      # 1. Checkout repo
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # 2. Install Doxygen
-      - name: Install Doxygen
-        run: sudo apt-get update && sudo apt-get install -y doxygen graphviz
+      - name: Build project & generate docs
+        run: cmake -S . -B build -DTEST=OFF -DDOXY=ON && cmake --build build
 
-      # 3. Build Doxygen docs
-      - name: Build Doxygen
-        run: doxygen Doxyfile
+      - name: Create .nojekyll
+        run: touch build/docs/html/.nojekyll
 
-      # 4. Deploy to gh-pages
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v6
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs/html
+          publish_dir: build/docs/html
+          publish_branch: gh-pages

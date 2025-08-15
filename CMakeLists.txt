@@ -59,20 +59,12 @@ option(TEST "DO GTEST" OFF)
 if (TEST)
     # Workaround macro
     set(TOOLBOX_DEFINE "#ifdef _DECLARE_TOOLBOX_HERE")
-    configure_file(
-        ${CMAKE_CURRENT_SOURCE_DIR}/supports/otools.h.in
-        ${PROJECT_BINARY_DIR}/supports/otools.h
-    )
 
     # Run tests
     add_subdirectory(tests)
 else()
     # Workaround macro
     set(TOOLBOX_DEFINE "#ifdef BUILD_MAIN")
-    configure_file(
-        ${CMAKE_CURRENT_SOURCE_DIR}/supports/otools.h.in
-        ${PROJECT_BINARY_DIR}/supports/otools.h
-    )
 
     # Create main exe
     add_executable(glimpse2 main.cpp)
@@ -89,4 +81,34 @@ else()
 
     # Link to compile options
     target_compile_options(glimpse2 PRIVATE -Wno-ignored-attributes) 
+endif()
+
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/supports/otools.h.in
+    ${PROJECT_BINARY_DIR}/supports/otools.h
+)
+
+## Create Doxygen (option)
+option(DOXY "CREATE DOXYGEN DOCUMENT" OFF)
+if(DOXY)
+    find_package(Doxygen REQUIRED)
+
+    # Paths for input/output
+    set(DOXYFILE_IN ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in)
+    set(DOXYFILE_OUT ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
+
+    # Replace variables in template
+    configure_file(${DOXYFILE_IN} ${DOXYFILE_OUT} @ONLY)
+
+    # Create custom target
+    add_custom_target(doc_doxygen ALL
+        COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYFILE_OUT}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMENT "Generating Doxygen documentation"
+        DEPENDS 
+            ${PROJECT_BINARY_DIR}/versions/versions.h 
+            ${PROJECT_BINARY_DIR}/supports/otools.h
+        VERBATIM
+    )
+
 endif()
