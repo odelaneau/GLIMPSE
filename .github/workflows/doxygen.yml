@@ -1,21 +1,27 @@
-name: Doxygen GitHub Pages Deploy Action
+name: Build & Deploy Docs
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 jobs:
-  deploy:
+  docs:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
+    container:
+      image: ghcr.io/${{ github.repository_owner }}/my-devcontainer:latest
+
     steps:
-      - uses: DenverCoder1/doxygen-github-pages-action@v2.0.0
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Build project & generate docs
+        run: cmake -S . -B build -DTEST=OFF -DDOXY=ON && cmake --build build
+
+      - name: Create .nojekyll
+        run: touch build/docs/html/.nojekyll
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v6
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: gh-pages
-          folder: docs/html
-          config_file: Doxyfile
-          doxygen_version: 1.9.6
+          publish_dir: build/docs/html
+          publish_branch: gh-pages
