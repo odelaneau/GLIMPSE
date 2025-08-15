@@ -6,22 +6,26 @@ on:
 jobs:
   docs:
     runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/${{ github.repository_owner }}/glimpse2-dev:latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-      - name: Build project & generate docs
-        run: cmake -S . -B build -DTEST=OFF -DDOXY=ON && cmake --build build
-
-      - name: Create .nojekyll
-        run: touch build/docs/html/.nojekyll
+      - name: Build and run container dynamically (lowercase)
+        run: |
+          # Lowercase the GitHub repository owner
+          USERNAME=$(echo "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')
+          
+          # Build full image name
+          IMAGE="ghcr.io/$USERNAME/glimpse2-dev:latest"
+          echo "Using image $IMAGE"
+          
+          # Run container and build docs
+          docker run --rm -v "$PWD":/workspace -w /workspace $IMAGE \
+            /bin/bash -c "cmake -S . -B build -DTEST=OFF -DDOXY=ON && cmake --build build && touch docs/html/.nojekyll"
 
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v6
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: build/docs/html
-          publish_branch: gh-pages
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: gh-pages
+          folder: docs/html
