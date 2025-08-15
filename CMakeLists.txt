@@ -59,20 +59,12 @@ option(TEST "DO GTEST" OFF)
 if (TEST)
     # Workaround macro
     set(TOOLBOX_DEFINE "#ifdef _DECLARE_TOOLBOX_HERE")
-    configure_file(
-        ${CMAKE_CURRENT_SOURCE_DIR}/supports/otools.h.in
-        ${PROJECT_BINARY_DIR}/supports/otools.h
-    )
 
     # Run tests
     add_subdirectory(tests)
 else()
     # Workaround macro
     set(TOOLBOX_DEFINE "#ifdef BUILD_MAIN")
-    configure_file(
-        ${CMAKE_CURRENT_SOURCE_DIR}/supports/otools.h.in
-        ${PROJECT_BINARY_DIR}/supports/otools.h
-    )
 
     # Create main exe
     add_executable(glimpse2 main.cpp)
@@ -90,3 +82,8 @@ else()
     # Link to compile options
     target_compile_options(glimpse2 PRIVATE -Wno-ignored-attributes) 
 endif()
+
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/supports/otools.h.in
+    ${PROJECT_BINARY_DIR}/supports/otools.h
+)
