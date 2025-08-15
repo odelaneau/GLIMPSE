@@ -17,8 +17,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build Docker image
-        run: docker build -t ghcr.io/${{ github.repository_owner }}/my-devcontainer:latest -f .devcontainer/Dockerfile .
-
-      - name: Push Docker image
-        run: docker push ghcr.io/${{ github.repository_owner }}/my-devcontainer:latest
+      - name: Build and Push Docker image
+        run: |
+          # Convert GitHub username to lowercase
+          USERNAME=$(echo "${GITHUB_REPOSITORY_OWNER}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_NAME=ghcr.io/$USERNAME/glimpse2-dev:latest
+          echo "Building Docker image $IMAGE_NAME"
+          docker build -t $IMAGE_NAME -f .devcontainer/Dockerfile .
+          echo "Pushing Docker image $IMAGE_NAME"
+          docker push $IMAGE_NAME
