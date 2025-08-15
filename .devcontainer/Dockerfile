@@ -28,8 +28,13 @@ RUN apt-get update && apt-get install -y build-essential=12.8ubuntu1.1 \
                                          libboost-program-options-dev=1.71.0.0ubuntu2\
                                          libhts-dev=1.10.2-3ubuntu0.1\
                                          libboost-serialization-dev=1.71.0.0ubuntu2\
-                                         doxygen=1.8.17-0ubuntu2\
                                          graphviz=2.42.2-3build2
+# Install Doxygen 1.9.5
+RUN wget https://www.doxygen.nl/files/doxygen-1.9.5.linux.bin.tar.gz && \
+    tar -xzf doxygen-1.9.5.linux.bin.tar.gz && \
+    mv doxygen-1.9.5 /opt/ && \
+    ln -sf /opt/doxygen-1.9.5/bin/doxygen /usr/local/bin/doxygen && \
+    rm doxygen-1.9.5.linux.bin.tar.gz
 
 # Install required packages for docs 
 RUN apt-get update && apt-get install -y ruby-full=1:2.7+1

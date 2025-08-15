@@ -91,6 +91,7 @@ configure_file(
 ## Create Doxygen (option)
 option(DOXY "CREATE DOXYGEN DOCUMENT" OFF)
 if(DOXY)
+    set(DOXYGEN_EXECUTABLE "/usr/local/bin/doxygen" CACHE FILEPATH "Path to Doxygen executable")
     find_package(Doxygen REQUIRED)
 
     ## Format css
@@ -119,5 +120,4 @@ if(DOXY)
             ${PROJECT_BINARY_DIR}/supports/otools.h
         VERBATIM
     )
-
 endif()
