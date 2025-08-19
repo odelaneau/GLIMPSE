@@ -23,7 +23,7 @@
  * SOFTWARE.
  ******************************************************************************/
 
-#include <chunker/chunker_header.h>
+#include "chunker_header.h"
 
 chunker::chunker() {
 	gregion = "";
@@ -64,29 +64,29 @@ void chunker::parseRegion()
 	int ret = stb.split(gregion, t1, ":");
 	if (ret < 1 || ret > 2) vrb.error("Region needs to be specified as chrN or chrN:Y-, or chrN:Y-Z (chromosome ID cannot be extracted)");
 
-	start=0;
-	stop=2147483647;
+	this->start=0;
+	this->stop=2147483647;		// Max 32-bit int value by default
 
 	if  (ret > 1)
 	{
 
 		if (t1[1].find('-') == std::string::npos) vrb.error("Region needs to be specified as chrN or chrN:Y-, or chrN:Y-Z (start and stop regions cannot be extracted)");
 		ret = stb.split(t1[1], t2, "-");
-		if (ret == 1)
+		if (ret == 1)		// Format: chrN:Y-
 		{
-			start = atoi(t2[0].c_str());
-			if (start < 0) vrb.error("Genomic region coordinates are incorrect (input_start < 0)");
+			this->start = atoi(t2[0].c_str());
+			if (this->start < 0) vrb.error("Genomic region coordinates are incorrect (input_start < 0)");
 			gregion+=stb.str(2147483647);
 		}
-		else if (ret == 2)
+		else if (ret == 2)		// Format: chrN:Y-Z
 		{
-			start = atoi(t2[0].c_str());
-			stop = atoi(t2[1].c_str());
-			if (start > stop) vrb.error("Genomic region coordinates are incorrect (start > stop)");
-			if (start < 0) vrb.error("Genomic region coordinates are incorrect (start < 0)");
+			this->start = atoi(t2[0].c_str());
+			this->stop = atoi(t2[1].c_str());
+			if (this->start > this->stop) vrb.error("Genomic region coordinates are incorrect (start > stop)");
+			if (this->start < 0) vrb.error("Genomic region coordinates are incorrect (start < 0)");
 		}
 		else vrb.error("Region needs to be specified as chrN or chrN:Y-, or chrN:Y-Z (start and stop regions cannot be extracted)");
-	} else if (ret==1)
+	} else if (ret==1)		// Format: chrN only
 	{
 		if (t1[0].size()!=gregion.size()) vrb.error("Region needs to be specified as chrN or chrN:Y-, or chrN:Y-Z (start and stop regions cannot be extracted)");
 		whole_chr=true;

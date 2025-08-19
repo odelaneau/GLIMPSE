@@ -24,7 +24,7 @@
  ******************************************************************************/
 
 #define _GLOBAL
-#include <objects/variant.h>
+#include "variant.h"
 
 variant::variant() : bp(0), type(0), idx(0), cref(0), calt(0), cm(-1), LQ(false)
 {

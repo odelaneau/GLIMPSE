@@ -1,0 +1,18 @@
+# Create Split_ref library
+add_library(Spliter INTERFACE)
+
+# Add spliter
+add_subdirectory(src/spliter)
+
+# Add Libraries
+target_link_libraries(Spliter INTERFACE Containers
+                                      INTERFACE IO
+                                      INTERFACE Objects
+                                      INTERFACE SplitCaller
+                                      INTERFACE Boost::serialization
+                                      INTERFACE Boost::program_options
+                                      INTERFACE Boost::iostreams
+                                      INTERFACE Boost::regex
+                                      INTERFACE ZLIB::ZLIB
+                                      INTERFACE ${HTS_LIB}
+)

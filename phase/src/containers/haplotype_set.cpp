@@ -24,14 +24,14 @@
  ******************************************************************************/
 
 #include <math.h>
-#include <containers/haplotype_set.h>
+#include "containers/haplotype_set.h"
 #include "boost/serialization/serialization.hpp"
 #include <boost/archive/tmpdir.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/vector.hpp>
-#include <objects/genotype.h>
+#include "genotype.h"
 
 
 haplotype_set::haplotype_set()

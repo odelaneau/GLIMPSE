@@ -1,0 +1,17 @@
+## Create phase caller library
+add_library(phase_caller caller_algorithm.cpp
+                         caller_finalise.cpp
+                         caller_initialise.cpp
+                         caller_management.cpp
+                         caller_parameters.cpp
+)
+
+## Link dependencies
+target_link_libraries(phase_caller PUBLIC Utils Objects Containers IO Version_tools)
+
+## Ignore warning 
+target_compile_options(phase_caller PRIVATE -Wno-ignored-attributes)
+
+## Link header file
+target_include_directories(phase_caller PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/.." )
+

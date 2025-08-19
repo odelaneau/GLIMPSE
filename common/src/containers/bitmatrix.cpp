@@ -23,7 +23,7 @@
  * SOFTWARE.
  ******************************************************************************/
 
-#include <containers/bitmatrix.h>
+#include "bitmatrix.h"
 
 bitmatrix::bitmatrix() {
 	n_rows = 0;

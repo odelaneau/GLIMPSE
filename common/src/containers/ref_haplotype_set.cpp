@@ -23,7 +23,7 @@
  * SOFTWARE.
  ******************************************************************************/
 
-#include <containers/ref_haplotype_set.h>
+#include "ref_haplotype_set.h"
 #include <math.h>
 
 ref_haplotype_set::ref_haplotype_set() : n_tot_sites(0),n_rar_sites(0),n_com_sites(0),n_com_sites_hq(0),n_ref_haps(0),sparse_maf(0.001f)

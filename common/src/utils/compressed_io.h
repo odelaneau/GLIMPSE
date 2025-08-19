@@ -26,91 +26,114 @@
 #ifndef _COMPRESSED_IO_H
 #define _COMPRESSED_IO_H
 
-//STL INCLUDES
+// STL includes
 #include <iostream>
 #include <sstream>
 #include <fstream>
+#include <string>
 
-//BOOST INCLUDES
+// Boost includes
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
 #include <boost/iostreams/filter/bzip2.hpp>
 
+/**
+ * @brief Input file stream wrapper supporting gzip and bzip2 decompression transparently
+ */
 class input_file : public boost::iostreams::filtering_istream {
 protected:
-	std::ifstream file_descriptor;
+    std::ifstream file_descriptor;
 
 public:
-	input_file(const std::string filename) {
-		if (filename.substr(filename.find_last_of(".") + 1) == "gz") {
-			file_descriptor.open(filename.c_str(), std::ios::in | std::ios::binary);
-			push(boost::iostreams::gzip_decompressor());
-		} else if (filename.substr(filename.find_last_of(".") + 1) == "bz2") {
-			file_descriptor.open(filename.c_str(), std::ios::in | std::ios::binary);
-			push(boost::iostreams::bzip2_decompressor());
-		} else file_descriptor.open(filename.c_str());
-		if (!file_descriptor.fail()) push(file_descriptor);
-	}
+    explicit input_file(const std::string& filename) {
+        // Detect compression by file extension
+        const std::string ext = filename.substr(filename.find_last_of(".") + 1);
+        if (ext == "gz") {
+            file_descriptor.open(filename.c_str(), std::ios::in | std::ios::binary);
+            push(boost::iostreams::gzip_decompressor());
+        } else if (ext == "bz2") {
+            file_descriptor.open(filename.c_str(), std::ios::in | std::ios::binary);
+            push(boost::iostreams::bzip2_decompressor());
+        } else {
+            file_descriptor.open(filename.c_str());
+        }
+        // Push underlying file descriptor to filtering stream if open succeeded
+        if (!file_descriptor.fail()) {
+            push(file_descriptor);
+        }
+    }
 
-	~input_file() {
-		close();
-	}
+    ~input_file() {
+        close();
+    }
 
-	bool fail() {
-		return file_descriptor.fail();
-	}
+    /**
+     * @return true if underlying file failed to open
+     */
+    bool fail() const {
+        return file_descriptor.fail();
+    }
 
-	void close() {
-		if (!file_descriptor.fail()) {
-			if (!empty()) reset();
-			file_descriptor.close();
-		}
-	}
+    /**
+     * Close the stream and underlying file descriptor
+     */
+    void close() {
+        if (!file_descriptor.fail()) {
+            if (!empty()) reset();
+            file_descriptor.close();
+        }
+    }
 };
 
+
+/**
+ * @brief Output file stream wrapper supporting gzip and bzip2 compression transparently
+ */
 class output_file : public boost::iostreams::filtering_ostream {
 protected:
-	std::ofstream file_descriptor;
+    std::ofstream file_descriptor;
 
 public:
-	output_file(){}
+    output_file() = default;
 
-	output_file(std::string filename) {
-		if (filename.substr(filename.find_last_of(".") + 1) == "gz") {
-			file_descriptor.open(filename.c_str(), std::ios::out | std::ios::binary);
-			push(boost::iostreams::gzip_compressor());
-		} else if (filename.substr(filename.find_last_of(".") + 1) == "bz2") {
-			file_descriptor.open(filename.c_str(), std::ios::out | std::ios::binary);
-			push(boost::iostreams::bzip2_compressor());
-		} else file_descriptor.open(filename.c_str());
-		if (!file_descriptor.fail()) push(file_descriptor);
-	}
+    explicit output_file(const std::string& filename) {
+        open(filename);
+    }
 
-	~output_file() {
-		close();
-	}
+    ~output_file() {
+        close();
+    }
 
-	bool fail() {
-		return file_descriptor.fail();
-	}
+    bool fail() const {
+        return file_descriptor.fail();
+    }
 
-	void close() {
-		if (!file_descriptor.fail()) {
-			if (!empty()) reset();
-			file_descriptor.close();
-		}
-	}
+    void close() {
+        if (!file_descriptor.fail()) {
+            if (!empty()) reset();
+            file_descriptor.close();
+        }
+    }
 
-	void open(std::string filename) {
-		if (filename.substr(filename.find_last_of(".") + 1) == "gz") {
-			file_descriptor.open(filename.c_str(), std::ios::out | std::ios::binary);
-			push(boost::iostreams::gzip_compressor());
-		} else if (filename.substr(filename.find_last_of(".") + 1) == "bz2") {
-			file_descriptor.open(filename.c_str(), std::ios::out | std::ios::binary);
-			push(boost::iostreams::bzip2_compressor());
-		} else file_descriptor.open(filename.c_str());
-		if (!file_descriptor.fail()) push(file_descriptor);
-	}
+    /**
+     * Open a file with optional compression based on file extension.
+     * @param filename Path of the file to open
+     */
+    void open(const std::string& filename) {
+        const std::string ext = filename.substr(filename.find_last_of(".") + 1);
+        if (ext == "gz") {
+            file_descriptor.open(filename.c_str(), std::ios::out | std::ios::binary);
+            push(boost::iostreams::gzip_compressor());
+        } else if (ext == "bz2") {
+            file_descriptor.open(filename.c_str(), std::ios::out | std::ios::binary);
+            push(boost::iostreams::bzip2_compressor());
+        } else {
+            file_descriptor.open(filename.c_str());
+        }
+        if (!file_descriptor.fail()) {
+            push(file_descriptor);
+        }
+    }
 };
 
 #endif

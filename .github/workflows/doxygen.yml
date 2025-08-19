@@ -1,0 +1,31 @@
+name: Build & Deploy Docs
+
+on:
+  workflow_dispatch:
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Build and run container dynamically (lowercase)
+        run: |
+          # Lowercase the GitHub repository owner
+          USERNAME=$(echo "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')
+          
+          # Build full image name
+          IMAGE="ghcr.io/$USERNAME/glimpse2-dev:latest"
+          echo "Using image $IMAGE"
+          
+          # Run container and build docs
+          docker run --rm -v "$PWD":/workspace -w /workspace $IMAGE \
+            /bin/bash -c "cmake -S . -B build -DTEST=OFF -DDOXY=ON && cmake --build build && touch docs/html/.nojekyll"
+
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: gh-pages
+          folder: docs/html

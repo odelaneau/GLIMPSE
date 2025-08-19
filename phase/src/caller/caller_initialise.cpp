@@ -23,14 +23,14 @@
  * SOFTWARE.
  ******************************************************************************/
 
-#include <caller/caller_header.h>
+#include "caller/caller_header.h"
 
-#include <io/genotype_reader.h>
-#include <io/genotype_writer.h>
-#include <io/gmap_reader.h>
-#include <io/genotype_bam_caller.h>
+#include "io/genotype_reader.h"
+#include "io/genotype_writer.h"
+#include "gmap_reader.h"
+#include "io/genotype_bam_caller.h"
 #include <boost/archive/binary_iarchive.hpp>
-#include <containers/glimpse_mpileup.h>
+#include "containers/glimpse_mpileup.h"
 
 void caller::print_ref_panel_info(const std::string ref_string)
 {

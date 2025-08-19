@@ -23,102 +23,141 @@
  * SOFTWARE.
  ******************************************************************************/
 
-#include <chunker/chunker_header.h>
+#include "chunker_header.h"
 
 void chunker::readData(std::string fmain, std::string region, long int nthreads) {
-	tac.clock();
-	vrb.title("Reading input files");
-	vrb.progress("  * Reading              : [" + fmain + "]");
+    // Start timing and log start of reading process
+    tac.clock();
+    vrb.title("Reading input files");
+    vrb.progress("  * Reading              : [" + fmain + "]");
 
+    // Initialize synchronous BCF/VCF reader (htslib)
+    bcf_srs_t * sr =  bcf_sr_init();
+    sr->collapse = COLLAPSE_NONE; // Keep multi-allelic variants separate
+    sr->require_index = 1;        // Require an index file (.tbi/.csi)
 
-	bcf_srs_t * sr =  bcf_sr_init();
-	sr->collapse = COLLAPSE_NONE;
-	sr->require_index = 1;
+    // Enable multi-threaded reading if requested
+    if (nthreads > 1) bcf_sr_set_threads(sr, nthreads);
 
-	if (nthreads > 1) bcf_sr_set_threads(sr, nthreads);
-	if (bcf_sr_set_regions(sr, region.c_str(), 0) == -1) vrb.error("Impossible to jump to region [" + region + "] in [" + fmain + "]");
-	if(!(bcf_sr_add_reader (sr, fmain.c_str())))
-	{
-		//we do not build an index here, as the target and reference panel could be accessed in parallel
-		if (sr->errnum != idx_load_failed) vrb.error("Failed to open file: " + fmain + "");
-		else vrb.error("Failed to load index of the file: " + fmain + "");
-	}
+    // Restrict reading to given region (chr or chr:start-end)
+    if (bcf_sr_set_regions(sr, region.c_str(), 0) == -1)
+        vrb.error("Impossible to jump to region [" + region + "] in [" + fmain + "]");
 
-	if (whole_chr)
-	{
-		const char **seq;
-		int i, nseq;
-		tbx_t *tbx = NULL;
-		hts_idx_t *idx = NULL;
+    // Add the main input file to the reader
+    if(!(bcf_sr_add_reader(sr, fmain.c_str()))) {
+        // Report error depending on whether it's an open or index failure
+        if (sr->errnum != idx_load_failed)
+            vrb.error("Failed to open file: " + fmain);
+        else
+            vrb.error("Failed to load index of the file: " + fmain);
+    }
 
-		if ( hts_get_format(sr->readers[0].file)->format==vcf )
-		{
-			tbx = tbx_index_load(fmain.c_str());
-			if ( !tbx ) { vrb.error("Could not load index for VCF: " + fmain); }
-		}
-		else if ( hts_get_format(sr->readers[0].file)->format==bcf )
-		{
-			idx = bcf_index_load(fmain.c_str());
-			if ( !idx ) { vrb.error("Could not load index for BCF: " + fmain); }
-		}
-		else  vrb.error("Could not detect the file type as VCF or BCF: " + fmain);
+    // If whole chromosome mode: get contig length from header/index
+    if (whole_chr) {
+        const char **seq;
+        int i, nseq;
+        tbx_t *tbx = NULL;
+        hts_idx_t *idx = NULL;
 
-		seq = tbx ? tbx_seqnames(tbx, &nseq) : bcf_index_seqnames(idx, sr->readers[0].header, &nseq);
-		//uint64_t sum = 0;
-		for (i=0; i<nseq; i++)
-		{
-			if (seq[i] != region) continue;
-	        bcf_hrec_t *hrec = sr ? bcf_hdr_get_hrec(sr->readers[0].header, BCF_HL_CTG, "ID", seq[i], NULL) : NULL;
-	        int hkey = hrec ? bcf_hrec_find_key(hrec, "length") : -1;
-	        //printf("%s\t%s\t", seq[i], hkey<0?".":hrec->vals[hkey]);
+        // Decide if input is VCF or BCF and load correct type of index
+        if (hts_get_format(sr->readers[0].file)->format == vcf) {
+            tbx = tbx_index_load(fmain.c_str());
+            if (!tbx) vrb.error("Could not load index for VCF: " + fmain);
+        }
+        else if (hts_get_format(sr->readers[0].file)->format == bcf) {
+            idx = bcf_index_load(fmain.c_str());
+            if (!idx) vrb.error("Could not load index for BCF: " + fmain);
+        }
+        else vrb.error("Could not detect the file type as VCF or BCF: " + fmain);
 
-			if (hkey>=0) contig_len = atol(hrec->vals[hkey]);
-			if (contig_len <= 0) contig_len = 1248956422;
-			break;
-		}
-		free(seq);
-		if (tbx) tbx_destroy(tbx);
-		if (idx) hts_idx_destroy(idx);
+        // Retrieve sequence (chromosome) names
+        seq = tbx ? tbx_seqnames(tbx, &nseq)
+                  : bcf_index_seqnames(idx, sr->readers[0].header, &nseq);
 
-	}
+        // Find the matching sequence for the region and get its length
+        for (i = 0; i < nseq; i++) {
+            if (seq[i] != region) continue; // Skip non-matching contigs
+            bcf_hrec_t *hrec = sr ? bcf_hdr_get_hrec(sr->readers[0].header, BCF_HL_CTG, "ID", seq[i], NULL) : NULL;
+            int hkey = hrec ? bcf_hrec_find_key(hrec, "length") : -1;
 
-	int n_variants = 0;
-	int n_comm_variants_cnt=0;
-	float* af_ptr = nullptr, af;
-	int *itmp=NULL, mitmp=0, tret=0;
-	int naf_f, naf_arr_f;
-	int rAC=0, nAC=0, *vAC = NULL;
-	int rAN=0, nAN=0, *vAN = NULL;
+            // Set contig length if available, otherwise use fallback value
+            if (hkey >= 0) this->contig_len = atol(hrec->vals[hkey]);
+            if (this->contig_len <= 0) this->contig_len = 1248956422; // fallback
+            break;
+        }
 
-	bcf1_t * line_main;
-	while (bcf_sr_next_line (sr)) {
-		line_main =  bcf_sr_get_line(sr, 0);
-		if (line_main->n_allele == 2)
-		{
-			n_variants++;
-			if (n_comm_variants_cnt < 1) chrID = bcf_hdr_id2name(sr->readers[0].header, line_main->rid);
-			rAC = bcf_get_info_int32(sr->readers[0].header, line_main, "AC", &vAC, &nAC);
-			rAN = bcf_get_info_int32(sr->readers[0].header, line_main, "AN", &vAN, &nAN);
-			if ((nAC!=1)||(nAN!=1)) vrb.error("VCF/BCF needs AC/AN INFO fields to be present");
-			//Classify variant
-			double MAF = std::min(((vAN[0] - vAC[0])*1.0f)/(vAN[0]), (vAC[0]*1.0f)/(vAN[0]));
-			const bool is_common = MAF >= sparse_maf;
+        // Clean up sequence/index memory
+        free(seq);
+        if (tbx) tbx_destroy(tbx);
+        if (idx) hts_idx_destroy(idx);
+    }
 
-			positions_all_mb.push_back(line_main->pos + 1);
-			map_positions_all.insert(std::pair < int , int> (line_main->pos + 1, positions_all_mb.size()-1));
-			all2common.push_back(n_comm_variants_cnt);
-			if (is_common)
-			{
-				positions_common_mb.push_back(line_main->pos + 1);
-				common2all.push_back(positions_all_mb.size()-1);
-				n_comm_variants_cnt++;
-			}
-		}
-	}
-	bcf_sr_destroy(sr);
-	if (itmp) free(itmp);
-	if (vAC) free(vAC);
-	if (vAN) free(vAN);
-	vrb.bullet("Input file read      : [" + fmain + "] (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
-	vrb.bullet("#variants            : [" + stb.str(n_variants) + " total | " +  stb.str(n_variants-n_comm_variants_cnt) + " rare | " +  stb.str(n_comm_variants_cnt) +" common]");
+    // Counters and temporary storage for INFO fields
+    int n_variants = 0;             // Total number of biallelic variants
+    int n_comm_variants_cnt = 0;    // Number of common variants
+    int *vAC = NULL, *vAN = NULL;   // Buffers for AC and AN
+    int nAC = 0, nAN = 0;           // Sizes of AC/AN buffers
+    int rAC = 0, rAN = 0;           // Return values from htslib calls
+
+    bcf1_t * line_main; // Pointer to current variant record
+
+    // Loop through all records in the specified region
+    while (bcf_sr_next_line(sr)) {
+        line_main = bcf_sr_get_line(sr, 0);
+
+        // Keep only biallelic sites (n_allele == 2)
+        if (line_main->n_allele == 2) {
+            n_variants++;
+
+            // Store chromosome name for the first common variant
+            if (n_comm_variants_cnt < 1)
+                chrID = bcf_hdr_id2name(sr->readers[0].header, line_main->rid);
+
+            // Read INFO/AC and INFO/AN values
+            rAC = bcf_get_info_int32(sr->readers[0].header, line_main, "AC", &vAC, &nAC);
+            rAN = bcf_get_info_int32(sr->readers[0].header, line_main, "AN", &vAN, &nAN);
+
+            // AC and AN must be scalar integers
+            if ((nAC != 1) || (nAN != 1))
+                vrb.error("VCF/BCF needs AC/AN INFO fields to be present");
+
+            // Compute minor allele frequency
+            double MAF = std::min(
+                ((vAN[0] - vAC[0]) * 1.0f) / (vAN[0]),
+                (vAC[0] * 1.0f) / (vAN[0])
+            );
+
+            // Classify as common if MAF >= sparse_maf
+            const bool is_common = MAF >= this->sparse_maf;
+
+            // Store position (convert 0-based VCF to 1-based)
+            this->positions_all_mb.push_back(line_main->pos + 1);
+
+            // Map position → index in positions_all_mb
+            this->map_positions_all.insert(
+                std::pair<int, int>(line_main->pos + 1, positions_all_mb.size() - 1)
+            );
+
+            // Map index in "all variants" → index in "common variants" (or current count)
+            this->all2common.push_back(n_comm_variants_cnt);
+
+            // If common, store in common variant structures
+            if (is_common) {
+                this->positions_common_mb.push_back(line_main->pos + 1);
+                this->common2all.push_back(positions_all_mb.size() - 1);
+                n_comm_variants_cnt++;
+            }
+        }
+    }
+
+    // Clean up reader and temporary buffers
+    bcf_sr_destroy(sr);
+    if (vAC) free(vAC);
+    if (vAN) free(vAN);
+
+    // Log final stats
+    vrb.bullet("Input file read      : [" + fmain + "] (" + stb.str(tac.rel_time() * 1.0 / 1000, 2) + "s)");
+    vrb.bullet("#variants            : [" + stb.str(n_variants) + " total | "
+               + stb.str(n_variants - n_comm_variants_cnt) + " rare | "
+               + stb.str(n_comm_variants_cnt) + " common]");
 }

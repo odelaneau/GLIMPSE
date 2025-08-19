@@ -1,9 +1,5 @@
-<p align="center">
-  <a href="https://odelaneau.github.io/GLIMPSE/">
-    <img height="150" src="docs/assets/images/branding/glimpse_logo_400x171.png">
-  </a>
-  <h1 align="center">GLIMPSE</h1>
-</p>
+![](assets/images/glimpse_logo_400x171.png)
+<h1 align="center">GLIMPSE</h1>
 
 [![GitHub license](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/odelaneau/GLIMPSE/blob/master/LICENSE)
 [![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat-square)](http://bioconda.github.io/recipes/glimpse-bio/README.html)

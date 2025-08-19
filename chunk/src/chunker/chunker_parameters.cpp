@@ -23,8 +23,8 @@
  * SOFTWARE.
  ******************************************************************************/
 
-#include "../../versions/versions.h"
-#include <chunker/chunker_header.h>
+#include "versions.h"
+#include "chunker_header.h"
 
 void chunker::declare_options() {
 	bpo::options_description opt_base ("Basic options");
@@ -60,17 +60,17 @@ void chunker::declare_options() {
 			("output,O", bpo::value< std::string >(), "File containing the chunks for phasing and imputation")
 			("log", bpo::value< std::string >(), "Log file");
 
-	descriptions.add(opt_base).add(opt_input).add(opt_param).add(opt_algo).add(opt_output);
+	this->descriptions.add(opt_base).add(opt_input).add(opt_param).add(opt_algo).add(opt_output);
 }
 
 void chunker::parse_command_line(std::vector < std::string > & args) {
 	try {
-		bpo::store(bpo::command_line_parser(args).options(descriptions).run(), options);
-		bpo::notify(options);
+		bpo::store(bpo::command_line_parser(args).options(this->descriptions).run(), this->options);
+		bpo::notify(this->options);
 	} catch ( const boost::program_options::error& e ) { std::cerr << "Error parsing command line arguments: " << std::string(e.what()) << std::endl; exit(0); }
 
-	if (options.count("log") && !vrb.open_log(options["log"].as < std::string > ()))
-		vrb.error("Impossible to create log file [" + options["log"].as < std::string > () +"]");
+	if (this->options.count("log") && !vrb.open_log(this->options["log"].as < std::string > ()))
+		vrb.error("Impossible to create log file [" + this->options["log"].as < std::string > () +"]");
 
 	vrb.title("[GLIMPSE2] Split chromosomes into chunks");
 	vrb.bullet("Authors              : Simone RUBINACCI & Olivier DELANEAU, University of Lausanne");
@@ -80,74 +80,74 @@ void chunker::parse_command_line(std::vector < std::string > & args) {
 	vrb.bullet("        	         : Nature Genetics 53, 120–126 (2021). DOI: https://doi.org/10.1038/s41588-020-00756-0");
 	vrb.bullet("Run date      	 : " + tac.date());
 
-	if (options.count("help")) { std::cout << descriptions << std::endl; exit(0); }
+	if (this->options.count("help")) { std::cout << this->descriptions << std::endl; exit(0); }
 }
 
 void chunker::check_options() {
-	if (!options.count("input"))
+	if (!this->options.count("input"))
 		vrb.error("You must specify one input file using --input");
 
-	if (!options.count("region"))
+	if (!this->options.count("region"))
 		vrb.error("You must specify a region to be split using --region (ideally a chromosome)");
 
-	if (!options.count("output"))
+	if (!this->options.count("output"))
 		vrb.error("You must specify a phased output file with --output");
 
-	if (options.count("seed") && options["seed"].as < long int > () < 0)
+	if (this->options.count("seed") && this->options["seed"].as < long int > () < 0)
 		vrb.error("Random number generator needs a positive seed value");
 
-	if (options["threads"].as < long int > () < 1)
+	if (this->options["threads"].as < long int > () < 1)
 		vrb.error("Number of threads is a strictly positive number.");
 
-	if (options["window-cm"].as < float > () <= 0)
+	if (this->options["window-cm"].as < float > () <= 0)
 		vrb.error("Window size in cM must be positive");
-	if (options["window-mb"].as < float > () <= 0)
+	if (this->options["window-mb"].as < float > () <= 0)
 		vrb.error("Window size in Mb must be positive");
-	if (options["window-count"].as < long int > () <= 0)
+	if (this->options["window-count"].as < long int > () <= 0)
 		vrb.error("Window size in number of markers must be positive");
 
-	if (options["buffer-cm"].as < float > () <= 0)
+	if (this->options["buffer-cm"].as < float > () <= 0)
 		vrb.error("Buffer size in cM must be positive");
-	if (options["buffer-mb"].as < float > () <= 0)
+	if (this->options["buffer-mb"].as < float > () <= 0)
 		vrb.error("Buffer size in Mb must be positive");
-	if (options["buffer-count"].as < long int > () <= 0)
+	if (this->options["buffer-count"].as < long int > () <= 0)
 		vrb.error("Buffer size in number of markers must be positive");
 
-	float s_maf = options["sparse-maf"].as < float > ();
+	float s_maf = this->options["sparse-maf"].as < float > ();
 	if (s_maf >= 0.5 || s_maf < 0) vrb.error("The sparse MAF parameter should not be set too high or low. Ideally within the range [0.01-0.001] 0.001 MAF is the recommended setting]");
 
-	if (options.count("recursive") && options.count("sequential"))
+	if (this->options.count("recursive") && this->options.count("sequential"))
 		vrb.error("One of the two algorithms must be selected. Please choose one between recursive and sequential");
-	if (!options.count("recursive") && !options.count("sequential"))
+	if (!this->options.count("recursive") && !this->options.count("sequential"))
 		vrb.error("One of the two algorithms must be selected. Please choose one between recursive and sequential");
 
 }
 
 void chunker::verbose_files() {
 	vrb.title("Files:");
-	vrb.bullet("Input VCF            : [" + options["input"].as < std::string > () + "]");
-	vrb.bullet("Region               : [" + options["region"].as < std::string > () + "]");
-	if (options.count("map"))
-		vrb.bullet("Genetic Map          : [" + options["map"].as < std::string > () + "]");
+	vrb.bullet("Input VCF            : [" + this->options["input"].as < std::string > () + "]");
+	vrb.bullet("Region               : [" + this->options["region"].as < std::string > () + "]");
+	if (this->options.count("map"))
+		vrb.bullet("Genetic Map          : [" + this->options["map"].as < std::string > () + "]");
 	else
 		vrb.warning("No genetic map provided. Please provide a map if available. Setting 1cM = 1Mb\n\x1B[33mWARNING:\033[0m The parameters --window-cm and --buffer-cm should be set to zero if no map is available.\n");
 
-	vrb.bullet("Output file          : [" + options["output"].as < std::string > () + "]");
-	if (options.count("log")) vrb.bullet("Output LOG           : [" + options["log"].as < std::string > () + "]");
+	vrb.bullet("Output file          : [" + this->options["output"].as < std::string > () + "]");
+	if (this->options.count("log")) vrb.bullet("Output LOG           : [" + this->options["log"].as < std::string > () + "]");
 }
 
 void chunker::verbose_options() {
-	std::string opt_algo = options.count("sequential") ? "Sequential" : "Recursive";
-	std::string opt_map = options.count("map") ? "Given by genetic map" : "Constant rate of 1cM/Mb";
+	std::string opt_algo = this->options.count("sequential") ? "Sequential" : "Recursive";
+	std::string opt_map = this->options.count("map") ? "Given by genetic map" : "Constant rate of 1cM/Mb";
 
 	vrb.title("Parameters:");
-	vrb.bullet("Sparse MAF           : [" + stb.str(options["sparse-maf"].as < float > ()) + "]");
+	vrb.bullet("Sparse MAF           : [" + stb.str(this->options["sparse-maf"].as < float > ()) + "]");
 	vrb.bullet("Algorithm            : [" + opt_algo + "]");
 	vrb.bullet("Recombination rates  : [" + opt_map + "]");
-	vrb.bullet("Min. Window size     : [" + stb.str(options["window-cm"].as < float > ()) + "cM | " + stb.str(options["window-mb"].as < float > ()) + "Mb | " + stb.str(options["window-count"].as < long int > ()) + " variants]");
-	vrb.bullet("Min. Buffer size     : [" + stb.str(options["buffer-cm"].as < float > ()) + "cM | " + stb.str(options["buffer-mb"].as < float > ()) + "Mb | " + stb.str(options["buffer-count"].as < long int > ()) + " variants]");
+	vrb.bullet("Min. Window size     : [" + stb.str(this->options["window-cm"].as < float > ()) + "cM | " + stb.str(this->options["window-mb"].as < float > ()) + "Mb | " + stb.str(this->options["window-count"].as < long int > ()) + " variants]");
+	vrb.bullet("Min. Buffer size     : [" + stb.str(this->options["buffer-cm"].as < float > ()) + "cM | " + stb.str(this->options["buffer-mb"].as < float > ()) + "Mb | " + stb.str(this->options["buffer-count"].as < long int > ()) + " variants]");
 
 	vrb.title("Other parameters");
-	vrb.bullet("Seed                 : [" + stb.str(options["seed"].as < long int > ()) + "]");
-	vrb.bullet("#Threads             : [" + stb.str(options["threads"].as < long int > ()) + "]");
+	vrb.bullet("Seed                 : [" + stb.str(this->options["seed"].as < long int > ()) + "]");
+	vrb.bullet("#Threads             : [" + stb.str(this->options["threads"].as < long int > ()) + "]");
 }

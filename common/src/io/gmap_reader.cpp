@@ -23,7 +23,7 @@
  * SOFTWARE.
  ******************************************************************************/
 
-#include <io/gmap_reader.h>
+#include "gmap_reader.h"
 
 gmap_reader::gmap_reader() {
 }

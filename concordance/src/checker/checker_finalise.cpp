@@ -23,7 +23,7 @@
  * SOFTWARE.
  ******************************************************************************/
 
-#include <checker/checker_header.h>
+#include "checker_header.h"
 
 void checker::write_files_and_finalise(const std::string gp_filter) {
 	//step1: writting output

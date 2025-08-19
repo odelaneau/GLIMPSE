@@ -23,7 +23,7 @@
  * SOFTWARE.
  ******************************************************************************/
 
-#include <containers/conditioning_set.h>
+#include "containers/conditioning_set.h"
 #include <algorithm>
 
 conditioning_set::conditioning_set(const variant_map & _mapG, const haplotype_set & _H, const unsigned int _n_ref_haps, const unsigned int _n_eff_haps, const int _kinit, const int _kpbwt, const float _err_imp, const float _err_phs, const bool use_list):

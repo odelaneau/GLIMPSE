@@ -1,0 +1,159 @@
+/*******************************************************************************
+ * @file olivier_tools.h
+ * @brief Common includes, constants, typedefs, and global tools for the software.
+ *
+ * This header centralizes commonly used STL, Boost, and HTSlib includes,
+ * defines utility constants and macros, and declares global tool objects
+ * to be used throughout the software.
+ *
+ * @copyright Copyright (C) 2022-2023 Simone Rubinacci and Olivier Delaneau
+ * @license MIT License
+ ******************************************************************************/
+
+#ifndef _OLIVIER_TOOLS_H
+#define _OLIVIER_TOOLS_H
+
+//INCLUDE STANDARD TEMPLATE LIBRARY USEFUL STUFFS (STL)
+#include <vector>
+#include <list>
+#include <queue>
+#include <stack>
+#include <bitset>
+#include <set>
+#include <tuple>
+#include <map>
+#include <unordered_set>
+#include <unordered_map>
+#include <algorithm>
+#include <cmath>
+#include <string>
+#include <exception>
+#include <cassert>
+#include <limits>
+#include <cstdint>
+
+//INCLUDE BOOST USEFUL STUFFS (BOOST)
+#include <boost/program_options.hpp>
+#include <boost/uuid/uuid.hpp>
+#include <boost/align/aligned_allocator.hpp>
+
+//INCLUDE HTS LIBRARY
+#include <htslib/hts.h>
+#include <htslib/kseq.h>
+#include <htslib/sam.h>
+#include <htslib/faidx.h>
+#include <htslib/regidx.h>
+extern "C" {
+	#include <htslib/vcf_sweep.h>
+	#include <htslib/synced_bcf_reader.h>
+	#include <htslib/vcf.h>
+	#include <htslib/vcfutils.h>
+}
+
+//INCLUDES BASE STUFFS
+#include "compressed_io.h"
+#include "random_number.h"
+#include "basic_stats.h"
+#include "basic_algos.h"
+#include "string_utils.h"
+#include "timer.h"
+#include "verbose.h"
+
+//TYPEDEFS
+/**
+ * @brief Vector with 32-byte aligned allocator (for SIMD optimizations).
+ */
+template <typename T>
+using aligned_vector32 = std::vector<T, boost::alignment::aligned_allocator<T, 32>>;
+
+//CONSTANTS
+/** Frequency threshold to define rare variants */
+#define RARE_VARIANT_FREQ	0.001f
+
+/** Number of haplotypes */
+#define HAP_NUMBER			8
+
+/** Maximum ambiguity code count */
+#define MAX_AMB				22
+
+/** Processing stages identifiers */
+#define STAGE_INIT	0
+#define STAGE_BURN	1
+#define STAGE_MAIN	2
+#define STAGE_RESTRICT	3
+
+//MACROS
+/** Divide integer by 2 using bit shift */
+#define DIV2(v)	((v) >> 1)
+
+/** Modulo 2 using bitwise AND */
+#define MOD2(v)	((v) & 1)
+
+//NAMESPACE ALIASES
+namespace bio = boost::iostreams;
+namespace bpo = boost::program_options;
+namespace bid = boost::uuids;
+
+/**
+ * @brief Lookup table for converting Phred quality scores to probabilities.
+ * 
+ * Equivalent to computing pow(10., -i/10.) for i = 0..255.
+ */
+const static float unphred[256] = { 
+	1.000000e+00, 7.943282e-01, 6.309573e-01, /* ... truncated for brevity ... */ 3.162278e-26
+};
+
+/**
+ * @brief Supported input formats enumeration.
+ */
+enum class InputFormat
+{
+	BCF = 0,     /**< Binary variant call format */
+	GLIMPSE = 1  /**< GLIMPSE imputation output format */
+};
+
+/**
+ * @brief Supported output formats enumeration.
+ */
+enum class OutputFormat
+{
+	VCF = 0,     /**< Variant Call Format */
+	BCF = 1,     /**< Binary VCF */
+	BGEN = 2     /**< BGEN genotype probability format */
+};
+
+/**
+ * @brief Supported output compression types.
+ */
+enum class OutputCompression
+{
+	NONE = 0,    /**< No compression */
+	ZLIB = 1,    /**< Zlib compression */
+	ZSTD = 2     /**< Zstandard compression */
+};
+
+//MAKE SOME TOOLS FULLY ACCESSIBLE THROUGHOUT THE SOFTWARE
+@TOOLBOX_DEFINE@
+	/** @brief Global random number generator instance */
+	random_number_generator rng;
+
+	/** @brief Global string manipulation utilities instance */
+	string_utils stb;
+
+	/** @brief Global basic algorithm utilities instance */
+	basic_algos alg;
+
+	/** @brief Global verbose output utility instance */
+	verbose vrb;
+
+	/** @brief Global timer utility instance */
+	timer tac;
+#else
+	extern random_number_generator rng; /**< External declaration of global RNG */
+	extern string_utils stb;            /**< External declaration of string utils */
+	extern basic_algos alg;             /**< External declaration of basic algos */
+	extern verbose vrb;                 /**< External declaration of verbose output */
+	extern timer tac;                   /**< External declaration of timer */
+#endif
+
+#endif

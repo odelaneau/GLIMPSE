@@ -23,7 +23,7 @@
  * SOFTWARE.
  ******************************************************************************/
 
-#include <checker/checker_header.h>
+#include "checker_header.h"
 
 void checker::read_files_and_initialise() {
 	//step0: Initialize seed and multi-threading

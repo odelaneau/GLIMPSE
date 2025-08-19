@@ -45,6 +45,7 @@
 
 # CMake
 cmake-build-*/
+build
 
 
 ##### Eclipse
@@ -105,3 +106,12 @@ tutorial/GLIMPSE_concordance/
 tutorial/bin/
 
 3rd_party/
+
+
+# Testing files
+*.txt.gz
+*chr*.txt
+
+# Ignore docs
+docs/html
+docs/latex

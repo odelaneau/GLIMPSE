@@ -1,0 +1,22 @@
+/* Force light background and dark text */
+body, .contents {
+    background-color: white !important;
+    color: black !important;
+}
+
+/* Links */
+a {
+    color: #0066cc !important;
+}
+
+/* Tables */
+table {
+    background-color: white !important;
+    color: black !important;
+}
+
+/* Optional: override sidebar and header */
+#side-nav, .nav-path, .headertitle {
+    background-color: #f9f9f9 !important;
+    color: black !important;
+}

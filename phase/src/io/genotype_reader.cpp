@@ -24,6 +24,7 @@
  ******************************************************************************/
 
 #include <io/genotype_reader.h>
+#include <ref_genotype_reader.h>
 
 std::map<std::string, int> mapPloidy = {
 		{"1",1},

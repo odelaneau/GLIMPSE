@@ -24,7 +24,7 @@
  ******************************************************************************/
 
 #include <io/genotype_writer.h>
-#include "../../versions/versions.h"
+#include "versions.h"
 
 #define OFILE_VCFU	0
 #define OFILE_VCFC	1
