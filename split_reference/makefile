@@ -15,6 +15,7 @@ LDFLAG=-O3
 
 #DYNAMIC LIBRARIES
 DYN_LIBS=-lz -lpthread -lbz2 -llzma -lcurl -lcrypto -ldeflate
+BASE_DYN_LIBS := $(DYN_LIBS)
 
 HFILE=$(shell find src -name *.h)
 CFILE=$(shell find src -name *.cpp)
@@ -24,6 +25,34 @@ VPATH=$(shell for file in `find src -name *.cpp`; do echo $$(dirname $$file); do
 NAME=$(shell basename $(CURDIR))
 BFILE=bin/GLIMPSE2_$(NAME)
 EXEFILE=bin/GLIMPSE2_$(NAME)_static
+
+BREW_AVAILABLE := $(shell command -v brew 2>/dev/null)
+BOOST_PREFIX_AUTO := $(if $(BREW_AVAILABLE),$(shell brew --prefix boost 2>/dev/null),)
+HTSLIB_PREFIX_AUTO := $(if $(BREW_AVAILABLE),$(shell brew --prefix htslib 2>/dev/null),)
+
+BOOST_INC_AUTO := $(if $(BOOST_PREFIX_AUTO),$(BOOST_PREFIX_AUTO)/include,)
+BOOST_LIB_DIR_AUTO := $(if $(BOOST_PREFIX_AUTO),$(BOOST_PREFIX_AUTO)/lib,)
+BOOST_LIB_IO_AUTO := $(firstword $(wildcard $(BOOST_LIB_DIR_AUTO)/libboost_iostreams.a $(BOOST_LIB_DIR_AUTO)/libboost_iostreams.dylib $(BOOST_LIB_DIR_AUTO)/libboost_iostreams.so))
+BOOST_LIB_PO_AUTO := $(firstword $(wildcard $(BOOST_LIB_DIR_AUTO)/libboost_program_options.a $(BOOST_LIB_DIR_AUTO)/libboost_program_options.dylib $(BOOST_LIB_DIR_AUTO)/libboost_program_options.so))
+BOOST_LIB_SE_AUTO := $(firstword $(wildcard $(BOOST_LIB_DIR_AUTO)/libboost_serialization.a $(BOOST_LIB_DIR_AUTO)/libboost_serialization.dylib $(BOOST_LIB_DIR_AUTO)/libboost_serialization.so))
+
+HTSLIB_INC_AUTO := $(if $(HTSLIB_PREFIX_AUTO),$(HTSLIB_PREFIX_AUTO)/include,)
+HTSLIB_LIB_AUTO := $(firstword $(wildcard $(HTSLIB_PREFIX_AUTO)/lib/libhts.a $(HTSLIB_PREFIX_AUTO)/lib/libhts.dylib $(HTSLIB_PREFIX_AUTO)/lib/libhts.so))
+
+OPENSSL_PREFIX_AUTO := $(if $(BREW_AVAILABLE),$(shell brew --prefix openssl@3 2>/dev/null),)
+LIBDEFLATE_PREFIX_AUTO := $(if $(BREW_AVAILABLE),$(shell brew --prefix libdeflate 2>/dev/null),)
+
+EXTRA_LDFLAGS_AUTO := $(strip $(if $(BOOST_LIB_DIR_AUTO),-L$(BOOST_LIB_DIR_AUTO)) $(if $(HTSLIB_PREFIX_AUTO),-L$(HTSLIB_PREFIX_AUTO)/lib) $(if $(OPENSSL_PREFIX_AUTO),-L$(OPENSSL_PREFIX_AUTO)/lib) $(if $(LIBDEFLATE_PREFIX_AUTO),-L$(LIBDEFLATE_PREFIX_AUTO)/lib))
+
+DEFAULT_BOOST_INC := $(or $(BOOST_INC_AUTO),/usr/include)
+DEFAULT_BOOST_LIB_IO := $(or $(BOOST_LIB_IO_AUTO),-lboost_iostreams)
+DEFAULT_BOOST_LIB_PO := $(or $(BOOST_LIB_PO_AUTO),-lboost_program_options)
+DEFAULT_BOOST_LIB_SE := $(or $(BOOST_LIB_SE_AUTO),-lboost_serialization)
+
+DEFAULT_HTSLIB_INC := $(or $(HTSLIB_INC_AUTO),/home/srubinac/git/htslib)
+DEFAULT_HTSLIB_LIB := $(or $(HTSLIB_LIB_AUTO),/home/srubinac/git/htslib/libhts.a)
+
+.DEFAULT_GOAL := auto
 
 #COMMIT_VERS=$(shell git rev-parse --short HEAD)
 #COMMIT_DATE=$(shell git log -1 --format=%cd --date=short)
@@ -147,10 +176,19 @@ static_exe: BOOST_LIB_SE=/usr/local/lib/libboost_serialization.a
 static_exe: $(EXEFILE)
 
 #COMPILATION RULES
-all: desktop
+all: auto
+
+auto: BOOST_INC=$(DEFAULT_BOOST_INC)
+auto: BOOST_LIB_IO=$(DEFAULT_BOOST_LIB_IO)
+auto: BOOST_LIB_PO=$(DEFAULT_BOOST_LIB_PO)
+auto: BOOST_LIB_SE=$(DEFAULT_BOOST_LIB_SE)
+auto: HTSLIB_INC=$(DEFAULT_HTSLIB_INC)
+auto: HTSLIB_LIB=$(DEFAULT_HTSLIB_LIB)
+auto: AUTO_LDFLAG=$(strip $(LDFLAG) $(EXTRA_LDFLAGS_AUTO))
+auto: $(BFILE)
 	
 $(BFILE): $(OFILE)
-	$(CXX) $(LDFLAG) $^ $(HTSLIB_LIB) $(BOOST_LIB_IO) $(BOOST_LIB_PO) $(BOOST_LIB_SE) $(BGEN_LIB) -o $@ $(DYN_LIBS)
+	$(CXX) $(AUTO_LDFLAG) $^ $(HTSLIB_LIB) $(BOOST_LIB_IO) $(BOOST_LIB_PO) $(BOOST_LIB_SE) $(BGEN_LIB) -o $@ $(DYN_LIBS)
 
 $(EXEFILE): $(OFILE)
 	$(CXX) $(LDFLAG) -static -static-libgcc -static-libstdc++ -pthread -o $(EXEFILE) $^ $(HTSLIB_LIB) $(BOOST_LIB_IO) $(BOOST_LIB_PO) $(BOOST_LIB_SE) -Wl,-Bstatic $(DYN_LIBS)
