@@ -45,6 +45,35 @@ At the moment, GLIMPSE2 performs imputation only from a reference panel of sampl
 
 To build the source code, please refer to the [step-by-step guide on the website](https://odelaneau.github.io/GLIMPSE/docs/installation).
 
+#### Building on macOS
+
+GLIMPSE2 supports macOS builds, including Apple Silicon (ARM64) devices. The build system automatically detects dependencies installed via Homebrew.
+
+**Prerequisites:**
+```bash
+# Install dependencies via Homebrew
+brew install boost htslib openssl@3 libdeflate
+```
+
+**Building:**
+```bash
+# Build all tools
+make
+
+# Or build individual tools
+make phase
+make chunk
+make ligate
+make split_reference
+make concordance
+```
+
+**Platform-specific notes:**
+
+- **⚠️ Performance Note (WIP):** On Apple Silicon and other ARM platforms, GLIMPSE2 currently uses scalar fallback implementations instead of AVX2 SIMD instructions. This means **significantly slower performance** compared to x86_64 with AVX2. Native ARM NEON optimizations are planned for future releases.
+- On x86_64 platforms, native AVX2/FMA instructions are used for optimal performance
+- The build system automatically detects the architecture and applies appropriate compiler flags
+
 #### Docker images
 
 ##### Dockerhub
