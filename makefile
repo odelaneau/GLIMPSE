@@ -12,7 +12,7 @@ LDLIBS   += -lboost_program_options
 all: $(projects)
 
 $(projects):
-	$(MAKE) -C $@ \
+	$(MAKE) -C $@ $(COMPILATION_ENV) \
 		CXXFLAGS="$(CXXFLAGS)" \
 		LDFLAGS="$(LDFLAGS)" \
 		LDLIBS="$(LDLIBS)"
