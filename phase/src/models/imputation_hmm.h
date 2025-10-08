@@ -28,7 +28,7 @@
 
 #include <utils/otools.h>
 #include <containers/conditioning_set.h>
-#include <immintrin.h>
+#include "simd_compat.h"
 #include <boost/align/aligned_allocator.hpp>
 
 template <typename T>
