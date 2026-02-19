@@ -26,8 +26,7 @@
 #include <caller/caller_header.h>
 
 caller::caller():
-		i_workers(0), i_jobs(0), current_stage(0), current_iteration(0), min_gl(1e-10),
-		input_fmt(InputFormat::BCF), output_fmt(OutputFormat::BCF), output_compr(OutputCompression::ZLIB), bgen_bits(8)
+		i_workers(0), i_jobs(0), current_stage(0), A(), H(A)
 {
 }
 
@@ -56,8 +55,8 @@ void caller::phase(std::vector < std::string > & args) {
 }
 
 void caller::buildCoordinates() {
-	std::string input_region = options["input-region"].as < std::string > ();
-	std::string output_region = options["output-region"].as < std::string > ();
+	std::string input_region = A.mInputRegion;
+	std::string output_region = A.mOutputRegion;
 	vrb.title("Parsing specified genomic regions");
 	std::vector < std::string > input_t1, input_t2;
 	std::vector < std::string > output_t1, output_t2;

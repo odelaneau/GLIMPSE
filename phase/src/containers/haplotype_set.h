@@ -27,14 +27,15 @@
 #define _HAPLOTYPE_SET_H
 
 #include <utils/otools.h>
-#include <utils/checksum_utils.h>
 
+#include <containers/argument_set.h>
 #include <containers/bitmatrix.h>
 #include <containers/genotype_set.h>
 #include <containers/ref_haplotype_set.h>
 
 class haplotype_set : public ref_haplotype_set {
 public:
+	const argument_set& A;
 	//COUNTS
 	unsigned int n_tot_haps;					// #haplotypes [target + reference samples]
 	unsigned int n_tar_haps;					// #haplotypes [target samples]
@@ -56,8 +57,6 @@ public:
 	std::vector < int > tar_hapid2ind;
 
 	//PBWT
-	int pbwt_depth;
-	float pbwt_modulo_cm;
 	std::vector < int > pbwt_array_V;
 
 	//FM
@@ -79,17 +78,13 @@ public:
 	std::vector < bool > pbwt_stored;
 	std::vector < int > pbwt_grp;
 
-	int Kinit;
-	int Kpbwt;
-	int K;
 	int nstored;
-
 	int counter_gf;
 	int counter_sel_gf;
 	int counter_rare_restarts;
 
 	std::vector<std::vector<std::vector<int>>> pbwt_states;
-	std::vector<std::set<int>> init_states;
+	std::vector<std::vector<int>> init_states;
 	std::vector<std::vector<int>> list_states;
 
 	std::vector<unsigned char> tar_hap;
@@ -114,7 +109,7 @@ public:
 
 
 	//CONSTRUCTOR/DESTRUCTOR/INITIALIZATION
-	haplotype_set();
+	haplotype_set(const argument_set& A);
 
 	virtual ~haplotype_set();
 	void allocate();
@@ -134,7 +129,7 @@ public:
 
 
 	//PBWT ROUTINES
-	void allocatePBWT(const int _pbwt_depth, const float _pbwt_modulo_cm, const variant_map & V, const genotype_set & G, const int _Kinit, const int _Kpbwt);
+	void allocatePBWT(const variant_map & V, const genotype_set & G);
 	void matchHapsFromCompressedPBWTSmall(const variant_map & V, const bool main_iteration);
 	void init_common(const int k, const int l, const int ref_rac_l_com);
 	void init_rare(const variant_map & M,const int k, const int l);
@@ -144,24 +139,6 @@ public:
 	void selectKrare(const int htr, const int k, const int ref_rac_l, const std::vector < int >& pbwt_array, const int k0, const unsigned char a);
 	void select_common_pd_fg(const int k, const int l_hq, const int l_all, const int ref_rac_l, const int prev_ref_rac_l);
 	void select_rare_pd_fg(const int k, const int ref_rac_l);
-
-	void update_checksum(checksum &crc) const
-	{
-		ref_haplotype_set::update_checksum(crc);
-		crc.process_data(n_tot_haps);
-		crc.process_data(n_tar_haps);
-		crc.process_data(n_tar_samples);
-		HvarTar.update_checksum(crc);
-		crc.process_data(ShapTar);
-		crc.process_data(SvarTar);
-		crc.process_data(SindTarGL);
-		crc.process_data(cm_pos);
-		crc.process_data(fploidy);
-		crc.process_data(max_ploidy);
-		crc.process_data(tar_ploidy);
-		crc.process_data(tar_ind2hapid);
-		crc.process_data(tar_hapid2ind);
-	}
 };
 
 #endif

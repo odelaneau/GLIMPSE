@@ -34,7 +34,7 @@
 #include <objects/genotype.h>
 
 
-haplotype_set::haplotype_set()
+haplotype_set::haplotype_set(const argument_set& _A) : A(_A)
 {
 	n_tot_sites = 0;
 	n_rar_sites = 0;
@@ -45,12 +45,7 @@ haplotype_set::haplotype_set()
 	n_ref_haps = 0;
 	n_tar_samples = 0;
 
-	Kinit=1000;
-	K=1000;
-	Kpbwt=2000;
 	nstored=0;
-	pbwt_depth = 0;
-	pbwt_modulo_cm = 0.0f;
 	max_ploidy = 2;
 	fploidy=2;
 	counter_sel_gf=0;
@@ -67,9 +62,6 @@ haplotype_set::~haplotype_set()
 	n_tot_haps = 0;
 	n_tar_haps = 0;
 	n_ref_haps = 0;
-
-	pbwt_depth = 0;
-	pbwt_modulo_cm = 0;
 }
 
 void haplotype_set::allocate()
@@ -86,7 +78,7 @@ void haplotype_set::allocate()
 	SindTarGL = std::vector < std::vector < int > > (n_tar_samples);
 
 	pbwt_states = std::vector<std::vector<std::vector<int>>>(n_tar_samples, std::vector<std::vector<int>>());
-	init_states = std::vector<std::set<int>>(n_tar_samples, std::set<int>());
+	init_states = std::vector<std::vector<int>>(n_tar_samples, std::vector<int>());
 	list_states = std::vector<std::vector<int>>(n_tar_haps);
 }
 
@@ -101,12 +93,12 @@ void haplotype_set::allocate_hap_only()
 	SindTarGL = std::vector < std::vector < int > > (n_tar_samples);
 
 	pbwt_states = std::vector<std::vector<std::vector<int>>>(n_tar_samples, std::vector<std::vector<int>>());
-	init_states = std::vector<std::set<int>>(n_tar_samples, std::set<int>());
+	init_states = std::vector<std::vector<int>>(n_tar_samples, std::vector<int>());
 	list_states = std::vector<std::vector<int>>(n_tar_haps);
 }
 
 void haplotype_set::initRareTar(const genotype_set & G, const variant_map& M) {
-	if (Kinit==0)
+	if (A.Kinit==0)
 	{
 		vrb.bullet("No init rare Tar (Kinit=0)");
 		return;
@@ -226,16 +218,11 @@ void haplotype_set::transposeRareTar() {
 	vrb.bullet("RARE transpose Tar (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
 }
 
-void haplotype_set::allocatePBWT(const int _pbwt_depth, const float _pbwt_modulo_cm, const variant_map & M, const genotype_set & G, const int _Kinit,const int _Kpbwt)
+void haplotype_set::allocatePBWT(const variant_map & M, const genotype_set & G)
 {
 	tac.clock();
 
-	Kinit=_Kinit;
-	Kpbwt=_Kpbwt;
-	pbwt_depth = _pbwt_depth;
-	pbwt_modulo_cm = _pbwt_modulo_cm;
-
-	if (Kpbwt==0 || Kpbwt >= n_ref_haps)
+	if (A.Kpbwt==0 || A.Kpbwt >= n_ref_haps)
 	{
 		vrb.bullet("No PBWT allocated (Kpbwt=0 or Kpbwt >= n_ref_haps)");
 		return;
@@ -265,7 +252,7 @@ void haplotype_set::allocatePBWT(const int _pbwt_depth, const float _pbwt_modulo
 		for (int j =0; j<tar_ploidy[i]; ++j)
 		{
 			tar_hapid2ind[idx_tar_hap]=i;
-			//cond_haps_per_hap[idx_tar_hap]=Kinit/tar_ploidy[i];
+			//cond_haps_per_hap[idx_tar_hap]=A.Kinit/tar_ploidy[i];
 			++idx_tar_hap;
 		}
 	}
@@ -273,17 +260,17 @@ void haplotype_set::allocatePBWT(const int _pbwt_depth, const float _pbwt_modulo
 	pack3init();
 
 	if (Ypacked.size() ==0) build_sparsePBWT(M);
+	else
+	{
+		tac.clock();
+		HvarRef.reallocate(n_com_sites, n_ref_haps);
+		HhapRef.transpose(HvarRef, n_ref_haps, n_com_sites);
+		vrb.bullet("Transpose hap2var (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
+	}
 
 	cm_pos = std::vector<float>(n_tot_sites);
 	for (int i=0; i<n_tot_sites; ++i)
 		cm_pos[i] = std::max(0.0f,(float)M.vec_pos[i]->cm);
-
-	float length = cm_pos.back() - cm_pos[0];
-	if ((length / pbwt_modulo_cm) * 2 * pbwt_depth < Kpbwt)
-	{
-		while ((length / pbwt_modulo_cm) * 2 * pbwt_depth < Kpbwt && pbwt_modulo_cm>0.02) pbwt_modulo_cm/=2;
-		vrb.warning("Small imputation region in cM detected (for Kpbwt parameter): changing PBWT modulo parameter to: " + std::to_string(pbwt_modulo_cm) + " cM");
-	}
 
 	pbwt_grp.clear();
 	pbwt_stored = std::vector<bool>(n_com_sites_hq,false);
@@ -291,7 +278,7 @@ void haplotype_set::allocatePBWT(const int _pbwt_depth, const float _pbwt_modulo
 	{
 		const int k = common2tot[l_all];
 		if (M.vec_pos[k]->LQ) continue;
-		const int tmp = (int)round(cm_pos[k] / pbwt_modulo_cm);
+		const int tmp = (int)round(cm_pos[k] / A.mPbwtCM);
 		if (src != tmp)
 		{
 			src = tmp;
@@ -302,21 +289,20 @@ void haplotype_set::allocatePBWT(const int _pbwt_depth, const float _pbwt_modulo
 	if  (pbwt_grp.back() < n_com_sites_hq) pbwt_grp.push_back(n_com_sites_hq);
 	nstored = pbwt_grp.size();
 
-	K=pbwt_depth;
 	for(int i = 0 ; i < n_tar_samples ; ++i)
 	{
-		for (int j = 0; j<K; ++j)
+		for (int j = 0; j<A.mMaxPbwtDepth; ++j)
 		{
 			pbwt_states[i].push_back(std::vector<int>());
 			pbwt_states[i].back().reserve(tar_ploidy[i]*nstored*2);
 		}
 	}
-	vrb.bullet("Size PBWT (" + stb.str(Ypacked.size()/(1024*1024)) + " Mb) / pbwt-depth=" +  std::to_string(K) + " / n_stored=" + std::to_string(nstored));
+	vrb.bullet("Size PBWT (" + stb.str(Ypacked.size()/(1024*1024)) + " Mb) / max pbwt-depth=" +  std::to_string(A.mMaxPbwtDepth) + " / n_stored=" + std::to_string(nstored));
 }
 
 void haplotype_set::matchHapsFromCompressedPBWTSmall(const variant_map & M, const bool main_iteration)
 {
-	if (Kpbwt==0 || Kpbwt >= n_ref_haps)
+	if (A.Kpbwt==0 || A.Kpbwt >= n_ref_haps)
 	{
 		vrb.bullet("No PBWT selection (Kpbwt=0 or Kpbwt >= n_ref_haps)");
 		return;
@@ -347,7 +333,7 @@ void haplotype_set::matchHapsFromCompressedPBWTSmall(const variant_map & M, cons
 		pbwt_index[e] = rng.getInt(0,n_ref_haps-1);
 	}
 	for (int e = 0 ; e < n_tar_samples ; e ++)
-		for (int j = 0; j<K; ++j) pbwt_states[e][j].clear();
+		for (int j = 0; j<A.mMaxPbwtDepth; ++j) pbwt_states[e][j].clear();
 
 	int ref_rac_l_com=0, prev_ref_rac_l_com=0;
 	int ref_rac_l_rare=0, prev_ref_rac_l_rare=0;
@@ -458,10 +444,10 @@ void haplotype_set::select_common_pd_fg(const int k, const int l_hq, const int l
 		if (g_dash <= f_dash)
 		{
 			++counter_gf;
-			if (pbwt_stored[l_hq] || cm_pos[k-1] - cm_pos[last_reset[htr]] > pbwt_modulo_cm/2.0f) //only long matches
+			if (pbwt_stored[l_hq]) //|| cm_pos[k-1] - cm_pos[last_reset[htr]] > pbwt_modulo_cm/2.0f) //only long matches
 			{
 				counter_sel_gf++;
-				selectK(htr, k-1, prev_ref_rac_l, pbwt_array_B, K, prev_hap);
+				selectK(htr, k-1, prev_ref_rac_l, pbwt_array_B, A.mMaxPbwtDepth, prev_hap);
 				length_sel_gf.push(cm_pos[k-1] - cm_pos[last_reset[htr]]);
 			}
 			f_dash = tar_hap[htr] * ref_rac_l;
@@ -478,7 +464,7 @@ void haplotype_set::select_common_pd_fg(const int k, const int l_hq, const int l
 
 		if (!reset && pbwt_stored[l_hq])
 		{
-			selectK(htr, k, ref_rac_l, pbwt_array_A, K, tar_hap[htr]);
+			selectK(htr, k, ref_rac_l, pbwt_array_A, A.mMaxPbwtDepth, tar_hap[htr]);
 			length_sel_mod.push(cm_pos[k] - cm_pos[last_reset[htr]]);
 //			f_k[htr]=0;
 //			g_k[htr]=n_ref_haps;
@@ -576,7 +562,7 @@ void haplotype_set::init_common(const int k, const int l, const int prev_ref_rac
 			if(g_dash <= f_dash)
 			{
 				counter_sel_gf++;
-				selectK(htr, common2tot[l-1], prev_ref_rac_l_com, pbwt_array_A, K, tar_hap[htr]);
+				selectK(htr, common2tot[l-1], prev_ref_rac_l_com, pbwt_array_A, A.mMaxPbwtDepth, tar_hap[htr]);
 				length_sel_gf.push(cm_pos[common2tot[l-1]] - cm_pos[last_reset[htr]]);
 
 				f_dash = 0;
@@ -598,14 +584,14 @@ void haplotype_set::init_common(const int k, const int l, const int prev_ref_rac
 			if(g_dash <= f_dash) //TODO check this
 			{
 				counter_sel_gf++;
-				if (cm_pos[common2tot[l-1]] - cm_pos[last_reset[htr]] > pbwt_modulo_cm/5.0f) //only long matches, e.g. 0.02cM
+				if (cm_pos[common2tot[l-1]] - cm_pos[last_reset[htr]] > A.mPbwtCM/5.0f) //only long matches, e.g. 0.02cM
 				{
 					counter_sel_gf++;
-					selectK(htr, common2tot[l-1], prev_ref_rac_l_com, pbwt_array_A, K, tar_hap[htr]);
+					selectK(htr, common2tot[l-1], prev_ref_rac_l_com, pbwt_array_A, A.mMaxPbwtDepth, tar_hap[htr]);
 					length_sel_gf.push(cm_pos[common2tot[l-1]] - cm_pos[last_reset[htr]]);
 				}
 				/*
-				selectK(htr, common2tot[l-1], prev_ref_rac_l_com, pbwt_array_A, pbwt_depth/4, tar_hap[htr]);
+				selectK(htr, common2tot[l-1], prev_ref_rac_l_com, pbwt_array_A, A.mMaxPbwtDepth/4, tar_hap[htr]);
 				length_sel_gf.push(cm_pos[common2tot[l-1]] - cm_pos[last_reset[htr]]);
 				*/
 				f_dash = 0;
@@ -688,7 +674,7 @@ void haplotype_set::selectK(const int htr, const int k, const int ref_rac_l, con
 	int d_up = pbwt_index[htr]-f_k[htr];
 	int d_down = g_k[htr]-pbwt_index[htr];
 
-	const int k1 = (k0<=0) ? K : k0;
+	const int k1 = (k0<=0) ? A.mMaxPbwtDepth : k0;
 
 	if (d_up < k1 && d_down < k1)
 	{
@@ -737,7 +723,7 @@ void haplotype_set::selectKrare(const int htr, const int k, const int ref_rac_l,
 	int d_down = g_k_small[htr]-pbwt_small_index[htr];
 	const int n_rare_haps = pbwt_array.size();
 
-	const int k1 = (k0<=0) ? K : k0;
+	const int k1 = (k0<=0) ? A.mMaxPbwtDepth : k0;
 
 	if (d_up < k1 && d_down < k1)
 	{
@@ -774,7 +760,7 @@ void haplotype_set::selectKrare(const int htr, const int k, const int ref_rac_l,
 
 void haplotype_set::performSelection_RARE_INIT_GL(const variant_map & M)
 {
-	if (Kinit==0)
+	if (A.Kinit==0)
 	{
 		vrb.bullet("No init selection (Kinit=0)");
 		return;
@@ -782,51 +768,44 @@ void haplotype_set::performSelection_RARE_INIT_GL(const variant_map & M)
 
 	std::vector<int> ref_range_iota(n_ref_haps);
 	std::iota(ref_range_iota.begin(),ref_range_iota.end(),0);
-	const int k_init=Kinit;
+	const int k_init=A.Kinit;
 	const int k_init8=static_cast <int> (std::floor(k_init*0.8f));
 	std::vector<int> sampled;
 	sampled.reserve(k_init);
 	std::vector < std::pair < int, int > > tmp_idxHaps_mac;
 	tmp_idxHaps_mac.reserve(k_init*2);
+	std::unordered_set<int> init_set;
 
 	for (int ind=0; ind < n_tar_samples; ++ind)
 	{
-		const int htr = tar_ind2hapid[ind];
+		init_set.clear();
+		/*
 		if (SindTarGL[ind].size() > 0)
 		{
-			if (SindTarGL[ind].size() > k_init8)
-			{
-				tmp_idxHaps_mac.clear();
-				for (auto r0 = 0; r0 < SindTarGL[ind].size(); ++r0) tmp_idxHaps_mac.push_back(std::pair < int, int > (M.vec_pos[SindTarGL[ind][r0]]->getMAC(), SindTarGL[ind][r0]));
-				std::sort(tmp_idxHaps_mac.begin(), tmp_idxHaps_mac.end());
+			tmp_idxHaps_mac.clear();
+			for (auto r0 = 0; r0 < SindTarGL[ind].size(); ++r0) tmp_idxHaps_mac.push_back(std::pair < int, int > (M.vec_pos[SindTarGL[ind][r0]]->getMAC(), SindTarGL[ind][r0]));
+			std::sort(tmp_idxHaps_mac.begin(), tmp_idxHaps_mac.end());
+			const int size_max = std::max((int) std::floor(k_init8*1.0 / SindTarGL[ind].size()), 2);
 
-				for (int r0 = 0 ; r0 < SindTarGL[ind].size() && init_states[ind].size() < k_init8 ; r0 ++)
-				{
-					const int idx_rare_variant = tmp_idxHaps_mac[r0].second;
-					sampled.clear();
-					std::sample(ref_range_iota.begin(), ref_range_iota.begin() + SvarRef[idx_rare_variant].size(), std::back_inserter(sampled), 5, rng.randomEngine);
-					for (int i=0; i<sampled.size() && init_states[ind].size() < k_init8; ++i) init_states[ind].insert(SvarRef[idx_rare_variant][sampled[i]]);
-				}
-			}
-			else
+			for (int r0 = 0 ; r0 < SindTarGL[ind].size() && init_set.size() < k_init8 ; r0 ++)
 			{
-				const int size_max = std::max((int) std::floor(k_init8*1.0 / SindTarGL[ind].size()), 1);
-				for (int r0 = 0 ; r0 < SindTarGL[ind].size() ; r0 ++)
-				{
-					sampled.clear();
-					const int idx_rare_variant = SindTarGL[ind][r0];
-					std::sample(SvarRef[idx_rare_variant].begin(), SvarRef[idx_rare_variant].end(),std::back_inserter(sampled), size_max, rng.randomEngine);
-					for (int r0=0; r0<sampled.size() && init_states[ind].size() < k_init8; ++r0) init_states[ind].insert(sampled[r0]);
-				}
+				const int idx_rare_variant = tmp_idxHaps_mac[r0].second;
+				sampled.clear();
+				std::sample(SvarRef[idx_rare_variant].begin(), SvarRef[idx_rare_variant].end(),std::back_inserter(sampled), size_max, rng.randomEngine);
+				for (int r0=0; r0<sampled.size() && init_set.size() < k_init8; ++r0) init_set.insert(sampled[r0]);
 			}
 		}
-		if (init_states[ind].size() < k_init)
+		*/
+		if (init_set.size() < k_init)
 		{
 			sampled.clear();
 			std::sample(ref_range_iota.begin(), ref_range_iota.end(),std::back_inserter(sampled), k_init, rng.randomEngine);
 			//std::shuffle(std::begin(ref_range_iota), std::end(ref_range_iota), rng.randomEngine);
-			for (int r0=0; r0<sampled.size() && init_states[ind].size() < k_init; ++r0) init_states[ind].insert(sampled[r0]);
+			for (int r0=0; r0<sampled.size() && init_set.size() < k_init; ++r0) init_set.insert(sampled[r0]);
 		}
+		init_states[ind].resize(init_set.size());
+		std::copy(init_set.begin(), init_set.end(), init_states[ind].begin());
+		std::sort(init_states[ind].begin(), init_states[ind].end());
 	}
 	SindTarGL.clear();
 	SindTarGL.shrink_to_fit();

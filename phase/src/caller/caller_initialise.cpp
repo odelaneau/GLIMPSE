@@ -43,41 +43,34 @@ void caller::read_files_and_initialise() {
 	vrb.title("Initialisation:");
 
 	//step0: Initialize seed & other
-	rng.setSeed(options["seed"].as < int > ());
-	const int nthreads =  options["threads"].as < int > ();
-	iterations_per_stage[STAGE_INIT] = 1;
-	iterations_per_stage[STAGE_BURN] = options["burnin"].as < int > ();
-	iterations_per_stage[STAGE_MAIN] = options["main"].as < int > ();
+	rng.setSeed(A.mSeed);
+	if (A.mNumThreads == 0) vrb.error("Error defining the number of threads. Only positive values are accepted.");
 
-	if (nthreads < 1) vrb.error("Error defining the number of threads. Only positive values are accepted.");
-
-	if (nthreads > 1) {
+	if (A.mNumThreads > 1) {
 		i_workers = 0; i_jobs = 0;
-		id_workers = std::vector < pthread_t > (nthreads);
+		id_workers = std::vector < pthread_t > (A.mNumThreads);
 		pthread_mutex_init(&mutex_workers, NULL);
 	}
-	min_gl = options["min-gl"].as < float > ();
 
 	//step2: Read input files
-	std::string reference_filename = options["reference"].as<std::string>();
-	if (input_fmt == InputFormat::BCF)
+	if (A.mInputFormat == InputFormat::BCF)
 	{
 		buildCoordinates();
 
-		genotype_reader readerG(H, G, V, M, options["sparse-maf"].as < float > (), options.count("input-field-gl"),options.count("impute-reference-only-variants"), options.count("keep-monomorphic-ref-sites"), options.count("use-gl-indels"));
-		if (options.count("samples-file")) readerG.readSamplesFilePloidy(options["samples-file"].as < std::string > ());
+		genotype_reader readerG(A,H, G, V, M, A.mSparseMaf);
+		if (!A.mSamplesFilename.empty()) readerG.readSamplesFilePloidy(A.mSamplesFilename);
 
 		if (options.count("input-gl"))
 		{
-			readerG.readGenotypes(options["input-gl"].as < std::string > (), options["reference"].as < std::string > (), nthreads);
+			readerG.readGenotypes(A.mInputGLFilename, A.mRefHapFilename, A.mNumThreads);
 			print_ref_panel_info("VCF/BCF");
 		}
 		else if (options.count("bam-list") || options.count("bam-file"))
 		{
 			setup_mpileup();
-			readerG.readGenotypesAndBAMs(options["reference"].as < std::string > (), nthreads);
+			readerG.readGenotypesAndBAMs(A.mRefHapFilename, A.mNumThreads);
 			print_ref_panel_info("VCF/BCF");
-			readerG.set_ploidy_tar();
+			//readerG.set_ploidy_tar();
 			read_BAMs();
 		}
 		else vrb.error("No valid input options (input-gl / bam-list / bam)");
@@ -87,18 +80,15 @@ void caller::read_files_and_initialise() {
 		vrb.wait("  * Binary reference panel parsing");
 		tac.clock();
 		{
-			std::ifstream ifs(reference_filename, std::ios::binary | std::ios_base::in);
-			if (!ifs.good()) vrb.error("Reading binary reference panel file: [" + reference_filename + "]. File not good(): eofbit, failbit or badbit set or file not found.");
+			std::ifstream ifs(A.mRefHapFilename, std::ios::binary | std::ios_base::in);
+			if (!ifs.good()) vrb.error("Reading binary reference panel file: [" + A.mRefHapFilename + "]. File not good(): eofbit, failbit or badbit set or file not found.");
 			try
 			{
 				boost::archive::binary_iarchive ia(ifs);
 				ia >> H;
 				ia >> V;
 			} catch (std::exception& e ) {
-				std::stringstream err_str;
-				err_str <<"problems reading the binary reference panel (exception triggered by boost archive). Please ensure you are using the same GLIMPSE and boost library version";
-				err_str << e.what();
-				vrb.error(err_str.str());
+				vrb.error("problems reading the binary reference panel (exception triggered by boost archive). Please ensure you are using the same GLIMPSE and boost library version");
 			}
 			if (H.Ypacked.size()==0) vrb.error("Problem reading binary file format. Empty PBWT detected.");
 
@@ -106,12 +96,12 @@ void caller::read_files_and_initialise() {
 			print_ref_panel_info("Binary");
 		}
 
-		genotype_reader readerG(H, G, V, M, H.sparse_maf, options.count("input-field-gl"),options.count("impute-reference-only-variants"), options.count("keep-monomorphic-ref-sites"),options.count("use-gl-indels"));
-		if (options.count("samples-file")) readerG.readSamplesFilePloidy(options["samples-file"].as < std::string > ());
+		genotype_reader readerG(A,H,G, V, M, H.sparse_maf);
+		if (!A.mSamplesFilename.empty()) readerG.readSamplesFilePloidy(A.mSamplesFilename);
 
 		if (options.count("input-gl"))
 		{
-			readerG.readTarGenotypes(options["input-gl"].as < std::string > (), nthreads);
+			readerG.readTarGenotypes(A.mInputGLFilename, A.mNumThreads);
 			H.allocate_hap_only();
 		}
 		else if (options.count("bam-list") || options.count("bam-file"))
@@ -121,98 +111,88 @@ void caller::read_files_and_initialise() {
 			H.allocate_hap_only();
 			read_BAMs();
 		}
-		else vrb.error("No valid input options (input-gl / bam-list / bam)");
+		else vrb.error("No valid input options (input-gl / bam-list / bam-file)");
 	}
-	H.transposeRareRef();
 
 	//step3: Read and initialise genetic map
-	if (input_fmt == InputFormat::BCF)
+	if (A.mInputFormat == InputFormat::BCF)
 	{
 		if (options.count("map"))
 		{
 			gmap_reader readerGM;
-			readerGM.readGeneticMapFile(options["map"].as < std::string > ());
+			readerGM.readGeneticMapFile(A.mMapFilename);
 			V.setGeneticMap(readerGM);
 		} else V.setGeneticMap();
 	}
 	vrb.bullet("Region spans " + stb.str(V.length()) + " bp and " + stb.str(V.lengthcM(), 2) + " cM");
 
-	//step4
-	const int ne = options["ne"].as < int > ();
-	HP0 = std::vector < std::vector < float > > (nthreads, std::vector < float > (H.n_tot_sites * 2, 0.0));
-	if (H.max_ploidy > 1) HP1 = std::vector < std::vector < float > > (nthreads, std::vector < float > (H.n_tot_sites * 2, 0.0));
+	vrb.title("Allocating data structures");
 
-	HLC = std::vector < std::vector < float > > (nthreads, std::vector < float > (H.n_tot_sites * 2));
-	HMM = std::vector < imputation_hmm * > (nthreads, nullptr);
-	if (H.max_ploidy > 1) DMM = std::vector < phasing_hmm * > (nthreads, nullptr);
-	COND = std::vector < conditioning_set * > (nthreads, nullptr);
-	int kpbwt = std::min(options["Kpbwt"].as < int > (), (int) H.n_ref_haps);
-	int kinit = std::min(options["Kinit"].as < int > (), (int) H.n_ref_haps);
-	const float err_imp = std::clamp(options["err-imp"].as < float > (), 1e-12f, 1e-3f);
-	const float err_phase = options["err-phase"].as < float > ();
+	H.transposeRareRef();
+
+	//step4
+	HP0 = std::vector < std::vector < float > > (A.mNumThreads, std::vector < float > (H.n_tot_sites * 2, 0.0));
+	if (H.max_ploidy > 1) HP1 = std::vector < std::vector < float > > (A.mNumThreads, std::vector < float > (H.n_tot_sites * 2, 0.0));
+
+	HLC = std::vector < std::vector < float > > (A.mNumThreads, std::vector < float > (H.n_tot_sites * 2));
+	HMM = std::vector < imputation_hmm * > (A.mNumThreads, nullptr);
+	if (H.max_ploidy > 1) DMM = std::vector < phasing_hmm * > (A.mNumThreads, nullptr);
+	COND = std::vector < conditioning_set * > (A.mNumThreads, nullptr);
 	const bool use_list = options.count("state-list");
 
 	for (int t = 0 ; t < HMM.size() ; t ++)
 	{
-		COND[t] = new conditioning_set(V,H,H.n_ref_haps,ne, kinit, kpbwt, err_imp, err_phase, use_list);
+		COND[t] = new conditioning_set(A,V,H);
 		HMM[t] = new imputation_hmm(COND[t]);
 		if (H.max_ploidy > 1) DMM[t] = new phasing_hmm(COND[t]);
 	}
 
 	//step5 PBWT
-	H.allocatePBWT(options["pbwt-depth"].as < int > (), options["pbwt-modulo-cm"].as < float > (), V, G, kinit, kpbwt);
+	H.allocatePBWT(V, G);
 
 	//step6 list states
-	if (use_list) H.read_list_states(options["state-list"].as < std::string > ());
-
-	//checksum
-	if(options.count("checkpoint-file-in") || options.count("checkpoint-file-out")) {
-		H.update_checksum(crc);
-		G.update_checksum(crc);
-		V.update_checksum(crc);
-	}
-
+	if (use_list) H.read_list_states(A.mStateListFilename);
 }
 
 
 void caller::setup_mpileup()
 {
-	if (!options.count("download-fasta-ref"))
-	{
+//	if (!options.count("download-fasta-ref"))
+//	{
 	// without these 2 lines, htslib sometimes tries to download a part of the sequence
 	// even though the -f reference was provided.
 		setenv("REF_CACHE", "", 0);
 		setenv("REF_PATH", "fake_value_so_no_download", 0);
-	}
+//	}
 
 	//if (!options.count("fasta") && !options.count("download-fasta-ref")) vrb.error("Fasta file should be provided or --download-fasta-ref option must be added.");
 	if (options.count("fasta"))
 	{
-		M.fai_fname = options["fasta"].as < std::string > ();
+		M.fai_fname = A.mFastaFilename;
 		M.fai = fai_load(M.fai_fname.c_str());
 		if (M.fai == NULL) vrb.error("Error loading reference genome. The reference should be a fasta file with a .fai index.");
 	}
 
 	M.fflag = (BAM_FUNMAP | BAM_FSECONDARY);
-	if (!options.count("keep-failed-qc")) M.fflag |= BAM_FQCFAIL;
-	if (!options.count("keep-duplicates")) M.fflag |= BAM_FDUP;
+	if (!A.mKeepFailedQC) M.fflag |= BAM_FQCFAIL;
+	if (!A.mKeepDuplicates) M.fflag |= BAM_FDUP;
 	//if (!options.count("keep-supp")) M.fflag  |= BAM_FSUPPLEMENTARY;
 
-	M.keep_orphan = options.count("keep-orphan-reads");
-	M.check_orientation = !options.count("ignore-orientation");
-	M.check_proper_pair = options.count("check-proper-pairing");
+	M.keep_orphan = A.mKeepOrphanReads;
+	M.check_orientation = !A.mIgnoreOrientation;
+	M.check_proper_pair = A.mCheckProperPairing;
 
-	M.min_mq = options["mapq"].as <int> ();
-	M.min_bq = options["baseq"].as<int>();
-	M.max_dp = options["max-depth"].as<int>();
+	M.min_mq = A.mMapQ;
+	M.min_bq = A.mBaseQ;
+	M.max_dp = A.mMaxDepth;
 
 	if (M.min_mq <0) vrb.error("Error setting min map quality. Value is negative: " + std::to_string(M.min_mq) + ".");
 	if (M.min_bq <0) vrb.error("Error setting min base quality. Value is negative: " + std::to_string(M.min_bq) + ".");
 	if (M.max_dp <0) vrb.error("Error setting max deapth. Value is negative: " + std::to_string(M.max_dp) + ".");
 
-	M.illumina13 = options.count("illumina13+");
+	M.illumina13 = A.mIllumina13;
 
-	if (options["call-model"].as<std::string>()!="standard")
+	if (A.mCallModel!="standard")
 	{
 		vrb.error("Only standard model is supported for now");
 	}
@@ -220,8 +200,8 @@ void caller::setup_mpileup()
     if (options.count("bam-list"))
     {
     	std::string buffer;
-		input_file fd (options["bam-list"].as < std::string >());
-	    if (!fd.good()) vrb.error("Reading bam list: [" + options["bam-list"].as < std::string >() + "]");
+		input_file fd (A.mBamListFilename);
+	    if (!fd.good()) vrb.error("Reading bam list: [" +A.mBamListFilename + "]");
 
 		std::vector<std::string> btokens(2);
 		std::set<std::string> sbams;
@@ -245,10 +225,10 @@ void caller::setup_mpileup()
     else
     {
     	if (!options.count("bam-file")) vrb.error("Error reading --bam-file option");
-    	M.bam_fnames  = std::vector<std::string>(1, options["bam-file"].as < std::string > ());
+    	M.bam_fnames  = std::vector<std::string>(1, A.mBamFileFilename);
     	M.n_tar_samples = 1;
     	M.tar_sample_names = std::vector<std::string>(1);
-    	if (options.count("ind-name")) M.tar_sample_names[0] = options["ind-name"].as<std::string>();
+    	if (options.count("ind-name")) M.tar_sample_names[0] = A.mIndName;
     	else M.tar_sample_names[0] = stb.remove_ext(stb.extract_file_name(M.bam_fnames[0]));
     }
     if (M.n_tar_samples == 0) vrb.error("No input BAM file given.");
@@ -278,12 +258,12 @@ void caller::read_BAMs()
 {
 	tac.clock();
 
-	vrb.bullet("Reading BAM files");
+	vrb.title("Reading BAM files");
 
-	const int nthreads = options["threads"].as < int > ();
-	READER_BAM = std::vector < genotype_bam_caller * > (nthreads, nullptr);
-	for (int t = 0 ; t < nthreads ; t ++)
-		READER_BAM[t] = new genotype_bam_caller(H,G,V,M, V.input_gregion, V.input_start, V.input_stop,  options["call-model"].as <std::string> (), options.count("call-indels"));
+	vrb.progress("  * Reading BAM files", 0);
+	READER_BAM = std::vector < genotype_bam_caller * > (A.mNumThreads, nullptr);
+	for (int t = 0 ; t < A.mNumThreads ; t ++)
+		READER_BAM[t] = new genotype_bam_caller(H,G,V,M, V.input_gregion, V.input_start, V.input_stop,  A.mCallModel, A.mCallIndels);
 
     G.stats.cov_ind = std::vector<stats1D>(M.n_tar_samples);
     G.stats.depth_count = std::vector< std::vector<int>> (M.n_tar_samples, std::vector<int> (M.max_dp+1, 0));
@@ -291,7 +271,7 @@ void caller::read_BAMs()
 	float prog_step = 1.0/M.n_tar_samples;
 	float prog_bar = 0.0;
 
-	if (nthreads > 1)
+	if (A.mNumThreads > 1)
 	{
 		for (int t = 0 ; t < id_workers.size() ; t++) pthread_create( &id_workers[t] , NULL, read_BAMs_callback, static_cast<void *>(this));
 		for (int t = 0 ; t < id_workers.size() ; t++) pthread_join( id_workers[t] , NULL);
@@ -302,7 +282,7 @@ void caller::read_BAMs()
 		vrb.progress("  * Reading BAM files", prog_bar);
 	}
 
-	for (int t = 0 ; t < nthreads ; t ++)
+	for (int t = 0 ; t < A.mNumThreads ; t ++)
 	{
 		if(READER_BAM[t]) delete READER_BAM[t];
 	}
@@ -311,8 +291,7 @@ void caller::read_BAMs()
     vrb.bullet("Reading BAM files done (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
 
 	//STATS HERE!
-    std::string out_file_name = options["output"].as < std::string > ();
-    std::string file_name = stb.remove_ext(out_file_name);
+    std::string file_name = stb.remove_ext(A.mOutputFilename);
     if (stb.get_extension(file_name) == "vcf") file_name = stb.remove_ext(file_name);
     file_name += "_stats_coverage.txt.gz";
     output_file out_file(file_name);

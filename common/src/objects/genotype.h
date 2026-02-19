@@ -27,8 +27,6 @@
 #define _GENOTYPE_H
 
 #include <utils/otools.h>
-#include <utils/checksum_utils.h>
-#include "boost/serialization/serialization.hpp"
 
 #define _SET32(n,i)	((n) |= 1U << (i))
 #define _CLR32(n,i)	((n) &= ~(1U << (i)));
@@ -39,10 +37,6 @@ struct inferred_genotype {
 	float gp0, gp1;
 	bool hds;
 	int32_t idx;
-
-	inferred_genotype() : idx(0), gp0(0), gp1(0), hds(0)
-	{
-	}
 
 	inferred_genotype(const int _idx, const float _gp0, const float _gp1, const bool _hds) : idx(_idx), gp0(_gp0), gp1(_gp1), hds(_hds) {
 	}
@@ -67,16 +61,19 @@ struct inferred_genotype {
 		return gp1 > gp0;
 	}
 
-	template<class Archive>
-	void serialize(Archive & ar, const unsigned int version)
+	void getGp(const bool maj, std::array<float,3>& _gp)
 	{
-		ar & gp0;
-		ar & gp1;
-		ar & hds;
-		ar & idx;
+		_gp[2*maj] = gp0;
+		_gp[1] = gp1;
+		_gp[2-2*maj] = std::clamp(1.0f - gp1 - gp0, 0.0f, 1.0f);
 	}
 };
 
+struct alt_ds {
+	std::array<float,2> ap;
+
+	alt_ds(const float _ap0, const float _ap1) {ap[0]=_ap0; ap[1]=_ap1;}
+};
 
 class genotype {
 public:
@@ -87,12 +84,14 @@ public:
 	const int ploidy;				//ploidy can be 1,2 (2 is default)
 	const int hapid;
 	int stored_cnt;
+	const bool store_hap_ds;
 
 	std::vector < unsigned char > GL;		// Original Genotype Likelihoods
 	std::vector <bool> flat;
 
 	// Sparse storage for GPs and HSs
 	std::vector < inferred_genotype > stored_data;
+	std::vector < alt_ds > stored_alt_ds;
 
 	// This should be removed as it is already stored in haplotype_set
 	std::vector < bool > H0;					// First haplotype
@@ -100,7 +99,7 @@ public:
 
 
 	//CORE METHODS
-	genotype(const std::string _name, const int _index, const int _n_variants, const int _ploidy, const int _hapid);
+	genotype(const std::string _name, const int _index, const int _n_variants, const int _ploidy, const int _hapid, const bool _store_hap_ds);
 	~genotype();
 	void allocate();
 	void free();
@@ -113,26 +112,6 @@ public:
 	void storeGenotypePosteriorsAndHaplotypes(const std::vector < float > &);
 	void storeGenotypePosteriorsAndHaplotypes(const std::vector < float > &, const std::vector < float > &);
 	void sortAndNormAndInferGenotype();
-
-	template<class Archive>
-	void serialize_checkpoint_data(Archive &ar)
-	{
-		ar & stored_cnt;
-		ar & stored_data;
-		ar & H0;
-		ar & H1;
-	}
-
-	void update_checksum(checksum &crc) const
-	{
-		crc.process_data(name);
-		crc.process_data(index);
-		crc.process_data(n_variants);
-		crc.process_data(ploidy);
-		crc.process_data(hapid);
-		crc.process_data(GL);
-		crc.process_data(flat);
-	}
 };
 
 #endif

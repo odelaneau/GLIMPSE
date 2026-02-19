@@ -28,7 +28,6 @@
 
 #include <cstdlib>
 #include <utils/otools.h>
-#include <utils/checksum_utils.h>
 #include "boost/serialization/serialization.hpp"
 #include "boost/serialization/array.hpp"
 
@@ -41,20 +40,24 @@ class bitmatrix
 {
 public:
 	unsigned long int n_bytes, n_cols, n_rows;
-	unsigned char * bytes;
+	char * bytes;
 
 	bitmatrix();
 	virtual ~bitmatrix();
 
-
-	void subset(bitmatrix & BM, std::vector < unsigned int > rows);
+	void reset();
+	void subset(const bitmatrix & BM, const std::vector < unsigned int >& rows);
 	void allocate(unsigned int nrow, unsigned int ncol);
 	void reallocate(unsigned int nrow, unsigned int ncol);
-	void set(unsigned int row, unsigned int col, unsigned char bit);
-	void set(unsigned int row, unsigned char bit);
-	unsigned char get(unsigned int row, unsigned int col) const;
-	unsigned char getByte(unsigned int row, unsigned int col) const;
+	void set_all(char bit);
+	void set(unsigned int row, unsigned int col, char bit);
+	void set(unsigned int row, char bit);
+	char get(unsigned int row, unsigned int col) const;
+	char getByte(unsigned int row, unsigned int col) const;
+	char* getRowPtr(unsigned int row);
+	char* getRow(unsigned int row);
 
+	//void transpose(bitmatrix & BM, unsigned int _max_row, unsigned int _max_col, std::vector<unsigned int>& col2row_offsets);
 	void transpose(bitmatrix & BM, unsigned int _min_row, unsigned int _min_col, unsigned int _max_row, unsigned int _max_col);
 	void transpose(bitmatrix & BM, unsigned int _max_row, unsigned int _max_col);
 	void transpose(bitmatrix & BM);
@@ -70,43 +73,51 @@ public:
 		if (Archive::is_loading::value)
 		{
 			assert(bytes == nullptr);
-			bytes = (unsigned char*)std::malloc(n_bytes*sizeof(unsigned char));
+			bytes = (char*)std::malloc(n_bytes*sizeof(char));
 		}
-		ar & boost::serialization::make_array<unsigned char>(bytes, n_bytes);
-	}
-
-	void update_checksum(checksum &crc) const
-	{
-		crc.process_data(n_bytes);
-		crc.process_data(n_cols);
-		crc.process_data(n_rows);
-		crc.process_data(bytes, n_bytes*sizeof(unsigned char));
+		ar & boost::serialization::make_array<char>(bytes, n_bytes);
 	}
 };
 
 inline
-void bitmatrix::set(unsigned int row, unsigned int col, unsigned char bit) {
+void bitmatrix::set_all(char bit)
+{
+	std::memset(bytes, 0, n_bytes);
+}
+
+inline
+void bitmatrix::set(unsigned int row, unsigned int col, char bit) {
 	unsigned int bitcol = col % 8;
 	unsigned long targetAddr = ((unsigned long)row) * (n_cols/8) + col/8;
-	unsigned char mask = ~(1 << (7 - bitcol));
+	char mask = ~(1 << (7 - bitcol));
 	this->bytes[targetAddr] &= mask;
 	this->bytes[targetAddr] |= (bit << (7 - bitcol));
 }
 
 inline
-void bitmatrix::set(unsigned int row, unsigned char bit) {
+void bitmatrix::set(unsigned int row, char bit) {
 	std::memset(&bytes[(unsigned long)row * (n_cols/8)], bit * 255, n_cols/8);
 }
 
 inline
-unsigned char bitmatrix::get(unsigned int row, unsigned int col) const {
+char bitmatrix::get(unsigned int row, unsigned int col) const {
 	unsigned long targetAddr = ((unsigned long)row) * (n_cols>>3) +  (col>>3);
 	return (this->bytes[targetAddr] >> (7 - (col%8))) & 1;
 }
 
 inline
-unsigned char bitmatrix::getByte(unsigned int row, unsigned int col) const {
+char bitmatrix::getByte(unsigned int row, unsigned int col) const {
 	return bytes[((unsigned long)row) * (n_cols>>3) +  (col>>3)];
+}
+
+inline
+char* bitmatrix::getRow(unsigned int row) {
+	return bytes + ((unsigned long)row) * (n_cols>>3);
+}
+
+inline
+char* bitmatrix::getRowPtr(unsigned int row) {
+	return &bytes[((unsigned long)row) * (n_cols>>3)];
 }
 
 #endif

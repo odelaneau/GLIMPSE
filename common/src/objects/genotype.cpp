@@ -25,13 +25,14 @@
 
 #include <objects/genotype.h>
 
-genotype::genotype(const std::string _name, const int _index, const int _n_variants, const int _ploidy, const int _hapid) :
+genotype::genotype(const std::string _name, const int _index, const int _n_variants, const int _ploidy, const int _hapid, const bool _store_hap_ds) :
 		name(_name),
 		index(_index),
 		n_variants(_n_variants),
 		ploidy(_ploidy),
 		hapid(_hapid),
-		stored_cnt(0)
+		stored_cnt(0),
+		store_hap_ds(_store_hap_ds)
 {
 }
 
@@ -172,6 +173,11 @@ void genotype::storeGenotypePosteriorsAndHaplotypes(const std::vector < float > 
 	for (int e = 0 ; e < stored_data.size() ; e ++)
 	{
 		int var_idx = stored_data[e].idx;
+		//debugging
+		//if (var_idx == 215){ 
+		//	float = 2;//stop here 
+		//}
+
 		float p0 = std::clamp(HP0[2*var_idx+0] * HP1[2*var_idx+0],0.0f,1.0f);
 		float p1 = std::clamp(HP0[2*var_idx+0] * HP1[2*var_idx+1] + HP0[2*var_idx+1] * HP1[2*var_idx+0],0.0f,1.0f);
 		float p2 = std::clamp(HP0[2*var_idx+1] * HP1[2*var_idx+1],0.0f,1.0f);
@@ -183,6 +189,11 @@ void genotype::storeGenotypePosteriorsAndHaplotypes(const std::vector < float > 
 		//H0[var_idx]?_SET32(stored_data[e].hs,2*(stored_cnt%16)+0):_CLR32(stored_data[e].hs,2*(stored_cnt%16)+0);
 		//H1[var_idx]?_SET32(stored_data[e].hs,2*(stored_cnt%16)+1):_CLR32(stored_data[e].hs,2*(stored_cnt%16)+1);
 		stored_data[e].hds = HP0[2*var_idx+1] < HP1[2*var_idx+1];
+		if (store_hap_ds)
+		{
+			stored_alt_ds[e].ap[0] += HP0[2*var_idx+1];
+			stored_alt_ds[e].ap[1] += HP1[2*var_idx+1];
+		}
 		//Flag variant as already stored GP/HS
 		flag[var_idx] = true;
 	}
@@ -201,7 +212,7 @@ void genotype::storeGenotypePosteriorsAndHaplotypes(const std::vector < float > 
 				//H0[l]?_SET32(new_hs,2*(stored_cnt%16)+0):_CLR32(new_hs,2*(stored_cnt%16)+0);
 				//H1[l]?_SET32(new_hs,2*(stored_cnt%16)+1):_CLR32(new_hs,2*(stored_cnt%16)+1);
 				stored_data.emplace_back(l, p0/(p0+p1+p2) + stored_cnt*1.0f, p1/(p0+p1+p2), HP0[2*l+1] < HP1[2*l+1]);
-
+				if (store_hap_ds) stored_alt_ds.emplace_back(HP0[2*l+1], HP1[2*l+1]);
 			}
 		}
 	}
@@ -216,8 +227,19 @@ void genotype::sortAndNormAndInferGenotype() {
 
 	// Normalizing
 	for (int e = 0 ; e < stored_data.size() ; e ++) {
+		//if (stored_data[e].idx==215){ 
+			//stop here 
+	//		float stop = 1; 
+		//}
 		stored_data[e].gp0 /= stored_cnt;
 		stored_data[e].gp1 /= stored_cnt;
+		//float ds = stored_data[e].gp1 + stored_data[e].getGp2()*2;
+		if (store_hap_ds)
+		{
+			stored_alt_ds[e].ap[0] /= stored_cnt;
+			stored_alt_ds[e].ap[1] /= stored_cnt;
+			//float altds = stored_alt_ds[e].ap[0] + stored_alt_ds[e].ap[1];
+		}
 	}
 
 	// Infer most likely genotypes

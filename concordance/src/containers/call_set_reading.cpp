@@ -427,7 +427,7 @@ void call_set::readData(std::vector < std::string > & ftruth, std::vector < std:
 				line_f =  bcf_sr_get_line(sr, 2);
 
 				const int line_type = bcf_get_variant_types(line_f);
-				if (line_f->n_allele == 2 && ((line_type==VCF_SNP) || (line_type==VCF_INDEL)))
+				if (line_f->n_allele == 2)
 				{
 					float af = 0.0f;
 
