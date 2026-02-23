@@ -131,16 +131,16 @@ void ref_genotype_reader::scanGenotypesCommon(bcf_srs_t * sr,const std::string f
 	vrb.wait("  * VCF/BCF scanning");
 	tac.clock();
 
-	//Scan Ref file
-	#ifdef __XSI__
-		n_ref_samples = c_xcf_nsamples(fref.c_str());
-	#else
-		n_ref_samples = bcf_hdr_nsamples(sr->readers[ref_sr_n].header);
-	#endif
-	//n_ref_samples = bcf_hdr_nsamples(sr->readers[ref_sr_n].header);
-	H.n_tot_sites = 0;
+	bcf_idpair_t *ctg = sr->readers[ref_sr_n].header->id[BCF_DT_CTG];
+	for (int idx_ctg = 0; idx_ctg < sr->readers[ref_sr_n].header->n[BCF_DT_CTG]; ++idx_ctg)
+	{
+		std::string length = "";
+		if (ctg[idx_ctg].val->info[0] > 0) length = ",length=" + std::to_string(ctg[idx_ctg].val->info[0]);
+		H.contigs_header.push_back(std::string("##contig=<ID="+ std::string(ctg[idx_ctg].key) + length + ">"));
+	}
 
-	//Scan file
+	n_ref_samples = bcf_hdr_nsamples(sr->readers[ref_sr_n].header);
+	H.n_tot_sites = 0;
 	int nset;
 	bcf1_t * line_ref = NULL;
 	int rAC=0, nAC=0, *vAC = NULL;
@@ -280,8 +280,12 @@ void ref_genotype_reader::parseRefGenotypes(bcf_srs_t * sr,const std::string fre
 		c_xcf_delete(c_xcf_p);
 	#endif
 	free(gt_arr_ref);
-
-	// Report
 	vrb.bullet("Reference panel parsing done ("+stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
+
+	tac.clock();
+	H.HhapRef.allocate(H.n_ref_haps, H.n_com_sites);
+	H.HvarRef.transpose(H.HhapRef,H.n_com_sites,H.n_ref_haps);
+	//H.HvarRef.reset();
+	vrb.bullet("Common transpose\t[ref]\t\t[var2hap]\t\t\t(" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
 }
 

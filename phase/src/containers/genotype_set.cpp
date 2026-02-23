@@ -32,8 +32,13 @@ genotype_set::genotype_set() {
 }
 
 genotype_set::~genotype_set() {
-	for (int i = 0 ; i< vecG.size() ; i ++) delete vecG[i];
+	for (auto p : vecG)
+    {
+	     delete p;
+    }
 	vecG.clear();
+	stats.cov_ind.clear();
+	stats.depth_count.clear();
 	n_site = 0;
 	n_ind = 0;
 }

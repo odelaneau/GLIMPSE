@@ -27,7 +27,6 @@
 #define _REF_HAPLOTYPE_SET_H
 
 #include <utils/otools.h>
-#include <utils/checksum_utils.h>
 
 #include <containers/variant_map.h>
 #include <containers/bitmatrix.h>
@@ -119,6 +118,7 @@ public:
 	std::vector < std::vector < int > > ShapRef;				// Rare alleles per haplotype
 	std::vector < std::vector <int> > SvarRef;
 	bitmatrix HvarRef;								// Bitmatrix of haplotypes, variant first / transpose of Hhap;
+	bitmatrix HhapRef;
 
 	std::vector < unsigned char > Ypacked;
 	std::vector < std::vector <int > > A_small_idx;
@@ -128,6 +128,8 @@ public:
 	std::vector < int > pbwt_array_B;
 	std::vector<int> pbwt_small_A;
 	std::vector<int> pbwt_small_B;
+
+	std::vector<std::string> contigs_header;
 
 	//CONSTRUCTOR/DESTRUCTOR/INITIALIZATION
 	ref_haplotype_set();
@@ -145,6 +147,7 @@ public:
 	template<class Archive>
 	void serialize(Archive & ar, const unsigned int version)
 	{
+		ar & sparse_maf;
 		ar & n_tot_sites;
 		ar & n_rar_sites;
 		ar & n_com_sites;
@@ -154,25 +157,10 @@ public:
 		ar & major_alleles;
 		ar & common2tot;
 		ar & ShapRef;
-		ar & HvarRef;
+		ar & HhapRef;
 		ar & Ypacked;
 		ar & A_small_idx;
-	}
-
-	void update_checksum(checksum &crc) const
-	{
-		crc.process_data(n_tot_sites);
-		crc.process_data(n_rar_sites);
-		crc.process_data(n_com_sites);
-		crc.process_data(n_com_sites_hq);
-		crc.process_data(n_ref_haps);
-		crc.process_data(flag_common);
-		crc.process_data(major_alleles);
-		crc.process_data(common2tot);
-		crc.process_data(ShapRef);
-		HvarRef.update_checksum(crc);
-		crc.process_data(Ypacked);
-		crc.process_data(A_small_idx);
+		ar & contigs_header;
 	}
 };
 

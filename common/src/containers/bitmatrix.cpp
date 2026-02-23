@@ -38,12 +38,21 @@ bitmatrix::~bitmatrix() {
 	bytes=NULL;
 }
 
+void bitmatrix::reset()
+{
+	if (bytes) std::free(bytes);
+	bytes=nullptr;
+	n_rows = 0;
+	n_cols = 0;
+	n_bytes = 0;
+}
 
-void bitmatrix::subset(bitmatrix & BM, std::vector < unsigned int > rows) {
+void bitmatrix::subset(const bitmatrix & BM, const std::vector < unsigned int >& rows)
+{
 	n_rows = rows.size() + ((rows.size()%8)?(8-(rows.size()%8)):0);
 	n_cols = BM.n_cols;
 	n_bytes = (n_cols/8) * (unsigned long)n_rows;
-	bytes = (unsigned char*)realloc(bytes, n_bytes*sizeof(unsigned char));
+	bytes = (char*)realloc(bytes, n_bytes*sizeof(char));
 	unsigned long offset_addr = 0;
 	for (int r = 0 ; r < rows.size() ; r ++) {
 		std::memcpy(&bytes[offset_addr], &BM.bytes[((unsigned long)rows[r]) * (BM.n_cols/8)], n_cols/8);
@@ -60,7 +69,7 @@ void bitmatrix::subset(bitmatrix & BM, vector < int > rows, unsigned int col_fro
 	n_cols = n_bytes_per_row * 8;
 	n_bytes = n_bytes_per_row * n_rows;
 	cout << row_start << " " << row_end << " " << n_bytes_per_row << endl;
-	bytes = (unsigned char*)realloc(bytes, n_bytes*sizeof(unsigned char));
+	bytes = (char*)realloc(bytes, n_bytes*sizeof(char));
 	cout << "OKAY!" << n_bytes_per_row << endl;
 	unsigned long offset_addr = 0;
 	for (int r = 0 ; r < rows.size() ; r ++) {
@@ -78,7 +87,7 @@ void bitmatrix::allocate(unsigned int nrow, unsigned int ncol) {
 	n_rows = nrow + ((nrow%8)?(8-(nrow%8)):0);
 	n_cols = ncol + ((ncol%8)?(8-(ncol%8)):0);
 	n_bytes = (n_cols/8) * (unsigned long)n_rows;
-	bytes = (unsigned char*)std::malloc(n_bytes*sizeof(unsigned char));
+	bytes = (char*)std::malloc(n_bytes*sizeof(char));
 	std::memset(bytes, 0, n_bytes);
 }
 
@@ -86,8 +95,9 @@ void bitmatrix::reallocate(unsigned int nrow, unsigned int ncol) {
 	n_rows = nrow + ((nrow%8)?(8-(nrow%8)):0);
 	n_cols = ncol + ((ncol%8)?(8-(ncol%8)):0);
 	unsigned long int new_n_bytes = (n_cols/8) * (unsigned long)n_rows;
-	if (new_n_bytes > n_bytes) bytes = (unsigned char*)std::realloc(bytes, new_n_bytes*sizeof(unsigned char));
+	if (new_n_bytes > n_bytes) bytes = (char*)std::realloc(bytes, new_n_bytes*sizeof(char));
 	n_bytes = new_n_bytes;
+	std::memset(bytes, 0, n_bytes);
 }
 
 
@@ -101,7 +111,7 @@ void bitmatrix::transpose(bitmatrix & BM, unsigned int _max_row, unsigned int _m
 	unsigned int max_row = _max_row + ((_max_row%8)?(8-(_max_row%8)):0);
 	unsigned int max_col = _max_col + ((_max_col%8)?(8-(_max_col%8)):0);
 	unsigned long targetAddr, sourceAddr;
-	union { unsigned int x[2]; unsigned char b[8]; } m4x8d;
+	union { unsigned int x[2]; char b[8]; } m4x8d;
 	for (unsigned int row = 0; row < max_row; row += 8) {
 		for (unsigned int col = 0; col < max_col; col += 8) {
 			for (unsigned int i = 0; i < 8; i++) {
@@ -110,15 +120,52 @@ void bitmatrix::transpose(bitmatrix & BM, unsigned int _max_row, unsigned int _m
 			}
 			for (unsigned int i = 0; i < 7; i++) {
 				targetAddr = ((col+i) * ((unsigned long)(n_rows/8)) + (row) / 8);
-				BM.bytes[targetAddr]  = static_cast<unsigned char>(abracadabra(m4x8d.x[1] & (0x80808080 >> i), (0x02040810 << i)) & 0x0f) << 4;
-                BM.bytes[targetAddr] |= static_cast<unsigned char>(abracadabra(m4x8d.x[0] & (0x80808080 >> i), (0x02040810 << i)) & 0x0f) << 0;
+				BM.bytes[targetAddr]  = static_cast<char>(abracadabra(m4x8d.x[1] & (0x80808080 >> i), (0x02040810 << i)) & 0x0f) << 4;
+                BM.bytes[targetAddr] |= static_cast<char>(abracadabra(m4x8d.x[0] & (0x80808080 >> i), (0x02040810 << i)) & 0x0f) << 0;
 			}
 			targetAddr = ((col+7) * ((unsigned long)(n_rows/8)) + (row) / 8);
-			BM.bytes[targetAddr]  = static_cast<unsigned char>(abracadabra((m4x8d.x[1] << 7) & (0x80808080 >> 0), (0x02040810 << 0)) & 0x0f) << 4;
-            BM.bytes[targetAddr] |= static_cast<unsigned char>(abracadabra((m4x8d.x[0] << 7) & (0x80808080 >> 0), (0x02040810 << 0)) & 0x0f) << 0;
+			BM.bytes[targetAddr]  = static_cast<char>(abracadabra((m4x8d.x[1] << 7) & (0x80808080 >> 0), (0x02040810 << 0)) & 0x0f) << 4;
+            BM.bytes[targetAddr] |= static_cast<char>(abracadabra((m4x8d.x[0] << 7) & (0x80808080 >> 0), (0x02040810 << 0)) & 0x0f) << 0;
 		}
 	}
 }
+/*
+void bitmatrix::transpose(bitmatrix & BM, unsigned int _max_row, unsigned int _max_col, std::vector<unsigned int>& col2row_offsets)
+{
+	assert(col2row_offsets.size() == _max_col);
+	assert(BM.n_cols == n_rows);
+	assert(BM.n_rows >= n_cols);
+	unsigned int max_row = _max_row + ((_max_row%8)?(8-(_max_row%8)):0);
+	unsigned int max_col = _max_col + ((_max_col%8)?(8-(_max_col%8)):0);
+
+	size_t cur_size=col2row_offsets.size();
+	if (cur_size < max_col)
+	{
+		col2row_offsets.resize(max_col);
+		for (size_t i=0; i<max_col-cur_size; ++i)
+			col2row_offsets[cur_size+i] = 0;
+	}
+
+	unsigned long targetAddr, sourceAddr;
+	union { unsigned int x[2]; char b[8]; } m4x8d;
+	for (unsigned int row = 0; row < max_row; row += 8) {
+		for (unsigned int col = 0; col < max_col; col += 8) {
+			for (unsigned int i = 0; i < 8; i++) {
+				sourceAddr = (row+i) * ((unsigned long)(n_cols/8)) + col/8;
+				m4x8d.b[7 - i] = this->bytes[sourceAddr];
+			}
+			for (unsigned int i = 0; i < 7; i++) {
+				targetAddr = (col2row_offsets[col+i]) * ((unsigned long)(n_rows/8)) + row/8;
+				BM.bytes[targetAddr]  = static_cast<char>(abracadabra(m4x8d.x[1] & (0x80808080 >> i), (0x02040810 << i)) & 0x0f) << 4;
+                BM.bytes[targetAddr] |= static_cast<char>(abracadabra(m4x8d.x[0] & (0x80808080 >> i), (0x02040810 << i)) & 0x0f) << 0;
+			}
+			targetAddr = (col2row_offsets[col+7]) * ((unsigned long)(n_rows/8)) + row/ 8;
+			BM.bytes[targetAddr]  = static_cast<char>(abracadabra((m4x8d.x[1] << 7) & (0x80808080 >> 0), (0x02040810 << 0)) & 0x0f) << 4;
+            BM.bytes[targetAddr] |= static_cast<char>(abracadabra((m4x8d.x[0] << 7) & (0x80808080 >> 0), (0x02040810 << 0)) & 0x0f) << 0;
+		}
+	}
+}
+*/
 
 void bitmatrix::transpose(bitmatrix & BM, unsigned int _min_row, unsigned int _min_col, unsigned int _max_row, unsigned int _max_col) {
 	unsigned int min_row = _min_row - ((_min_row%8)?(8-(_min_row%8)):0);
@@ -127,7 +174,7 @@ void bitmatrix::transpose(bitmatrix & BM, unsigned int _min_row, unsigned int _m
 	unsigned int max_col = _max_col + ((_max_col%8)?(8-(_max_col%8)):0);
 
 	unsigned long targetAddr, sourceAddr;
-	union { unsigned int x[2]; unsigned char b[8]; } m4x8d;
+	union { unsigned int x[2]; char b[8]; } m4x8d;
 	for (unsigned int row = min_row; row < max_row; row += 8) {
 		for (unsigned int col = min_col; col < max_col; col += 8) {
 			for (unsigned int i = 0; i < 8; i++) {
@@ -136,12 +183,12 @@ void bitmatrix::transpose(bitmatrix & BM, unsigned int _min_row, unsigned int _m
 			}
 			for (unsigned int i = 0; i < 7; i++) {
 				targetAddr = ((col+i) * ((unsigned long)(n_rows/8)) + (row) / 8);
-				BM.bytes[targetAddr]  = static_cast<unsigned char>(abracadabra(m4x8d.x[1] & (0x80808080 >> i), (0x02040810 << i)) & 0x0f) << 4;
-                BM.bytes[targetAddr] |= static_cast<unsigned char>(abracadabra(m4x8d.x[0] & (0x80808080 >> i), (0x02040810 << i)) & 0x0f) << 0;
+				BM.bytes[targetAddr]  = static_cast<char>(abracadabra(m4x8d.x[1] & (0x80808080 >> i), (0x02040810 << i)) & 0x0f) << 4;
+                BM.bytes[targetAddr] |= static_cast<char>(abracadabra(m4x8d.x[0] & (0x80808080 >> i), (0x02040810 << i)) & 0x0f) << 0;
 			}
 			targetAddr = ((col+7) * ((unsigned long)(n_rows/8)) + (row) / 8);
-			BM.bytes[targetAddr]  = static_cast<unsigned char>(abracadabra((m4x8d.x[1] << 7) & (0x80808080 >> 0), (0x02040810 << 0)) & 0x0f) << 4;
-            BM.bytes[targetAddr] |= static_cast<unsigned char>(abracadabra((m4x8d.x[0] << 7) & (0x80808080 >> 0), (0x02040810 << 0)) & 0x0f) << 0;
+			BM.bytes[targetAddr]  = static_cast<char>(abracadabra((m4x8d.x[1] << 7) & (0x80808080 >> 0), (0x02040810 << 0)) & 0x0f) << 4;
+            BM.bytes[targetAddr] |= static_cast<char>(abracadabra((m4x8d.x[0] << 7) & (0x80808080 >> 0), (0x02040810 << 0)) & 0x0f) << 0;
 		}
 	}
 }

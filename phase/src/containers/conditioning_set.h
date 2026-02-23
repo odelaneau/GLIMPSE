@@ -29,6 +29,7 @@
 #include <utils/otools.h>
 #include <containers/variant_map.h>
 #include <containers/haplotype_set.h>
+#include <containers/argument_set.h>
 
 //Types included in vector < char > var_type
 #define TYPE_COMMON	0
@@ -38,6 +39,7 @@
 class conditioning_set {
 public:
 	//STATIC DATA
+	const argument_set& A;
 	const variant_map & mapG;
 	const haplotype_set & H;
 
@@ -58,6 +60,8 @@ public:
 	std::vector < unsigned int > polymorphic_sites;		//List of common sites [TYPE_COMMON or TYPE_RARE]
 	std::vector < unsigned int > monomorphic_sites;		//List of monomorphic sites [TYPE_MONO]
 	std::vector < bool > lq_flag;
+	bitmatrix Hhapsubset;
+	bitmatrix Hvarsubset;
 
 	//CONDITIONING STATES
 	std::vector < unsigned int > idxHaps_ref;				//Indexes of conditioning_states in ref haplotype_set
@@ -72,14 +76,11 @@ public:
 	const float ed_imp;
 	const float ee_imp;
 
-	int Kinit;
-	int Kpbwt;
-
 	std::vector<unsigned int> swap_ref;
 	std::vector<unsigned int> swap_tar;
 
 	//CONSTRUCTOR/DESTRUCTOR/INITIALIZATION
-	conditioning_set(const variant_map &, const haplotype_set &, const unsigned int, const unsigned int, const int,const int, const float, const float, const bool );
+	conditioning_set(const argument_set&, const variant_map &, const haplotype_set &);
 	~conditioning_set();
 	void clear();
 

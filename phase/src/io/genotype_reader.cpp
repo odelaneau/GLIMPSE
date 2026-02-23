@@ -31,18 +31,14 @@ std::map<std::string, int> mapPloidy = {
 };
 
 genotype_reader::genotype_reader(
+		const argument_set & _A,
 		haplotype_set & _H,
 		genotype_set & _G,
 		variant_map & _V,
 		glimpse_mpileup & _M,
-		const float _sparse_maf,
-		const bool _inputGL,
-		const bool _impute_refonly,
-		const bool _keep_mono,
-		const bool _use_gl_indels) :
+		const float _sparse_maf) : A(_A),
 				H(_H), G(_G), V(_V), M(_M),
-				sparse_maf(_sparse_maf),
-				inputGL(_inputGL), impute_refonly(_impute_refonly), n_ref_samples(0), keep_mono(_keep_mono), use_gl_indels(_use_gl_indels)
+				sparse_maf(_sparse_maf), n_ref_samples(0)
 {
 	H.sparse_maf = _sparse_maf;
 }
@@ -141,8 +137,8 @@ void genotype_reader::readGenotypesAndBAMs(std::string fref,int nthreads)
 	bcf_srs_t * sr_scan =  bcf_sr_init();
 	initReader(sr_scan, fref, nthreads);
 
-	set_ploidy_tar();
 	scanGenotypesCommon(sr_scan, 0);
+	set_ploidy_tar();
 
 	bcf_sr_destroy(sr_scan);
 
@@ -215,7 +211,7 @@ void genotype_reader::scanGenotypesCommon(bcf_srs_t * sr, int ref_sr_n /* Refere
 
 	while ((nset = bcf_sr_next_line (sr)))
 	{
-		if (!bcf_sr_has_line(sr, ref_sr_n) || bcf_sr_get_line(sr, ref_sr_n)->n_allele != 2 || (nset < (ref_sr_n+1 /* warning relies on reader number */) && !impute_refonly)) continue; //always ref
+		if (!bcf_sr_has_line(sr, ref_sr_n) || bcf_sr_get_line(sr, ref_sr_n)->n_allele != 2 || (nset < (ref_sr_n+1 /* warning relies on reader number */) && !A.mImputeReferenceOnlyVariants)) continue; //always ref
 		line_ref =  bcf_sr_get_line(sr, ref_sr_n);
 
 		//Get AC / AN
@@ -225,7 +221,7 @@ void genotype_reader::scanGenotypesCommon(bcf_srs_t * sr, int ref_sr_n /* Refere
 		calt = vAC[0]; cref = (vAN[0] - vAC[0]);
 
 		//TODO: Check AN for missing data too
-		if (std::min(calt, cref) == 0 && !keep_mono) { if (!warning_out) vrb.warning("Monomorphic site found [AC field] in reference panel at position: " + stb.str(line_ref->pos + 1) + ". ALL monomorphic variants will be skipped. Please check your reference panel file. Use the --keep-monomorphic-ref-sites option to force GLIMPSE to use monomorphic sites in the reference panel. This warning is shown only once."); warning_out=true; continue;}
+		if (std::min(calt, cref) == 0 && !A.mKeepMonomorphicRefSites) { if (!warning_out) vrb.warning("Monomorphic site found [AC field] in reference panel at position: " + stb.str(line_ref->pos + 1) + ". ALL monomorphic variants will be skipped. Please check your reference panel file. Use the --keep-monomorphic-ref-sites option to force GLIMPSE to use monomorphic sites in the reference panel. This warning is shown only once."); warning_out=true; continue;}
 		if (ref_sr_n > 0 ) { /* warning relies on reader number */
 			n_inc_sites += bcf_sr_has_line(sr, ref_sr_n-1);
 		}
@@ -333,9 +329,9 @@ void genotype_reader::readTarGenotypes(std::string fmain, int nthreads)
 			line_main = bcf_sr_get_line(sr_parse, 0);
 
 			//request: switch on/off indel calling from gl file
-			if (bcf_get_variant_types(line_main)!=VCF_SNP && !use_gl_indels) { ++i_site; continue;}
+			if (bcf_get_variant_types(line_main)!=VCF_SNP && !A.mUseGLIndels) { ++i_site; continue;}
 
-			if (inputGL)
+			if (A.mInputFieldGL)
 			{
 				ngl_main = bcf_get_format_float(sr_parse->readers[0].header, line_main, "GL", &gl_arr_main, &ngl_arr_main);
 				main_file_max_ploidy = ngl_main/H.n_tar_samples;
@@ -457,10 +453,10 @@ void genotype_reader::set_ploidy_tar()
 	H.tar_ind2hapid = M.tar_ind2gt;
 
 	//Allocate genotype set
-	G.vecG = std::vector < genotype * > (H.n_tar_samples, NULL);
 	G.n_ind = H.n_tar_samples;
+	G.vecG = std::vector < genotype * > (H.n_tar_samples, nullptr);
 	for (unsigned int i = 0 ; i < M.n_tar_samples ; i ++) {
-		G.vecG[i] = new genotype (M.tar_sample_names[i], i, H.n_tot_sites, H.tar_ploidy[i], H.tar_ind2hapid[i]);
+		G.vecG[i] = new genotype (M.tar_sample_names[i], i, H.n_tot_sites, H.tar_ploidy[i], H.tar_ind2hapid[i], A.mPrintAP);
 		G.vecG[i]->allocate();
 	}
 }
@@ -493,7 +489,7 @@ void genotype_reader::parseGenotypes(bcf_srs_t * sr) {
 	int rAN=0, nAN=0, *vAN = NULL;
 	while ((nset = bcf_sr_next_line (sr)))
 	{
-		if (!bcf_sr_has_line(sr,1) || bcf_sr_get_line(sr, 1)->n_allele != 2 || (nset < 2 && !impute_refonly)) continue; //always ref
+		if (!bcf_sr_has_line(sr,1) || bcf_sr_get_line(sr, 1)->n_allele != 2 || (nset < 2 && !A.mImputeReferenceOnlyVariants)) continue; //always ref
 
 		line_ref =  bcf_sr_get_line(sr, 1);
 		rAC = bcf_get_info_int32(sr->readers[1].header, line_ref, "AC", &vAC, &nAC);
@@ -501,7 +497,7 @@ void genotype_reader::parseGenotypes(bcf_srs_t * sr) {
 		if ((nAC!=1)||(nAN!=1)) vrb.error("VCF for reference panel needs AC/AN INFO fields to be present");
 		calt = vAC[0]; cref = (vAN[0] - vAC[0]);
 
-		if (std::min(calt, cref) == 0 && !keep_mono) continue;
+		if (std::min(calt, cref) == 0 && !A.mKeepMonomorphicRefSites) continue;
 
 		if (i_site==0) set_ploidy_ref(sr,1);
 
@@ -544,7 +540,7 @@ void genotype_reader::parseGenotypes(bcf_srs_t * sr) {
 		{
 			line_main = bcf_sr_get_line(sr, 0);
 
-			if (inputGL)
+			if (A.mInputFieldGL)
 			{
 				ngl_main = bcf_get_format_float(sr->readers[0].header, line_main, "GL", &gl_arr_main, &ngl_arr_main);
 
@@ -645,9 +641,17 @@ void genotype_reader::parseGenotypes(bcf_srs_t * sr) {
 	free(pl_arr_main);
 	free(gl_arr_main);
 	free(gt_arr_ref);
+	free(vAC);
+	free(vAN);
 
 	// Report
 	vrb.bullet("VCF/BCF parsing done ("+stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
+
+	tac.clock();
+	H.HhapRef.allocate(H.n_ref_haps, H.n_com_sites);
+	H.HvarRef.transpose(H.HhapRef,H.n_com_sites,H.n_ref_haps);
+	//H.HvarRef.reset();
+	vrb.bullet("Common transpose\t[ref]\t\t[var2hap]\t\t\t(" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
 }
 
 void genotype_reader::parseRefGenotypes(bcf_srs_t * sr) {
@@ -669,41 +673,68 @@ void genotype_reader::parseRefGenotypes(bcf_srs_t * sr) {
 	int *ptr;
 	float *ptr_f;
 
+	int rAC=0, nAC=0, *vAC = NULL;
+	int rAN=0, nAN=0, *vAN = NULL;
+
 	while (bcf_sr_next_line (sr))
 	{
 		if (bcf_sr_get_line(sr, 0)->n_allele != 2) continue; //always ref
 
 		line_ref =  bcf_sr_get_line(sr, 0);
-		if (i_site==0) set_ploidy_ref(sr,0);
+		rAC = bcf_get_info_int32(sr->readers[0].header, line_ref, "AC", &vAC, &nAC);
+		rAN = bcf_get_info_int32(sr->readers[0].header, line_ref, "AN", &vAN, &nAN);
+		if ((nAC!=1)||(nAN!=1)) vrb.error("VCF for reference panel needs AC/AN INFO fields to be present");
+		calt = vAC[0]; cref = (vAN[0] - vAC[0]);
+		if (std::min(calt, cref) == 0 && !A.mKeepMonomorphicRefSites) continue;
 
 		ngt_ref = bcf_get_genotypes(sr->readers[0].header, line_ref, &gt_arr_ref, &ngt_arr_ref);
+		if (i_site==0) set_ploidy_ref(sr,0);
 		line_max_ploidy = ngt_ref/n_ref_samples;
 		idx_ref_hap=0, cref = 0, calt = 0;
 
-		for(int i = 0 ; i < n_ref_samples ; ++i)
+		if (H.flag_common[i_site])
 		{
-			ptr = gt_arr_ref + i*line_max_ploidy;
-			for (int j=0; j<ploidy_ref_samples[i]; j++) {
-				a = (bcf_gt_allele(ptr[j])==1);
-				if (H.flag_common[i_site]) H.HvarRef.set(i_common, idx_ref_hap, a);
-				else if (a != H.major_alleles[i_site]) H.ShapRef[idx_ref_hap].push_back(i_site);
-				++idx_ref_hap;
-				calt+=a;
-				cref+=!a;
+			for(int i = 0 ; i < n_ref_samples ; ++i) {
+				ptr = gt_arr_ref + i*line_max_ploidy;
+				for (int j=0; j<ploidy_ref_samples[i]; j++) {
+					a = (bcf_gt_allele(ptr[j])==1);
+					if (a) H.HvarRef.set(i_common, idx_ref_hap, a);
+					++idx_ref_hap;
+					a?++calt:++cref;
+				}
+			}
+		}
+		else
+		{
+			for(int i = 0 ; i < n_ref_samples ; ++i) {
+				ptr = gt_arr_ref + i*line_max_ploidy;
+				for (int j=0; j<ploidy_ref_samples[i]; j++) {
+					a = (bcf_gt_allele(ptr[j])==1);
+					if (a != H.major_alleles[i_site]) H.ShapRef[idx_ref_hap].push_back(i_site);
+					++idx_ref_hap;
+					a?++calt:++cref;
+				}
 			}
 		}
 
 		//Check that AC and AN used for classification were actually correct
-		if ((cref!=V.vec_pos[i_site]->cref)||(calt!=V.vec_pos[i_site]->calt)) vrb.error("AC/AN INFO fields in VCF are inconsistent with GT field, update the values in the VCF");
+		if ((cref!=V.vec_pos[i_site]->cref)||(calt!=V.vec_pos[i_site]->calt))
+			vrb.error("AC/AN INFO fields in VCF are inconsistent with GT field, update the values in the VCF");
 		i_common+=H.flag_common[i_site];
 		i_site++;
 		prog_bar+=prog_step;
 		vrb.progress("  * Reference panel parsing ", prog_bar);
 	}
 	free(gt_arr_ref);
-
+	free(vAC);
+	free(vAN);
 	// Report
 	vrb.bullet("Reference panel parsing done ("+stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
+	tac.clock();
+	H.HhapRef.allocate(H.n_ref_haps, H.n_com_sites);
+	H.HvarRef.transpose(H.HhapRef,H.n_com_sites,H.n_ref_haps);
+	//H.HvarRef.reset();
+	vrb.bullet("Common transpose\t[ref]\t\t[var2hap]\t\t\t(" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
 }
 
 

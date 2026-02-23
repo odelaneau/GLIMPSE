@@ -36,16 +36,13 @@ class genotype_reader
 {
 public:
 	//DATA
+	const argument_set & A;
 	haplotype_set & H;
 	genotype_set & G;
 	variant_map & V;
 	glimpse_mpileup & M;
 
 	const float sparse_maf;
-	const bool inputGL;
-	const bool impute_refonly;
-	const bool keep_mono;
-	const bool use_gl_indels;
 
 	int n_ref_samples;
 	std::set < std::string > initializing_samples;
@@ -53,7 +50,7 @@ public:
 	std::vector<int> ploidy_ref_samples;
 
 	//CONSTRUCTORS/DESCTRUCTORS
-	genotype_reader(haplotype_set &, genotype_set &, variant_map &, glimpse_mpileup & M, const float _sparse_maf,const bool _inputGL, const bool _impute_refonly, const bool keep_mono, const bool use_gl_indels);
+	genotype_reader(const argument_set& A, haplotype_set &, genotype_set &, variant_map &, glimpse_mpileup & M, const float _sparse_maf);
 	~genotype_reader();
 
 	//IO

@@ -26,18 +26,17 @@
 #include <containers/conditioning_set.h>
 #include <algorithm>
 
-conditioning_set::conditioning_set(const variant_map & _mapG, const haplotype_set & _H, const unsigned int _n_ref_haps, const unsigned int _n_eff_haps, const int _kinit, const int _kpbwt, const float _err_imp, const float _err_phs, const bool use_list):
-		mapG(_mapG), H(_H), n_ref_haps(_n_ref_haps),
-		n_eff_haps(_n_eff_haps),
+conditioning_set::conditioning_set(const argument_set& _A, const variant_map & _mapG,const haplotype_set & _H):
+		A(_A), mapG(_mapG), H(_H), n_ref_haps(H.n_ref_haps),
+		n_eff_haps(A.mNe),
 		n_com_sites(H.common2tot.size()),
 		n_tot_sites(mapG.size()),
-		nrho(use_list ? (-0.04 * n_eff_haps) / std::max(n_ref_haps,n_eff_haps) : (-0.04 * n_eff_haps) / n_ref_haps),
+		nrho(!A.mStateListFilename.empty() ? (-0.04 * n_eff_haps) / std::max(n_ref_haps,n_eff_haps) : (-0.04f * n_eff_haps) / n_ref_haps),
 		one_l(1.0 - 1e-7),
-		ed_phs(_err_phs),
-		ee_phs(1.0 -_err_phs),
-		ed_imp(_err_imp),
-		ee_imp(1.0 - _err_imp),
-		Kinit(_kinit), Kpbwt(_kpbwt)
+		ed_phs(A.mErrPhase),
+		ee_phs(1.0 -A.mErrPhase),
+		ed_imp(A.mErrImp),
+		ee_imp(1.0 - A.mErrImp)
 {
 	var_type = std::vector < unsigned char > (n_tot_sites);
 	major_alleles = H.major_alleles;
@@ -77,36 +76,39 @@ void conditioning_set::compactSelection(const int ind, const int iter)
 	const int ploidyM1 = H.tar_ploidy[ind]-1;
 	idxHaps_ref.clear();
 
-	if (iter==STAGE_INIT && Kinit > 0)
+	if (iter==STAGE_INIT && A.Kinit > 0)
 	{
-		std::copy(H.init_states[ind].begin(), H.init_states[ind].end(), std::back_inserter(idxHaps_ref));
+		idxHaps_ref.resize(H.init_states[ind].size());
+		std::copy(H.init_states[ind].begin(), H.init_states[ind].end(), idxHaps_ref.begin());
 	}
-	else if (iter==STAGE_RESTRICT && Kpbwt > 0)
+	else if (A.Kpbwt > 0 && A.Kpbwt < H.n_ref_haps)
 	{
-		const int k_pbwt = std::max(Kpbwt/10,350);
-		std::set<int> states_ind;
-		for (int i=0; i<H.pbwt_states[ind].size() && (states_ind.size() < k_pbwt || i<=1); ++i)
-			for (int j=H.pbwt_states[ind][i].size()-1; j>=0; --j)
+		std::unordered_set<int> states_ind;
+		for (int i=0; i<A.mMinPbwtDepth; ++i)
+		{
+			for (int j=0; j<H.pbwt_states[ind][i].size(); ++j)
+			{
 				states_ind.insert(H.pbwt_states[ind][i][j]);
-
-		std::copy(states_ind.begin(), states_ind.end(), std::back_inserter(idxHaps_ref));
-	}
-	else if (Kpbwt > 0 && Kpbwt < H.n_ref_haps)
-	{
-		std::set<int> states_ind;
-		for (int i=0; i<H.pbwt_states[ind].size() && states_ind.size() < Kpbwt; ++i)
-			for (int j=H.pbwt_states[ind][i].size()-1; j>=0 && states_ind.size() < Kpbwt; --j)
+			}
+		}
+		for (int i=A.mMinPbwtDepth; i<H.pbwt_states[ind].size() && states_ind.size() < A.Kpbwt; ++i)
+		{
+			for (int j=0; j<H.pbwt_states[ind][i].size() && states_ind.size() < A.Kpbwt; ++j)
+			{
 				states_ind.insert(H.pbwt_states[ind][i][j]);
-
-		std::copy(states_ind.begin(), states_ind.end(), std::back_inserter(idxHaps_ref));
+			}
+		}
+		idxHaps_ref.resize(states_ind.size());
+		std::copy(states_ind.begin(), states_ind.end(), idxHaps_ref.begin());
+		std::sort(idxHaps_ref.begin(),idxHaps_ref.end());
 	}
-	else if (Kpbwt >= H.n_ref_haps)
+	else if (A.Kpbwt >= H.n_ref_haps)
 	{
 		idxHaps_ref.resize(H.n_ref_haps);
 		std::iota(idxHaps_ref.begin(), idxHaps_ref.end(), 0);
 		use_list = false;
 	}
-	//Kpbwt == 0 easy: just go here..
+	//A.Kpbwt == 0 easy: just go here..
 	if (use_list && (H.list_states[hapid].size() > 0 || H.list_states[hapid+ploidyM1].size() > 0))
 	{
 		std::copy(H.list_states[hapid].begin(), H.list_states[hapid].end(), std::back_inserter(idxHaps_ref));
@@ -129,15 +131,71 @@ void conditioning_set::compactSelection(const int ind, const int iter)
 	//Update var_type
 	monomorphic_sites.clear();
 	polymorphic_sites.clear();
-	for (int l = 0 ; l < n_tot_sites ; l++) {
-		if (H.flag_common[l]) var_type[l] = TYPE_COMMON;
-		else if (Svar[l].size()) var_type[l] = TYPE_RARE;
-		else var_type[l] = TYPE_MONO;
-		if (var_type[l] == TYPE_MONO) monomorphic_sites.push_back(l);
-		else polymorphic_sites.push_back(l);
+	//std::vector<unsigned int> col2row_offsets(n_com_sites);
+	for (unsigned int l = 0, lcom=0,lrel=0 ; l < n_tot_sites ; l++) {
+		if (H.flag_common[l])
+		{
+			var_type[l] = TYPE_COMMON;
+			//col2row_offsets[lcom++] = lrel;
+		}
+		else if (Svar[l].size())
+		{
+			var_type[l] = TYPE_RARE;
+		}
+		else
+		{
+			var_type[l] = TYPE_MONO;
+			monomorphic_sites.push_back(l);
+			continue;
+		}
+		polymorphic_sites.push_back(l);
+		lrel++;
 	}
+	//vrb.print(stb.str(polymorphic_sites.size()));
+	//tac.clock();
 
+	/*
+	Hvar.reallocate(polymorphic_sites.size(), n_states);
+	Hhapsubset.reallocate(n_states,n_com_sites);
+	Hvarsubset.reallocate(n_com_sites,n_states);
+	Hhapsubset.subset(H.HhapRef, idxHaps_ref);
+	Hhapsubset.transpose(Hvarsubset,n_states,n_com_sites);
+	for (int labs = 0, lrel = 0; labs < n_tot_sites ; labs ++)
+	{
+		if (var_type[labs] == TYPE_MONO) continue;
+		else if (var_type[labs] == TYPE_RARE)
+		{
+			Hvar.set(lrel, major_alleles[labs]);
+			for (int r = 0 ; r < Svar[labs].size() ; r++) Hvar.set(lrel, Svar[labs][r], !major_alleles[labs]);
+		} //else mono: do nothing
+		++lrel;
+	}
+	*/
+	Hvar.reallocate(polymorphic_sites.size(), n_states);
+	Hhapsubset.reallocate(n_states,n_com_sites);
+	Hvarsubset.reallocate(n_com_sites,n_states);
+	Hhapsubset.subset(H.HhapRef, idxHaps_ref);
+	Hhapsubset.transpose(Hvarsubset,n_states,n_com_sites);
+	for (int labs = 0, lrel = 0, lcom = 0 ; labs < n_tot_sites ; labs ++) {
+		if (var_type[labs] == TYPE_COMMON) {
+			std::memcpy(Hvar.getRowPtr(lrel), Hvarsubset.getRowPtr(lcom), (Hvarsubset.n_cols>>3));
+			//for (int k = 0 ; k < idxHaps_ref.size() ; k++) Hvar1.set(lrel, k, Hvarsubset.get(lcom, k));
+			lrel++;
+			lcom++;
+		} else if (var_type[labs] == TYPE_RARE) {
+			Hvar.set(lrel, major_alleles[labs]);
+			for (int r = 0 ; r < Svar[labs].size() ; r++) Hvar.set(lrel, Svar[labs][r], !major_alleles[labs]);
+			lrel++;
+		} //else mono: do nothing
+	}
+/*
+*/
+	//vrb.bullet("Hapvar2 (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
+/*
 	//Build bitmatrix Hvar
+	bitmatrix Hvar1;
+	tac.clock();
+
 	Hvar.reallocate(polymorphic_sites.size(), n_states);
 	for (int labs = 0, lrel = 0, lcom = 0 ; labs < n_tot_sites ; labs ++) {
 		if (var_type[labs] == TYPE_COMMON) {
@@ -150,6 +208,66 @@ void conditioning_set::compactSelection(const int ind, const int iter)
 			lrel++;
 		} //else mono: do nothing
 	}
+
+	vrb.bullet("Hapvar0 (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
+
+	{
+		//Hvar1.allocate(polymorphic_sites.size(), n_states);
+		tac.clock();
+		Hvar1.reallocate(polymorphic_sites.size(), n_states);
+		Hhapsubset.reallocate(n_states,n_com_sites);
+		Hvarsubset.reallocate(n_com_sites,n_states);
+		Hhapsubset.subset(H.HhapRef, idxHaps_ref);
+		Hhapsubset.transpose(Hvarsubset,n_states,n_com_sites);
+		for (int labs = 0, lrel = 0, lcom = 0 ; labs < n_tot_sites ; labs ++) {
+			if (var_type[labs] == TYPE_COMMON) {
+				std::memcpy(Hvar1.getRowPtr(lrel), Hvarsubset.getRowPtr(lcom), (Hvarsubset.n_cols>>3));
+				//for (int k = 0 ; k < idxHaps_ref.size() ; k++) Hvar1.set(lrel, k, Hvarsubset.get(lcom, k));
+				lrel++;
+				lcom++;
+			} else if (var_type[labs] == TYPE_RARE) {
+				Hvar1.set(lrel, major_alleles[labs]);
+				for (int r = 0 ; r < Svar[labs].size() ; r++) Hvar1.set(lrel, Svar[labs][r], !major_alleles[labs]);
+				lrel++;
+			} //else mono: do nothing
+		}
+		vrb.bullet("Hapvar1 (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
+	}
+*/
+/*
+	{
+
+		Hvar2.allocate(polymorphic_sites.size(), n_states);
+		tac.clock();
+		Hhapsubset.reallocate(n_states,n_com_sites);
+		Hhapsubset.subset(H.HhapRef, idxHaps_ref);
+		Hhapsubset.transpose(Hvar,n_states,n_com_sites,col2row_offsets);
+		for (int labs = 0, lrel = 0; labs < n_tot_sites ; labs ++)
+		{
+			if (var_type[labs] == TYPE_MONO) continue;
+			else if (var_type[labs] == TYPE_RARE)
+			{
+				Hvar.set(lrel, major_alleles[labs]);
+				for (int r = 0 ; r < Svar[labs].size() ; r++) Hvar.set(lrel, Svar[labs][r], !major_alleles[labs]);
+			} //else mono: do nothing
+			++lrel;
+		}
+		//vrb.bullet("Hapvar2 (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
+	}
+*/
+/*
+	for (int labs = 0, lrel = 0, lcom = 0 ; labs < n_tot_sites ; labs ++)
+	{
+		if (var_type[labs] == TYPE_MONO) continue;
+		for (int r = 0 ; r <n_states ; r++)
+			if (Hvar1.get(lrel, r)!=Hvar.get(lrel,r))
+			{
+				vrb.error(stb.str(lrel) + " - " + stb.str(r));
+			}
+		++lrel;
+	}
+	vrb.print("OK");
+*/
 }
 
 void conditioning_set::updateTransitions()

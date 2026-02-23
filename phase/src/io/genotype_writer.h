@@ -49,7 +49,7 @@ public:
 	genotype_writer(const haplotype_set &, const genotype_set &, const variant_map &, const caller & C);
 	~genotype_writer();
 
-	void writeGenotypes(const std::string fname, OutputFormat oformat, OutputCompression ocompr, const int n_bits_bgen, const int n_main, const int n_threads, const std::string fai_fname) const;
+	void writeGenotypes(const argument_set& A) const;
 	void update_header_from_fai(bcf_hdr_t * hdr, const std::string fai_fname) const;
 
 #ifdef __BGEN__
