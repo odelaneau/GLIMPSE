@@ -135,7 +135,7 @@ void caller::increment_iteration() {
 
 void caller::write_checkpoint() {
 	if (options.count("checkpoint-file-out")) {
-		
+
 		vrb.bullet("writing out checkpoint");
 		std::string cp_filename = options["checkpoint-file-out"].as < std::string > ();
 		std::string tmp_cp_filename = cp_filename + ".tmp";
@@ -154,6 +154,14 @@ void caller::write_checkpoint() {
 		oa << options["pbwt-modulo-cm"].as<float>();
 		oa << options["Kinit"].as<int>();
 		oa << options["Kpbwt"].as<int>();
+
+		// Serialize RNG state (for deterministic checkpointing)
+		std::stringstream rng_state;
+		rng_state << rng.getEngine();
+		std::string rng_state_str = rng_state.str();
+		vrb.bullet("Saving RNG state     : [" + rng_state_str + "]");
+		oa << rng_state_str;
+
 		G.serialize_checkpoint_data(oa);
 		std::filesystem::rename(tmp_cp_filename.c_str(), cp_filename.c_str());
 		vrb.bullet("checkpoint completed (" + stb.str(tac.rel_time(), 2) + "ms)");
@@ -179,7 +187,7 @@ void caller::read_checkpoint_if_available() {
 		if (current_iteration >= iterations_per_stage[current_stage]) {
 			std::stringstream err_str;
 			err_str<<"Checkpoint file has already run "<<current_iteration + 1<<" iterations "
-			"for stage"<<stage_names[current_stage]<<", and this run only calls for "<<iterations_per_stage[current_stage]<< 
+			"for stage"<<stage_names[current_stage]<<", and this run only calls for "<<iterations_per_stage[current_stage]<<
 			". This run must call for at least a many iterations as the checkpoint file already ran in order "
 			"to use this checkpoint file.";
 			vrb.error(err_str.str());
@@ -199,6 +207,17 @@ void caller::read_checkpoint_if_available() {
 		confirm_checkpoint_param<float>(ia, "pbwt-modulo-cm");
 		confirm_checkpoint_param<int>(ia, "Kinit");
 		confirm_checkpoint_param<int>(ia, "Kpbwt");
+
+		// Deserialize full RNG engine state (for deterministic checkpointing)
+		std::string rng_state_str;
+		ia >> rng_state_str;
+		vrb.bullet("Reading RNG state    : [" + rng_state_str + "]");
+		std::stringstream rng_state(rng_state_str);
+		rng_state >> rng.getEngine();
+		std::stringstream rng_state_verify;
+		rng_state_verify << rng.getEngine();
+		vrb.bullet("Restored RNG state   : [" + rng_state_verify.str() + "]");
+
 		G.serialize_checkpoint_data(ia);
 		vrb.bullet("checkpoint read");
 	}
