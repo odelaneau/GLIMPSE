@@ -18,12 +18,25 @@ permalink: /docs/installation/build_from_source/required_libraries
 ---
 
 ## Required libraries
-GLIMPSE2 requires several libraries installed on the system. Here we assume most of the libraries are available, and we focus on two main libraries:
+GLIMPSE2 requires several libraries installed on the system:
 
-- HTSlib version >= 1.7: A C library for reading/writing high-throughput sequencing data.
-- BOOST version >= 1.65: A set of peer-reviewed portable C++ source libraries. GLIMPSE2 uses three specific BOOST libraries: `iostreams`, `program_options` and `serialization`.
+- **HTSlib** version >= 1.7: A C library for reading/writing high-throughput sequencing data.
+- **Boost** version >= 1.65: A set of peer-reviewed portable C++ source libraries. GLIMPSE2 uses three specific Boost libraries: `iostreams`, `program_options` and `serialization`.
+- **SIMDe** (bundled): The [SIMDe](https://github.com/simd-everywhere/simde) header-only library is included as a git submodule and provides portable SIMD support across x86_64 and ARM64 platforms.
 
-### HTSlib
+### macOS (Homebrew)
+
+On macOS with [Homebrew](https://brew.sh/), all required libraries can be installed with a single command:
+
+<div class="code-example" markdown="1">
+```bash
+brew install htslib boost libdeflate
+```
+</div>
+
+### Linux (from source)
+
+#### HTSlib
 Building HTSlib is straightforward and does not require root privileges. Please refer to the [HTSlib](http://www.htslib.org/) documentation for complete details. Here we provide a basic script to install HTSlib v1.16:
 
 <div class="code-example" markdown="1">
@@ -40,8 +53,8 @@ make
 After this, you'll find the libhts.a inside your current directory and the include files inside subdirectory: `./include/`
 
 
-### Boost
-As GLIMPSE2 only requires few of the boost libraries, we'll build the smallest possible boost build, without requiring root privileges. Please refer to the [Boost installation instructions](https://www.boost.org/doc/libs/1_73_0/more/getting_started/unix-variants.html#easy-build-and-install) for complete details. Here we provide a basic script to the minimal build of Boost v1.73.0 required to run GLIMPSE2:
+#### Boost
+As GLIMPSE2 only requires few of the Boost libraries, we'll build the smallest possible Boost build, without requiring root privileges. Please refer to the [Boost installation instructions](https://www.boost.org/doc/libs/1_73_0/more/getting_started/unix-variants.html#easy-build-and-install) for complete details. Here we provide a basic script to the minimal build of Boost v1.73.0 required to run GLIMPSE2:
 
 <div class="code-example" markdown="1">
 ```bash
@@ -56,23 +69,14 @@ cd ../boost #change this to the folder you used as --prefix for the bootstrap sc
 
 After this, you will also find a copy of the Boost headers in the include/ subdirectory of the installation prefix (our current directory). The Boost static libraries (`libboost_iostreams.a`, `libboost_program_options.a` and `libboost_serialization.a`) are found in the subfolder `./lib/` of your installation prefix.
 
-### Additional libraries
+#### Additional libraries
 
-Make sure that the following standard library flags can be used by g++ on your system:
+Make sure that the following standard library flags can be used by your compiler on your system:
 - `-lz`,`-lbz2` and `-llzma` for reading/writing compressed files.
 - `-lm` for basic math operations.
 - `-lpthread` for multi-threading
-
-You can do so by checking the outcome of the following commands:
-<div class="code-example" markdown="1">
-```bash
-locate -b '\libz.so'
-locate -b '\libbz2.so'
-locate -b '\liblzma.so'
-locate -b '\libm.so'
-locate -b '\libpthread.so'
-locate -b '\libcurl.so'
-```
-</div>
+- `-lcurl` for network access.
+- `-lcrypto` for cryptographic functions.
+- `-ldeflate` for libdeflate compression.
 
 

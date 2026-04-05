@@ -18,7 +18,15 @@ permalink: /docs/installation/build_from_source/system_requirements
 ---
 
 ## System requirements
-GLIMPSE2 is a set of C++ tools covering the process of haplotype phasing in large datasets. In order to compile, we require a modern Linux operating system and a version of GCC > 4.4. We recommend to use the latest available version for your system.
+GLIMPSE2 is a set of C++ tools covering the process of haplotype phasing in large datasets. GLIMPSE2 supports the following platforms:
+
+- **Linux x86_64** (GCC or Clang)
+- **Linux aarch64/ARM64** (GCC or Clang)
+- **macOS ARM64 / Apple Silicon** (Clang)
+
+### Linux
+
+We require a version of GCC > 4.4 or a recent version of Clang. We recommend using the latest available version for your system.
 
 For example running the following instruction on Ubuntu 20.04 focal:
 
@@ -28,13 +36,29 @@ sudo apt install build-essential
 ```
 </div>
 
-
-
 will install the GNU g++ compiler version 9.2. To check the version of your g++ compiler, simply run:
 
 <div class="code-example" markdown="1">
 ```bash
 g++ --version
+```
+</div>
+
+### macOS (Apple Silicon)
+
+macOS builds use the Apple Clang compiler included with Xcode Command Line Tools. To install:
+
+<div class="code-example" markdown="1">
+```bash
+xcode-select --install
+```
+</div>
+
+To check your compiler version:
+
+<div class="code-example" markdown="1">
+```bash
+clang++ --version
 ```
 </div>
 
