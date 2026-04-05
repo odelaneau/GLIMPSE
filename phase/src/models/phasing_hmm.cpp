@@ -220,7 +220,7 @@ void phasing_hmm::backward() {
 		if (curr_segment_locus == 0) {
 			SUMK();
 			//phasingProb[curr_segment_index] = prob;
-			std::copy(prob.begin(), prob.end(), phasingProb.begin()+curr_segment_index*C->n_states*HAP_NUMBER);
+			std::copy(prob.begin(), prob.end(), phasingProb.begin()+(size_t)curr_segment_index*C->n_states*HAP_NUMBER);
 			//phasingProbSum[curr_segment_index] = probSumH;
 			std::copy(probSumH.begin(), probSumH.end(), phasingProbSum.begin()+curr_segment_index*HAP_NUMBER);
 			phasingProbSumSum[curr_segment_index] = probSumT;
@@ -229,7 +229,7 @@ void phasing_hmm::backward() {
 		//STORE PROBS FOR PHASING RARE HETS
 		if (VAR_TYP[curr_idx_locus] == VAR_FLAT_HET) {
 			//imputeProb[curr_missing_locus] = prob;
-			std::copy(prob.begin(), prob.end(), imputeProb.begin()+curr_missing_locus*C->n_states*HAP_NUMBER);
+			std::copy(prob.begin(), prob.end(), imputeProb.begin()+(size_t)curr_missing_locus*C->n_states*HAP_NUMBER);
 			//imputeProbSum[curr_missing_locus] = probSumH;
 			std::copy(probSumH.begin(), probSumH.end(), imputeProbSum.begin()+curr_missing_locus*HAP_NUMBER);
 			imputeProbSumSum[curr_missing_locus] = probSumT;

@@ -289,7 +289,7 @@ void phasing_hmm::SUMK() {
 inline
 bool phasing_hmm::TRANS_HAP()
 {
-	const int states_haps = C->n_states*HAP_NUMBER;
+	const size_t states_haps = (size_t)C->n_states*HAP_NUMBER;
 	sumHProbs = 0.0f;
 	yt = C->getTransition(VAR_ABS[curr_idx_locus], VAR_ABS[curr_idx_locus+1]);
 	nt = 1.0f - yt;
@@ -327,7 +327,7 @@ bool phasing_hmm::SAMPLE_DIP() {
 inline
 void phasing_hmm::IMPUTE_FLAT_HET()
 {
-	const int states_haps = C->n_states*HAP_NUMBER;
+	const size_t states_haps = (size_t)C->n_states*HAP_NUMBER;
 	const __m256 _one = _mm256_set1_ps(1.0f);
 	const __m256 _zero = _mm256_set1_ps(0.0f);
 	__m256 _scaleR = _mm256_load_ps(&imputeProbSum[curr_missing_locus*HAP_NUMBER]);
