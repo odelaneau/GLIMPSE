@@ -1,5 +1,5 @@
-#COMPILER MODE C++11
-CXX=g++ -std=c++17
+#COMPILER MODE C++17
+CXX?=g++
 
 
 #create folders
@@ -7,7 +7,7 @@ dummy_build_folder_bin := $(shell mkdir -p bin)
 dummy_build_folder_obj := $(shell mkdir -p obj)
 
 #COMPILER & LINKER FLAGS
-CXXFLAG=-O3 -Wno-ignored-attributes
+CXXFLAG=-std=c++17 -O3 -Wno-ignored-attributes -I../third_party/simde
 LDFLAG=-O3
 
 #CXXFLAG=-O0 -g -Wno-ignored-attributes
@@ -30,8 +30,11 @@ EXEFILE=bin/GLIMPSE2_$(NAME)_static
 #CXXFLAG+= -D__COMMIT_ID__=\"$(COMMIT_VERS)\"
 #CXXFLAG+= -D__COMMIT_DATE__=\"$(COMMIT_DATE)\"
 
+ARCH := $(shell uname -m)
 ifeq ($(NAME),phase)
- CXXFLAG+=-mavx2 -mfma
+  ifneq (,$(filter x86_64 amd64,$(ARCH)))
+    CXXFLAG+=-mavx2 -mfma
+  endif
 endif
 
 COMMIT_VERS=3bed6d9
@@ -89,14 +92,36 @@ endif
 
 #CONDITIONAL PATH DEFINITON
 
-system: DYN_LIBS=-lz -lpthread -lbz2 -llzma
-system: HTSSRC=/home/srubinac/git
-system: HTSLIB_INC=$(HTSSRC)/htslib
-system: HTSLIB_LIB=$(HTSSRC)/htslib/libhts.a
-system: BOOST_INC=/usr/include
-system: BOOST_LIB_IO=/usr/lib/x86_64-linux-gnu/libboost_iostreams.a
-system: BOOST_LIB_PO=/usr/lib/x86_64-linux-gnu/libboost_program_options.a
-system: BOOST_LIB_SE=/usr/lib/x86_64-linux-gnu/libboost_serialization.a
+# Auto-detected system target: works on linux/x86_64, linux/aarch64, macOS/arm64
+OS := $(shell uname -s)
+ifeq ($(OS),Darwin)
+  SYS_CXX=clang++
+  SYS_HTSSRC=/opt/homebrew
+  SYS_HTSLIB_INC=$(SYS_HTSSRC)/include
+  SYS_HTSLIB_LIB=$(SYS_HTSSRC)/lib/libhts.a
+  SYS_BOOST_INC=/opt/homebrew/include
+  SYS_BOOST_LIB=/opt/homebrew/lib
+  SYS_DYN_LIBS=-L/opt/homebrew/lib -lz -lpthread -lbz2 -llzma -lcurl -lcrypto -ldeflate
+else
+  SYS_CXX=g++
+  SYS_MULTIARCH=$(shell dpkg-architecture -qDEB_HOST_MULTIARCH 2>/dev/null || echo $(ARCH)-linux-gnu)
+  SYS_HTSSRC=/usr/local
+  SYS_HTSLIB_INC=$(SYS_HTSSRC)/include
+  SYS_HTSLIB_LIB=$(SYS_HTSSRC)/lib/libhts.a
+  SYS_BOOST_INC=/usr/include
+  SYS_BOOST_LIB=/usr/lib/$(SYS_MULTIARCH)
+  SYS_DYN_LIBS=-lz -lpthread -lbz2 -llzma -lcurl -lcrypto -ldeflate
+endif
+
+system: CXX=$(SYS_CXX)
+system: HTSSRC=$(SYS_HTSSRC)
+system: HTSLIB_INC=$(SYS_HTSLIB_INC)
+system: HTSLIB_LIB=$(SYS_HTSLIB_LIB)
+system: BOOST_INC=$(SYS_BOOST_INC)
+system: BOOST_LIB_IO=$(SYS_BOOST_LIB)/libboost_iostreams.a
+system: BOOST_LIB_PO=$(SYS_BOOST_LIB)/libboost_program_options.a
+system: BOOST_LIB_SE=$(SYS_BOOST_LIB)/libboost_serialization.a
+system: DYN_LIBS=$(SYS_DYN_LIBS)
 system: $(BFILE)
 
 desktop: HTSSRC=/home/srubinac/git
