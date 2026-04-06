@@ -53,7 +53,9 @@ Each program in the suite contains the same folder structure:
 - `bin`: folder for the compiled binary.
 - `obj`: folder with all binary objects.
 - `src`: folder with source code.
-- `makefile`: Makefile to compile the program.
+- `makefile`: includes `../common.mk`, the shared build configuration.
+
+Build configuration (compiler flags, library paths, build targets) is centralized in `common.mk` at the repository root. Each tool's `makefile` simply includes it.
 
 ### Quick build (system target)
 
@@ -95,5 +97,5 @@ locate libboost_program_options.a libboost_iostreams.a libhts.a
 ```
 </div>
 
-Once all paths are correctly set up, proceed with the compilation using `make <target>`. The binary can be found in the `bin/` folder of each tool and will have a name similar to `GLIMPSE2_phase`. You will need to copy the modified makefile in each tool (folder) of GLIMPSE2.
+Once all paths are correctly set up, proceed with the compilation using `make <target>`. The binary can be found in the `bin/` folder of each tool and will have a name similar to `GLIMPSE2_phase`. Since all tools share the same `common.mk`, you only need to edit it once — the change applies to all tools automatically.
 
