@@ -7,13 +7,11 @@ all: $(projects)
 $(projects):
 	$(MAKE) -C $@ $(COMPILATION_ENV)
 
-system:
-	for dir in $(projects); do \
-	$(MAKE) -C $$dir system; \
-	done
+system: $(addprefix system-,$(projects))
+system-%:
+	$(MAKE) -C $* system
 
-clean:
-	for dir in $(projects); do \
-	$(MAKE) $@ -C $$dir; \
-	done
+clean: $(addprefix clean-,$(projects))
+clean-%:
+	$(MAKE) -C $* clean
 
