@@ -90,31 +90,69 @@ ifeq ($(BGEN_SUPPORT),YES)
 	CXXFLAG+= -D__BGEN__ -I$(BGEN_INC)
 endif
 
-#CONDITIONAL PATH DEFINITON
+#CONDITIONAL PATH DEFINITION
 
 # Auto-detected system target: works on linux/x86_64, linux/aarch64, macOS/arm64
 OS := $(shell uname -s)
-ifeq ($(OS),Darwin)
-  SYS_CXX=clang++
-  SYS_HTSSRC=/opt/homebrew
-  SYS_HTSLIB_INC=$(SYS_HTSSRC)/include
-  SYS_HTSLIB_LIB=$(SYS_HTSSRC)/lib/libhts.a
-  SYS_BOOST_INC=/opt/homebrew/include
-  SYS_BOOST_LIB=/opt/homebrew/lib
-  SYS_DYN_LIBS=-L/opt/homebrew/lib -lz -lpthread -lbz2 -llzma -lcurl -lcrypto -ldeflate
+
+# Common library and include search paths across all platforms and distributions
+LIB_SEARCH_PATHS := /opt/homebrew/lib /usr/local/lib /usr/lib /usr/lib64
+INC_SEARCH_PATHS := /opt/homebrew/include /usr/local/include /usr/include
+
+# On Debian/Ubuntu, add multiarch library paths
+DEB_MULTIARCH := $(shell dpkg-architecture -qDEB_HOST_MULTIARCH 2>/dev/null)
+ifneq ($(DEB_MULTIARCH),)
+  LIB_SEARCH_PATHS += /usr/lib/$(DEB_MULTIARCH)
+endif
+
+# Find Boost static libraries and headers
+SYS_BOOST_LIB ?= $(patsubst %/libboost_program_options.a,%,$(firstword $(foreach p,$(LIB_SEARCH_PATHS),$(wildcard $(p)/libboost_program_options.a))))
+SYS_BOOST_INC ?= $(patsubst %/boost/version.hpp,%,$(firstword $(foreach p,$(INC_SEARCH_PATHS),$(wildcard $(p)/boost/version.hpp))))
+
+# Find HTSlib static library and headers
+SYS_HTSLIB_LIBDIR ?= $(patsubst %/libhts.a,%,$(firstword $(foreach p,$(LIB_SEARCH_PATHS),$(wildcard $(p)/libhts.a))))
+SYS_HTSLIB_INC ?= $(patsubst %/htslib/hts.h,%,$(firstword $(foreach p,$(INC_SEARCH_PATHS),$(wildcard $(p)/htslib/hts.h))))
+
+# Override HTSlib paths with pkg-config if available (more precise for non-standard installs)
+HAVE_PKGCONFIG := $(shell command -v pkg-config 2>/dev/null)
+ifdef HAVE_PKGCONFIG
+  _PKG_HTSLIB_INC := $(shell pkg-config --variable=includedir htslib 2>/dev/null)
+  _PKG_HTSLIB_LIBDIR := $(shell pkg-config --variable=libdir htslib 2>/dev/null)
+  ifneq ($(_PKG_HTSLIB_INC),)
+    SYS_HTSLIB_INC := $(_PKG_HTSLIB_INC)
+  endif
+  ifneq ($(_PKG_HTSLIB_LIBDIR),)
+    SYS_HTSLIB_LIBDIR := $(_PKG_HTSLIB_LIBDIR)
+  endif
+endif
+
+# Use static libhts.a if available, otherwise fall back to shared -lhts
+# When using shared linking, htslib goes in DYN_LIBS (at end of link line) for correct symbol resolution
+ifneq ($(wildcard $(SYS_HTSLIB_LIBDIR)/libhts.a),)
+  SYS_HTSLIB_LIB = $(SYS_HTSLIB_LIBDIR)/libhts.a
 else
-  SYS_CXX=g++
-  SYS_MULTIARCH=$(shell dpkg-architecture -qDEB_HOST_MULTIARCH 2>/dev/null || echo $(ARCH)-linux-gnu)
-  SYS_HTSSRC=/usr/local
-  SYS_HTSLIB_INC=$(SYS_HTSSRC)/include
-  SYS_HTSLIB_LIB=$(SYS_HTSSRC)/lib/libhts.a
-  SYS_BOOST_INC=/usr/include
-  SYS_BOOST_LIB=/usr/lib/$(SYS_MULTIARCH)
-  SYS_DYN_LIBS=-lz -lpthread -lbz2 -llzma -lcurl -lcrypto -ldeflate
+  SYS_HTSLIB_LIB =
+  _HTSLIB_SHARED = -L$(SYS_HTSLIB_LIBDIR) -lhts
+endif
+
+# Compiler and dynamic libraries
+ifeq ($(OS),Darwin)
+  SYS_CXX = clang++
+  SYS_DYN_LIBS = -L/opt/homebrew/lib -lz -lpthread -lbz2 -llzma -lcurl -lcrypto -ldeflate
+else
+  SYS_CXX = g++
+  SYS_DYN_LIBS = $(_HTSLIB_SHARED) -lz -lpthread -lbz2 -llzma -lcurl -lcrypto -ldeflate
+  # When pkg-config is available, add HTSlib's static link dependencies
+  # (e.g., -lhtscodecs and LTO flags required by some distro-packaged libhts.a)
+  ifdef HAVE_PKGCONFIG
+    _PKG_HTS_STATIC_LIBS := $(shell pkg-config --libs --static htslib 2>/dev/null)
+    ifneq ($(_PKG_HTS_STATIC_LIBS),)
+      SYS_DYN_LIBS = $(_HTSLIB_SHARED) $(_PKG_HTS_STATIC_LIBS) -lz -lpthread -lbz2 -llzma -lcurl -lcrypto -ldeflate
+    endif
+  endif
 endif
 
 system: CXX=$(SYS_CXX)
-system: HTSSRC=$(SYS_HTSSRC)
 system: HTSLIB_INC=$(SYS_HTSLIB_INC)
 system: HTSLIB_LIB=$(SYS_HTSLIB_LIB)
 system: BOOST_INC=$(SYS_BOOST_INC)

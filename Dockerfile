@@ -43,13 +43,15 @@ COPY concordance GLIMPSE/concordance/
 COPY ligate GLIMPSE/ligate/
 COPY phase GLIMPSE/phase/
 COPY split_reference GLIMPSE/split_reference/
+COPY third_party GLIMPSE/third_party/
 COPY versions GLIMPSE/versions/
+COPY common.mk GLIMPSE/common.mk
 COPY makefile GLIMPSE/makefile
 
 # Download and build GLIMPSE
 RUN cd GLIMPSE && \
 make clean && \
-make COMPILATION_ENV=docker
+make system -j$(nproc)
 
 RUN mv GLIMPSE/chunk/bin/GLIMPSE2_chunk GLIMPSE/split_reference/bin/GLIMPSE2_split_reference GLIMPSE/phase/bin/GLIMPSE2_phase GLIMPSE/ligate/bin/GLIMPSE2_ligate GLIMPSE/concordance/bin/GLIMPSE2_concordance /bin && \
 chmod +x /bin/GLIMPSE2* && \

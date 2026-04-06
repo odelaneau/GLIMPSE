@@ -67,35 +67,31 @@ make system
 ```
 </div>
 
-The `system` target auto-detects your OS and architecture:
+The `system` target auto-detects your OS, architecture, and library locations. It searches standard installation paths across all major Linux distributions (Debian/Ubuntu, Fedora/RHEL, Arch, openSUSE, etc.) and macOS Homebrew. If `pkg-config` is installed, it is used for more precise HTSlib detection.
 
-| Platform | Compiler | Library paths |
-|----------|----------|---------------|
-| Linux x86_64 | g++ | `/usr/lib/x86_64-linux-gnu` and `/usr/local/lib` |
-| Linux aarch64 | g++ | `/usr/lib/aarch64-linux-gnu` and `/usr/local/lib` |
-| macOS ARM64 | clang++ | `/opt/homebrew/lib` (Homebrew) |
+| Platform | Compiler | Detection method |
+|----------|----------|-----------------|
+| Linux (all distros) | g++ | Searches `/usr/lib`, `/usr/lib64`, `/usr/local/lib`, Debian multiarch paths |
+| macOS ARM64 | clang++ | Searches `/opt/homebrew/lib`, plus pkg-config |
 
 On x86_64, the phase module automatically enables AVX2/FMA SIMD instructions. On ARM64 platforms, SIMD is provided via NEON instructions through the SIMDe compatibility library.
 
 ### Custom build (other targets)
 
-If your libraries are installed in non-standard locations, you can use one of the other predefined targets (`desktop`, `docker`, etc.) or create your own by editing the makefile. The following variables need to be set:
-
-- `HTSSRC`: path to the root of the HTSlib library, the prefix for HTSLIB_INC and HTSLIB_LIB paths.
-- `HTSLIB_INC`: path to the HTSlib header files.
-- `HTSLIB_LIB`: path to the static HTSlib library (file `libhts.a`).
-- `BOOST_INC`: path to the Boost header files (usually `/usr/include`).
-- `BOOST_LIB_IO`: path to the static Boost iostreams library (file `libboost_iostreams.a`).
-- `BOOST_LIB_PO`: path to the static Boost `program_options` library (file `libboost_program_options.a`).
-- `BOOST_LIB_SE`: path to the static Boost serialization library (file `libboost_serialization.a`).
-
-If installed at the system level, static libraries (*.a files) can be located with this command:
+If the auto-detection doesn't find your libraries (e.g., they are installed in a non-standard location), you can override individual paths on the command line:
 
 <div class="code-example" markdown="1">
 ```bash
-locate libboost_program_options.a libboost_iostreams.a libhts.a
+make system SYS_BOOST_LIB=/path/to/boost/lib SYS_HTSLIB_LIBDIR=/path/to/htslib/lib
 ```
 </div>
 
-Once all paths are correctly set up, proceed with the compilation using `make <target>`. The binary can be found in the `bin/` folder of each tool and will have a name similar to `GLIMPSE2_phase`. Since all tools share the same `common.mk`, you only need to edit it once — the change applies to all tools automatically.
+The overridable variables are:
+
+- `SYS_HTSLIB_INC`: path to the HTSlib header files directory.
+- `SYS_HTSLIB_LIBDIR`: path to the directory containing `libhts.a`.
+- `SYS_BOOST_INC`: path to the Boost header files directory.
+- `SYS_BOOST_LIB`: path to the directory containing the Boost static libraries.
+
+Alternatively, you can use one of the other predefined targets (`desktop`, `docker`, etc.) or create your own by editing `common.mk`. Since all tools share the same `common.mk`, you only need to edit it once — the change applies to all tools automatically.
 

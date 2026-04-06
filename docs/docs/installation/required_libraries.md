@@ -34,7 +34,36 @@ brew install htslib boost libdeflate
 ```
 </div>
 
+### Linux (package manager)
+
+Most Linux distributions package all required libraries. Installing from your distribution's package manager is the easiest approach.
+
+#### Debian / Ubuntu
+<div class="code-example" markdown="1">
+```bash
+sudo apt-get install build-essential pkg-config \
+  libhts-dev libhtscodecs-dev libboost-iostreams-dev libboost-program-options-dev \
+  libboost-serialization-dev libdeflate-dev zlib1g-dev libbz2-dev \
+  liblzma-dev libssl-dev
+```
+</div>
+
+#### Fedora / RHEL / Rocky Linux
+<div class="code-example" markdown="1">
+```bash
+sudo dnf install gcc-c++ make pkg-config \
+  htslib-devel boost-devel boost-static libdeflate-devel zlib-devel bzip2-devel \
+  xz-devel libcurl-devel openssl-devel
+```
+</div>
+
+Not all Fedora-based distributions (e.g., Amazon Linux) make `htslib-devel` and `libdeflate-devel` available in their package repositories. If these packages are not found, you will need to build them from source (see below).
+
+After installing packages, build with `make system` from the GLIMPSE2 root directory. The build system will automatically locate libraries using `pkg-config` (for HTSlib) and by searching standard installation paths.
+
 ### Linux (from source)
+
+If your distribution does not package these libraries, or you need specific versions, you can build them from source.
 
 #### HTSlib
 Building HTSlib is straightforward and does not require root privileges. Please refer to the [HTSlib](http://www.htslib.org/) documentation for complete details. Here we provide a basic script to install HTSlib v1.16:
