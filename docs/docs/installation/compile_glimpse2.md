@@ -41,6 +41,7 @@ You'll find there a folder containing all the software packages and other utilit
 - **concordance**: program to verify the accuracy of low-coverage imputation against high-coverage genomes
 - **docker**: all scripts needed to build a docker file comprising all binaries
 - **docs**: documentation in html
+- **inspect**: program to print summary statistics for a binary reference panel (.bin) file
 - **ligate**: ligate multiple imputed BCF/VCF files into a single chromosome-length file
 - **maps**: genetics maps in b37 and b38
 - **phase**: program to impute and phase low-coverage data.

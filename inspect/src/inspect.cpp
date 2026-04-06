@@ -23,19 +23,12 @@
  * SOFTWARE.
  ******************************************************************************/
 
-#ifndef _VERSION_H
-#define _VERSION_H
+#define _DECLARE_TOOLBOX_HERE
+#include <inspector/inspector_header.h>
 
-#define CALL_VERSION "2.0.0"
-#define CHUNK_VERSION "2.0.0"
-#define CONCORDANCE_VERSION "2.0.0"
-#define INSPECT_VERSION "2.0.0"
-#define LIGATE_VERSION "2.0.0"
-#define PHASE_VERSION "2.0.0"
-#define SPLIT_REFERENCE_VERSION "2.0.0"
-#define SIMULATE_BAMS_VERSION "2.0.0"
-#define SAMPLE_VERSION "2.0.0"
-#define SNPARRAY_VERSION "2.0.0"
-#define STATS_VERSION "2.0.0"
-
-#endif
+int main(int argc, char ** argv) {
+	std::vector < std::string > args;
+	for (int a = 1 ; a < argc ; a ++) args.push_back(std::string(argv[a]));
+	inspector().inspect(args);
+	return EXIT_SUCCESS;
+}

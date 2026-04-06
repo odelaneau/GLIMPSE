@@ -23,19 +23,34 @@
  * SOFTWARE.
  ******************************************************************************/
 
-#ifndef _VERSION_H
-#define _VERSION_H
+#ifndef _INSPECTOR_H
+#define _INSPECTOR_H
 
-#define CALL_VERSION "2.0.0"
-#define CHUNK_VERSION "2.0.0"
-#define CONCORDANCE_VERSION "2.0.0"
-#define INSPECT_VERSION "2.0.0"
-#define LIGATE_VERSION "2.0.0"
-#define PHASE_VERSION "2.0.0"
-#define SPLIT_REFERENCE_VERSION "2.0.0"
-#define SIMULATE_BAMS_VERSION "2.0.0"
-#define SAMPLE_VERSION "2.0.0"
-#define SNPARRAY_VERSION "2.0.0"
-#define STATS_VERSION "2.0.0"
+#include <utils/otools.h>
+#include <containers/ref_haplotype_set.h>
+#include <containers/variant_map.h>
+
+class inspector {
+public:
+	//COMMAND LINE OPTIONS
+	bpo::options_description descriptions;
+	bpo::variables_map options;
+
+	//DATA
+	ref_haplotype_set H;
+	variant_map V;
+
+	//CONSTRUCTOR
+	inspector();
+	~inspector();
+
+	//METHODS
+	void declare_options();
+	void parse_command_line(std::vector < std::string > &);
+	void check_options();
+	void read_binary_panel();
+	void print_statistics();
+	void inspect(std::vector < std::string > &);
+};
 
 #endif
