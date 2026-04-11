@@ -20,13 +20,21 @@ permalink: /docs/installation/build_from_source/compile_glimpse2
 Download the last version of the GLIMPSE2 code using:
 <div class="code-example" markdown="1">
 ```bash
-git clone https://github.com/odelaneau/glimpse.git
+git clone --recursive https://github.com/odelaneau/glimpse.git
+```
+</div>
+
+The `--recursive` flag is required to fetch the [SIMDe](https://github.com/simd-everywhere/simde) submodule used for portable SIMD support. If you have already cloned without `--recursive`, run:
+
+<div class="code-example" markdown="1">
+```bash
+git submodule update --init
 ```
 </div>
 
 Navigate to the downloaded folder using `cd glimpse`.
 
-You'll find there a folder containing all the software packages are other utility folders:
+You'll find there a folder containing all the software packages and other utility folders:
 
 - **chunk**: program to define chunks where to run phasing and imputation.
 - **common**: basic source files used by different tools.
@@ -36,7 +44,7 @@ You'll find there a folder containing all the software packages are other utilit
 - **ligate**: ligate multiple imputed BCF/VCF files into a single chromosome-length file
 - **maps**: genetics maps in b37 and b38
 - **phase**: program to impute and phase low-coverage data.
-- **split_reference**: prorgram to create GLIMPSE2's reference file format, used by GLIMPSE2_phase
+- **split_reference**: program to create GLIMPSE2's reference file format, used by GLIMPSE2_phase
 - **tutorial**: test datasets and scripts
 - **versions**: versioning
 
@@ -45,25 +53,45 @@ Each program in the suite contains the same folder structure:
 - `bin`: folder for the compiled binary.
 - `obj`: folder with all binary objects.
 - `src`: folder with source code.
-- `makefile`: Makefile to compile the program.
+- `makefile`: includes `../common.mk`, the shared build configuration.
 
-In order to compile a specific tool, for example _GLIMPSE2_phase_, go in directory of the software (cd `phase`) and edit the specific makefile at lines so that the following variables are correctly set up (look at the paths already there for an example):
+Build configuration (compiler flags, library paths, build targets) is centralized in `common.mk` at the repository root. Each tool's `makefile` simply includes it.
 
-- `HTSSRC`: path to the root of the HTSlib library, the prefix for HTSLIB_INC and HTSLIB_LIB paths.
-- `HTSLIB_INC`: path to the HTSlib header files.
-- `HTSLIB_LIB`: path to the static HTSlib library (file `libhts.a`).
-- `BOOST_INC`: path to the BOOST header files (usually `/usr/include`). 
-- `BOOST_LIB_IO`: path to the static BOOST iostreams library (file `libboost_iostreams.a`). 
-- `BOOST_LIB_PO`: path to the static BOOST `program_options` library (file `libboost_program_options.a`). 
-- `BOOST_LIB_SE`: path to the static BOOST serialization library (file `libboost_serialization.a`).
+### Quick build (system target)
 
-If installed at the system level, static libraries (*.a files) can be located with this command:
+If your libraries are installed in standard system locations, you can build all tools with:
 
 <div class="code-example" markdown="1">
 ```bash
-locate libboost_program_options.a libboost_iostreams.a libhts.a
+make system
 ```
 </div>
 
-Once all paths correctly set up, proceed with the compilation using `make`. The binary can be found in the `bin/` folder of each tool and will have a name similar to `GLIMPSE2_phase`. You will need to copy the modified makefile in each tool (folder) of GLIMPSE2.
+The `system` target auto-detects your OS, architecture, and library locations. It searches standard installation paths across all major Linux distributions (Debian/Ubuntu, Fedora/RHEL, Arch, openSUSE, etc.) and macOS Homebrew. If `pkg-config` is installed, it is used for more precise HTSlib detection.
+
+| Platform | Compiler | Detection method |
+|----------|----------|-----------------|
+| Linux (all distros) | g++ | Searches `/usr/lib`, `/usr/lib64`, `/usr/local/lib`, Debian multiarch paths |
+| macOS ARM64 | clang++ | Searches `/opt/homebrew/lib`, plus pkg-config |
+
+On x86_64, the phase module automatically enables AVX2/FMA SIMD instructions. On ARM64 platforms, SIMD is provided via NEON instructions through the SIMDe compatibility library.
+
+### Custom build (other targets)
+
+If the auto-detection doesn't find your libraries (e.g., they are installed in a non-standard location), you can override individual paths on the command line:
+
+<div class="code-example" markdown="1">
+```bash
+make system SYS_BOOST_LIB=/path/to/boost/lib SYS_HTSLIB_LIBDIR=/path/to/htslib/lib
+```
+</div>
+
+The overridable variables are:
+
+- `SYS_HTSLIB_INC`: path to the HTSlib header files directory.
+- `SYS_HTSLIB_LIBDIR`: path to the directory containing `libhts.a`.
+- `SYS_BOOST_INC`: path to the Boost header files directory.
+- `SYS_BOOST_LIB`: path to the directory containing the Boost static libraries.
+
+Alternatively, you can use one of the other predefined targets (`desktop`, `docker`, etc.) or create your own by editing `common.mk`. Since all tools share the same `common.mk`, you only need to edit it once — the change applies to all tools automatically.
 

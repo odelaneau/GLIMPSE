@@ -41,9 +41,33 @@ https://odelaneau.github.io/GLIMPSE/
 At the moment, GLIMPSE2 performs imputation only from a reference panel of samples. To use the joint-model, particularly useful for many samples at higher coverages (>0.5x) and small reference panels, please visit the GLIMPSE1 website and checkout the [GLIMPSE1 branch](https://github.com/odelaneau/GLIMPSE/tree/glimpse1).
 
 
-### Installation
+### Building from source
 
-To build the source code, please refer to the [step-by-step guide on the website](https://odelaneau.github.io/GLIMPSE/docs/installation).
+GLIMPSE2 supports **Linux x86_64**, **Linux aarch64**, and **macOS ARM64 (Apple Silicon)**.
+
+<details>
+<summary><b>macOS (Apple Silicon)</b></summary>
+
+```bash
+brew install htslib boost libdeflate
+git clone --recursive https://github.com/odelaneau/GLIMPSE.git
+cd GLIMPSE
+make system
+```
+</details>
+
+<details>
+<summary><b>Linux (Debian/Ubuntu)</b></summary>
+
+```bash
+sudo apt install build-essential libboost-iostreams-dev libboost-program-options-dev libboost-serialization-dev libhts-dev libdeflate-dev libbz2-dev liblzma-dev libcurl4-openssl-dev libssl-dev zlib1g-dev
+git clone --recursive https://github.com/odelaneau/GLIMPSE.git
+cd GLIMPSE
+make system
+```
+</details>
+
+For detailed instructions including building dependencies from source, see the [step-by-step guide on the website](https://odelaneau.github.io/GLIMPSE/docs/installation).
 
 #### Docker images
 
