@@ -186,7 +186,7 @@ void caller::read_checkpoint_if_available() {
 		if (current_iteration >= iterations_per_stage[current_stage]) {
 			std::stringstream err_str;
 			err_str<<"Checkpoint file has already run "<<current_iteration + 1<<" iterations "
-			"for stage"<<stage_names[current_stage]<<", and this run only calls for "<<iterations_per_stage[current_stage]<<
+			"for stage"<<stage_names[current_stage]<<", and this run only calls for "<<iterations_per_stage[current_stage]<< 
 			". This run must call for at least a many iterations as the checkpoint file already ran in order "
 			"to use this checkpoint file.";
 			vrb.error(err_str.str());
