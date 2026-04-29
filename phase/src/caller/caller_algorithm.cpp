@@ -154,6 +154,13 @@ void caller::write_checkpoint() {
 		oa << options["pbwt-modulo-cm"].as<float>();
 		oa << options["Kinit"].as<int>();
 		oa << options["Kpbwt"].as<int>();
+
+		// Serialize RNG state (for deterministic checkpointing)
+		std::stringstream rng_state;
+		rng_state << rng.getEngine();
+		std::string rng_state_str = rng_state.str();
+		oa << rng_state_str;
+
 		G.serialize_checkpoint_data(oa);
 		std::filesystem::rename(tmp_cp_filename.c_str(), cp_filename.c_str());
 		vrb.bullet("checkpoint completed (" + stb.str(tac.rel_time(), 2) + "ms)");
@@ -199,6 +206,15 @@ void caller::read_checkpoint_if_available() {
 		confirm_checkpoint_param<float>(ia, "pbwt-modulo-cm");
 		confirm_checkpoint_param<int>(ia, "Kinit");
 		confirm_checkpoint_param<int>(ia, "Kpbwt");
+
+		// Deserialize full RNG engine state (for deterministic checkpointing)
+		std::string rng_state_str;
+		ia >> rng_state_str;
+		std::stringstream rng_state(rng_state_str);
+		rng_state >> rng.getEngine();
+		std::stringstream rng_state_verify;
+		rng_state_verify << rng.getEngine();
+
 		G.serialize_checkpoint_data(ia);
 		vrb.bullet("checkpoint read");
 	}

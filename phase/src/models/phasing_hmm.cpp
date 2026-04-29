@@ -247,6 +247,7 @@ void phasing_hmm::backward() {
 void phasing_hmm::rephaseHaplotypes(std::vector < bool > & H0, std::vector < bool > & H1, std::vector < bool > & flat) {
 	reallocate(H0, H1, flat);
 	backward();
+	sumDProbs = 0.0f;
 	for (int d = 0 ; d < HAP_NUMBER ; d ++) {
 		//DProbs[d] = (phasingProbSum[0][d] / phasingProbSumSum[0]) * (phasingProbSum[0][HAP_NUMBER - d - 1] / phasingProbSumSum[0]);
 		DProbs[d] = (phasingProbSum[d] / phasingProbSumSum[0]) * (phasingProbSum[HAP_NUMBER - d - 1] / phasingProbSumSum[0]);
