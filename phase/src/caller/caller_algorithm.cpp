@@ -135,7 +135,7 @@ void caller::increment_iteration() {
 
 void caller::write_checkpoint() {
 	if (options.count("checkpoint-file-out")) {
-
+		
 		vrb.bullet("writing out checkpoint");
 		std::string cp_filename = options["checkpoint-file-out"].as < std::string > ();
 		std::string tmp_cp_filename = cp_filename + ".tmp";
@@ -186,7 +186,7 @@ void caller::read_checkpoint_if_available() {
 		if (current_iteration >= iterations_per_stage[current_stage]) {
 			std::stringstream err_str;
 			err_str<<"Checkpoint file has already run "<<current_iteration + 1<<" iterations "
-			"for stage"<<stage_names[current_stage]<<", and this run only calls for "<<iterations_per_stage[current_stage]<< 
+			"for stage"<<stage_names[current_stage]<<", and this run only calls for "<<iterations_per_stage[current_stage]<<
 			". This run must call for at least a many iterations as the checkpoint file already ran in order "
 			"to use this checkpoint file.";
 			vrb.error(err_str.str());
