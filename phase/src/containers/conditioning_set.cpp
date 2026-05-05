@@ -37,7 +37,9 @@ conditioning_set::conditioning_set(const variant_map & _mapG, const haplotype_se
 		ee_phs(1.0 -_err_phs),
 		ed_imp(_err_imp),
 		ee_imp(1.0 - _err_imp),
-		Kinit(_kinit), Kpbwt(_kpbwt)
+		Kinit(_kinit), Kpbwt(_kpbwt),
+		cached_full_panel_n(0),
+		transitions_valid(false)
 {
 	var_type = std::vector < unsigned char > (n_tot_sites);
 	major_alleles = H.major_alleles;
@@ -102,9 +104,12 @@ void conditioning_set::compactSelection(const int ind, const int iter)
 	}
 	else if (Kpbwt >= H.n_ref_haps)
 	{
+		use_list = false;
+		//Cache hit: the full-panel selection produces the same derived state every
+		//time, so reuse the result of the previous build (see header for details).
+		if (cached_full_panel_n == H.n_ref_haps) return;
 		idxHaps_ref.resize(H.n_ref_haps);
 		std::iota(idxHaps_ref.begin(), idxHaps_ref.end(), 0);
-		use_list = false;
 	}
 	//Kpbwt == 0 easy: just go here..
 	if (use_list && (H.list_states[hapid].size() > 0 || H.list_states[hapid+ploidyM1].size() > 0))
@@ -169,11 +174,17 @@ void conditioning_set::compactSelection(const int ind, const int iter)
 			lrel++;
 		} //else mono: do nothing
 	}
+
+	//We just rebuilt polymorphic_sites, so any previously computed t/nt are stale.
+	//Mark the full-panel cache as valid only if we actually took that path.
+	transitions_valid = false;
+	cached_full_panel_n = use_list ? 0 : H.n_ref_haps;
 }
 
 void conditioning_set::updateTransitions()
 {
 	if (polymorphic_sites.size() == 0) return;
+	if (transitions_valid) return;
 	t.resize(polymorphic_sites.size() - 1);
 	nt.resize(polymorphic_sites.size() - 1);
 	for (int l = 1 ; l < polymorphic_sites.size() ; l ++)
@@ -181,4 +192,5 @@ void conditioning_set::updateTransitions()
 		t[l-1] = std::clamp(-expm1(nrho * (mapG.vec_pos[polymorphic_sites[l]]->cm - mapG.vec_pos[polymorphic_sites[l-1]]->cm)), 1e-7, one_l);
 		nt[l-1] = 1.0f-t[l-1];
 	}
+	transitions_valid = true;
 }
