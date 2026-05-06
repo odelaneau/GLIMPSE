@@ -54,6 +54,7 @@ public:
 	void set(unsigned int row, unsigned char bit);
 	unsigned char get(unsigned int row, unsigned int col) const;
 	unsigned char getByte(unsigned int row, unsigned int col) const;
+	void setByte(unsigned int row, unsigned int col, unsigned char byte);
 
 	void transpose(bitmatrix & BM, unsigned int _min_row, unsigned int _min_col, unsigned int _max_row, unsigned int _max_col);
 	void transpose(bitmatrix & BM, unsigned int _max_row, unsigned int _max_col);
@@ -107,6 +108,14 @@ unsigned char bitmatrix::get(unsigned int row, unsigned int col) const {
 inline
 unsigned char bitmatrix::getByte(unsigned int row, unsigned int col) const {
 	return bytes[((unsigned long)row) * (n_cols>>3) +  (col>>3)];
+}
+
+//Writes 8 packed bits at column col (must be a multiple of 8). Avoids the
+//read-modify-write of set() when all 8 bits in the byte are known up front.
+inline
+void bitmatrix::setByte(unsigned int row, unsigned int col, unsigned char byte) {
+	assert((col & 7) == 0);
+	bytes[((unsigned long)row) * (n_cols>>3) +  (col>>3)] = byte;
 }
 
 #endif

@@ -78,10 +78,18 @@ public:
 	std::vector<unsigned int> swap_ref;
 	std::vector<unsigned int> swap_tar;
 
+	//FULL-PANEL CACHE
+	//When Kpbwt >= n_ref_haps the iota selection path runs and the derived state
+	//(var_type, polymorphic_sites, monomorphic_sites, Svar, Hvar, t, nt) depends only
+	//on H, so it is identical across individuals and iterations. Assumes H is
+	//immutable for the lifetime of this object (true today).
+	unsigned int cached_full_panel_n;		//0 when invalid; otherwise H.n_ref_haps it was built for
+	bool transitions_valid;					//true when t and nt match the current polymorphic_sites
+
 	//CONSTRUCTOR/DESTRUCTOR/INITIALIZATION
 	conditioning_set(const variant_map &, const haplotype_set &, const unsigned int, const unsigned int, const int,const int, const float, const float, const bool );
 	~conditioning_set();
-	void clear();
+	void clear();		//currently unimplemented; if defined, must reset cached_full_panel_n=0 and transitions_valid=false
 
 	//SELECTION ROUTINES
 	void compactSelection(const int ind, const int iter);
