@@ -1,4 +1,4 @@
-projects = chunk concordance ligate phase split_reference
+projects = chunk concordance inspect ligate phase split_reference
 
 .PHONY: all $(projects) system clean
 
