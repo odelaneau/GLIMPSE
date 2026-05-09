@@ -38,6 +38,15 @@ public:
 	bool use_subset_samples;
 	std::set < std::string > subset_samples_set;
 	std::vector < std::string > subset_samples;
+	// Truth-side sample ID per row of subset_samples. When --samples provides
+	// only one column for a row, the entry equals the imputed-side ID. When
+	// --samples is not provided, this is populated alongside subset_samples
+	// with identical values during readData initialisation.
+	std::vector < std::string > subset_samples_truth;
+	// For each row i of subset_samples, the column index in the per-record
+	// truth FORMAT arrays after the truth header has been subset to its
+	// unique truth IDs. Multiple imputed rows may share a truth column.
+	std::vector < int > imputed_to_truth_col;
 
 	std::vector < std::string > samples;
 	std::vector < double > bins;

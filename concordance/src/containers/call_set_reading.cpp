@@ -42,10 +42,14 @@ void call_set::readData(std::vector < std::string > & ftruth, std::vector < std:
 	int n_true_samples, n_esti_samples;
 	unsigned long int n_variants_all_chromosomes = 0;
 	//std::vector < int > mappingT, mappingE;
-	char** isec_samples_names = NULL;
-	int* truth_imap;
-	int* estimated_imap;
-	int n_isec_samples_names = 0;
+	// Imputed-side: one entry per imputed sample (length N).
+	char** estimated_subset_names = NULL;
+	int n_estimated_subset_names = 0;
+	int* estimated_imap = NULL;
+	// Truth-side: one entry per *unique* truth alias (length K, possibly < N).
+	char** truth_subset_names = NULL;
+	int n_truth_subset_names = 0;
+	int* truth_imap = NULL;
 
 	std::string af_tag = options["af-tag"].as<std::string>();
 	const bool gt_validation = options.count("gt-val");
@@ -107,41 +111,81 @@ void call_set::readData(std::vector < std::string > & ftruth, std::vector < std:
 		if (f == 0)
 		{
 			std::unordered_set<std::string> truth_samples_names_set;
-			std::unordered_set<std::string> isec_samples_names_set;
+			std::unordered_set<std::string> esti_samples_names_set;
 
 			int n_true_samples_file = bcf_hdr_nsamples(sr->readers[0].header);
 			int n_esti_samples_file = bcf_hdr_nsamples(sr->readers[1].header);
 			for (int i = 0 ; i < n_true_samples_file ; i ++) truth_samples_names_set.insert(sr->readers[0].header->samples[i]);
-			for (int i = 0 ; i < n_esti_samples_file ; i ++)
-				if (truth_samples_names_set.find(sr->readers[1].header->samples[i]) != truth_samples_names_set.end())
-					isec_samples_names_set.insert(sr->readers[1].header->samples[i]);
+			for (int i = 0 ; i < n_esti_samples_file ; i ++) esti_samples_names_set.insert(sr->readers[1].header->samples[i]);
 
-			if (!options.count("samples")) subset_samples.assign(isec_samples_names_set.begin(),isec_samples_names_set.end());
-			for (int i = 0; i < subset_samples.size() ; i ++)
-			{
-				if (isec_samples_names_set.find(subset_samples[i]) != isec_samples_names_set.end())
-				{
-					isec_samples_names = (char**) realloc(isec_samples_names, (n_isec_samples_names+1)*sizeof(const char*));
-					isec_samples_names[n_isec_samples_names] = strdup(subset_samples[i].c_str());
-					n_isec_samples_names++;
+			// No --samples: take the imputed∩truth intersection 1:1 (truth ID == imputed ID for every row).
+			if (!options.count("samples")) {
+				for (int i = 0 ; i < n_esti_samples_file ; i ++) {
+					const std::string esti_id = sr->readers[1].header->samples[i];
+					if (truth_samples_names_set.count(esti_id)) {
+						subset_samples.push_back(esti_id);
+						subset_samples_truth.push_back(esti_id);
+					}
 				}
 			}
-			if (n_isec_samples_names == 0) vrb.error("No sample in common between datasets");
 
-			truth_imap = (int*)malloc(n_isec_samples_names * sizeof(int));
-			estimated_imap = (int*)malloc(n_isec_samples_names * sizeof(int));
+			// Filter rows whose imputed ID is missing from the imputed VCF or whose
+			// (possibly aliased) truth ID is missing from the truth VCF.
+			std::vector<std::string> kept_imputed, kept_truth;
+			for (size_t i = 0; i < subset_samples.size(); i++) {
+				if (esti_samples_names_set.count(subset_samples[i]) &&
+					truth_samples_names_set.count(subset_samples_truth[i])) {
+					kept_imputed.push_back(subset_samples[i]);
+					kept_truth.push_back(subset_samples_truth[i]);
+				}
+			}
+			subset_samples.swap(kept_imputed);
+			subset_samples_truth.swap(kept_truth);
+			if (subset_samples.empty()) vrb.error("No sample in common between datasets");
 
-			hdr_truth = bcf_hdr_subset(sr->readers[0].header, n_isec_samples_names, isec_samples_names, truth_imap);
-			hdr_estimated = bcf_hdr_subset(sr->readers[1].header, n_isec_samples_names, isec_samples_names, estimated_imap);
+			// Build the estimated-side name array — one entry per imputed row (unique by construction).
+			n_estimated_subset_names = subset_samples.size();
+			estimated_subset_names = (char**) malloc(n_estimated_subset_names * sizeof(char*));
+			for (int i = 0; i < n_estimated_subset_names; i++)
+				estimated_subset_names[i] = strdup(subset_samples[i].c_str());
 
-			if ( !hdr_truth || !hdr_estimated || bcf_hdr_nsamples(hdr_truth) != bcf_hdr_nsamples(hdr_estimated) || bcf_hdr_nsamples(hdr_truth)<=0) vrb.error("Error occurred while subsetting truth samples");
+			// Build the truth-side unique-name array and the imputed→truth-column mapping.
+			std::unordered_map<std::string,int> truth_alias_to_col;
+			imputed_to_truth_col.clear();
+			imputed_to_truth_col.reserve(subset_samples_truth.size());
+			for (size_t i = 0; i < subset_samples_truth.size(); i++) {
+				const std::string & tid = subset_samples_truth[i];
+				auto it = truth_alias_to_col.find(tid);
+				if (it == truth_alias_to_col.end()) {
+					int col = (int) truth_alias_to_col.size();
+					truth_alias_to_col[tid] = col;
+					imputed_to_truth_col.push_back(col);
+				} else {
+					imputed_to_truth_col.push_back(it->second);
+				}
+			}
+			n_truth_subset_names = (int) truth_alias_to_col.size();
+			truth_subset_names = (char**) malloc(n_truth_subset_names * sizeof(char*));
+			for (auto & kv : truth_alias_to_col)
+				truth_subset_names[kv.second] = strdup(kv.first.c_str());
 
-			n_true_samples = bcf_hdr_nsamples(hdr_truth);
-			n_esti_samples = bcf_hdr_nsamples(hdr_estimated);
+			truth_imap     = (int*) malloc(n_truth_subset_names * sizeof(int));
+			estimated_imap = (int*) malloc(n_estimated_subset_names * sizeof(int));
 
-			N=n_true_samples;
+			hdr_truth     = bcf_hdr_subset(sr->readers[0].header, n_truth_subset_names,     truth_subset_names,     truth_imap);
+			hdr_estimated = bcf_hdr_subset(sr->readers[1].header, n_estimated_subset_names, estimated_subset_names, estimated_imap);
+
+			if (!hdr_truth || !hdr_estimated
+				|| bcf_hdr_nsamples(hdr_truth)     != n_truth_subset_names
+				|| bcf_hdr_nsamples(hdr_estimated) != n_estimated_subset_names)
+				vrb.error("Error occurred while subsetting samples");
+
+			n_true_samples = bcf_hdr_nsamples(hdr_truth);     // = K (unique truth IDs)
+			n_esti_samples = bcf_hdr_nsamples(hdr_estimated); // = N (imputed rows)
+
+			N=n_esti_samples;
 			samples.reserve(N);
-			for (int i=0; i<N;++i) samples.push_back(std::string(hdr_truth->samples[i]));
+			for (int i=0; i<N;++i) samples.push_back(std::string(hdr_estimated->samples[i]));
 
 /*
 			////////////////////////////////////////////////////////////////////////////////
@@ -200,7 +244,7 @@ void call_set::readData(std::vector < std::string > & ftruth, std::vector < std:
 				int n_gt_fields = 0;
 
 				bcf1_t * line =  bcf_sr_get_line(sr, 1);
-				bcf_subset(hdr_estimated, line, n_isec_samples_names, estimated_imap);
+				bcf_subset(hdr_estimated, line, n_estimated_subset_names, estimated_imap);
 				int ngt = bcf_get_genotypes(hdr_estimated, line, &gt_fields, &n_gt_fields);
 				const int line_max_ploidy = ngt/n_esti_samples;
 				assert(line_max_ploidy==ploidy); //we do not allow missing data
@@ -342,8 +386,12 @@ void call_set::readData(std::vector < std::string > & ftruth, std::vector < std:
 		}
 		else
 		{
-			hdr_truth = bcf_hdr_subset(sr->readers[0].header, n_isec_samples_names, isec_samples_names, truth_imap);
-			hdr_estimated = bcf_hdr_subset(sr->readers[1].header, n_isec_samples_names, isec_samples_names, estimated_imap);
+			hdr_truth     = bcf_hdr_subset(sr->readers[0].header, n_truth_subset_names,     truth_subset_names,     truth_imap);
+			hdr_estimated = bcf_hdr_subset(sr->readers[1].header, n_estimated_subset_names, estimated_subset_names, estimated_imap);
+			if (!hdr_truth || !hdr_estimated
+				|| bcf_hdr_nsamples(hdr_truth)     != n_truth_subset_names
+				|| bcf_hdr_nsamples(hdr_estimated) != n_estimated_subset_names)
+				vrb.error("Error occurred while subsetting samples in [" + ftruth[f] + "] / [" + festimated[f] + "] (a sample present in the first input file is missing here)");
 		}
 
 		const int ploidyP1 = ploidy + 1;
@@ -434,8 +482,8 @@ void call_set::readData(std::vector < std::string > & ftruth, std::vector < std:
 					line_t =  bcf_sr_get_line(sr, 0);
 					line_e =  bcf_sr_get_line(sr, 1);
 
-					bcf_subset(hdr_truth, line_t, n_isec_samples_names, truth_imap);
-					bcf_subset(hdr_estimated, line_e, n_isec_samples_names, estimated_imap);
+					bcf_subset(hdr_truth,     line_t, n_truth_subset_names,     truth_imap);
+					bcf_subset(hdr_estimated, line_e, n_estimated_subset_names, estimated_imap);
 
 				    naf_f = bcf_get_info_float(sr->readers[2].header, line_f, af_tag.c_str(), &af_ptr, &naf_arr_f);
 
@@ -515,10 +563,13 @@ void call_set::readData(std::vector < std::string > & ftruth, std::vector < std:
 						if (grp_bin >= 0)
 						{	// Do this variant fall within a given frequency bin?
 
-							// Read Truth
-							for(int i = 0 ; i < n_true_samples ; i ++)
+							// Read Truth — iterate over imputed rows (N), indexing into the
+							// truth subset via imputed_to_truth_col so multiple imputed rows
+							// can read from the same truth column when aliased.
+							for(int i = 0 ; i < N ; i ++)
 							{
-								const int index = ploidy_t_record*i;//ploidy
+								const int t_col = imputed_to_truth_col[i];
+								const int index = ploidy_t_record*t_col;
 								const int gpos=ind2gpos[i];
 
 								if (gt_validation)
@@ -540,7 +591,7 @@ void call_set::readData(std::vector < std::string > & ftruth, std::vector < std:
 										GLs[gpos+1] = (gt == 1);
 										GLs[gpos+ploidy] = gt == ploidy;
 									}
-									DPs[i] = D > 0 ? dp_arr_t[i] : 0;
+									DPs[i] = D > 0 ? dp_arr_t[t_col] : 0;
 								}
 								else
 								{
@@ -558,8 +609,10 @@ void call_set::readData(std::vector < std::string > & ftruth, std::vector < std:
 										GLs[gpos+1] = unphred[std::min(pl_arr_t[index+1],255)];
 										GLs[gpos+ploidy] = unphred[std::min(pl_arr_t[index+ploidy],255)];
 									}
-									DPs[i] = D > 0 ? dp_arr_t[i] : 0;
+									DPs[i] = D > 0 ? dp_arr_t[t_col] : 0;
 								}
+								// Per-imputed-row gpos, so when two rows alias the same truth column
+								// each flips its own GLs slot independently — no double-flip.
 								if (flip) { float_swap = GLs[gpos+ploidy]; GLs[gpos+ploidy] = GLs[gpos+0]; GLs[gpos+0] = float_swap; }
 							}
 
@@ -898,8 +951,10 @@ void call_set::readData(std::vector < std::string > & ftruth, std::vector < std:
 	}
 	free(truth_imap);
 	free(estimated_imap);
-	for(int i = 0; i < n_isec_samples_names; i++) free(isec_samples_names[i]);
-	if (isec_samples_names) free(isec_samples_names);
+	for (int i = 0; i < n_estimated_subset_names; i++) free(estimated_subset_names[i]);
+	if (estimated_subset_names) free(estimated_subset_names);
+	for (int i = 0; i < n_truth_subset_names; i++) free(truth_subset_names[i]);
+	if (truth_subset_names) free(truth_subset_names);
 
 	vrb.print("");
 	vrb.bullet("Total #variants = " + stb.str(n_variants_all_chromosomes));

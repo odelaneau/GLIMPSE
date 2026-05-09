@@ -113,14 +113,31 @@ void call_set::setTargets(std::string fsamples) {
 	std::string buffer;
 	input_file fd (fsamples);
 	std::vector < std::string > tokens;
-	std::pair<std::set<std::string>::iterator,bool> ret;
+	// Map imputed-id → truth-id. Used to detect duplicate imputed rows that
+	// disagree on the truth-side alias.
+	std::map < std::string, std::string > imputed_to_truth;
 
 	while (getline(fd, buffer))
 	{
-		if (stb.split(buffer, tokens) < 1) vrb.error("Empty line found in sample file.");
-		ret = subset_samples_set.insert(tokens[0]);
-		if (ret.second) subset_samples.push_back(tokens[0]);
+		const int n_tok = stb.split(buffer, tokens);
+		if (n_tok < 1) vrb.error("Empty line found in sample file.");
+		if (n_tok > 2) vrb.error("Too many columns in sample file (expected 1 or 2): " + buffer);
 
+		const std::string & imputed_id = tokens[0];
+		const std::string & truth_id   = (n_tok == 2) ? tokens[1] : tokens[0];
+
+		auto ins = imputed_to_truth.insert({imputed_id, truth_id});
+		if (ins.second)
+		{
+			subset_samples_set.insert(imputed_id);
+			subset_samples.push_back(imputed_id);
+			subset_samples_truth.push_back(truth_id);
+		}
+		else if (ins.first->second != truth_id)
+		{
+			vrb.error("Sample [" + imputed_id + "] listed twice in --samples file with conflicting truth-side IDs [" + ins.first->second + "] and [" + truth_id + "]");
+		}
+		// else: duplicate row with consistent truth ID — silently dedupe.
 	}
 	vrb.bullet("#samples  = " + stb.str(subset_samples.size()));
 	fd.close();
