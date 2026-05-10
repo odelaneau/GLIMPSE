@@ -528,6 +528,22 @@ void call_set::readData(std::vector < std::string > & ftruth, std::vector < std:
 						const int ploidy_e_record=ngp_e/n_esti_samples;
 						const int ploidy_t_record=npl_t/n_true_samples;
 
+						// The truth-side per-sample stride must match the imputed-side
+						// ploidy: ploidy entries per sample under --gt-val (one allele each),
+						// otherwise ploidy+1 PL entries per sample (one per genotype). When
+						// these disagree the per-record reads below would silently walk into
+						// the next sample's slot. This is reachable when --samples aliases
+						// an imputed sample to a validation sample of different ploidy.
+						const int expected_t_stride = gt_validation ? ploidy : ploidyP1;
+						if (ploidy_t_record != expected_t_stride)
+							vrb.error("Validation and imputed VCFs disagree on ploidy at "
+								+ std::string(bcf_hdr_id2name(hdr_truth, line_t->rid))
+								+ ":" + stb.str(line_t->pos + 1)
+								+ " (imputed ploidy=" + stb.str(ploidy)
+								+ ", validation per-sample stride=" + stb.str(ploidy_t_record)
+								+ ", expected " + stb.str(expected_t_stride)
+								+ "). Aliased samples in --samples must share ploidy with their validation-side counterparts.");
+
 						const bool flip = use_alt_af? false : (af > 0.5f);
 						const float maf = use_alt_af? af : std::min(af, 1.0f - af);
 						int grp_bin = -1;
