@@ -113,7 +113,7 @@ void call_set::setTargets(std::string fsamples) {
 	std::string buffer;
 	input_file fd (fsamples);
 	std::vector < std::string > tokens;
-	// Map imputed-id → truth-id. Used to detect duplicate imputed rows that
+	// Map imputed-id -> truth-id. Used to detect duplicate imputed rows that
 	// disagree on the truth-side alias.
 	std::map < std::string, std::string > imputed_to_truth;
 
@@ -129,7 +129,6 @@ void call_set::setTargets(std::string fsamples) {
 		auto ins = imputed_to_truth.insert({imputed_id, truth_id});
 		if (ins.second)
 		{
-			subset_samples_set.insert(imputed_id);
 			subset_samples.push_back(imputed_id);
 			subset_samples_truth.push_back(truth_id);
 		}
@@ -137,7 +136,7 @@ void call_set::setTargets(std::string fsamples) {
 		{
 			vrb.error("Sample [" + imputed_id + "] listed twice in --samples file with conflicting truth-side IDs [" + ins.first->second + "] and [" + truth_id + "]");
 		}
-		// else: duplicate row with consistent truth ID — silently dedupe.
+		// else: duplicate row with consistent truth ID -- silently dedupe.
 	}
 	vrb.bullet("#samples  = " + stb.str(subset_samples.size()));
 	fd.close();

@@ -143,13 +143,13 @@ void call_set::readData(std::vector < std::string > & ftruth, std::vector < std:
 			subset_samples_truth.swap(kept_truth);
 			if (subset_samples.empty()) vrb.error("No sample in common between datasets");
 
-			// Build the estimated-side name array — one entry per imputed row (unique by construction).
+			// Build the estimated-side name array: one entry per imputed row (unique by construction).
 			n_estimated_subset_names = subset_samples.size();
 			estimated_subset_names = (char**) malloc(n_estimated_subset_names * sizeof(char*));
 			for (int i = 0; i < n_estimated_subset_names; i++)
 				estimated_subset_names[i] = strdup(subset_samples[i].c_str());
 
-			// Build the truth-side unique-name array and the imputed→truth-column mapping.
+			// Build the truth-side unique-name array and the imputed -> truth-column mapping.
 			std::unordered_map<std::string,int> truth_alias_to_col;
 			imputed_to_truth_col.clear();
 			imputed_to_truth_col.reserve(subset_samples_truth.size());
@@ -563,9 +563,9 @@ void call_set::readData(std::vector < std::string > & ftruth, std::vector < std:
 						if (grp_bin >= 0)
 						{	// Do this variant fall within a given frequency bin?
 
-							// Read Truth — iterate over imputed rows (N), indexing into the
-							// truth subset via imputed_to_truth_col so multiple imputed rows
-							// can read from the same truth column when aliased.
+							// Iterate over imputed rows (N) rather than truth columns (K):
+							// when K < N, multiple imputed rows alias the same truth column
+							// and each needs its own per-row write into GLs/DPs below.
 							for(int i = 0 ; i < N ; i ++)
 							{
 								const int t_col = imputed_to_truth_col[i];
@@ -611,8 +611,6 @@ void call_set::readData(std::vector < std::string > & ftruth, std::vector < std:
 									}
 									DPs[i] = D > 0 ? dp_arr_t[t_col] : 0;
 								}
-								// Per-imputed-row gpos, so when two rows alias the same truth column
-								// each flips its own GLs slot independently — no double-flip.
 								if (flip) { float_swap = GLs[gpos+ploidy]; GLs[gpos+ploidy] = GLs[gpos+0]; GLs[gpos+0] = float_swap; }
 							}
 

@@ -63,8 +63,8 @@ The three NA12878 rows alias to the single truth sample `NA12878`; `HG00096` and
 | Option name 	       | Argument| Default  | Description |
 |:---------------------|:--------|:---------|:-------------------------------------|
 | \-\-input            | FILE    | NA       | File with four columns listing in order: regions frequencies validation and imputed dataset. For genome-wide concordance, add more lines specifying different chromosomes. |
-| \-\-samples          | FILE    | NA       | List of samples to process. One sample per line, giving the sample ID as it appears in the imputed VCF. Each row may optionally include a second whitespace-separated column giving the corresponding sample ID in the validation VCF (useful when the same biological sample appears under different IDs, e.g. multiple downsampled replicates of the same truth sample). The second column is optional on a per-row basis — a single file may freely mix rows with and without an alias. When omitted, the truth-side ID is assumed identical to the imputed-side ID. See "Sample aliasing" below for an example. |
-| \-\-gt-val           | NA      | NA       | Uses hard called genotypes rather than phread-scaled likelihoods for the validation dataset, reading them from FORMAT/GT field. |
+| \-\-samples          | FILE    | NA       | List of samples to process. One sample per line, giving the imputed-VCF sample ID; an optional second whitespace-separated column gives the corresponding validation-VCF sample ID. See [Sample aliasing](#sample-aliasing) above for the full description and an example. |
+| \-\-gt-val           | NA      | NA       | Uses hard called genotypes rather than phred-scaled likelihoods for the validation dataset, reading them from FORMAT/GT field. |
 | \-\-gt-tar           | NA      | NA       | Uses FORMAT/GT field to determine the best-guess genotype rather than the FORMAT/GP (default). FORMAT/DS are FORMAT/GP fields are still required for calibration and rsquared calculations. |
 
 

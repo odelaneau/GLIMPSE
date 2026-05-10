@@ -36,8 +36,8 @@ void checker::declare_options() {
 	bpo::options_description opt_input ("Input parameters");
 	opt_input.add_options()
 			("input", bpo::value< std::string >(), "File with four columns listing in order: regions frequencies validation and imputed dataset. For genome-wide concordance, add more lines specifying different chromosomes.")
-			("samples", bpo::value< std::string >(), "List of samples to process. One sample per line, giving the imputed-VCF sample ID. An optional second whitespace-separated column on each row gives the corresponding sample ID in the validation VCF (useful when the same biological sample appears under different IDs, e.g. multiple downsampled replicates of the same truth sample). The second column is optional per-row; rows without it use the imputed-side ID for both files.")
-			("gt-val", "Uses hard called genotypes rather than phread-scaled likelihoods for the validation dataset, reading them from FORMAT/GT field.")
+			("samples", bpo::value< std::string >(), "List of samples to process. One sample per line, giving the sample ID as it appears in the imputed VCF. Each row may optionally include a second whitespace-separated column giving the corresponding sample ID in the validation VCF (useful when the same biological sample appears under different IDs, e.g. multiple downsampled replicates of the same truth sample). The second column is optional on a per-row basis; a single file may freely mix rows with and without an alias. When omitted, the validation-side ID is assumed identical to the imputed-side ID.")
+			("gt-val", "Uses hard called genotypes rather than phred-scaled likelihoods for the validation dataset, reading them from FORMAT/GT field.")
 			("gt-tar", "Uses FORMAT/GT field to determine the best-guess genotype rather than the FORMAT/GP (default). FORMAT/DS are FORMAT/GP fields are still required for calibration and rsquared calculations.");
 
 
