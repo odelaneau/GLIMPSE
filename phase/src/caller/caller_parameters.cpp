@@ -1,6 +1,6 @@
 /*******************************************************************************
- * Copyright (C) 2022-2023 Simone Rubinacci
- * Copyright (C) 2022-2023 Olivier Delaneau
+ * Copyright (C) 2022-2026 Simone Rubinacci
+ * Copyright (C) 2022-2026 Olivier Delaneau
  *
  * MIT Licence
  *
@@ -111,7 +111,7 @@ void caller::parse_command_line(std::vector < std::string > & args) {
 
 	vrb.title("[GLIMPSE2] Phase and impute low coverage sequencing data");
 	vrb.bullet("Authors              : Simone RUBINACCI & Olivier DELANEAU, University of Lausanne");
-	vrb.bullet("Contact              : simone.rubinacci@unil.ch & olivier.delaneau@unil.ch");
+	vrb.bullet("Contact              : simone.rubinacci@helsinki.fi & olivier.delaneau@unil.ch");
 	vrb.bullet("Version       	 : GLIMPSE2_phase v" + std::string(PHASE_VERSION) + " / commit = " + std::string(__COMMIT_ID__) + " / release = " + std::string (__COMMIT_DATE__));
 	vrb.bullet("Citation	         : BiorXiv, (2022). DOI: https://doi.org/10.1101/2022.11.28.518213");
 	vrb.bullet("        	         : Nature Genetics 53, 120–126 (2021). DOI: https://doi.org/10.1038/s41588-020-00756-0");
