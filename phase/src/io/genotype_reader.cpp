@@ -24,6 +24,8 @@
  ******************************************************************************/
 
 #include <io/genotype_reader.h>
+#include <thread>
+#include <chrono>
 
 std::map<std::string, int> mapPloidy = {
 		{"1",1},
@@ -245,6 +247,7 @@ void genotype_reader::scanGenotypesCommon(bcf_srs_t * sr, int ref_sr_n /* Refere
 		V.push(new variant (line_ref->pos + 1, std::string(line_ref->d.id), line_ref->d.allele[0], line_ref->d.allele[1], line_type, V.size(), cref, calt, line_type==VCF_SNP && (line_ref->pos != prev_pos)));
 		prev_pos=line_ref->pos;
 	}
+	if (sr->errnum) vrb.error("Error while scanning VCF/BCF file(s): " + std::string(bcf_sr_strerror(sr->errnum)));
 	free(vAC);
 	free(vAN);
 	if (H.n_tot_sites == 0) vrb.error("No variants to be imputed in files");
@@ -271,33 +274,77 @@ void genotype_reader::scanGenotypes(bcf_srs_t * sr) {
 }
 void genotype_reader::readTarGenotypes(std::string fmain, int nthreads)
 {
-	//TODO //FIXME //TO TEST
-	bcf_srs_t * sr_scan =  bcf_sr_init();
-
-	initReader(sr_scan, fmain, nthreads);
-	M.n_tar_samples = bcf_hdr_nsamples(sr_scan->readers[0].header);
-	M.tar_sample_names = std::vector<std::string> (M.n_tar_samples);
-
-	for (int i = 0 ; i < M.n_tar_samples ; i ++)
-		M.tar_sample_names[i] = std::string(sr_scan->readers[0].header->samples[i]);
-
+	//One-time header setup (sample names + ploidy; set_ploidy_tar also allocates the
+	//genotype set, so it must run exactly once). Open/index errors here are already
+	//fatal via initReader; only the streaming passes below are retried.
+	{
+		bcf_srs_t * sr_hdr = bcf_sr_init();
+		initReader(sr_hdr, fmain, nthreads);
+		M.n_tar_samples = bcf_hdr_nsamples(sr_hdr->readers[0].header);
+		M.tar_sample_names = std::vector<std::string> (M.n_tar_samples);
+		for (int i = 0 ; i < M.n_tar_samples ; i ++)
+			M.tar_sample_names[i] = std::string(sr_hdr->readers[0].header->samples[i]);
+		bcf_sr_destroy(sr_hdr);
+	}
 	set_ploidy_tar();
 
+	std::vector<variant*> vec_pos_tar;
+
+	//Retries are not implemented in hfile_libcurl (used when streaming from a cloud
+	//location), so we retry transient read failures of each streaming pass here. The
+	//scan only accumulates into the local vec_pos_tar (reset by clearing it at the
+	//start of scanTarGenotypes), and the parse overwrites the genotype set by site
+	//index, so each retry restarts the pass from a clean state.
 	vrb.wait("  * VCF/BCF scanning");
 	tac.clock();
+	{
+		const int n_retry = 3;
+		int n_retry_remain = n_retry;
+		std::chrono::seconds delay(1);
+		for (; n_retry_remain > 0; n_retry_remain--, delay *= 2)
+		{
+			if (n_retry_remain != n_retry) std::this_thread::sleep_for(delay);
+			const int err = scanTarGenotypes(fmain, nthreads, vec_pos_tar);
+			if (err)
+			{
+				vrb.warning("Error while scanning [" + fmain + "]: " + std::string(bcf_sr_strerror(err)) + ". " + std::to_string(n_retry_remain) + " retries remaining");
+				continue;
+			}
+			break;
+		}
+		if (n_retry_remain == 0) vrb.error("Max number of retries attempted while scanning [" + fmain + "]");
+	}
 
-	//Scan file
-	bcf1_t * line_main = NULL;
-	int npl_main, npl_arr_main = 0, *pl_arr_main = NULL;
-	int ngl_main, ngl_arr_main = 0;
-	float *gl_arr_main = NULL;
-	const int max_ploidyP1=H.max_ploidy+1;
-	int *ptr;
-	int main_file_max_ploidy=0;
-	float *ptr_f;
-	std::vector<variant*> vec_pos_tar;
+	vrb.wait("  * VCF/BCF parsing");
+	tac.clock();
+	{
+		const int n_retry = 3;
+		int n_retry_remain = n_retry;
+		std::chrono::seconds delay(1);
+		for (; n_retry_remain > 0; n_retry_remain--, delay *= 2)
+		{
+			if (n_retry_remain != n_retry) std::this_thread::sleep_for(delay);
+			const int err = parseTarGenotypes(fmain, nthreads, vec_pos_tar);
+			if (err)
+			{
+				vrb.warning("Error while parsing [" + fmain + "]: " + std::string(bcf_sr_strerror(err)) + ". " + std::to_string(n_retry_remain) + " retries remaining");
+				continue;
+			}
+			break;
+		}
+		if (n_retry_remain == 0) vrb.error("Max number of retries attempted while parsing [" + fmain + "]");
+	}
+}
+
+int genotype_reader::scanTarGenotypes(std::string fmain, int nthreads, std::vector<variant*>& vec_pos_tar)
+{
+	vec_pos_tar.clear(); //reset any partial accumulation from a failed attempt
+
+	bcf_srs_t * sr_scan = bcf_sr_init();
+	initReader(sr_scan, fmain, nthreads);
 	sr_scan->max_unpack = BCF_UN_INFO;
 
+	bcf1_t * line_main = NULL;
 	while (bcf_sr_next_line (sr_scan))
 	{
 		if (!bcf_sr_has_line(sr_scan, 0) || bcf_sr_get_line(sr_scan, 0)->n_allele != 2) continue; //always ref
@@ -307,18 +354,27 @@ void genotype_reader::readTarGenotypes(std::string fmain, int nthreads)
 		if (vecS.size() > 0) vec_pos_tar.push_back(vecS[0]);
 		else vec_pos_tar.push_back(nullptr);
 	}
-
+	const int err = sr_scan->errnum;
 	bcf_sr_destroy(sr_scan);
+	return err;
+}
 
-	vrb.wait("  * VCF/BCF parsing");
-	tac.clock();
+int genotype_reader::parseTarGenotypes(std::string fmain, int nthreads, const std::vector<variant*>& vec_pos_tar)
+{
+	bcf1_t * line_main = NULL;
+	int npl_main, npl_arr_main = 0, *pl_arr_main = NULL;
+	int ngl_main, ngl_arr_main = 0;
+	float *gl_arr_main = NULL;
+	const int max_ploidyP1=H.max_ploidy+1;
+	int *ptr;
+	int main_file_max_ploidy=0;
+	float *ptr_f;
+	int i_site=0;
+	const int n_ref_haps = H.n_ref_haps;
 
 	bcf_srs_t * sr_parse =  bcf_sr_init();
 	initReader(sr_parse, fmain, nthreads);
-	int i_site=0;
-
 	sr_parse->max_unpack = BCF_UN_ALL;
-	const int n_ref_haps = H.n_ref_haps;
 
 	while (bcf_sr_next_line (sr_parse))
 	{
@@ -410,9 +466,11 @@ void genotype_reader::readTarGenotypes(std::string fmain, int nthreads)
 			++i_site;
 		}
 	}
+	const int err = sr_parse->errnum;
 	bcf_sr_destroy(sr_parse);
 	free(pl_arr_main);
 	free(gl_arr_main);
+	return err;
 }
 
 void genotype_reader::set_ploidy_tar()
@@ -642,6 +700,7 @@ void genotype_reader::parseGenotypes(bcf_srs_t * sr) {
 		prog_bar+=prog_step;
 		vrb.progress("  * VCF/BCF parsing", prog_bar);
 	}
+	if (sr->errnum) vrb.error("Error while parsing VCF/BCF file(s): " + std::string(bcf_sr_strerror(sr->errnum)));
 	free(pl_arr_main);
 	free(gl_arr_main);
 	free(gt_arr_ref);
@@ -700,6 +759,7 @@ void genotype_reader::parseRefGenotypes(bcf_srs_t * sr) {
 		prog_bar+=prog_step;
 		vrb.progress("  * Reference panel parsing ", prog_bar);
 	}
+	if (sr->errnum) vrb.error("Error while parsing reference panel: " + std::string(bcf_sr_strerror(sr->errnum)));
 	free(gt_arr_ref);
 
 	// Report

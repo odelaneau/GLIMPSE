@@ -69,6 +69,10 @@ public:
 
 	void scanGenotypes(bcf_srs_t * sr);
 	void readTarGenotypes(std::string , int);
+	//One streaming pass each over the target GL file. Return the synced-reader errnum
+	//(0 on success) so the caller can retry transient cloud-streaming read failures.
+	int scanTarGenotypes(std::string fmain, int nthreads, std::vector<variant*>& vec_pos_tar);
+	int parseTarGenotypes(std::string fmain, int nthreads, const std::vector<variant*>& vec_pos_tar);
 	//void readTarGenotypesValidation(string, string, int);
 
 	void parseGenotypes(bcf_srs_t * sr);
