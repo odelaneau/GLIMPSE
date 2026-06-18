@@ -28,6 +28,9 @@ GLIMPSE2 is a set of C++ tools covering the process of haplotype phasing in larg
 
 We require a version of GCC > 4.4 or a recent version of Clang. We recommend using the latest available version for your system.
 
+{: .note }
+> **On aarch64/ARM64, Clang is strongly recommended and is the build's default compiler.** Clang generates much faster NEON code for GLIMPSE2's SIMDe-translated kernels than GCC does (~2.5× faster phase imputation on AWS Graviton / Neoverse). Install it with `sudo apt install clang` (Debian/Ubuntu) or `sudo dnf install clang` (Fedora/RHEL). `make system` uses `clang++` automatically when present and falls back to `g++` otherwise. On x86_64, GCC remains the default.
+
 For example running the following instruction on Ubuntu 20.04 focal:
 
 <div class="code-example" markdown="1">
