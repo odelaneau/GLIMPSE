@@ -9,8 +9,9 @@ LABEL org.opencontainers.image.authors="simone.rubinacci@unil.ch"
 
 WORKDIR /docker_build/
 
-# Install required packages
-RUN apt-get update && apt-get install -y build-essential libbz2-dev libcurl4-openssl-dev autoconf libssl-dev wget zlib1g-dev liblzma-dev libdeflate-dev
+# Install required packages, plus clang on arm64, where the build prefers it (see common.mk)
+RUN apt-get update && apt-get install -y build-essential libbz2-dev libcurl4-openssl-dev autoconf libssl-dev wget zlib1g-dev liblzma-dev libdeflate-dev && \
+if [ "$(dpkg --print-architecture)" = arm64 ]; then apt-get install -y --no-install-recommends clang; fi
 
 # Download and build boost program_options and iostreams
 RUN wget https://archives.boost.io/release/1.78.0/source/boost_1_78_0.tar.gz && \

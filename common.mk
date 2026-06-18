@@ -1,7 +1,3 @@
-#COMPILER MODE C++17
-CXX?=g++
-
-
 #create folders
 dummy_build_folder_bin := $(shell mkdir -p bin)
 dummy_build_folder_obj := $(shell mkdir -p obj)
@@ -31,6 +27,32 @@ EXEFILE=bin/GLIMPSE2_$(NAME)_static
 #CXXFLAG+= -D__COMMIT_DATE__=\"$(COMMIT_DATE)\"
 
 ARCH := $(shell uname -m)
+OS := $(shell uname -s)
+
+# Default compiler: clang++ on macOS and aarch64, g++ elsewhere. On aarch64 the
+# phase kernels are x86 AVX2/FMA intrinsics that SIMDe lowers to NEON, and clang
+# generates much faster NEON code for them than gcc does.
+ifeq ($(OS),Darwin)
+  DEFAULT_CXX := clang++
+else ifneq (,$(filter arm64 aarch64,$(ARCH)))
+  DEFAULT_CXX := $(if $(shell command -v clang++ 2>/dev/null),clang++,g++)
+else
+  DEFAULT_CXX := g++
+endif
+
+# Make predefines CXX, so `CXX ?=` would never apply. Use the default only when
+# CXX was not set on the command line or in the environment.
+ifneq (,$(filter default undefined,$(origin CXX)))
+  CXX := $(DEFAULT_CXX)
+  ifneq (,$(filter arm64 aarch64,$(ARCH)))
+    ifeq ($(CXX),g++)
+      ifneq ($(MAKECMDGOALS),clean)
+        $(warning clang++ not found, building with g++, which makes GLIMPSE2_phase much slower on aarch64. Install clang, or pass a versioned compiler, e.g. CXX=clang++-18)
+      endif
+    endif
+  endif
+endif
+
 ifeq ($(NAME),phase)
   ifneq (,$(filter x86_64 amd64,$(ARCH)))
     CXXFLAG+=-mavx2 -mfma
@@ -93,7 +115,6 @@ endif
 #CONDITIONAL PATH DEFINITION
 
 # Auto-detected system target: works on linux/x86_64, linux/aarch64, macOS/arm64
-OS := $(shell uname -s)
 
 # Common library and include search paths across all platforms and distributions
 LIB_SEARCH_PATHS := /opt/homebrew/lib /usr/local/lib /usr/lib /usr/lib64
@@ -135,12 +156,10 @@ else
   _HTSLIB_SHARED = -L$(SYS_HTSLIB_LIBDIR) -lhts
 endif
 
-# Compiler and dynamic libraries
+# Dynamic libraries
 ifeq ($(OS),Darwin)
-  SYS_CXX = clang++
   SYS_DYN_LIBS = -L/opt/homebrew/lib -lz -lpthread -lbz2 -llzma -lcurl -lcrypto -ldeflate
 else
-  SYS_CXX = g++
   SYS_DYN_LIBS = $(_HTSLIB_SHARED) -lz -lpthread -lbz2 -llzma -lcurl -lcrypto -ldeflate
   # When pkg-config is available, add HTSlib's static link dependencies
   # (e.g., -lhtscodecs and LTO flags required by some distro-packaged libhts.a)
@@ -152,7 +171,6 @@ else
   endif
 endif
 
-system: CXX=$(SYS_CXX)
 system: HTSLIB_INC=$(SYS_HTSLIB_INC)
 system: HTSLIB_LIB=$(SYS_HTSLIB_LIB)
 system: BOOST_INC=$(SYS_BOOST_INC)
