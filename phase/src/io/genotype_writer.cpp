@@ -40,7 +40,7 @@ genotype_writer::genotype_writer(const haplotype_set & _H, const genotype_set & 
 genotype_writer::~genotype_writer() {
 }
 
-void genotype_writer::writeGenotypes(const std::string fname, OutputFormat output_fmt, OutputCompression output_compr, const int n_bits_bgen, const int n_main, const int n_threads, const std::string fai_fname) const {
+void genotype_writer::writeGenotypes(const std::string fname, OutputFormat output_fmt, OutputCompression output_compr, const int n_bits_bgen, const int n_main, const int n_threads, const std::string fai_fname, const int compression_level) const {
 	tac.clock();
 	unsigned int file_type = OFILE_BCFC;
 	std::string file_format = "wb";
@@ -50,6 +50,9 @@ void genotype_writer::writeGenotypes(const std::string fname, OutputFormat outpu
 		if (output_compr == OutputCompression::NONE) {file_format = "w"; file_type = OFILE_VCFU;}
 		else {file_format = "wz"; file_type = OFILE_VCFC;}
 	}
+
+	//htslib takes the compression level as a digit in the mode string
+	if (file_type != OFILE_VCFU) file_format += std::to_string(compression_level);
 
 	htsFile * fp = hts_open(fname.c_str(),file_format.c_str());
 	if (n_threads > 1) hts_set_threads(fp, n_threads);

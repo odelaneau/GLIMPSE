@@ -32,10 +32,6 @@
 #include <utils/basic_stats.h>
 
 
-#define OFILE_VCFU	0
-#define OFILE_VCFC	1
-#define OFILE_BCFC	2
-
 #define GET(n,i)	(((n)>>(i))&1U)
 #define TOG(n,i)	((n)^=(1UL<<(i)))
 
@@ -221,11 +217,7 @@ void ligater::ligate() {
 	//Create all input file descriptors
 	vrb.bullet("Creating file descriptor");
 
-	std::string file_format = "w";
 	std::string fname = options["output"].as < std::string > ();
-	unsigned int file_type = OFILE_VCFU;
-	if (fname.size() > 6 && fname.substr(fname.size()-6) == "vcf.gz") { file_format = "wz"; file_type = OFILE_VCFC; }
-	if (fname.size() > 3 && fname.substr(fname.size()-3) == "bcf") { file_format = "wb"; file_type = OFILE_BCFC; }
 	bcf_srs_t * sr =  bcf_sr_init();
 	sr->require_index = 1;
 	int n_threads = options["threads"].as < int > ();
@@ -296,14 +288,14 @@ void ligater::ligate() {
 	GTa = GTb = NULL;
 	mGTa = 0, mGTb=0;
 
-	htsFile * out_fp = hts_open(fname.c_str(),file_format.c_str());
+	htsFile * out_fp = hts_open(fname.c_str(),out_file_format.c_str());
 	if ( out_fp == NULL ) vrb.error("Can't write to " + fname + ".");
 	if (n_threads > 1) hts_set_opt(out_fp, HTS_OPT_THREAD_POOL, sr->p);
 	bcf_hdr_add_sample(out_hdr, NULL);
 	if (bcf_hdr_write(out_fp, out_hdr)) vrb.error("Failed to write header to output file");
 
-	std::string fnidx= (file_type == OFILE_BCFC)? fname +".csi" : fname+".tbi";
-	if (file_type!=OFILE_VCFU)
+	std::string fnidx= (out_file_type == OFILE_BCFC)? fname +".csi" : fname+".tbi";
+	if (out_file_type!=OFILE_VCFU)
 	{
 		std::ifstream file_idx(fnidx);
 		if (file_idx.good())
@@ -312,10 +304,10 @@ void ligater::ligate() {
 			if (std::remove(fnidx.c_str()))
 			{
 				vrb.warning("Detected index file. Were not able to delete it. Trying to skip index creation.");
-				file_type=OFILE_VCFU;
+				out_file_type=OFILE_VCFU;
 			}
 		}
-		if (file_type!=OFILE_VCFU)
+		if (out_file_type!=OFILE_VCFU)
 		{
 			if (bcf_idx_init(out_fp, out_hdr, 14, fnidx.c_str())) vrb.error("Initializing index");
 		}
@@ -452,7 +444,7 @@ void ligater::ligate() {
         if ( sr->nreaders ) while ( sr->nreaders ) bcf_sr_remove_reader(sr, 0);
     }
 	vrb.print("Cnk " + stb.str(ifname-1) + " [" + prev_chr + ":" + stb.str(first_pos) + "-" + stb.str(prev_pos[0] + 1) + "] [L=" + stb.str(n_variants-n_variants_at_start_cnk) + "]" );
-	if (file_type!=OFILE_VCFU)
+	if (out_file_type!=OFILE_VCFU)
 	{
 		if (bcf_idx_save(out_fp)) vrb.warning("Error writing index");
 	}

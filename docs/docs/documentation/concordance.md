@@ -75,5 +75,6 @@ GLIMPSE2_concordance --gt-val --ac-bins 1 5 10 20 50 100 200 500 1000 2000 5000 
 | Option name 	       | Argument| Default  | Description |
 |:---------------------|:--------|:---------|:-------------------------------------|
 | \-O \[\-\-output \]  | STRING  | NA       | Prefix of the output files (extensions are automatically added) |
+| \-\-compression-level| INT     | 6        | Compression level for the \-\-out-rej-sites/\-\-out-conc-sites/\-\-out-disc-sites BCFs: 0 = none (still BGZF-framed and indexable), 1 = fastest, 9 = smallest. |
 | \-\-log              | STRING  | NA       | Log file  |
 
