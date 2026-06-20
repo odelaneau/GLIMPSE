@@ -57,12 +57,14 @@ GLIMPSE2_phase --bam-list bams_1.0x.txt --reference binary_reference_panel_chr20
 | \-\-keep-monomorphic-ref-sites | NA       | NA       | **Expert setting.** Keeps monomorphic markers in the reference panel (removed by default) |
 | \-\-impute-reference-only-variants | NA       | NA       | Only used together with \-\-input-gl. Allows imputation at variants only present in the reference panel (no GL called at these positions). The use of this option is intended only to allow imputation at sporadic missing variants. If the number of missing variants is non-sporadic, please re-run the genotype likelihood computation at all reference variants and avoid using this option, since data from the reads should be  used. A warning is thrown if reference-only variants are found.|
 | \-\-input-field-gl   | NA       | NA       | Only used together with \-\-input-gl. Use FORMAT/GL field instead of FORMAT/PL to read genotyope likelihoods |
+| \-\-use-gl-indels    | NA       | NA       | **Expert setting.** Only used together with \-\-input-gl. Use genotype likelihoods at indels from the VCF/BCF file. By default GLIMPSE assumes flat likelihoods at non-SNP variants, as genotype likelihoods from low-coverage data are often miscalibrated, potentially affecting neighbouring variants. |
+| \-\-checkpoint-file-in | FILE   | NA       | File to read in checkpoint from |
 
 #### Model parameters
 
 | Option name 	      | Argument|  Default  | Description |
 |:--------------------|:--------|:----------|:-------------------------------------|
-| \-\-burn-in         | INT     | 5         | **Expert setting.** Number of burn-in iterations of the Gibbs sampler
+| \-\-burnin          | INT     | 5         | **Expert setting.** Number of burn-in iterations of the Gibbs sampler
 | \-\-main            | INT     | 15        | **Expert setting.** Number of main iterations of the Gibbs sampler
 | \-\-ne              | INT     | 100000    | **Expert setting.** Effective diploid population size modelling recombination frequency
 | \-\-min-gl          | FLOAT   | 1e-10     | **Expert setting.** Minimim haploid likelihood
@@ -74,10 +76,10 @@ GLIMPSE2_phase --bam-list bams_1.0x.txt --reference binary_reference_panel_chr20
 | Option name 	      | Argument|  Default  | Description |
 |:--------------------|:--------|:----------|:-------------------------------------|
 | \-\-pbwt-depth      | INT     | 12        | **Expert setting.** Number of neighbors in the sparse PBWT selection step (positive number).
-| \-\-pbwt-modulo-cm  | FLOAT   | 5         | **Expert setting.** Frequency of PBWT selection in cM (positive number). This parameter is automatically adjusted in case of small imputation regions.
+| \-\-pbwt-modulo-cm  | FLOAT   | 0.1       | **Expert setting.** Frequency of PBWT selection in cM (positive number). This parameter is automatically adjusted in case of small imputation regions.
 | \-\-Kinit           | INT     | 1000      | **Expert setting.** Number of states used for initialization (positive number). Can be set to zero only when --state-list is set, to skip the selection for the initialization step.
 | \-\-Kpbwt           | INT     | 2000      | **Expert setting.** Maximum number of states selected from the sparse PBWT (positive number). Can be set to zero only when --state-list is set, to skip the selection for during the Gibbs iterations.
-| \-\-state-list      | FILE    | 5         | **Expert setting.** List (.txt file) of haplotypes always present in the conditioning set, independent from state selection. Not affected by other selection parameters. Each row is a target haplotype (two lines per sample in case of diploid individuals) each column is a space separated list of reference haplotypes (in numerical order 0-(2N-1) ). Useful when prior knowledge of relatedness between the reference and target panel is known a priori.
+| \-\-state-list      | FILE    | NA        | **Expert setting.** List (.txt file) of haplotypes always present in the conditioning set, independent from state selection. Not affected by other selection parameters. Each row is a target haplotype (two lines per sample in case of diploid individuals) each column is a space separated list of reference haplotypes (in numerical order 0-(2N-1) ). Useful when prior knowledge of relatedness between the reference and target panel is known a priori.
 
 #### BAM/CRAM options and filters
 
@@ -105,5 +107,6 @@ GLIMPSE2_phase --bam-list bams_1.0x.txt --reference binary_reference_panel_chr20
 | \-\-bgen-bits        | INT     | 8        | **Expert setting.** Only used together when the output is in BGEN file format. Specifies the number of bits to be used for the encoding probabilities of the output BGEN file. If the output is in the .vcf\[.gz\]/.bcf format, this value is ignored. Accepted values: 1-32. |
 | \-\-bgen-compr       | STRING  | zstd     | **Expert setting.** Only used together when the output is in BGEN file format. Specifies the compression of the output BGEN file. If the output is in the .vcf\[.gz\]/.bcf format, this value is ignored.  Accepted values: \[no,zlib,zstd\] |
 | \-\-log              | FILE    | NA       | Log file  |
+| \-\-checkpoint-file-out | FILE | NA       | File to save checkpoint info in |
 
 

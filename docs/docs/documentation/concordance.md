@@ -46,7 +46,7 @@ GLIMPSE2_concordance --gt-val --ac-bins 1 5 10 20 50 100 200 500 1000 2000 5000 
 | Option name 	       | Argument| Default  | Description |
 |:---------------------|:--------|:---------|:-------------------------------------|
 | \-\-input            | FILE    | NA       | File with four columns listing in order: regions frequencies validation and imputed dataset. For genome-wide concordance, add more lines specifying different chromosomes. |
-| \-\-samples          | NA      | NA       | List of samples to process, one sample ID per line. |
+| \-\-samples          | FILE    | NA       | List of samples to process, one sample ID per line. |
 | \-\-gt-val           | NA      | NA       | Uses hard called genotypes rather than phread-scaled likelihoods for the validation dataset, reading them from FORMAT/GT field. |
 | \-\-gt-tar           | NA      | NA       | Uses FORMAT/GT field to determine the best-guess genotype rather than the FORMAT/GP (default). FORMAT/DS are FORMAT/GP fields are still required for calibration and rsquared calculations. |
 
@@ -57,7 +57,7 @@ GLIMPSE2_concordance --gt-val --ac-bins 1 5 10 20 50 100 200 500 1000 2000 5000 
 |:--------------------|:--------|:----------|:-------------------------------------|
 | \-\-af-tag          | STRING  | AF        | Allele frequency INFO tag to use for binning. By default the allele frequency is estimated from the INFO/AF tag.  |
 | \-\-use-alt-af      | NA      | NA        | If specified, the metrics work on the ALT allele frequency (range \[0,1\]), rather than minor allele frequency (range \[0,0.5\]).  |
-| \-\-bins            | VECTOR  | NA        | Allele frequency bins used for rsquared computations. By default they should as MAF bins \[0-0.5\], while they should take the full range \[0-1\] if --use-ref-alt is used.  |
+| \-\-bins            | VECTOR  | NA        | Allele frequency bins used for rsquared computations. By default they should as MAF bins \[0-0.5\], while they should take the full range \[0-1\] if --use-alt-af is used.  |
 | \-\-ac-bins         | VECTOR  | NA        | User-defined allele count bins used for rsquared computations. |
 | \-\-allele-counts   | VECTOR  | NA        | Default allele count bins used for rsquared computations. AN field must be defined in the frequency file. |
 | \-\-min-val-gl      | FLOAT   | NA        | Minimum genotype likelihood probability P(G\|R) in validation data \[set to zero to have no filter of if using --gt-validation\] |
