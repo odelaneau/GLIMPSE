@@ -60,8 +60,8 @@ GLIMPSE2_concordance --gt-val --ac-bins 1 5 10 20 50 100 200 500 1000 2000 5000 
 | \-\-bins            | VECTOR  | NA        | Allele frequency bins used for rsquared computations. By default they should as MAF bins \[0-0.5\], while they should take the full range \[0-1\] if --use-alt-af is used.  |
 | \-\-ac-bins         | VECTOR  | NA        | User-defined allele count bins used for rsquared computations. |
 | \-\-allele-counts   | VECTOR  | NA        | Default allele count bins used for rsquared computations. AN field must be defined in the frequency file. |
-| \-\-min-val-gl      | FLOAT   | NA        | Minimum genotype likelihood probability P(G\|R) in validation data \[set to zero to have no filter of if using --gt-validation\] |
-| \-\-min-val-dp      | INT     | NA        | Minimum coverage in validation data. If FORMAT/DP is missing and --minDP > 0, the program exits with an error. \[set to zero to have no filter of if using --gt-validation\] |
+| \-\-min-val-gl      | FLOAT   | NA        | Minimum genotype likelihood probability P(G\|R) in validation data \[set to zero to have no filter if using --gt-val\] |
+| \-\-min-val-dp      | INT     | NA        | Minimum coverage in validation data. If FORMAT/DP is missing and --minDP > 0, the program exits with an error. \[set to zero to have no filter if using --gt-val\] |
 | \-\-min-tar-gp      | VECTOR  | NA        | Minimum GP probabilities to be used as a filter. By default it looks at the GP field to specify the filter, but will try to use FORMAT/PL if gt-tar option is specified. Leave empty if no filter is used. |
 | \-\-out-r2-per-site | NA      | NA        | Output r2 at each site. |
 | \-\-out-rej-sites   | NA      | NA        | Output sites where that cannot be used for the concordance.  |
