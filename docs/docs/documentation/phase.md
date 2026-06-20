@@ -64,22 +64,22 @@ GLIMPSE2_phase --bam-list bams_1.0x.txt --reference binary_reference_panel_chr20
 
 | Option name 	      | Argument|  Default  | Description |
 |:--------------------|:--------|:----------|:-------------------------------------|
-| \-\-burnin          | INT     | 5         | **Expert setting.** Number of burn-in iterations of the Gibbs sampler
-| \-\-main            | INT     | 15        | **Expert setting.** Number of main iterations of the Gibbs sampler
-| \-\-ne              | INT     | 100000    | **Expert setting.** Effective diploid population size modelling recombination frequency
-| \-\-min-gl          | FLOAT   | 1e-10     | **Expert setting.** Minimim haploid likelihood
-| \-\-err-imp         | FLOAT   | 1e-12     | **Expert setting.** Imputation HMM error rate
-| \-\-err-phase       | FLOAT   | 1e-4      | **Expert setting.** Phasing HMM error rate
+| \-\-burnin          | INT     | 5         | **Expert setting.** Number of burn-in iterations of the Gibbs sampler |
+| \-\-main            | INT     | 15        | **Expert setting.** Number of main iterations of the Gibbs sampler |
+| \-\-ne              | INT     | 100000    | **Expert setting.** Effective diploid population size modelling recombination frequency |
+| \-\-min-gl          | FLOAT   | 1e-10     | **Expert setting.** Minimim haploid likelihood |
+| \-\-err-imp         | FLOAT   | 1e-12     | **Expert setting.** Imputation HMM error rate |
+| \-\-err-phase       | FLOAT   | 1e-4      | **Expert setting.** Phasing HMM error rate |
 
 #### Selection parameters
 
 | Option name 	      | Argument|  Default  | Description |
 |:--------------------|:--------|:----------|:-------------------------------------|
-| \-\-pbwt-depth      | INT     | 12        | **Expert setting.** Number of neighbors in the sparse PBWT selection step (positive number).
-| \-\-pbwt-modulo-cm  | FLOAT   | 0.1       | **Expert setting.** Frequency of PBWT selection in cM (positive number). This parameter is automatically adjusted in case of small imputation regions.
-| \-\-Kinit           | INT     | 1000      | **Expert setting.** Number of states used for initialization (positive number). Can be set to zero only when --state-list is set, to skip the selection for the initialization step.
-| \-\-Kpbwt           | INT     | 2000      | **Expert setting.** Maximum number of states selected from the sparse PBWT (positive number). Can be set to zero only when --state-list is set, to skip the selection for during the Gibbs iterations.
-| \-\-state-list      | FILE    | NA        | **Expert setting.** List (.txt file) of haplotypes always present in the conditioning set, independent from state selection. Not affected by other selection parameters. Each row is a target haplotype (two lines per sample in case of diploid individuals) each column is a space separated list of reference haplotypes (in numerical order 0-(2N-1) ). Useful when prior knowledge of relatedness between the reference and target panel is known a priori.
+| \-\-pbwt-depth      | INT     | 12        | **Expert setting.** Number of neighbors in the sparse PBWT selection step (positive number). |
+| \-\-pbwt-modulo-cm  | FLOAT   | 0.1       | **Expert setting.** Frequency of PBWT selection in cM (positive number). This parameter is automatically adjusted in case of small imputation regions. |
+| \-\-Kinit           | INT     | 1000      | **Expert setting.** Number of states used for initialization (positive number). Can be set to zero only when --state-list is set, to skip the selection for the initialization step. |
+| \-\-Kpbwt           | INT     | 2000      | **Expert setting.** Maximum number of states selected from the sparse PBWT (positive number). Can be set to zero only when --state-list is set, to skip the selection for during the Gibbs iterations. |
+| \-\-state-list      | FILE    | NA        | **Expert setting.** List (.txt file) of haplotypes always present in the conditioning set, independent from state selection. Not affected by other selection parameters. Each row is a target haplotype (two lines per sample in case of diploid individuals) each column is a space separated list of reference haplotypes (in numerical order 0-(2N-1) ). Useful when prior knowledge of relatedness between the reference and target panel is known a priori. |
 
 #### BAM/CRAM options and filters
 
