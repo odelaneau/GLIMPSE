@@ -40,6 +40,7 @@ void ligater::declare_options() {
 	bpo::options_description opt_output ("Output files");
 	opt_output.add_options()
 			("output,O", bpo::value< std::string >(), "Output ligated (phased) file in VCF/BCF format")
+			("compression-level", bpo::value< int >()->default_value(6), "Compression level for VCF/BCF output: 0 uncompressed, 1 best speed, 9 best compression. A level of 0 with .bcf output produces an uncompressed BCF. Ignored for uncompressed VCF (.vcf).")
 			("log", bpo::value< std::string >(), "Log file");
 
 	descriptions.add(opt_base).add(opt_input).add(opt_output);
@@ -77,6 +78,9 @@ void ligater::check_options() {
 
 	if (options["threads"].as < int > () < 1)
 		vrb.error("Number of threads is a strictly positive number.");
+
+	if (options["compression-level"].as < int > () < 0 || options["compression-level"].as < int > () > 9)
+		vrb.error("Compression level must be between 0 and 9.");
 }
 
 void ligater::verbose_files() {
@@ -85,6 +89,10 @@ void ligater::verbose_files() {
 	vrb.title("Files:");
 	vrb.bullet("Input LIST     : [" + options["input"].as < std::string > () + "]");
 	vrb.bullet("Output VCF     : [" + options["output"].as < std::string > () + "]");
+	const std::string out_fname = options["output"].as < std::string > ();
+	const bool compressed_out =	(out_fname.size() > 6 && out_fname.substr(out_fname.size()-6) == "vcf.gz") ||
+								(out_fname.size() > 3 && out_fname.substr(out_fname.size()-3) == "bcf");
+	if (compressed_out) vrb.bullet("Compression    : [level " + stb.str(options["compression-level"].as < int > ()) + "]");
 	if (options.count("log")) vrb.bullet("Output LOG    : [" + options["log"].as < std::string > () + "]");
 }
 

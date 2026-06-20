@@ -390,7 +390,7 @@ void call_set::readData(std::vector < std::string > & ftruth, std::vector < std:
 		if (out_rej_sites)
 		{
 			std::string out_filename_full = out_filename + "_rej_sites.bcf";
-			std::string out_file_format = "wb";
+			std::string out_file_format = "wb" + std::to_string(options["compression-level"].as < int > ());
 			out_fp_rej_sites = hts_open(out_filename_full.c_str(),out_file_format.c_str());
 			if (nthreads > 1) hts_set_threads(out_fp_rej_sites, nthreads);
 			out_hdr_rej_sites = bcf_hdr_dup(sr->readers[2].header);
@@ -399,7 +399,7 @@ void call_set::readData(std::vector < std::string > & ftruth, std::vector < std:
 		if (out_conc_sites)
 		{
 			std::string out_filename_full = out_filename + "_conc_sites.bcf";
-			std::string out_file_format = "wb";
+			std::string out_file_format = "wb" + std::to_string(options["compression-level"].as < int > ());
 			out_fp_conc_sites = hts_open(out_filename_full.c_str(),out_file_format.c_str());
 			if (nthreads > 1) hts_set_threads(out_fp_conc_sites, nthreads);
 			out_hdr_conc_sites = bcf_hdr_dup(sr->readers[2].header);
@@ -408,7 +408,7 @@ void call_set::readData(std::vector < std::string > & ftruth, std::vector < std:
 		if (out_disc_sites)
 		{
 			std::string out_filename_full = out_filename + "_disc_sites.bcf";
-			std::string out_file_format = "wb";
+			std::string out_file_format = "wb" + std::to_string(options["compression-level"].as < int > ());
 			out_fp_disc_sites = hts_open(out_filename_full.c_str(),out_file_format.c_str());
 			if (nthreads > 1) hts_set_threads(out_fp_disc_sites, nthreads);
 			out_hdr_disc_sites = bcf_hdr_dup(sr->readers[2].header);
