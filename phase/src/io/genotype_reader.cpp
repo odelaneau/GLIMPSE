@@ -179,6 +179,7 @@ void genotype_reader::initReader(bcf_srs_t *sr, std::string& fmain, std::string&
 
 void genotype_reader::readGenotypes(std::string fmain, std::string fref, int nthreads)
 {
+	vrb.bullet("Reading target GLs from [" + fmain + "] via synced-reader path (VCF/BCF reference panel) -- NO streaming retries on this path");
 	bcf_srs_t * sr_scan =  bcf_sr_init();
 
 	initReader(sr_scan, fmain, fref, nthreads);
@@ -295,6 +296,7 @@ void genotype_reader::readTarGenotypes(std::string fmain, int nthreads)
 	//scan only accumulates into the local vec_pos_tar (reset by clearing it at the
 	//start of scanTarGenotypes), and the parse overwrites the genotype set by site
 	//index, so each retry restarts the pass from a clean state.
+	vrb.bullet("Reading target GLs from [" + fmain + "] via retry-enabled streaming path (binary reference panel)");
 	vrb.wait("  * VCF/BCF scanning");
 	tac.clock();
 	{
