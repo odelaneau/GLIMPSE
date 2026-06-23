@@ -94,6 +94,7 @@ void caller::declare_options() {
 			("contigs-fai", bpo::value< std::string >(), "If specified, header contig names and their lengths are copied from the provided fasta index file (.fai). This allows to create imputed whole-genome files as contigs are present and can be easily merged by bcftools")
 			("bgen-bits", boost::program_options::value< int >()->default_value(8), "(Expert setting) Only used toghether when the output is in BGEN file format. Specifies the number of bits to be used for the encoding probabilities of the output BGEN file. If the output is in the .vcf[.gz]/.bcf format, this value is ignored. Accepted values: 1-32")
 			("bgen-compr", boost::program_options::value< std::string >()->default_value("zstd"), "(Expert setting) Only used toghether when the output is in BGEN file format. Specifies the compression of the output BGEN file. If the output is in the .vcf[.gz]/.bcf format, this value is ignored. Accepted values: [no,zlib,zstd]")
+			("compression-level", boost::program_options::value< int >()->default_value(6), "Compression level for VCF/BCF output: 0 uncompressed, 1 best speed, 9 best compression. A level of 0 with .bcf output produces an uncompressed BCF. Ignored for uncompressed VCF (.vcf) and BGEN output.")
 			("log", bpo::value< std::string >(), "Log file")
 			("checkpoint-file-out", bpo::value < std::string >(), "File to save checkpoint info in.");
 
@@ -141,6 +142,9 @@ void caller::check_options() {
 
 	if (options["threads"].as < int > () < 1)
 		vrb.error("Number of threads is a strictly positive number.");
+
+	if (options["compression-level"].as < int > () < 0 || options["compression-level"].as < int > () > 9)
+		vrb.error("Compression level must be between 0 and 9.");
 
 	std::string reference_filename = options["reference"].as<std::string>();
 	std::string ext0 = stb.get_extension(reference_filename);
@@ -275,6 +279,8 @@ void caller::verbose_files() {
 	std::array<std::string, 3> compr2string = { {"NO","ZLIB","ZSTD"} };
 	std::string n_bits = "";
 	if (output_fmt == OutputFormat::BGEN) n_bits = " - " + stb.str(bgen_bits) + " bits";
+	std::string compr_level = "";
+	if (output_fmt != OutputFormat::BGEN && output_compr != OutputCompression::NONE) compr_level = " level " + stb.str(options["compression-level"].as < int > ());
 
 	if (options.count("bam-list"))
 		vrb.bullet("List BAM/CRAM        : [" + options["bam-list"].as < std::string > () + "]");
@@ -293,7 +299,7 @@ void caller::verbose_files() {
 		vrb.bullet("Genetic Map          : [" + options["map"].as < std::string > () + "]");
 
 	vrb.bullet("Output file          : [" + options["output"].as < std::string > () + "]");
-	vrb.bullet("Output format        : [" + fmt2string[static_cast<int>(output_fmt)] + " format" + n_bits + " | " + compr2string[static_cast<int>(output_compr)] + " compression]");
+	vrb.bullet("Output format        : [" + fmt2string[static_cast<int>(output_fmt)] + " format" + n_bits + " | " + compr2string[static_cast<int>(output_compr)] + " compression" + compr_level + "]");
 
 
 	if (options.count("log")) vrb.bullet("Output LOG           : [" + options["log"].as < std::string > () + "]");

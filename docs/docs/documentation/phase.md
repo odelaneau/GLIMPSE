@@ -104,6 +104,7 @@ GLIMPSE2_phase --bam-list bams_1.0x.txt --reference binary_reference_panel_chr20
 | \-\-contigs-fai      | FILE    | NA       | If specified, header contig names and their lengths are copied from the  provided fasta index file (.fai). This allows to create imputed whole-genome files as contigs are present and can be easily merged by bcftools |
 | \-\-bgen-bits        | INT     | 8        | **Expert setting.** Only used together when the output is in BGEN file format. Specifies the number of bits to be used for the encoding probabilities of the output BGEN file. If the output is in the .vcf\[.gz\]/.bcf format, this value is ignored. Accepted values: 1-32. |
 | \-\-bgen-compr       | STRING  | zstd     | **Expert setting.** Only used together when the output is in BGEN file format. Specifies the compression of the output BGEN file. If the output is in the .vcf\[.gz\]/.bcf format, this value is ignored.  Accepted values: \[no,zlib,zstd\] |
+| \-\-compression-level| INT     | 6        | Compression level for VCF/BCF output: 0 uncompressed, 1 best speed, 9 best compression. A level of 0 with .bcf output produces an uncompressed BCF. Ignored for uncompressed VCF (.vcf) and BGEN output. |
 | \-\-log              | FILE    | NA       | Log file  |
 
 

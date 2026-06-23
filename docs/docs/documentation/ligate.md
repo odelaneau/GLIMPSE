@@ -53,6 +53,7 @@ GLIMPSE2_ligate --input list_imputed_files_chr20.txt --output ligated_chr20.bcf 
 | Option name 	       | Argument| Default  | Description |
 |:---------------------|:--------|:---------|:-------------------------------------|
 | \-O \[\-\-output \]  | STRING  | NA       | Output ligated (phased) file in VCF/BCF format |
+| \-\-compression-level| INT     | 6        | Compression level for VCF/BCF output: 0 uncompressed, 1 best speed, 9 best compression. A level of 0 with .bcf output produces an uncompressed BCF. Ignored for uncompressed VCF (.vcf). |
 | \-\-no-index         | STRING  | NA       | If specified, the ligated VCF/BCF is not indexed by GLIMPSE2 for random access to genomic regions |
 | \-\-log              | STRING  | NA       | Log file  |
 

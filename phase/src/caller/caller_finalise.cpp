@@ -36,7 +36,7 @@ void caller::write_files_and_finalise() {
 	std::string out_file = options["output"].as < std::string > ();
 	//step1: writing best guess haplotypes in VCF/BCF file
 	if (output_fmt != OutputFormat::BGEN)
-		genotype_writer(H, G, V, *this).writeGenotypes(options["output"].as < std::string > (), output_fmt, output_compr, 0, options["main"].as < int > (), options["threads"].as < int > (), options.count("contigs-fai")?options["contigs-fai"].as <std::string> () : "");
+		genotype_writer(H, G, V, *this).writeGenotypes(options["output"].as < std::string > (), output_fmt, output_compr, options["compression-level"].as < int > (), 0, options["main"].as < int > (), options["threads"].as < int > (), options.count("contigs-fai")?options["contigs-fai"].as <std::string> () : "");
 	else
 	{
 		#ifdef __BGEN__
@@ -44,7 +44,7 @@ void caller::write_files_and_finalise() {
 		#else
 			//should have already thrown an error at the beginning. But ok let's not waste computation in the we arrive here
 			vrb.warning("Output in bgen format but the program seems to not support BGEN output. Switching to BCF (extension .bcf will added to output file)");
-			genotype_writer(H, G, V, *this).writeGenotypes(options["output"].as < std::string > () + ".bcf", OutputFormat::BCF, OutputCompression::ZLIB, 0, options["main"].as < int > (), options["threads"].as < int > (),options.count("contigs-fai")?options["contigs-fai"].as <std::string> () : "");
+			genotype_writer(H, G, V, *this).writeGenotypes(options["output"].as < std::string > () + ".bcf", OutputFormat::BCF, OutputCompression::ZLIB, options["compression-level"].as < int > (), 0, options["main"].as < int > (), options["threads"].as < int > (),options.count("contigs-fai")?options["contigs-fai"].as <std::string> () : "");
 			out_file += ".bcf";
 		#endif
 	}

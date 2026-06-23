@@ -220,6 +220,9 @@ void ligater::ligate() {
 	unsigned int file_type = OFILE_VCFU;
 	if (fname.size() > 6 && fname.substr(fname.size()-6) == "vcf.gz") { file_format = "wz"; file_type = OFILE_VCFC; }
 	if (fname.size() > 3 && fname.substr(fname.size()-3) == "bcf") { file_format = "wb"; file_type = OFILE_BCFC; }
+	//Append the compression level to the htslib mode string for compressed formats (wb/wz).
+	//Level 0 yields an uncompressed BCF; it has no effect on plain text VCF ("w").
+	if (file_format != "w") file_format += std::to_string(options["compression-level"].as < int > ());
 	bcf_srs_t * sr =  bcf_sr_init();
 	sr->require_index = 1;
 	int n_threads = options["threads"].as < int > ();
