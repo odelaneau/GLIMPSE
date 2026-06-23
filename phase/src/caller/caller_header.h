@@ -99,6 +99,14 @@ public:
 	//FILE I/O
 	void print_ref_panel_info(const std::string ref_string);
 	void read_files_and_initialise();
+	//Single attempt at reading the binary reference panel (haplotype_set H +
+	//variant_map V). Returns true on success; on failure fills err_msg and returns
+	//false so the caller can retry transient localization/read failures (panel
+	//streamed or localized from a cloud filesystem). Each call re-opens the file and
+	//boost overwrites H/V, so a retry restarts the read from a clean archive. When the
+	//failure is non-retryable (e.g. a GLIMPSE/boost version mismatch), non_retryable is
+	//set to true so the caller can stop immediately instead of burning its retries.
+	bool read_binary_reference_panel(const std::string& reference_filename, std::string& err_msg, bool& non_retryable);
 	void setup_mpileup();
 	void read_BAMs();
 	

@@ -30,7 +30,10 @@
 #include <io/gmap_reader.h>
 #include <io/genotype_bam_caller.h>
 #include <boost/archive/binary_iarchive.hpp>
+#include <boost/archive/archive_exception.hpp>
 #include <containers/glimpse_mpileup.h>
+#include <thread>
+#include <chrono>
 
 void caller::print_ref_panel_info(const std::string ref_string)
 {
@@ -87,20 +90,25 @@ void caller::read_files_and_initialise() {
 		vrb.wait("  * Binary reference panel parsing");
 		tac.clock();
 		{
-			std::ifstream ifs(reference_filename, std::ios::binary | std::ios_base::in);
-			if (!ifs.good()) vrb.error("Reading binary reference panel file: [" + reference_filename + "]. File not good(): eofbit, failbit or badbit set or file not found.");
-			try
+			//Localizing/reading the binary reference panel can transiently fail when the
+			//panel is streamed or localized from a cloud filesystem. Retry the whole read
+			//(open + deserialize + sanity check) a few times with exponential backoff. Each
+			//attempt re-opens the file and boost overwrites H/V, so every retry restarts
+			//from a clean archive.
+			vrb.bullet("Localizing binary reference panel [" + reference_filename + "] via retry-enabled read");
+			const int n_retry = 3;
+			int n_retry_remain = n_retry;
+			std::chrono::seconds delay(1);
+			std::string err_msg;
+			bool non_retryable = false;
+			for (; n_retry_remain > 0; n_retry_remain--, delay *= 2)
 			{
-				boost::archive::binary_iarchive ia(ifs);
-				ia >> H;
-				ia >> V;
-			} catch (std::exception& e ) {
-				std::stringstream err_str;
-				err_str <<"problems reading the binary reference panel (exception triggered by boost archive). Please ensure you are using the same GLIMPSE and boost library version";
-				err_str << e.what();
-				vrb.error(err_str.str());
+				if (n_retry_remain != n_retry) std::this_thread::sleep_for(delay);
+				if (read_binary_reference_panel(reference_filename, err_msg, non_retryable)) break;
+				if (non_retryable) vrb.error("Non-retryable error while reading binary reference panel [" + reference_filename + "]: " + err_msg + ". This looks like a version mismatch, please ensure you are using the same GLIMPSE and boost library version.");
+				vrb.warning("Error while reading binary reference panel [" + reference_filename + "]: " + err_msg + ". " + std::to_string(n_retry_remain) + " retries remaining");
 			}
-			if (H.Ypacked.size()==0) vrb.error("Problem reading binary file format. Empty PBWT detected.");
+			if (n_retry_remain == 0) vrb.error("Max number of retries attempted while reading binary reference panel [" + reference_filename + "]. Last error: " + err_msg + ". If this is a version mismatch, please ensure you are using the same GLIMPSE and boost library version.");
 
 			vrb.bullet("Binary reference panel parsing [done] (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
 			print_ref_panel_info("Binary");
@@ -172,6 +180,68 @@ void caller::read_files_and_initialise() {
 		V.update_checksum(crc);
 	}
 
+}
+
+bool caller::read_binary_reference_panel(const std::string& reference_filename, std::string& err_msg, bool& non_retryable)
+{
+	err_msg.clear();
+	non_retryable = false;
+
+	//(1) Open the (possibly cloud-localized) file. A transient localization failure
+	//shows up here as a non-good() stream; report it so the caller can retry.
+	std::ifstream ifs(reference_filename, std::ios::binary | std::ios_base::in);
+	if (!ifs.good())
+	{
+		err_msg = "could not open file (not good(): eofbit, failbit or badbit set, or file not found/not yet localized)";
+		return false;
+	}
+
+	//(2) Deserialize the archive. boost overwrites H/V in place, so a failed attempt
+	//here leaves them partially written; the next retry re-opens and overwrites again,
+	//restarting from a clean archive. A truncated/incomplete localization surfaces as a
+	//retryable boost archive exception (e.g. input_stream_error), but a genuine
+	//GLIMPSE/boost version mismatch is non_retryable: retrying will never help, so flag
+	//it and let the caller stop immediately instead of burning its retries.
+	try
+	{
+		boost::archive::binary_iarchive ia(ifs);
+		ia >> H;
+		ia >> V;
+	}
+	catch (const boost::archive::archive_exception& e)
+	{
+		switch (e.code)
+		{
+		case boost::archive::archive_exception::unsupported_version:
+		case boost::archive::archive_exception::unsupported_class_version:
+		case boost::archive::archive_exception::unregistered_class:
+		case boost::archive::archive_exception::incompatible_native_format:
+			non_retryable = true;
+			break;
+		default:
+			//Everything else (input_stream_error from a truncated/partial read,
+			//invalid_signature from a not-yet-localized placeholder, etc.) is
+			//treated as transient and left retryable.
+			break;
+		}
+		err_msg = std::string("exception while parsing boost archive: ") + e.what();
+		return false;
+	}
+	catch (std::exception& e)
+	{
+		err_msg = std::string("exception while parsing boost archive: ") + e.what();
+		return false;
+	}
+
+	//(3) Sanity check the deserialized panel. An empty PBWT indicates a corrupt or
+	//incompletely localized file; treat as a retryable failure.
+	if (H.Ypacked.size() == 0)
+	{
+		err_msg = "empty PBWT detected after parsing (corrupt or incompletely localized binary file)";
+		return false;
+	}
+
+	return true;
 }
 
 
