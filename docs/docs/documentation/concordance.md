@@ -29,6 +29,23 @@ GLIMPSE2_concordance --gt-val --ac-bins 1 5 10 20 50 100 200 500 1000 2000 5000 
 ```
 </div>
 
+#### Sample aliasing
+
+By default, samples are matched between the imputed VCF and the validation VCF by exact ID. When the same biological sample appears under different IDs in the two files — for example, the same truth sample imputed at multiple downsampling depths — pass a `--samples` file with an optional second column that maps each imputed-side ID to the corresponding truth-side ID. Rows without a second column behave as before.
+
+<div class="code-example" markdown="1">
+```
+# samples.txt — first column = imputed ID, optional second column = validation ID
+NA12878.0_5x  NA12878
+NA12878.1x    NA12878
+NA12878.2x    NA12878
+HG00096
+HG00097
+```
+</div>
+
+The three NA12878 rows alias to the single truth sample `NA12878`; `HG00096` and `HG00097` use the same ID in both files and need no alias. Per-sample output rows are labelled with the imputed-side ID.
+
 ---
 
 ### Command line options
@@ -46,8 +63,8 @@ GLIMPSE2_concordance --gt-val --ac-bins 1 5 10 20 50 100 200 500 1000 2000 5000 
 | Option name 	       | Argument| Default  | Description |
 |:---------------------|:--------|:---------|:-------------------------------------|
 | \-\-input            | FILE    | NA       | File with four columns listing in order: regions frequencies validation and imputed dataset. For genome-wide concordance, add more lines specifying different chromosomes. |
-| \-\-samples          | NA      | NA       | List of samples to process, one sample ID per line. |
-| \-\-gt-val           | NA      | NA       | Uses hard called genotypes rather than phread-scaled likelihoods for the validation dataset, reading them from FORMAT/GT field. |
+| \-\-samples          | FILE    | NA       | List of samples to process. One sample per line, giving the imputed-VCF sample ID; an optional second whitespace-separated column gives the corresponding validation-VCF sample ID. See [Sample aliasing](#sample-aliasing) above for the full description and an example. |
+| \-\-gt-val           | NA      | NA       | Uses hard called genotypes rather than phred-scaled likelihoods for the validation dataset, reading them from FORMAT/GT field. |
 | \-\-gt-tar           | NA      | NA       | Uses FORMAT/GT field to determine the best-guess genotype rather than the FORMAT/GP (default). FORMAT/DS are FORMAT/GP fields are still required for calibration and rsquared calculations. |
 
 
