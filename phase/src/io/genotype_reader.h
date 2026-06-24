@@ -66,11 +66,17 @@ public:
 
 	void initReader(bcf_srs_t * sr, std::string& fmain, std::string& fref, int nthreads);
 	void initReader(bcf_srs_t * sr, std::string& file, int nthreads);
+	//Non-fatal open of a single (cloud-streamed) target file. Region/target setup errors
+	//are deterministic and stay fatal, but a failed open/index load returns the
+	//synced-reader errnum (nonzero) instead of exiting, so the streaming passes can retry
+	//a transient open failure rather than aborting the whole run on it.
+	int openTargetReader(bcf_srs_t * sr, std::string& file, int nthreads);
 
 	void scanGenotypes(bcf_srs_t * sr);
 	void readTarGenotypes(std::string , int);
 	//One streaming pass each over the target GL file. Return the synced-reader errnum
-	//(0 on success) so the caller can retry transient cloud-streaming read failures.
+	//(0 on success) so the caller can retry transient cloud-streaming read failures. The
+	//scan pass also reads the sample names/header (so no separate header open is needed).
 	int scanTarGenotypes(std::string fmain, int nthreads, std::vector<variant*>& vec_pos_tar);
 	int parseTarGenotypes(std::string fmain, int nthreads, const std::vector<variant*>& vec_pos_tar);
 	//void readTarGenotypesValidation(string, string, int);

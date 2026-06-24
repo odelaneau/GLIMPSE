@@ -32,7 +32,7 @@
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/archive_exception.hpp>
 #include <containers/glimpse_mpileup.h>
-#include <thread>
+#include <io/retry_io.h>
 #include <chrono>
 
 void caller::print_ref_panel_info(const std::string ref_string)
@@ -96,19 +96,12 @@ void caller::read_files_and_initialise() {
 			//attempt re-opens the file and boost overwrites H/V, so every retry restarts
 			//from a clean archive.
 			vrb.bullet("Localizing binary reference panel [" + reference_filename + "] via retry-enabled read");
-			const int n_retry = 3;
-			int n_retry_remain = n_retry;
-			std::chrono::seconds delay(1);
-			std::string err_msg;
-			bool non_retryable = false;
-			for (; n_retry_remain > 0; n_retry_remain--, delay *= 2)
-			{
-				if (n_retry_remain != n_retry) std::this_thread::sleep_for(delay);
-				if (read_binary_reference_panel(reference_filename, err_msg, non_retryable)) break;
-				if (non_retryable) vrb.error("Non-retryable error while reading binary reference panel [" + reference_filename + "]: " + err_msg + ". This looks like a version mismatch, please ensure you are using the same GLIMPSE and boost library version.");
-				vrb.warning("Error while reading binary reference panel [" + reference_filename + "]: " + err_msg + ". " + std::to_string(n_retry_remain) + " retries remaining");
-			}
-			if (n_retry_remain == 0) vrb.error("Max number of retries attempted while reading binary reference panel [" + reference_filename + "]. Last error: " + err_msg + ". If this is a version mismatch, please ensure you are using the same GLIMPSE and boost library version.");
+			retry_with_backoff("reading binary reference panel [" + reference_filename + "]", 3, std::chrono::seconds(1), [&]() -> attempt_result {
+				std::string err_msg;
+				bool non_retryable = false;
+				const bool ok = read_binary_reference_panel(reference_filename, err_msg, non_retryable);
+				return { ok, non_retryable, err_msg };
+			});
 
 			vrb.bullet("Binary reference panel parsing [done] (" + stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
 			print_ref_panel_info("Binary");
@@ -187,21 +180,25 @@ bool caller::read_binary_reference_panel(const std::string& reference_filename, 
 	err_msg.clear();
 	non_retryable = false;
 
-	//(1) Open the (possibly cloud-localized) file. A transient localization failure
-	//shows up here as a non-good() stream; report it so the caller can retry.
+	//(1) Open the file. A failure to open is not a transient localization hiccup: on the
+	//common case (a missing or mistyped --reference path) retrying just delays the
+	//failure, so report it precisely and mark it non_retryable to fail fast (matching the
+	//pre-retry behaviour). Transient localization failures surface later, as read errors
+	//during deserialization, not as a failed open.
 	std::ifstream ifs(reference_filename, std::ios::binary | std::ios_base::in);
 	if (!ifs.good())
 	{
-		err_msg = "could not open file (not good(): eofbit, failbit or badbit set, or file not found/not yet localized)";
+		err_msg = "could not open file (not good(): eofbit, failbit or badbit set, or file not found). Please check the path.";
+		non_retryable = true;
 		return false;
 	}
 
 	//(2) Deserialize the archive. boost overwrites H/V in place, so a failed attempt
 	//here leaves them partially written; the next retry re-opens and overwrites again,
 	//restarting from a clean archive. A truncated/incomplete localization surfaces as a
-	//retryable boost archive exception (e.g. input_stream_error), but a genuine
-	//GLIMPSE/boost version mismatch is non_retryable: retrying will never help, so flag
-	//it and let the caller stop immediately instead of burning its retries.
+	//retryable input_stream_error (EOF mid-stream); a bad/wrong archive header
+	//(invalid_signature) or a GLIMPSE/boost version mismatch are non_retryable, since the
+	//bytes already read are wrong and retrying will never help.
 	try
 	{
 		boost::archive::binary_iarchive ia(ifs);
@@ -210,6 +207,7 @@ bool caller::read_binary_reference_panel(const std::string& reference_filename, 
 	}
 	catch (const boost::archive::archive_exception& e)
 	{
+		std::string hint;
 		switch (e.code)
 		{
 		case boost::archive::archive_exception::unsupported_version:
@@ -217,14 +215,18 @@ bool caller::read_binary_reference_panel(const std::string& reference_filename, 
 		case boost::archive::archive_exception::unregistered_class:
 		case boost::archive::archive_exception::incompatible_native_format:
 			non_retryable = true;
+			hint = ". This looks like a version mismatch; please ensure you are using the same GLIMPSE and boost library versions";
+			break;
+		case boost::archive::archive_exception::invalid_signature:
+			non_retryable = true;
+			hint = ". The file is not a valid GLIMPSE binary reference panel";
 			break;
 		default:
-			//Everything else (input_stream_error from a truncated/partial read,
-			//invalid_signature from a not-yet-localized placeholder, etc.) is
+			//input_stream_error and the like (truncated/partial read mid-stream) are
 			//treated as transient and left retryable.
 			break;
 		}
-		err_msg = std::string("exception while parsing boost archive: ") + e.what();
+		err_msg = std::string("exception while parsing boost archive: ") + e.what() + hint;
 		return false;
 	}
 	catch (std::exception& e)
