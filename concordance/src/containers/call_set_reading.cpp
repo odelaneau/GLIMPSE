@@ -85,7 +85,7 @@ void call_set::readData(std::vector < std::string > & ftruth, std::vector < std:
 		{
 			if(!(bcf_sr_add_reader (sr, fnames[reader_id].c_str())))
 			{
-				if (sr->errnum != idx_load_failed) vrb.error("Failed to open file: " + fnames[reader_id] + "");
+				if (sr->errnum != idx_load_failed) vrb.error("Failed to open file [" + fnames[reader_id] + "]: " + std::string(bcf_sr_strerror(sr->errnum)) + ". The file may be missing, malformed, or (if cloud-streamed) the read may have failed.");
 				bcf_sr_remove_reader (sr, reader_id);
 				int ret = bcf_index_build3(fnames[reader_id].c_str(), NULL, 14, options["threads"].as < int > ());
 
@@ -98,7 +98,7 @@ void call_set::readData(std::vector < std::string > & ftruth, std::vector < std:
 					else
 						vrb.error("index: failed to create index for + " + fnames[reader_id]);
 				}
-				if(!(bcf_sr_add_reader (sr, fnames[reader_id].c_str()))) vrb.error("Problem opening/creating index file for [" + fnames[reader_id] + "]");
+				if(!(bcf_sr_add_reader (sr, fnames[reader_id].c_str()))) vrb.error("Problem opening/creating index file for [" + fnames[reader_id] + "]: " + std::string(bcf_sr_strerror(sr->errnum)) + ". The file may be missing, malformed, or (if cloud-streamed) the read may have failed.");
 				else vrb.bullet("Index file for [" + fnames[reader_id] + "] has been successfully created.\n");
 			}
 		}
@@ -822,6 +822,10 @@ void call_set::readData(std::vector < std::string > & ftruth, std::vector < std:
 					++n_disc_var_af;
 			}
 		}
+		//A nonzero errnum means the read loop stopped on a read failure, not a clean EOF.
+		//Without this check a truncated/dropped (e.g. cloud-streamed) input would look like
+		//the file simply ended, silently skewing the concordance statistics.
+		if (sr->errnum) vrb.error("Error reading VCF/BCF mid-stream while reading inputs for region [" + region[f] + "]: " + std::string(bcf_sr_strerror(sr->errnum)) + ". One of the truth/estimated/frequency files may be incomplete or, if cloud-streamed, the read dropped.");
 		if (itmp) free(itmp);
 		free(af_ptr);
 		free(pl_arr_t);
