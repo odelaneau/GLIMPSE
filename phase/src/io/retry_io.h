@@ -28,10 +28,6 @@ struct attempt_result
 //attempts still remaining. A fatal outcome aborts immediately via vrb.error; exhausting
 //all attempts also aborts via vrb.error. `what` names the action for the log messages,
 //e.g. "reading binary reference panel [path]".
-//
-//Note: this is a new phase-local header. If ligate/concordance ever grow the same
-//retry need, we should move it to common/src/utils/ with symlinks
-    — but I kept it phase-local to avoid touching the shared tree unnecessarily.
 template <typename Fn>
 void retry_with_backoff(const std::string& what, int n_retry, std::chrono::seconds base_delay, Fn&& attempt)
 {

@@ -182,9 +182,8 @@ bool caller::read_binary_reference_panel(const std::string& reference_filename, 
 
 	//(1) Open the file. A failure to open is not a transient localization hiccup: on the
 	//common case (a missing or mistyped --reference path) retrying just delays the
-	//failure, so report it precisely and mark it non_retryable to fail fast (matching the
-	//pre-retry behaviour). Transient localization failures surface later, as read errors
-	//during deserialization, not as a failed open.
+	//failure, so report it precisely and mark it non_retryable to fail fast. Transient
+	// localization failures surface later, as read errors during deserialization.
 	std::ifstream ifs(reference_filename, std::ios::binary | std::ios_base::in);
 	if (!ifs.good())
 	{
