@@ -29,9 +29,9 @@ struct attempt_result
 //all attempts also aborts via vrb.error. `what` names the action for the log messages,
 //e.g. "reading binary reference panel [path]".
 //
-//The retry idiom used to be hand-copied across the cloud-streamed read paths; this is the
-//single source of truth so the schedule and the "attempts remaining" count stay correct
-//and consistent everywhere.
+//Note: this is a new phase-local header. If ligate/concordance ever grow the same
+//retry need, we should move it to common/src/utils/ with symlinks
+    — but I kept it phase-local to avoid touching the shared tree unnecessarily.
 template <typename Fn>
 void retry_with_backoff(const std::string& what, int n_retry, std::chrono::seconds base_delay, Fn&& attempt)
 {
