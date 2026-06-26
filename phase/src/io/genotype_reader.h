@@ -69,16 +69,21 @@ public:
 	//Non-fatal open of a single (cloud-streamed) target file. Region/target setup errors
 	//are deterministic and stay fatal, but a failed open/index load returns the
 	//synced-reader errnum (nonzero) instead of exiting, so the streaming passes can retry
-	//a transient open failure rather than aborting the whole run on it.
-	int openTargetReader(bcf_srs_t * sr, std::string& file, int nthreads);
+	//a transient open failure rather than aborting the whole run on it. On failure err_out
+	//is filled with a human-readable description.
+	int openTargetReader(bcf_srs_t * sr, std::string& file, int nthreads, std::string& err_out);
 
 	void scanGenotypes(bcf_srs_t * sr);
 	void readTarGenotypes(std::string , int);
-	//One streaming pass each over the target GL file. Return the synced-reader errnum
-	//(0 on success) so the caller can retry transient cloud-streaming read failures. The
-	//scan pass also reads the sample names/header (so no separate header open is needed).
-	int scanTarGenotypes(std::string fmain, int nthreads, std::vector<variant*>& vec_pos_tar);
-	int parseTarGenotypes(std::string fmain, int nthreads, const std::vector<variant*>& vec_pos_tar);
+	//One streaming pass each over the target GL file. Return 0 on success or a nonzero code
+	//(synced-reader errnum, or one of the SR_* sentinels) so the caller can retry transient
+	//cloud-streaming failures; on failure err_out is filled with a description. The scan
+	//pass also reads the sample names/header (so no separate header open is needed). Note:
+	//htslib does not reliably set errnum on a mid-stream read failure (and open_failed==0),
+	//so a truncated pass can return 0; the parse pass cross-checks its site count against
+	//the scan to catch that case (see SR_TRUNCATED).
+	int scanTarGenotypes(std::string fmain, int nthreads, std::vector<variant*>& vec_pos_tar, std::string& err_out);
+	int parseTarGenotypes(std::string fmain, int nthreads, const std::vector<variant*>& vec_pos_tar, std::string& err_out);
 	//void readTarGenotypesValidation(string, string, int);
 
 	void parseGenotypes(bcf_srs_t * sr);
