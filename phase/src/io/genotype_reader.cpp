@@ -24,11 +24,34 @@
  ******************************************************************************/
 
 #include <io/genotype_reader.h>
+#include <io/retry_io.h>
+#include <thread>
+#include <chrono>
+#include <cstring>
+#include <cerrno>
 
 std::map<std::string, int> mapPloidy = {
 		{"1",1},
 		{"2",2}
 };
+
+//Synced-reader pass result sentinels (distinct from htslib's bcf_sr_error codes, which are
+//0..10). open_failed is 0 in htslib's enum and errnum is zero-initialized, so a raw errnum
+//of 0 is ambiguous; these sentinels give the streaming passes an unambiguous nonzero code.
+static constexpr int SR_OPEN_FAILED = -1;	//bcf_sr_add_reader failed to open/index
+static constexpr int SR_TRUNCATED   = -2;	//scan/parse site counts disagree -> a pass was truncated
+
+//Build a human-readable description of a synced-reader failure. bcf_sr_strerror returns an
+//empty string for several codes (including the open_failed==0 case and anything we cannot
+//map), so fall back to errno and, failing that, point at htslib's own [E::...] stderr lines
+//which carry the real underlying cause (e.g. libcurl/bgzf errors when cloud-streaming).
+static std::string describe_sr_error(int errnum, int saved_errno)
+{
+	const char * s = bcf_sr_strerror(errnum);
+	if (s && s[0]) return std::string(s);
+	if (saved_errno) return std::string(strerror(saved_errno));
+	return "no detail available from htslib (error code " + std::to_string(errnum) + "); see the [E::...] messages above for the underlying cause";
+}
 
 genotype_reader::genotype_reader(
 		haplotype_set & _H,
@@ -136,6 +159,29 @@ void genotype_reader::initReader(bcf_srs_t *sr, std::string& file, int nthreads)
 	}
 }
 
+int genotype_reader::openTargetReader(bcf_srs_t *sr, std::string& file, int nthreads, std::string& err_out)
+{
+	sr->require_index = 1;
+	//Region/target setup failures are deterministic config errors, not transient cloud
+	//hiccups, so they stay fatal.
+	if (bcf_sr_set_regions(sr, V.input_gregion.c_str(), 0) == -1) vrb.error("Impossible to jump to region [" + V.input_gregion + "] in [" + file + "]");
+	if (bcf_sr_set_targets(sr, V.input_gregion.c_str(), 0, 0) == -1) vrb.error("Impossible to set target region [" + V.input_gregion + "] in [" + file + "]");
+
+	if (nthreads>1) bcf_sr_set_threads(sr, nthreads);
+
+	//A failed open/index load is the most common transient cloud-streaming failure; return
+	//a nonzero code so the caller can retry instead of aborting here. Capture errno right
+	//here (it carries the real cause, e.g. EPERM on a flaky GCS read) before bcf_sr_destroy
+	//or anything else can clobber it; bcf_sr_strerror often returns nothing for open_failed.
+	errno = 0;
+	if(!(bcf_sr_add_reader (sr, file.c_str())))
+	{
+		err_out = "failed to open/index file: " + describe_sr_error(sr->errnum, errno);
+		return SR_OPEN_FAILED;
+	}
+	return 0;
+}
+
 void genotype_reader::readGenotypesAndBAMs(std::string fref,int nthreads)
 {
 	bcf_srs_t * sr_scan =  bcf_sr_init();
@@ -177,6 +223,7 @@ void genotype_reader::initReader(bcf_srs_t *sr, std::string& fmain, std::string&
 
 void genotype_reader::readGenotypes(std::string fmain, std::string fref, int nthreads)
 {
+	vrb.bullet("Reading target GLs from [" + fmain + "] via synced-reader path (VCF/BCF reference panel) -- NO streaming retries on this path");
 	bcf_srs_t * sr_scan =  bcf_sr_init();
 
 	initReader(sr_scan, fmain, fref, nthreads);
@@ -245,6 +292,7 @@ void genotype_reader::scanGenotypesCommon(bcf_srs_t * sr, int ref_sr_n /* Refere
 		V.push(new variant (line_ref->pos + 1, std::string(line_ref->d.id), line_ref->d.allele[0], line_ref->d.allele[1], line_type, V.size(), cref, calt, line_type==VCF_SNP && (line_ref->pos != prev_pos)));
 		prev_pos=line_ref->pos;
 	}
+	if (sr->errnum) vrb.error("Error while scanning VCF/BCF file(s): " + std::string(bcf_sr_strerror(sr->errnum)));
 	free(vAC);
 	free(vAN);
 	if (H.n_tot_sites == 0) vrb.error("No variants to be imputed in files");
@@ -271,33 +319,53 @@ void genotype_reader::scanGenotypes(bcf_srs_t * sr) {
 }
 void genotype_reader::readTarGenotypes(std::string fmain, int nthreads)
 {
-	//TODO //FIXME //TO TEST
-	bcf_srs_t * sr_scan =  bcf_sr_init();
+	//Retries are not implemented in hfile_libcurl (used when streaming from a cloud
+	//location), so we retry transient read failures here. The target file is read in two
+	//streaming passes - scan (sample names + the per-site list) then parse (fill the
+	//genotype set by site index) - and BOTH are wrapped in a single retry: htslib does not
+	//reliably set errnum on a mid-stream read failure (open_failed==0, errnum zero-init), so
+	//a transient glitch can silently truncate the scan and only show up as a scan/parse
+	//site-count mismatch in the parse pass. Retrying the pair re-runs the scan from a clean
+	//vec_pos_tar, so a one-off glitch is recovered instead of aborting the run.
+	vrb.bullet("Reading target GLs from [" + fmain + "] via retry-enabled streaming path (binary reference panel)");
+	std::vector<variant*> vec_pos_tar;
+	bool ploidy_set = false;
 
-	initReader(sr_scan, fmain, nthreads);
+	vrb.wait("  * VCF/BCF scanning + parsing");
+	tac.clock();
+	retry_with_backoff("reading target GLs [" + fmain + "]", 3, std::chrono::seconds(1), [&]() -> attempt_result {
+		std::string err;
+		const int scan_err = scanTarGenotypes(fmain, nthreads, vec_pos_tar, err);
+		if (scan_err) return { false, false, err };
+
+		//set_ploidy_tar allocates the genotype set from the panel-derived site count and the
+		//sample header - it does not depend on the scanned target sites - so it is run once
+		//after the first successful scan and reused across parse retries.
+		if (!ploidy_set) { set_ploidy_tar(); ploidy_set = true; }
+
+		const int parse_err = parseTarGenotypes(fmain, nthreads, vec_pos_tar, err);
+		if (parse_err) return { false, false, err };
+		return { true, false, std::string() };
+	});
+}
+
+int genotype_reader::scanTarGenotypes(std::string fmain, int nthreads, std::vector<variant*>& vec_pos_tar, std::string& err_out)
+{
+	vec_pos_tar.clear(); //reset any partial accumulation from a failed attempt
+
+	bcf_srs_t * sr_scan = bcf_sr_init();
+	const int open_err = openTargetReader(sr_scan, fmain, nthreads, err_out);
+	if (open_err) { bcf_sr_destroy(sr_scan); return open_err; }
+	sr_scan->max_unpack = BCF_UN_INFO;
+
+	//Read sample names/header from this (retried) pass, so a transient open failure here
+	//is retried rather than aborting the run in a separate, un-retried header open.
 	M.n_tar_samples = bcf_hdr_nsamples(sr_scan->readers[0].header);
 	M.tar_sample_names = std::vector<std::string> (M.n_tar_samples);
-
 	for (int i = 0 ; i < M.n_tar_samples ; i ++)
 		M.tar_sample_names[i] = std::string(sr_scan->readers[0].header->samples[i]);
 
-	set_ploidy_tar();
-
-	vrb.wait("  * VCF/BCF scanning");
-	tac.clock();
-
-	//Scan file
 	bcf1_t * line_main = NULL;
-	int npl_main, npl_arr_main = 0, *pl_arr_main = NULL;
-	int ngl_main, ngl_arr_main = 0;
-	float *gl_arr_main = NULL;
-	const int max_ploidyP1=H.max_ploidy+1;
-	int *ptr;
-	int main_file_max_ploidy=0;
-	float *ptr_f;
-	std::vector<variant*> vec_pos_tar;
-	sr_scan->max_unpack = BCF_UN_INFO;
-
 	while (bcf_sr_next_line (sr_scan))
 	{
 		if (!bcf_sr_has_line(sr_scan, 0) || bcf_sr_get_line(sr_scan, 0)->n_allele != 2) continue; //always ref
@@ -307,22 +375,44 @@ void genotype_reader::readTarGenotypes(std::string fmain, int nthreads)
 		if (vecS.size() > 0) vec_pos_tar.push_back(vecS[0]);
 		else vec_pos_tar.push_back(nullptr);
 	}
-
+	//NB: htslib may end the loop on a mid-stream read failure WITHOUT setting errnum, in
+	//which case this returns 0 and the truncated vec_pos_tar is caught downstream by the
+	//parse pass's site-count cross-check (SR_TRUNCATED).
+	const int saved_errno = errno;
+	const int err = sr_scan->errnum;
 	bcf_sr_destroy(sr_scan);
+	if (err) err_out = describe_sr_error(err, saved_errno);
+	return err;
+}
 
-	vrb.wait("  * VCF/BCF parsing");
-	tac.clock();
+int genotype_reader::parseTarGenotypes(std::string fmain, int nthreads, const std::vector<variant*>& vec_pos_tar, std::string& err_out)
+{
+	bcf1_t * line_main = NULL;
+	int npl_main, npl_arr_main = 0, *pl_arr_main = NULL;
+	int ngl_main, ngl_arr_main = 0;
+	float *gl_arr_main = NULL;
+	const int max_ploidyP1=H.max_ploidy+1;
+	int *ptr;
+	int main_file_max_ploidy=0;
+	float *ptr_f;
+	int i_site=0;
+	const int n_ref_haps = H.n_ref_haps;
+	bool truncated = false;
 
 	bcf_srs_t * sr_parse =  bcf_sr_init();
-	initReader(sr_parse, fmain, nthreads);
-	int i_site=0;
-
+	const int open_err = openTargetReader(sr_parse, fmain, nthreads, err_out);
+	if (open_err) { bcf_sr_destroy(sr_parse); return open_err; }
 	sr_parse->max_unpack = BCF_UN_ALL;
-	const int n_ref_haps = H.n_ref_haps;
 
 	while (bcf_sr_next_line (sr_parse))
 	{
 		if (!bcf_sr_has_line(sr_parse, 0) || bcf_sr_get_line(sr_parse, 0)->n_allele != 2) continue; //always ref
+		//The scan and parse passes are independent re-opens applying the same filter, so they
+		//must yield the same number of biallelic sites. If the parse pass yields MORE, one
+		//pass was truncated by a transient read error (htslib may not flag this via errnum) -
+		//stop before indexing vec_pos_tar[i_site] out of bounds and report a retryable
+		//truncation rather than corrupting output.
+		if (i_site >= (int)vec_pos_tar.size()) { truncated = true; break; }
 		if (vec_pos_tar[i_site] == nullptr)
 		{
 			++i_site;
@@ -410,9 +500,24 @@ void genotype_reader::readTarGenotypes(std::string fmain, int nthreads)
 			++i_site;
 		}
 	}
+	//If the parse pass read FEWER biallelic sites than the scan recorded (and did not
+	//already overrun above), it was itself truncated mid-stream. Either direction means a
+	//pass did not complete, so report a retryable truncation.
+	if (!truncated && i_site != (int)vec_pos_tar.size()) truncated = true;
+
+	const int saved_errno = errno;
+	const int err = sr_parse->errnum;
 	bcf_sr_destroy(sr_parse);
 	free(pl_arr_main);
 	free(gl_arr_main);
+
+	if (truncated)
+	{
+		err_out = "scan/parse site-count mismatch (scanned " + std::to_string(vec_pos_tar.size()) + ", parsed " + std::to_string(i_site) + "+); a streaming pass was likely truncated by a transient read error";
+		return SR_TRUNCATED;
+	}
+	if (err) err_out = describe_sr_error(err, saved_errno);
+	return err;
 }
 
 void genotype_reader::set_ploidy_tar()
@@ -642,6 +747,7 @@ void genotype_reader::parseGenotypes(bcf_srs_t * sr) {
 		prog_bar+=prog_step;
 		vrb.progress("  * VCF/BCF parsing", prog_bar);
 	}
+	if (sr->errnum) vrb.error("Error while parsing VCF/BCF file(s): " + std::string(bcf_sr_strerror(sr->errnum)));
 	free(pl_arr_main);
 	free(gl_arr_main);
 	free(gt_arr_ref);
@@ -700,6 +806,7 @@ void genotype_reader::parseRefGenotypes(bcf_srs_t * sr) {
 		prog_bar+=prog_step;
 		vrb.progress("  * Reference panel parsing ", prog_bar);
 	}
+	if (sr->errnum) vrb.error("Error while parsing reference panel: " + std::string(bcf_sr_strerror(sr->errnum)));
 	free(gt_arr_ref);
 
 	// Report

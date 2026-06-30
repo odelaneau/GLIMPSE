@@ -26,6 +26,8 @@
 #include <ligater/ligater_header.h>
 #include <htslib/khash.h>
 #include <sys/stat.h>
+#include <cstring>
+#include <cerrno>
 #include <utils/otools.h>
 #include <utils/basic_stats.h>
 
@@ -143,8 +145,8 @@ void ligater::scan_overlap(const int ifname, const char * seek_chr, int seek_pos
 	int n_threads = options["threads"].as < int > ();
 	if (n_threads > 1) bcf_sr_set_threads(sr, n_threads);
 
-	if (!bcf_sr_add_reader (sr, filenames[ifname-2].c_str())) vrb.error("Problem opening/creating index file for [" + filenames[ifname-2] + "]");
-	if (!bcf_sr_add_reader (sr, filenames[ifname-1].c_str())) vrb.error("Problem opening/creating index file for [" + filenames[ifname-1] + "]");
+	if (!bcf_sr_add_reader (sr, filenames[ifname-2].c_str())) vrb.error("Failed to open/index [" + filenames[ifname-2] + "]: " + std::string(bcf_sr_strerror(sr->errnum)) + ". The file may be missing, malformed, or (if cloud-streamed) the read may have failed.");
+	if (!bcf_sr_add_reader (sr, filenames[ifname-1].c_str())) vrb.error("Failed to open/index [" + filenames[ifname-1] + "]: " + std::string(bcf_sr_strerror(sr->errnum)) + ". The file may be missing, malformed, or (if cloud-streamed) the read may have failed.");
 
 	int nset = 0;
 	int n_sites_buff = 0;
@@ -177,6 +179,10 @@ void ligater::scan_overlap(const int ifname, const char * seek_chr, int seek_pos
 		++n_sites_buff;
 		++n_sites_tot;
 	}
+	//A nonzero errnum here means the loop stopped on a read failure, not a clean EOF.
+	//Without this check a truncated/dropped (e.g. cloud-streamed) input would look like
+	//the file simply ended, silently corrupting the overlap scan.
+	if (sr->errnum) vrb.error("Error reading VCF/BCF mid-stream while scanning the overlap of [" + filenames[ifname-2] + "] / [" + filenames[ifname-1] + "]: " + std::string(bcf_sr_strerror(sr->errnum)) + ". An input chunk may be incomplete or, if cloud-streamed, the read dropped.");
 	bcf_sr_destroy(sr);
 
 	stats1D stats_all;
@@ -231,8 +237,8 @@ void ligater::ligate() {
 
 	for (int f = 0, prev_chrid = -1 ; f < nfiles ; f ++)
 	{
-		htsFile *fp = hts_open(filenames[f].c_str(), "r"); if ( !fp ) vrb.error("Failed to open: " + filenames[f] + ".");
-		bcf_hdr_t *hdr = bcf_hdr_read(fp); if ( !hdr ) vrb.error("Failed to parse header: " + filenames[f] +".");
+		htsFile *fp = hts_open(filenames[f].c_str(), "r"); if ( !fp ) vrb.error("Failed to open [" + filenames[f] + "] (" + std::string(strerror(errno)) + "). The file may be missing, unreadable, or (if cloud-streamed) the read may have failed.");
+		bcf_hdr_t *hdr = bcf_hdr_read(fp); if ( !hdr ) vrb.error("Failed to parse header of [" + filenames[f] +"]. The file may be malformed or truncated (e.g. an incomplete cloud-stream).");
 		out_hdr = bcf_hdr_merge(out_hdr,hdr);
         if ( bcf_hdr_nsamples(hdr) != bcf_hdr_nsamples(out_hdr) ) vrb.error("Different number of samples in " + filenames[f] + ".");
         for (int j=0; j<bcf_hdr_nsamples(hdr); j++)
@@ -337,7 +343,7 @@ void ligater::ligate() {
         int new_file = 0;
         while ( sr->nreaders < 2 && ifname < nfiles )
         {
-            if ( !bcf_sr_add_reader (sr, filenames[ifname].c_str())) vrb.error("Failed to open " + filenames[ifname] + ".");
+            if ( !bcf_sr_add_reader (sr, filenames[ifname].c_str())) vrb.error("Failed to open/index [" + filenames[ifname] + "]: " + std::string(bcf_sr_strerror(sr->errnum)) + ". The file may be missing, malformed, or (if cloud-streamed) the read may have failed.");
             new_file = 1;
             ifname++;
             if ( start_pos[ifname-1]==-1 ) break;   // new chromosome, start with only one file open
@@ -374,7 +380,7 @@ void ligater::ligate() {
             while ( ifname < nfiles && start_pos[ifname]!=-1 && line->pos >= start_pos[ifname] )
             {
                 must_seek = 1;
-                if ( !bcf_sr_add_reader(sr, filenames[ifname].c_str())) vrb.error("Failed to open " + filenames[ifname] + ".");
+                if ( !bcf_sr_add_reader(sr, filenames[ifname].c_str())) vrb.error("Failed to open/index [" + filenames[ifname] + "]: " + std::string(bcf_sr_strerror(sr->errnum)) + ". The file may be missing, malformed, or (if cloud-streamed) the read may have failed.");
                 if  (sr->nreaders>2) vrb.error("Three files overlapping at position: " + std::to_string(line->pos+1));
                 ifname++;
             }
@@ -439,6 +445,10 @@ void ligater::ligate() {
             prev_readers_size = sr->nreaders;
     		n_variants++;
         }
+        //A nonzero errnum means the inner read loop stopped on a read failure rather than
+        //a clean end-of-input; without this check a truncated/dropped (e.g. cloud-streamed)
+        //chunk would be silently concatenated as if complete.
+        if (sr->errnum) vrb.error("Error reading VCF/BCF mid-stream during concatenation: " + std::string(bcf_sr_strerror(sr->errnum)) + ". An input chunk may be incomplete or, if cloud-streamed, the read dropped.");
         if ( sr->nreaders ) while ( sr->nreaders ) bcf_sr_remove_reader(sr, 0);
     }
 	vrb.print("Cnk " + stb.str(ifname-1) + " [" + prev_chr + ":" + stb.str(first_pos) + "-" + stb.str(prev_pos[0] + 1) + "] [L=" + stb.str(n_variants-n_variants_at_start_cnk) + "]" );
