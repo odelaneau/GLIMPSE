@@ -37,7 +37,7 @@ GLIMPSE2_split_reference --input-region chr20:7702567-12266861 --output-region c
 |:---------------------|:--------|:---------|:-------------------------------------|
 | \-\-help             | NA      | NA       | Produces help message |
 | \-\-seed             | INT     | 15052011 | Seed of the random number generator  |
-| \-T \[ \-\-threads\] | INT     | 1        | Number of threads |
+| \-T \[ \-\-threads \]| INT     | 1        | Number of threads |
 
 
 

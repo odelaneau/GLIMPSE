@@ -31,7 +31,7 @@ void chunker::declare_options() {
 	opt_base.add_options()
 			("help", "Produces help message")
 			("seed", bpo::value<long int>()->default_value(15052011), "Seed of the random number generator")
-			("threads", bpo::value<long int>()->default_value(1), "Number of threads");
+			("threads,T", bpo::value<long int>()->default_value(1), "Number of threads");
 
 	bpo::options_description opt_input ("Input parameters");
 	opt_input.add_options()
