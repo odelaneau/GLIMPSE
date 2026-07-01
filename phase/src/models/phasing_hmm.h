@@ -141,7 +141,20 @@ void phasing_hmm::INIT_PEAK_HET(int curr_het)
 {
 	const std::array <__m256, 2 > emits = {_mm256_load_ps(&EMIT0[curr_het][0]),_mm256_load_ps(&EMIT1[curr_het][0])};
     __m256 _sum = _mm256_set1_ps(0.0f);
-	for(int k = 0, i = 0 ; k != C->n_states ; ++k, i += HAP_NUMBER)
+	const unsigned int n_states = C->n_states;
+	const unsigned int n_states_full = (n_states / 8) * 8;
+	int k = 0, i = 0;
+	for ( ; k < n_states_full ; k += 8, i += 8 * HAP_NUMBER)
+	{
+		const unsigned char byte = C->Hvar.getByte(curr_rel_locus, k);
+		for (int b = 0 ; b < 8 ; ++b)
+		{
+			const bool ah = (byte >> (7 - b)) & 1;
+			_sum = _mm256_add_ps(_sum, emits[ah]);
+			_mm256_store_ps(&prob[i + b * HAP_NUMBER], emits[ah]);
+		}
+	}
+	for ( ; k < n_states ; ++k, i += HAP_NUMBER)
 	{
 		const bool ah = C->Hvar.get(curr_rel_locus, k);
 		_sum = _mm256_add_ps(_sum, emits[ah]);
@@ -156,7 +169,20 @@ void phasing_hmm::INIT_PEAK_HOM(bool ag)
 {
 	const std::array <__m256, 2 > emits = {_mm256_set1_ps(1.0f),_mm256_set1_ps(C->ed_phs/C->ee_phs)};
     __m256 _sum = _mm256_set1_ps(0.0f);
-	for(int k = 0, i = 0 ; k != C->n_states ; ++k, i += HAP_NUMBER)
+	const unsigned int n_states = C->n_states;
+	const unsigned int n_states_full = (n_states / 8) * 8;
+	int k = 0, i = 0;
+	for ( ; k < n_states_full ; k += 8, i += 8 * HAP_NUMBER)
+	{
+		const unsigned char byte = C->Hvar.getByte(curr_rel_locus, k);
+		for (int b = 0 ; b < 8 ; ++b)
+		{
+			const bool ag_ah = ((byte >> (7 - b)) & 1) != ag;
+			_sum = _mm256_add_ps(_sum, emits[ag_ah]);
+			_mm256_store_ps(&prob[i + b * HAP_NUMBER], emits[ag_ah]);
+		}
+	}
+	for ( ; k < n_states ; ++k, i += HAP_NUMBER)
 	{
 		const bool ag_ah = C->Hvar.get(curr_rel_locus, k)!=ag;
 		_sum = _mm256_add_ps(_sum, emits[ag_ah]);
@@ -180,7 +206,21 @@ void phasing_hmm::RUN_PEAK_HET(int curr_het)
 	const __m256 _nt = _mm256_set1_ps(nt / probSumT);
 	const std::array <__m256, 2 > emits = {_mm256_load_ps(&EMIT0[curr_het][0]),_mm256_load_ps(&EMIT1[curr_het][0])};
     __m256 _sum = _mm256_set1_ps(0.0f);
-	for(int k = 0, i = 0 ; k != C->n_states ; ++k, i += HAP_NUMBER)
+	const unsigned int n_states = C->n_states;
+	const unsigned int n_states_full = (n_states / 8) * 8;
+	int k = 0, i = 0;
+	for ( ; k < n_states_full ; k += 8, i += 8 * HAP_NUMBER)
+	{
+		const unsigned char byte = C->Hvar.getByte(curr_rel_locus, k);
+		for (int b = 0 ; b < 8 ; ++b)
+		{
+			const bool ah = (byte >> (7 - b)) & 1;
+			const __m256 _prob_curr = _mm256_mul_ps(_mm256_fmadd_ps(_mm256_load_ps(&prob[i + b * HAP_NUMBER]), _nt, _tFreq), emits[ah]);
+			_sum = _mm256_add_ps(_sum, _prob_curr);
+			_mm256_store_ps(&prob[i + b * HAP_NUMBER], _prob_curr);
+		}
+	}
+	for ( ; k < n_states ; ++k, i += HAP_NUMBER)
 	{
 		const bool ah = C->Hvar.get(curr_rel_locus, k);
 		const __m256 _prob_curr = _mm256_mul_ps(_mm256_fmadd_ps(_mm256_load_ps(&prob[i]), _nt, _tFreq), emits[ah]);
@@ -198,7 +238,23 @@ void phasing_hmm::RUN_PEAK_HOM(bool ag)
 	const __m256 _nt = _mm256_set1_ps(nt / probSumT);
     const __m256 _mism = _mm256_set1_ps(C->ed_phs/C->ee_phs);
     __m256 _sum = _mm256_set1_ps(0.0f);
-	for(int k = 0, i = 0 ; k != C->n_states ; ++k, i += HAP_NUMBER)
+	const unsigned int n_states = C->n_states;
+	const unsigned int n_states_full = (n_states / 8) * 8;
+	int k = 0, i = 0;
+	for ( ; k < n_states_full ; k += 8, i += 8 * HAP_NUMBER)
+	{
+		const unsigned char byte = C->Hvar.getByte(curr_rel_locus, k);
+		for (int b = 0 ; b < 8 ; ++b)
+		{
+			const bool ah = (byte >> (7 - b)) & 1;
+			const __m256 _prob_prev = _mm256_load_ps(&prob[i + b * HAP_NUMBER]);
+			__m256 _prob_curr = _mm256_fmadd_ps(_prob_prev, _nt, _tFreq);
+			if (ag!=ah) _prob_curr = _mm256_mul_ps(_prob_curr, _mism);
+			_sum = _mm256_add_ps(_sum, _prob_curr);
+			_mm256_store_ps(&prob[i + b * HAP_NUMBER], _prob_curr);
+		}
+	}
+	for ( ; k < n_states ; ++k, i += HAP_NUMBER)
 	{
 		const bool ah = C->Hvar.get(curr_rel_locus, k);
 		const __m256 _prob_prev = _mm256_load_ps(&prob[i]);
@@ -234,7 +290,21 @@ void phasing_hmm::COLLAPSE_PEAK_HET(int curr_het)
 	const __m256 _nt = _mm256_set1_ps(nt / probSumT);
 	const std::array <__m256, 2 > emits = {_mm256_load_ps(&EMIT0[curr_het][0]),_mm256_load_ps(&EMIT1[curr_het][0])};
     __m256 _sum = _mm256_set1_ps(0.0f);
-	for(int k = 0, i = 0 ; k != C->n_states ; ++k, i += HAP_NUMBER)
+	const unsigned int n_states = C->n_states;
+	const unsigned int n_states_full = (n_states / 8) * 8;
+	int k = 0, i = 0;
+	for ( ; k < n_states_full ; k += 8, i += 8 * HAP_NUMBER)
+	{
+		const unsigned char byte = C->Hvar.getByte(curr_rel_locus, k);
+		for (int b = 0 ; b < 8 ; ++b)
+		{
+			const bool ah = (byte >> (7 - b)) & 1;
+			const __m256 _prob_curr = _mm256_mul_ps(_mm256_fmadd_ps(_mm256_set1_ps(probSumK[k + b]), _nt, _tFreq), emits[ah]);
+			_sum = _mm256_add_ps(_sum, _prob_curr);
+			_mm256_store_ps(&prob[i + b * HAP_NUMBER], _prob_curr);
+		}
+	}
+	for ( ; k < n_states ; ++k, i += HAP_NUMBER)
 	{
 		const bool ah = C->Hvar.get(curr_rel_locus, k);
 		const __m256 _prob_curr = _mm256_mul_ps(_mm256_fmadd_ps(_mm256_set1_ps(probSumK[k]), _nt, _tFreq), emits[ah]);
@@ -252,8 +322,22 @@ void phasing_hmm::COLLAPSE_PEAK_HOM(bool ag)
    	const __m256 _nt = _mm256_set1_ps(nt / probSumT);
     __m256 _sum = _mm256_set1_ps(0.0f);
     const __m256 _mism = _mm256_set1_ps(C->ed_phs/C->ee_phs);
-
-   	for(int k = 0, i = 0 ; k != C->n_states ; ++k, i += HAP_NUMBER)
+	const unsigned int n_states = C->n_states;
+	const unsigned int n_states_full = (n_states / 8) * 8;
+	int k = 0, i = 0;
+	for ( ; k < n_states_full ; k += 8, i += 8 * HAP_NUMBER)
+	{
+		const unsigned char byte = C->Hvar.getByte(curr_rel_locus, k);
+		for (int b = 0 ; b < 8 ; ++b)
+		{
+			const bool ah = (byte >> (7 - b)) & 1;
+			__m256 _prob_curr = _mm256_fmadd_ps(_mm256_set1_ps(probSumK[k + b]), _nt, _tFreq);
+			if (ag!=ah) _prob_curr = _mm256_mul_ps(_prob_curr, _mism);
+			_sum = _mm256_add_ps(_sum, _prob_curr);
+			_mm256_store_ps(&prob[i + b * HAP_NUMBER], _prob_curr);
+		}
+	}
+   	for ( ; k < n_states ; ++k, i += HAP_NUMBER)
    	{
    		const bool ah = C->Hvar.get(curr_rel_locus, k);
    		__m256 _prob_curr = _mm256_fmadd_ps(_mm256_set1_ps(probSumK[k]), _nt, _tFreq);
@@ -337,8 +421,21 @@ void phasing_hmm::IMPUTE_FLAT_HET()
 	_scaleR = _mm256_div_ps(_one, _scaleR);
 	_scaleL = _mm256_div_ps(_one, _scaleL);
 	std::array <__m256, 2 > sums = {_mm256_set1_ps(0.0f),_mm256_set1_ps(0.0f)};
-
-	for(int k = 0, i = 0 ; k !=  C->n_states ; ++k, i += HAP_NUMBER) {
+	const unsigned int n_states = C->n_states;
+	const unsigned int n_states_full = (n_states / 8) * 8;
+	int k = 0, i = 0;
+	for ( ; k < n_states_full ; k += 8, i += 8 * HAP_NUMBER)
+	{
+		const unsigned char byte = C->Hvar.getByte(curr_rel_locus, k);
+		for (int b = 0 ; b < 8 ; ++b)
+		{
+			const bool ah = (byte >> (7 - b)) & 1;
+			const __m256 _p1 = _mm256_mul_ps(_mm256_load_ps(&imputeProb[curr_missing_locus*states_haps + i + b * HAP_NUMBER]), _scaleR);
+			const __m256 _p2 = _mm256_mul_ps(_mm256_load_ps(&prob[i + b * HAP_NUMBER]), _scaleL);
+			sums[ah] = _mm256_add_ps(sums[ah], _mm256_mul_ps(_p1,_p2));
+		}
+	}
+	for ( ; k < n_states ; ++k, i += HAP_NUMBER) {
 		const bool ah = C->Hvar.get(curr_rel_locus, k);
 		const __m256 _p1 = _mm256_mul_ps(_mm256_load_ps(&imputeProb[curr_missing_locus*states_haps + i]), _scaleR);
 		const __m256 _p2 = _mm256_mul_ps(_mm256_load_ps(&prob[i]), _scaleL);
