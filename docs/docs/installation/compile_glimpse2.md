@@ -69,12 +69,15 @@ make system
 
 The `system` target auto-detects your OS, architecture, and library locations. It searches standard installation paths across all major Linux distributions (Debian/Ubuntu, Fedora/RHEL, Arch, openSUSE, etc.) and macOS Homebrew. If `pkg-config` is installed, it is used for more precise HTSlib detection.
 
-| Platform | Compiler | Detection method |
+| Platform | Default compiler | Detection method |
 |----------|----------|-----------------|
-| Linux (all distros) | g++ | Searches `/usr/lib`, `/usr/lib64`, `/usr/local/lib`, Debian multiarch paths |
+| Linux x86_64 | g++ | Searches `/usr/lib`, `/usr/lib64`, `/usr/local/lib`, Debian multiarch paths |
+| Linux aarch64/ARM64 | clang++ (falls back to g++ if clang++ is not installed) | Searches `/usr/lib`, `/usr/lib64`, `/usr/local/lib`, Debian multiarch paths |
 | macOS ARM64 | clang++ | Searches `/opt/homebrew/lib`, plus pkg-config |
 
 On x86_64, the phase module automatically enables AVX2/FMA SIMD instructions. On ARM64 platforms, SIMD is provided via NEON instructions through the SIMDe compatibility library.
+
+On ARM64 the build **defaults to `clang++`** because clang generates substantially better NEON code for the SIMDe-translated kernels than g++ does — roughly **2.5× faster** phase imputation on AWS Graviton (Neoverse). Install clang on aarch64 to get this speedup (see [Required libraries](required_libraries)); if clang++ is not present the build automatically falls back to g++. You can always force a specific compiler by passing `CXX=` to make, e.g. `make system CXX=g++` or `make system CXX=clang++`.
 
 ### Custom build (other targets)
 
