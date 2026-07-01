@@ -40,6 +40,7 @@ rm -r htslib-1.16
 COPY chunk GLIMPSE/chunk/
 COPY common GLIMPSE/common/
 COPY concordance GLIMPSE/concordance/
+COPY inspect GLIMPSE/inspect/
 COPY ligate GLIMPSE/ligate/
 COPY phase GLIMPSE/phase/
 COPY split_reference GLIMPSE/split_reference/
@@ -53,7 +54,7 @@ RUN cd GLIMPSE && \
 make clean && \
 make system -j$(nproc)
 
-RUN mv GLIMPSE/chunk/bin/GLIMPSE2_chunk GLIMPSE/split_reference/bin/GLIMPSE2_split_reference GLIMPSE/phase/bin/GLIMPSE2_phase GLIMPSE/ligate/bin/GLIMPSE2_ligate GLIMPSE/concordance/bin/GLIMPSE2_concordance /bin && \
+RUN mv GLIMPSE/chunk/bin/GLIMPSE2_chunk GLIMPSE/split_reference/bin/GLIMPSE2_split_reference GLIMPSE/phase/bin/GLIMPSE2_phase GLIMPSE/ligate/bin/GLIMPSE2_ligate GLIMPSE/concordance/bin/GLIMPSE2_concordance GLIMPSE/inspect/bin/GLIMPSE2_inspect /bin && \
 chmod +x /bin/GLIMPSE2* && \
 rm -rf GLIMPSE
 
