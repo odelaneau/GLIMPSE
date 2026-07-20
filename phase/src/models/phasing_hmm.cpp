@@ -133,10 +133,10 @@ void phasing_hmm::reallocate(const std::vector < bool > & H0, const std::vector 
 	imputeProbSumSum.resize(n_miss);
 	imputeProbOf1s.resize(n_miss * HAP_NUMBER);
 
-	std::fill(phasingProb.begin(), phasingProb.end(), 0.0f);
-	std::fill(phasingProbSum.begin(), phasingProbSum.end(), 0.0f);
-	std::fill(imputeProb.begin(), imputeProb.end(), 0.0f);
-	std::fill(imputeProbSum.begin(), imputeProbSum.end(), 0.0f);
+	//phasingProb, phasingProbSum, imputeProb and imputeProbSum are fully overwritten
+	//by std::copy from prob/probSumH inside backward() before forward()/IMPUTE_FLAT_HET()
+	//ever read them, so the explicit zeroing here is dead work and was a measurable
+	//memset/memmove cost in profiling.
 }
 
 void phasing_hmm::forward()
