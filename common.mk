@@ -1,6 +1,6 @@
 #COMPILER MODE C++17
-CXX?=g++
-
+# Default compiler is selected by architecture below (see ARCH block), defaulting
+# to clang++ on aarch64 and g++ elsewhere. Override by passing CXX=... to make.
 
 #create folders
 dummy_build_folder_bin := $(shell mkdir -p bin)
@@ -31,6 +31,22 @@ EXEFILE=bin/GLIMPSE2_$(NAME)_static
 #CXXFLAG+= -D__COMMIT_DATE__=\"$(COMMIT_DATE)\"
 
 ARCH := $(shell uname -m)
+
+# Default compiler by architecture. On aarch64 the phase kernels are x86 AVX2/FMA
+# intrinsics that SIMDe lowers to NEON; clang generates far better NEON for SIMDe
+# than gcc does (~2.5x faster phase kernels on AWS Graviton / Neoverse), so prefer
+# clang++ when it is installed, falling back to g++ so gcc-only systems still build.
+ifneq (,$(filter arm64 aarch64,$(ARCH)))
+  ifneq (,$(shell command -v clang++ 2>/dev/null))
+    DEFAULT_CXX := clang++
+  else
+    DEFAULT_CXX := g++
+  endif
+else
+  DEFAULT_CXX := g++
+endif
+CXX ?= $(DEFAULT_CXX)
+
 ifeq ($(NAME),phase)
   ifneq (,$(filter x86_64 amd64,$(ARCH)))
     CXXFLAG+=-mavx2 -mfma
@@ -140,7 +156,8 @@ ifeq ($(OS),Darwin)
   SYS_CXX = clang++
   SYS_DYN_LIBS = -L/opt/homebrew/lib -lz -lpthread -lbz2 -llzma -lcurl -lcrypto -ldeflate
 else
-  SYS_CXX = g++
+  # clang++ on aarch64 (better SIMDe->NEON codegen), g++ on x86_64 (see DEFAULT_CXX above)
+  SYS_CXX = $(DEFAULT_CXX)
   SYS_DYN_LIBS = $(_HTSLIB_SHARED) -lz -lpthread -lbz2 -llzma -lcurl -lcrypto -ldeflate
   # When pkg-config is available, add HTSlib's static link dependencies
   # (e.g., -lhtscodecs and LTO flags required by some distro-packaged libhts.a)

@@ -9,8 +9,10 @@ LABEL org.opencontainers.image.authors="simone.rubinacci@unil.ch"
 
 WORKDIR /docker_build/
 
-# Install required packages
-RUN apt-get update && apt-get install -y build-essential libbz2-dev libcurl4-openssl-dev autoconf libssl-dev wget zlib1g-dev liblzma-dev libdeflate-dev
+# Install required packages.
+# clang is included because on aarch64 the build defaults to clang++ (much better
+# SIMDe->NEON codegen than g++); on x86_64 the build still uses g++ (build-essential).
+RUN apt-get update && apt-get install -y build-essential clang libbz2-dev libcurl4-openssl-dev autoconf libssl-dev wget zlib1g-dev liblzma-dev libdeflate-dev
 
 # Download and build boost program_options and iostreams
 RUN wget https://archives.boost.io/release/1.78.0/source/boost_1_78_0.tar.gz && \
