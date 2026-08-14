@@ -48,6 +48,13 @@ public:
 	std::vector < std::vector < int > > SindTarGL;				// Rare alleles per ind from GLs
 	std::vector < float > cm_pos;
 
+	//HVAR CACHE
+	//True when HvarRef has been mmap-adopted from a haplotype-major
+	//`--build-hvar-cache` cache file (see phase/src/containers/hvar_cache.h) instead
+	//of loaded row-major from the .bin as usual. conditioning_set::compactSelection
+	//uses this to pick which TYPE_COMMON gather algorithm matches HvarRef's layout.
+	bool hvarref_is_transposed = false;
+
 	//PLOIDY
 	int fploidy;								//Format ploidy field, to indicate the ploidy in the sample file: 1=only haploids, 2=only diploids, -2=mixed ploidy (haploids and diploids).
 	int max_ploidy;

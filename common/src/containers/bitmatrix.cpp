@@ -24,26 +24,60 @@
  ******************************************************************************/
 
 #include <containers/bitmatrix.h>
+#include <sys/mman.h>
 
 bitmatrix::bitmatrix() {
 	n_rows = 0;
 	n_cols = 0;
 	n_bytes = 0;
 	bytes = nullptr;
+	owns_mmap = false;
+	mmap_length = 0;
+	skip_and_discard_on_load = false;
 }
 
-bitmatrix::~bitmatrix() {	
-	n_bytes=0;
-	if (bytes) std::free(bytes);
-	bytes=NULL;
+bitmatrix::~bitmatrix() {
+	release();
 }
 
+void bitmatrix::release() {
+	if (bytes) {
+		if (owns_mmap) ::munmap(bytes, mmap_length);
+		else std::free(bytes);
+	}
+	bytes = nullptr;
+	owns_mmap = false;
+	mmap_length = 0;
+	n_bytes = 0;
+	n_cols = 0;
+	n_rows = 0;
+}
 
-void bitmatrix::subset(bitmatrix & BM, std::vector < unsigned int > rows) {
+void bitmatrix::adopt_mmap(unsigned char * mapped_bytes, unsigned long mapped_length, unsigned long nrow, unsigned long ncol, unsigned long nbytes_logical) {
+	release();		//tear down any previous state first (retry-safety)
+	bytes = mapped_bytes;
+	owns_mmap = true;
+	mmap_length = mapped_length;
+	n_rows = nrow;
+	n_cols = ncol;
+	n_bytes = nbytes_logical;
+}
+
+unsigned char * bitmatrix::rowPtr(unsigned int row) {
+	return &bytes[((unsigned long)row) * (n_cols/8)];
+}
+
+const unsigned char * bitmatrix::rowPtr(unsigned int row) const {
+	return &bytes[((unsigned long)row) * (n_cols/8)];
+}
+
+void bitmatrix::subset(const bitmatrix & BM, std::vector < unsigned int > rows) {
+	assert(!owns_mmap);
 	n_rows = rows.size() + ((rows.size()%8)?(8-(rows.size()%8)):0);
 	n_cols = BM.n_cols;
-	n_bytes = (n_cols/8) * (unsigned long)n_rows;
-	bytes = (unsigned char*)realloc(bytes, n_bytes*sizeof(unsigned char));
+	unsigned long new_n_bytes = (n_cols/8) * (unsigned long)n_rows;
+	if (new_n_bytes > n_bytes) bytes = (unsigned char*)realloc(bytes, new_n_bytes*sizeof(unsigned char));
+	n_bytes = new_n_bytes;
 	unsigned long offset_addr = 0;
 	for (int r = 0 ; r < rows.size() ; r ++) {
 		std::memcpy(&bytes[offset_addr], &BM.bytes[((unsigned long)rows[r]) * (BM.n_cols/8)], n_cols/8);
@@ -75,6 +109,7 @@ void bitmatrix::subset(bitmatrix & BM, vector < int > rows, unsigned int col_fro
 
 
 void bitmatrix::allocate(unsigned int nrow, unsigned int ncol) {
+	assert(!owns_mmap && "allocate() called on an mmap-backed bitmatrix");
 	n_rows = nrow + ((nrow%8)?(8-(nrow%8)):0);
 	n_cols = ncol + ((ncol%8)?(8-(ncol%8)):0);
 	n_bytes = (n_cols/8) * (unsigned long)n_rows;
@@ -83,6 +118,7 @@ void bitmatrix::allocate(unsigned int nrow, unsigned int ncol) {
 }
 
 void bitmatrix::reallocate(unsigned int nrow, unsigned int ncol) {
+	assert(!owns_mmap && "reallocate() called on an mmap-backed bitmatrix");
 	n_rows = nrow + ((nrow%8)?(8-(nrow%8)):0);
 	n_cols = ncol + ((ncol%8)?(8-(ncol%8)):0);
 	unsigned long int new_n_bytes = (n_cols/8) * (unsigned long)n_rows;
@@ -98,6 +134,7 @@ void bitmatrix::reallocate(unsigned int nrow, unsigned int ncol) {
  * Of note, function abracadabra is the same than getMultiplyUpperPart function in the original code from Timur Kristóf.
  */
 void bitmatrix::transpose(bitmatrix & BM, unsigned int _max_row, unsigned int _max_col) {
+	assert(!BM.owns_mmap && "transpose() destination is an mmap-backed bitmatrix");
 	unsigned int max_row = _max_row + ((_max_row%8)?(8-(_max_row%8)):0);
 	unsigned int max_col = _max_col + ((_max_col%8)?(8-(_max_col%8)):0);
 	unsigned long targetAddr, sourceAddr;
@@ -121,6 +158,7 @@ void bitmatrix::transpose(bitmatrix & BM, unsigned int _max_row, unsigned int _m
 }
 
 void bitmatrix::transpose(bitmatrix & BM, unsigned int _min_row, unsigned int _min_col, unsigned int _max_row, unsigned int _max_col) {
+	assert(!BM.owns_mmap && "transpose() destination is an mmap-backed bitmatrix");
 	unsigned int min_row = _min_row - ((_min_row%8)?(8-(_min_row%8)):0);
 	unsigned int min_col = _min_col - ((_min_col%8)?(8-(_min_col%8)):0);
 	unsigned int max_row = _max_row + ((_max_row%8)?(8-(_max_row%8)):0);

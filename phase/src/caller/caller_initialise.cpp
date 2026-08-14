@@ -32,6 +32,7 @@
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/archive_exception.hpp>
 #include <containers/glimpse_mpileup.h>
+#include <containers/hvar_cache.h>
 #include <io/retry_io.h>
 #include <chrono>
 
@@ -175,10 +176,36 @@ void caller::read_files_and_initialise() {
 
 }
 
-bool caller::read_binary_reference_panel(const std::string& reference_filename, std::string& err_msg, bool& non_retryable)
+bool caller::read_binary_reference_panel(const std::string& reference_filename, std::string& err_msg, bool& non_retryable, bool skip_cache)
 {
 	err_msg.clear();
 	non_retryable = false;
+
+	//(0) Determine whether a valid hvar cache (see containers/hvar_cache.h) exists for
+	//this panel, and if so mmap its blob NOW, before touching the .bin at all. This
+	//check only needs a cheap stat() fingerprint (size+mtime) plus the cache's own
+	//header, and mmap'ing here -- rather than after H is deserialized -- means a
+	//failure at this stage (bad/missing cache, mmap not supported on this filesystem,
+	//page-size mismatch) can fall back to a normal full load instead of being fatal:
+	//nothing about H has been touched yet either way.
+	bool use_cache = false;
+	std::string cache_path;
+	hvar_cache_header cache_hdr{};
+	void * cache_raw_base = nullptr;
+	if (!skip_cache)
+	{
+		cache_path = options.count("hvar-cache-file") ? options["hvar-cache-file"].as < std::string > () : default_hvar_cache_path(reference_filename);
+		std::string cache_err;
+		uint64_t src_size; int64_t src_mtime;
+		if (read_hvar_cache_header(cache_path, cache_hdr, cache_err)
+			&& stat_file_fingerprint(reference_filename, src_size, src_mtime)
+			&& cache_hdr.source_file_size == src_size && cache_hdr.source_mtime == src_mtime)
+		{
+			cache_raw_base = mmap_hvar_cache_blob_raw(cache_path, cache_hdr, cache_err);
+			if (cache_raw_base) use_cache = true;
+			else vrb.warning("Hvar cache [" + cache_path + "] looked valid but could not be mapped (" + cache_err + "); loading the full reference panel instead.");
+		}
+	}
 
 	//(1) Open the file. A failure to open is not a transient localization hiccup: on the
 	//common case (a missing or mistyped --reference path) retrying just delays the
@@ -187,6 +214,7 @@ bool caller::read_binary_reference_panel(const std::string& reference_filename, 
 	std::ifstream ifs(reference_filename, std::ios::binary | std::ios_base::in);
 	if (!ifs.good())
 	{
+		unmap_hvar_cache_blob_raw(cache_raw_base, cache_hdr.blob_bytes);
 		err_msg = "could not open file (not good(): eofbit, failbit or badbit set, or file not found). Please check the path.";
 		non_retryable = true;
 		return false;
@@ -198,6 +226,11 @@ bool caller::read_binary_reference_panel(const std::string& reference_filename, 
 	//retryable input_stream_error (EOF mid-stream); a bad/wrong archive header
 	//(invalid_signature) or a GLIMPSE/boost version mismatch are non_retryable, since the
 	//bytes already read are wrong and retrying will never help.
+	//When use_cache is true, HvarRef's row-major bytes are streamed-and-discarded
+	//rather than materialized (see bitmatrix::serialize()) -- H.HvarRef.release() first
+	//tears down whatever a previous failed attempt in this retry loop left behind.
+	H.HvarRef.release();
+	H.HvarRef.skip_and_discard_on_load = use_cache;
 	try
 	{
 		boost::archive::binary_iarchive ia(ifs);
@@ -206,6 +239,7 @@ bool caller::read_binary_reference_panel(const std::string& reference_filename, 
 	}
 	catch (const boost::archive::archive_exception& e)
 	{
+		unmap_hvar_cache_blob_raw(cache_raw_base, cache_hdr.blob_bytes);
 		std::string hint;
 		switch (e.code)
 		{
@@ -230,16 +264,43 @@ bool caller::read_binary_reference_panel(const std::string& reference_filename, 
 	}
 	catch (std::exception& e)
 	{
+		unmap_hvar_cache_blob_raw(cache_raw_base, cache_hdr.blob_bytes);
 		err_msg = std::string("exception while parsing boost archive: ") + e.what();
 		return false;
 	}
 
 	//(3) Sanity check the deserialized panel. An empty PBWT indicates a corrupt or
-	//incompletely localized file; treat as a retryable failure.
+	//incompletely localized file; treat as a retryable failure. (H.Ypacked is always
+	//materialized normally -- only HvarRef is ever streamed-and-discarded above.)
 	if (H.Ypacked.size() == 0)
 	{
+		unmap_hvar_cache_blob_raw(cache_raw_base, cache_hdr.blob_bytes);
 		err_msg = "empty PBWT detected after parsing (corrupt or incompletely localized binary file)";
 		return false;
+	}
+
+	//(4) If a cache is in play, adopt the already-mmap'd blob into H.HvarRef now. The
+	//size+mtime fingerprint already matched in step (0); this n_ref_haps/n_com_sites
+	//check is defense-in-depth. Because HvarRef's real bytes were discarded rather
+	//than materialized above, a mismatch here can no longer be handled by a graceful
+	//fallback (there is nothing left to fall back to) -- it should be practically
+	//unreachable given the fingerprint match, so treat it as a hard, actionable error.
+	if (use_cache)
+	{
+		if (cache_hdr.n_ref_haps != H.n_ref_haps || cache_hdr.n_com_sites != H.n_com_sites)
+		{
+			unmap_hvar_cache_blob_raw(cache_raw_base, cache_hdr.blob_bytes);
+			vrb.error("Hvar cache [" + cache_path + "] matches the reference panel's file size/timestamp but not its haplotype/site counts. "
+				"This should not happen; please delete the cache file and rerun --build-hvar-cache.");
+		}
+		H.HvarRef.adopt_mmap(static_cast<unsigned char*>(cache_raw_base), cache_hdr.blob_bytes, hvar_cache_round8(H.n_ref_haps), hvar_cache_round8(H.n_com_sites), cache_hdr.blob_bytes);
+		H.hvarref_is_transposed = true;
+		vrb.bullet("Using hvar cache [" + cache_path + "] to reduce reference panel memory usage");
+	}
+	else
+	{
+		H.hvarref_is_transposed = false;
+		if (!skip_cache) vrb.bullet("No hvar cache in use for this reference panel (run 'GLIMPSE2_phase --build-hvar-cache --reference " + reference_filename + "' once to reduce memory usage on future runs)");
 	}
 
 	return true;

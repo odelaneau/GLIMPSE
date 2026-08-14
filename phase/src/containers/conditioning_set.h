@@ -64,6 +64,15 @@ public:
 	std::vector < std::vector < unsigned int > > Svar;		//Sparse bitmatrix / Variant first
 	bitmatrix Hvar;									//Plain bitmatrix / Variant first
 
+	//Scratch buffers used only when H.hvarref_is_transposed (an hvar cache is mmap'd,
+	//see containers/hvar_cache.h): Hgathered holds the n_states selected haplotypes'
+	//contiguous common-site rows (haplotype-major, same orientation as H.HvarRef,
+	//gathered via bitmatrix::subset()); Htransposed flips that into sites-as-rows
+	//orientation (bitmatrix::transpose()) so it can be memcpy'd into Hvar's common
+	//rows. One instance per worker thread, same as Hvar itself.
+	bitmatrix Hgathered;
+	bitmatrix Htransposed;
+
 	//TRANSITION & EMISSION PROBABILITIES
 	std::vector < float > t;
 	std::vector < float > nt;

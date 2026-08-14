@@ -48,6 +48,10 @@ void caller::phase(std::vector < std::string > & args) {
 	declare_options();
 	parse_command_line(args);
 	check_options();
+	if (options.count("build-hvar-cache")) {
+		build_hvar_cache();
+		return;
+	}
 	verbose_files();
 	verbose_options();
 	read_files_and_initialise();

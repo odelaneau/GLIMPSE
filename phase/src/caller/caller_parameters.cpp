@@ -88,6 +88,11 @@ void caller::declare_options() {
 			("keep-duplicates", "(Expert setting) Keep duplicate sequencing reads in the process")
 			("illumina13+", "(Expert setting) Use illimina 1.3 encoding for the base quality (for older sequencing machines)");
 
+	bpo::options_description opt_hvarcache ("Hvar cache parameters (memory optimization for very large reference panels)");
+	opt_hvarcache.add_options()
+			("build-hvar-cache", "Build a haplotype-major cache file of the binary reference panel's common-variant matrix, used by later GLIMPSE2_phase runs against the same --reference panel to reduce memory usage. Run this once per binary reference panel (--reference must point to a binary panel produced by GLIMPSE2_split_reference, not a VCF/BCF file). Exits after building the cache; no imputation is performed.")
+			("hvar-cache-file", bpo::value < std::string >(), "Path to the hvar cache file. With --build-hvar-cache, this is where the cache is written (default: <reference>.hvarT). Otherwise, if a valid, up-to-date cache is found at this path (or the default location next to --reference), it is used automatically to reduce memory usage; if not found or stale, GLIMPSE2_phase falls back to loading the full reference panel as usual.");
+
 	bpo::options_description opt_output ("Output parameters");
 	opt_output.add_options()
 			("output,O", bpo::value< std::string >(), "Phased and imputed haplotypes in VCF/BCF/BGEN format")
@@ -97,7 +102,7 @@ void caller::declare_options() {
 			("log", bpo::value< std::string >(), "Log file")
 			("checkpoint-file-out", bpo::value < std::string >(), "File to save checkpoint info in.");
 
-	descriptions.add(opt_base).add(opt_input).add(opt_vcf_input).add(opt_algo).add(opt_selection).add(opt_filters).add(opt_output);
+	descriptions.add(opt_base).add(opt_input).add(opt_vcf_input).add(opt_algo).add(opt_selection).add(opt_filters).add(opt_hvarcache).add(opt_output);
 }
 
 void caller::parse_command_line(std::vector < std::string > & args) {
@@ -121,6 +126,29 @@ void caller::parse_command_line(std::vector < std::string > & args) {
 }
 
 void caller::check_options() {
+	if (options.count("build-hvar-cache")) {
+		//Cache-build mode: validate just enough to run build_hvar_cache(), and skip
+		//every other normal-run requirement below (output, target input, region, etc.)
+		//-- caller::phase() branches out to build_hvar_cache() before any of that is
+		//used. See phase/src/containers/hvar_cache.h for the cache file itself.
+		if (!options.count("reference"))
+			vrb.error("You must specify a binary reference panel using --reference when using --build-hvar-cache");
+
+		std::string reference_filename = options["reference"].as < std::string > ();
+		std::string ext0 = stb.get_extension(reference_filename);
+		bool is_vcf_bcf = (ext0 == "bcf" || ext0 == "vcf");
+		if (!is_vcf_bcf && ext0 == "gz") {
+			auto position = reference_filename.find_last_of('.');
+			if (position != std::string::npos && stb.get_extension(reference_filename.substr(0, position)) == "vcf")
+				is_vcf_bcf = true;
+		}
+		if (is_vcf_bcf)
+			vrb.error("--build-hvar-cache requires --reference to point to a binary reference panel (produced by GLIMPSE2_split_reference), not a VCF/BCF file.");
+
+		input_fmt = InputFormat::GLIMPSE;
+		return;
+	}
+
 	if (!options.count("bam-file") && !options.count("bam-list") && !options.count("input-gl"))
 			vrb.error("You must specify input files using one of the following options: --bam, --bam-list or --input-gl");
 

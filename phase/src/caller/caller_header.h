@@ -106,10 +106,20 @@ public:
 	//boost overwrites H/V, so a retry restarts the read from a clean archive. When the
 	//failure is non-retryable (e.g. a GLIMPSE/boost version mismatch), non_retryable is
 	//set to true so the caller can stop immediately instead of burning its retries.
-	bool read_binary_reference_panel(const std::string& reference_filename, std::string& err_msg, bool& non_retryable);
+	//When skip_cache is true (used only by build_hvar_cache(), which is rebuilding the
+	//cache and must not consume a stale one), any existing --hvar-cache-file is
+	//ignored and HvarRef is always loaded row-major from the .bin, as if no cache
+	//existed.
+	bool read_binary_reference_panel(const std::string& reference_filename, std::string& err_msg, bool& non_retryable, bool skip_cache = false);
 	void setup_mpileup();
 	void read_BAMs();
-	
+
+	//HVAR CACHE (see containers/hvar_cache.h): builds a phase-only, haplotype-major
+	//cache of an existing binary reference panel's common-variant matrix, used to
+	//reduce memory usage of later GLIMPSE2_phase runs against that same panel. Never
+	//modifies the source .bin; invoked only when --build-hvar-cache is given, in which
+	//case caller::phase() calls this instead of the normal imputation pipeline.
+	void build_hvar_cache();
 
 	void phase(std::vector < std::string > &);
 	void write_files_and_finalise();
