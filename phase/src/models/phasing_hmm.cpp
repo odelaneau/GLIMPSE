@@ -279,9 +279,10 @@ void phasing_hmm::rephaseHaplotypes(std::vector < bool > & H0, std::vector < boo
 			p01 = std::clamp(p01/sum, 0.0f,1.0f);
 			p10 = std::clamp(p10/sum, 0.0f,1.0f);
 			sum = p01+p10;
+			//rf==true selects the p01 configuration, i.e. H0 carries allele 0 and H1 allele 1
 			const bool rf = (rng.getFloat()*sum) < p01;
-			H0[VAR_ABS[curr_idx_locus]] = rf;
 			H0[VAR_ABS[curr_idx_locus]] = !rf;
+			H1[VAR_ABS[curr_idx_locus]] = rf;
 			curr_missing_locus++;
 		}
 		curr_segment_locus ++;
