@@ -169,7 +169,8 @@ void chunker::split_sequential(output_file & fd, long int & cidx, std::string & 
 
 void chunker::add_buffer(const long int start_idx, const long int stop_idx, long int& left_idx, long int& right_idx)
 {
-	long int left_mb_size = -1, left_cm_size = -1, left_count = -1;
+	long int left_mb_size = -1, left_count = -1;
+	float left_cm_size = -1;
 	if (start_idx > buffer_count) {
 		left_idx = start_idx - buffer_count;
 		do {
@@ -180,7 +181,8 @@ void chunker::add_buffer(const long int start_idx, const long int stop_idx, long
 		} while (((left_idx > 0) && ((left_cm_size < buffer_cm) || (left_mb_size < buffer_mb) || left_count < buffer_count)));
 	} else { left_idx = 0; }
 
-	long int right_mb_size = -1, right_cm_size = -1, right_count = -1;
+	long int right_mb_size = -1, right_count = -1;
+	float right_cm_size = -1;
 	if (stop_idx < (positions_all_mb.size() - buffer_count)) {
 		right_idx = stop_idx + buffer_count - 1;
 		do {
@@ -215,7 +217,7 @@ void chunker::chunk() {
 		readerGM.readGeneticMapFile(options["map"].as < std::string > ());
 		setGeneticMap(readerGM, map_positions_all, positions_all_mb, positions_all_cm);
 	} else setGeneticMap(map_positions_all, positions_all_mb, positions_all_cm);
-	vrb.bullet("Region spans " + stb.str(positions_all_mb.back() - positions_all_mb[0] + 1) + " bp and " + stb.str(positions_all_cm.back() - positions_all_cm[0] + 1, 2) + " cM");
+	vrb.bullet("Region spans " + stb.str(positions_all_mb.back() - positions_all_mb[0] + 1) + " bp and " + stb.str(positions_all_cm.back() - positions_all_cm[0], 2) + " cM");
 	if (positions_all_mb.size() == 0) vrb.error("No markers in region: " + options["region"].as < std::string > () + ". Check chromosome name and start/end positions.");
 
 	cnk_info.chr = chrID;

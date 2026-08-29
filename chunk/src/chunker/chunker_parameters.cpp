@@ -99,15 +99,15 @@ void chunker::check_options() {
 	if (options["threads"].as < long int > () < 1)
 		vrb.error("Number of threads is a strictly positive number.");
 
-	if (options["window-cm"].as < float > () <= 0)
-		vrb.error("Window size in cM must be positive");
+	if (options["window-cm"].as < float > () < 0)
+		vrb.error("Window size in cM must not be negative");
 	if (options["window-mb"].as < float > () <= 0)
 		vrb.error("Window size in Mb must be positive");
 	if (options["window-count"].as < long int > () <= 0)
 		vrb.error("Window size in number of markers must be positive");
 
-	if (options["buffer-cm"].as < float > () <= 0)
-		vrb.error("Buffer size in cM must be positive");
+	if (options["buffer-cm"].as < float > () < 0)
+		vrb.error("Buffer size in cM must not be negative");
 	if (options["buffer-mb"].as < float > () <= 0)
 		vrb.error("Buffer size in Mb must be positive");
 	if (options["buffer-count"].as < long int > () <= 0)
