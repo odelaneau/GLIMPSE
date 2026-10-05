@@ -338,7 +338,18 @@ void ligater::ligate() {
             if ( !bcf_sr_add_reader (sr, filenames[ifname].c_str())) vrb.error("Failed to open/index [" + filenames[ifname] + "]: " + std::string(bcf_sr_strerror(sr->errnum)) + ". The file may be missing, malformed, or (if cloud-streamed) the read may have failed.");
             new_file = 1;
             ifname++;
-            if ( start_pos[ifname-1]==-1 ) break;   // new chromosome, start with only one file open
+            if ( start_pos[ifname-1]==-1 )   // new chromosome, start with only one file open
+            {
+                // Phase is not linked across chromosomes: start each one unswapped so a
+                // swap decided on one chromosome does not flip every het on the next.
+                nswap = {0,0};
+                swap_phase = {std::vector<bool>(nsamples, false), std::vector<bool>(nsamples, false)};
+                // Handle its first chunk as the first file, so its Cnk log line starts afresh
+                // and no overlap from the previous chromosome is still counted as in progress.
+                prev_readers_size = 0;
+                n_sites_buff = 0;
+                break;
+            }
             if ( ifname < nfiles && start_pos[ifname]==-1 ) break; // next file starts on a different chromosome
         }
 
