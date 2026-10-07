@@ -26,6 +26,8 @@
 #ifndef _BASIC_ALGOS_H
 #define _BASIC_ALGOS_H
 
+#include <algorithm>
+#include <cstddef>
 #include <vector>
 
 class basic_algos {
@@ -44,6 +46,25 @@ public:
 		return maxIndex;
 	}
 };
+
+/**
+ * Resizes a scratch buffer whose elements the caller always writes before reading them.
+ *
+ * Unlike std::vector::resize, growing past the capacity releases the old storage before allocating
+ * the new and copies nothing, so the two allocations never coexist. The HMM buffers this is used for
+ * reach several GB, and that transient copy would otherwise set the peak memory of the whole run.
+ * Capacity still grows geometrically, as std::vector's does, so sizes that creep up between
+ * iterations rarely reallocate. Contents after the call are unspecified.
+ */
+template <typename T, typename Allocator>
+void resize_discarding_contents(std::vector<T, Allocator> & buffer, const std::size_t size) {
+	if (size > buffer.capacity()) {
+		const std::size_t capacity = std::max(2 * buffer.capacity(), size);
+		std::vector<T, Allocator>().swap(buffer);
+		buffer.reserve(capacity);
+	}
+	buffer.resize(size);
+}
 
 #endif
 

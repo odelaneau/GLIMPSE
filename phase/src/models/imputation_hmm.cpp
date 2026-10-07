@@ -54,7 +54,7 @@ void imputation_hmm::resize()
 {
 	modK = ((C->n_states / 8) + (C->n_states % 8 ? 1 : 0))*8;
 	AlphaSum.resize(C->polymorphic_sites.size(), 0.0f);
-	Alpha.resize(C->polymorphic_sites.size() * modK, 0.0f);
+	resize_discarding_contents(Alpha, C->polymorphic_sites.size() * modK);
 	Beta.resize(modK);
 }
 

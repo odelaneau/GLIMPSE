@@ -121,13 +121,13 @@ void phasing_hmm::reallocate(const std::vector < bool > & H0, const std::vector 
 	probSumK.resize(C->n_states);
 
 	//phasingProb = std::vector < aligned_vector32 < float >  > (n_segs, aligned_vector32 < float >  (C->n_states * HAP_NUMBER, 0.0f));
-	phasingProb.resize(n_segs*C->n_states * HAP_NUMBER);
+	resize_discarding_contents(phasingProb, (size_t)n_segs*C->n_states * HAP_NUMBER);
 	//phasingProbSum = std::vector < aligned_vector32 < float >  > (n_segs, aligned_vector32 < float >  (HAP_NUMBER, 0.0f));
 	phasingProbSum.resize(n_segs*HAP_NUMBER);
 	phasingProbSumSum.resize(n_segs);
 
 	//imputeProb = std::vector < aligned_vector32 < float >  > (n_miss, aligned_vector32 < float >  (C->n_states * HAP_NUMBER, 0.0f));
-	imputeProb.resize(n_miss*C->n_states * HAP_NUMBER);
+	resize_discarding_contents(imputeProb, (size_t)n_miss*C->n_states * HAP_NUMBER);
 	//imputeProbSum = std::vector < aligned_vector32 < float >  > (n_miss, aligned_vector32 < float >  (HAP_NUMBER, 0.0f));
 	imputeProbSum.resize(n_miss * HAP_NUMBER);
 	imputeProbSumSum.resize(n_miss);
