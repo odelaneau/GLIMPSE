@@ -41,15 +41,26 @@ private:
 	conditioning_set * C;
 	unsigned int modK;
 
+	// The backward pass needs every forward row, polymorphic sites x states floats in total. With
+	// checkpoint_block > 0 only the first row of each block of that many sites is kept, and backward
+	// recomputes each block when it reaches it: roughly one extra forward pass for far less memory.
+	// 0 (or any value at least the number of sites) keeps every row in one block, so nothing is recomputed.
+	const unsigned int checkpoint_block;
+	unsigned int alpha_block;			// Sites per block for the current sample; set by resize()
+
 	//DYNAMIC ARRAYS
 	aligned_vector32 < float > Emissions;
-	aligned_vector32 < float > Alpha;
+	aligned_vector32 < float > AlphaCheckpoints;	// Forward row at the start of each block
+	aligned_vector32 < float > AlphaBlock;			// Forward rows of the block currently being used
 	aligned_vector32 < float > AlphaSum;
 	aligned_vector32 < float > Beta;
 
+	void forwardSite(const int, const std::vector < bool > &, const float *, float *);
+	void recomputeBlock(const int, const std::vector < bool > &);
+
 public:
 	//CONSTRUCTOR/DESTRUCTOR
-	imputation_hmm(conditioning_set *);
+	imputation_hmm(conditioning_set *, const unsigned int);
 	~imputation_hmm();
 
 	void resize();
