@@ -104,14 +104,14 @@ void chunker::check_options() {
 	if (options["window-mb"].as < float > () <= 0)
 		vrb.error("Window size in Mb must be positive");
 	if (options["window-count"].as < long int > () <= 0)
-		vrb.error("Window size in number of markers must be positive");
+		vrb.error("Window size in number of common variants must be positive");
 
 	if (options["buffer-cm"].as < float > () < 0)
 		vrb.error("Buffer size in cM must not be negative");
 	if (options["buffer-mb"].as < float > () <= 0)
 		vrb.error("Buffer size in Mb must be positive");
 	if (options["buffer-count"].as < long int > () <= 0)
-		vrb.error("Buffer size in number of markers must be positive");
+		vrb.error("Buffer size in number of common variants must be positive");
 
 	float s_maf = options["sparse-maf"].as < float > ();
 	if (s_maf >= 0.5 || s_maf < 0) vrb.error("The sparse MAF parameter should not be set too high or low. Ideally within the range [0.01-0.001] 0.001 MAF is the recommended setting]");
@@ -144,8 +144,8 @@ void chunker::verbose_options() {
 	vrb.bullet("Sparse MAF           : [" + stb.str(options["sparse-maf"].as < float > ()) + "]");
 	vrb.bullet("Algorithm            : [" + opt_algo + "]");
 	vrb.bullet("Recombination rates  : [" + opt_map + "]");
-	vrb.bullet("Min. Window size     : [" + stb.str(options["window-cm"].as < float > ()) + "cM | " + stb.str(options["window-mb"].as < float > ()) + "Mb | " + stb.str(options["window-count"].as < long int > ()) + " variants]");
-	vrb.bullet("Min. Buffer size     : [" + stb.str(options["buffer-cm"].as < float > ()) + "cM | " + stb.str(options["buffer-mb"].as < float > ()) + "Mb | " + stb.str(options["buffer-count"].as < long int > ()) + " variants]");
+	vrb.bullet("Min. Window size     : [" + stb.str(options["window-cm"].as < float > ()) + "cM | " + stb.str(options["window-mb"].as < float > ()) + "Mb | " + stb.str(options["window-count"].as < long int > ()) + " common variants]");
+	vrb.bullet("Min. Buffer size     : [" + stb.str(options["buffer-cm"].as < float > ()) + "cM | " + stb.str(options["buffer-mb"].as < float > ()) + "Mb | " + stb.str(options["buffer-count"].as < long int > ()) + " common variants]");
 
 	vrb.title("Other parameters");
 	vrb.bullet("Seed                 : [" + stb.str(options["seed"].as < long int > ()) + "]");
