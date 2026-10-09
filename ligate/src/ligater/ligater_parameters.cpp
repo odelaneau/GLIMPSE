@@ -40,6 +40,7 @@ void ligater::declare_options() {
 	bpo::options_description opt_output ("Output files");
 	opt_output.add_options()
 			("output,O", bpo::value< std::string >(), "Output ligated (phased) file in VCF/BCF format")
+			("compression-level", bpo::value< int >()->default_value(6), "Compression level for VCF/BCF output: 0 = none (still BGZF-framed and indexable), 1 = fastest, 9 = smallest. Ignored for plain .vcf output.")
 			("log", bpo::value< std::string >(), "Log file");
 
 	descriptions.add(opt_base).add(opt_input).add(opt_output);
@@ -77,6 +78,18 @@ void ligater::check_options() {
 
 	if (options["threads"].as < int > () < 1)
 		vrb.error("Number of threads is a strictly positive number.");
+
+	const int compression_level = options["compression-level"].as < int > ();
+	if (compression_level < 0 || compression_level > 9)
+		vrb.error("Compression level must be between 0 and 9.");
+
+	const std::string fname = options["output"].as < std::string > ();
+	out_file_format = "w";
+	out_file_type = OFILE_VCFU;
+	if (fname.size() > 6 && fname.substr(fname.size()-6) == "vcf.gz") { out_file_format = "wz"; out_file_type = OFILE_VCFC; }
+	if (fname.size() > 3 && fname.substr(fname.size()-3) == "bcf") { out_file_format = "wb"; out_file_type = OFILE_BCFC; }
+	//htslib takes the compression level as a digit in the mode string
+	if (out_file_type != OFILE_VCFU) out_file_format += std::to_string(compression_level);
 }
 
 void ligater::verbose_files() {
@@ -85,6 +98,7 @@ void ligater::verbose_files() {
 	vrb.title("Files:");
 	vrb.bullet("Input LIST     : [" + options["input"].as < std::string > () + "]");
 	vrb.bullet("Output VCF     : [" + options["output"].as < std::string > () + "]");
+	if (out_file_type != OFILE_VCFU) vrb.bullet("Compression    : [level " + stb.str(options["compression-level"].as < int > ()) + "]");
 	if (options.count("log")) vrb.bullet("Output LOG    : [" + options["log"].as < std::string > () + "]");
 }
 
