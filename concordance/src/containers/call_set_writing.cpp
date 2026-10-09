@@ -36,8 +36,8 @@ void call_set::writeData(std::string fout) {
 
 	fd1<<"#Genotype concordance by sample (SNPs)\n";
 	fd1 << "#GCsS" << " ";
-	if (ploidy > 1) fd1 << "id sample_name #val_gt_RR #val_gt_RA #val_gt_AA #filtered_gp RR_hom_matches RA_het_matches AA_hom_matches RR_hom_mismatches RA_het_mismatches AA_hom_mismatches RR_hom_mismatches_rate_percent RA_het_mismatches_rate_percent AA_hom_mimatches non_reference_discordanc_rate_percent best_gt_rsquared imputed_ds_rsquared\n";
-	else fd1 << "id sample_name #val_gt_R #val_gt_A #filtered_gp R_matches A_matches R_mismatches A_mismatches R_mismatches_rate_percent A_mismatches_rate_percent non_reference_discordanc_rate_percent best_gt_rsquared imputed_ds_rsquared\n";
+	if (ploidy > 1) fd1 << "id sample_name #val_gt_RR #val_gt_RA #val_gt_AA #filtered_gp RR_hom_matches RA_het_matches AA_hom_matches RR_hom_mismatches RA_het_mismatches AA_hom_mismatches RR_hom_mismatches_rate_percent RA_het_mismatches_rate_percent AA_hom_mismatches_rate_percent non_reference_discordance_rate_percent best_gt_rsquared imputed_ds_rsquared\n";
+	else fd1 << "id sample_name #val_gt_R #val_gt_A #filtered_gp R_matches A_matches R_mismatches A_mismatches R_mismatches_rate_percent A_mismatches_rate_percent non_reference_discordance_rate_percent best_gt_rsquared imputed_ds_rsquared\n";
 
 	for (int i = 0 ; i < N ; i++)
 	{
@@ -93,8 +93,8 @@ void call_set::writeData(std::string fout) {
 
 	fd1<<"#Genotype concordance by sample (indels)\n";
 	fd1 << "#GCsI" << " ";
-	if (ploidy > 1) fd1 << "id sample_name #val_gt_RR #val_gt_RA #val_gt_AA #filtered_gp RR_hom_matches RA_het_matches AA_hom_matches RR_hom_mismatches RA_het_mismatches AA_hom_mismatches RR_hom_mismatches_rate_percent RA_het_mismatches_rate_percent AA_hom_mimatches non_reference_discordanc_rate_percent best_gt_rsquared imputed_ds_rsquared\n";
-	else fd1 << "id sample_name #val_gt_R #val_gt_A #filtered_gp R_matches A_matches R_mismatches A_mismatches R_mismatches_rate_percent A_mismatches_rate_percent non_reference_discordanc_rate_percent best_gt_rsquared imputed_ds_rsquared\n";
+	if (ploidy > 1) fd1 << "id sample_name #val_gt_RR #val_gt_RA #val_gt_AA #filtered_gp RR_hom_matches RA_het_matches AA_hom_matches RR_hom_mismatches RA_het_mismatches AA_hom_mismatches RR_hom_mismatches_rate_percent RA_het_mismatches_rate_percent AA_hom_mismatches_rate_percent non_reference_discordance_rate_percent best_gt_rsquared imputed_ds_rsquared\n";
+	else fd1 << "id sample_name #val_gt_R #val_gt_A #filtered_gp R_matches A_matches R_mismatches A_mismatches R_mismatches_rate_percent A_mismatches_rate_percent non_reference_discordance_rate_percent best_gt_rsquared imputed_ds_rsquared\n";
 
 	for (int i = 0 ; i < N ; i++)
 	{
@@ -151,8 +151,8 @@ void call_set::writeData(std::string fout) {
 
 	fd1<<"#Genotype concordance by sample (Variants: SNPs + indels)\n";
 	fd1 << "#GCsV" << " ";
-	if (ploidy > 1) fd1 << "id sample_name #val_gt_RR #val_gt_RA #val_gt_AA #filtered_gp RR_hom_matches RA_het_matches AA_hom_matches RR_hom_mismatches RA_het_mismatches AA_hom_mismatches RR_hom_mismatches_rate_percent RA_het_mismatches_rate_percent AA_hom_mimatches non_reference_discordanc_rate_percent best_gt_rsquared imputed_ds_rsquared\n";
-	else fd1 << "id sample_name #val_gt_R #val_gt_A #filtered_gp R_matches A_matches R_mismatches A_mismatches R_mismatches_rate_percent A_mismatches_rate_percent non_reference_discordanc_rate_percent best_gt_rsquared imputed_ds_rsquared\n";
+	if (ploidy > 1) fd1 << "id sample_name #val_gt_RR #val_gt_RA #val_gt_AA #filtered_gp RR_hom_matches RA_het_matches AA_hom_matches RR_hom_mismatches RA_het_mismatches AA_hom_mismatches RR_hom_mismatches_rate_percent RA_het_mismatches_rate_percent AA_hom_mismatches_rate_percent non_reference_discordance_rate_percent best_gt_rsquared imputed_ds_rsquared\n";
+	else fd1 << "id sample_name #val_gt_R #val_gt_A #filtered_gp R_matches A_matches R_mismatches A_mismatches R_mismatches_rate_percent A_mismatches_rate_percent non_reference_discordance_rate_percent best_gt_rsquared imputed_ds_rsquared\n";
 
 	for (int i = 0 ; i < N ; i++)
 	{
@@ -216,8 +216,8 @@ void call_set::writeData(std::string fout) {
 		vrb.bullet("Concordance by frequency bin: [" + fout + ".error.grp.txt.gz]");
 		fd1<<"#Genotype concordance by allele frequency bin (SNPs)\n";
 		fd1 << "#GCsSAF" << " ";
-		if (ploidy > 1) fd1 << "id n_genotypes mean_AF #val_gt_RR #val_gt_RA #val_gt_AA filtered_gp RR_hom_matches RA_het_matches AA_hom_matches RR_hom_mismatches RA_het_mismatches AA_hom_mismatches RR_hom_mismatches_rate_percent RA_het_mismatches_rate_percent AA_hom_mimatches_rate_percent best_gt_rsquared imputed_ds_rsquared\n";
-		else fd1 << "id n_genotypes mean_AF #val_gt_R #val_gt_A filtered_gp R_matches A_matches R_mismatches A_mismatches R_mismatches_rate_percent A_mismatches_rate_percent best_gt_rsquared imputed_ds_rsquared\n";
+		if (ploidy > 1) fd1 << "id n_genotypes mean_AF #val_gt_RR #val_gt_RA #val_gt_AA #filtered_gp RR_hom_matches RA_het_matches AA_hom_matches RR_hom_mismatches RA_het_mismatches AA_hom_mismatches RR_hom_mismatches_rate_percent RA_het_mismatches_rate_percent AA_hom_mismatches_rate_percent best_gt_rsquared imputed_ds_rsquared\n";
+		else fd1 << "id n_genotypes mean_AF #val_gt_R #val_gt_A #filtered_gp R_matches A_matches R_mismatches A_mismatches R_mismatches_rate_percent A_mismatches_rate_percent best_gt_rsquared imputed_ds_rsquared\n";
 
 
 		for (int b = 0 ; b < L ; b++)
@@ -253,8 +253,8 @@ void call_set::writeData(std::string fout) {
 
 		fd1<<"#Genotype concordance by allele frequency bin (indels)\n";
 		fd1 << "#GCsIAF" << " ";
-		if (ploidy > 1) fd1 << "id n_genotypes mean_AF #val_gt_RR #val_gt_RA #val_gt_AA filtered_gp RR_hom_matches RA_het_matches AA_hom_matches RR_hom_mismatches RA_het_mismatches AA_hom_mismatches RR_hom_mismatches_rate_percent RA_het_mismatches_rate_percent AA_hom_mimatches_rate_percent best_gt_rsquared imputed_ds_rsquared\n";
-		else fd1 << "id n_genotypes mean_AF #val_gt_R #val_gt_A filtered_gp R_matches A_matches R_mismatches A_mismatches R_mismatches_rate_percent A_mismatches_rate_percent best_gt_rsquared imputed_ds_rsquared\n";
+		if (ploidy > 1) fd1 << "id n_genotypes mean_AF #val_gt_RR #val_gt_RA #val_gt_AA #filtered_gp RR_hom_matches RA_het_matches AA_hom_matches RR_hom_mismatches RA_het_mismatches AA_hom_mismatches RR_hom_mismatches_rate_percent RA_het_mismatches_rate_percent AA_hom_mismatches_rate_percent best_gt_rsquared imputed_ds_rsquared\n";
+		else fd1 << "id n_genotypes mean_AF #val_gt_R #val_gt_A #filtered_gp R_matches A_matches R_mismatches A_mismatches R_mismatches_rate_percent A_mismatches_rate_percent best_gt_rsquared imputed_ds_rsquared\n";
 
 		for (int b = 0 ; b < L ; b++)
 		{
@@ -289,8 +289,8 @@ void call_set::writeData(std::string fout) {
 
 		fd1<<"#Genotype concordance by allele frequency bin (Variants: SNPs + indels)\n";
 		fd1 << "#GCsVAF" << " ";
-		if (ploidy > 1) fd1 << "id n_genotypes mean_AF #val_gt_RR #val_gt_RA #val_gt_AA filtered_gp RR_hom_matches RA_het_matches AA_hom_matches RR_hom_mismatches RA_het_mismatches AA_hom_mismatches RR_hom_mismatches_rate_percent RA_het_mismatches_rate_percent AA_hom_mimatches_rate_percent best_gt_rsquared imputed_ds_rsquared\n";
-		else fd1 << "id n_genotypes mean_AF #val_gt_R #val_gt_A filtered_gp R_matches A_matches R_mismatches A_mismatches R_mismatches_rate_percent A_mismatches_rate_percent best_gt_rsquared imputed_ds_rsquared\n";
+		if (ploidy > 1) fd1 << "id n_genotypes mean_AF #val_gt_RR #val_gt_RA #val_gt_AA #filtered_gp RR_hom_matches RA_het_matches AA_hom_matches RR_hom_mismatches RA_het_mismatches AA_hom_mismatches RR_hom_mismatches_rate_percent RA_het_mismatches_rate_percent AA_hom_mismatches_rate_percent best_gt_rsquared imputed_ds_rsquared\n";
+		else fd1 << "id n_genotypes mean_AF #val_gt_R #val_gt_A #filtered_gp R_matches A_matches R_mismatches A_mismatches R_mismatches_rate_percent A_mismatches_rate_percent best_gt_rsquared imputed_ds_rsquared\n";
 
 		for (int b = 0 ; b < L ; b++)
 		{
@@ -346,9 +346,9 @@ void call_set::writeData(std::string fout) {
 	fd1.open(fout + ".error.cal.txt.gz");
 	float step_size = 1.0 / N_BIN_CAL;
 
-	fd1<<"#Genotype caoncordance by calibration bin (SNPs)\n";
+	fd1<<"#Genotype concordance by calibration bin (SNPs)\n";
 	fd1 << "#GCsSC" << " ";
-	if (ploidy > 1) fd1 << "id start_bin end_bin avg_bin RR_hom_matches RA_het_matches AA_hom_matches RR_hom_mismatches RA_het_mismatches AA_hom_mismatches RR_hom_mismatches_rate_percent RA_het_mismatches_rate_percent AA_hom_mimatches_rate_percent all_mismatches_rate_percent\n";
+	if (ploidy > 1) fd1 << "id start_bin end_bin avg_bin RR_hom_matches RA_het_matches AA_hom_matches RR_hom_mismatches RA_het_mismatches AA_hom_mismatches RR_hom_mismatches_rate_percent RA_het_mismatches_rate_percent AA_hom_mismatches_rate_percent all_mismatches_rate_percent\n";
 	else fd1 << "id start_bin end_bin avg_bin R_matches A_matches R_mismatches A_mismatches R_mismatches_rate_percent A_mismatches_rate_percent all_mismatches_rate_percent\n";
 
 	for (int b = 0 ; b < N_BIN_CAL ; b++) {
@@ -381,9 +381,9 @@ void call_set::writeData(std::string fout) {
 		fd1 << std::endl;
 	}
 
-	fd1<<"#Genotype caoncordance by calibration bin (indels)\n";
+	fd1<<"#Genotype concordance by calibration bin (indels)\n";
 	fd1 << "#GCsIC" << " ";
-	if (ploidy > 1) fd1 << "id start_bin end_bin avg_bin RR_hom_matches RA_het_matches AA_hom_matches RR_hom_mismatches RA_het_mismatches AA_hom_mismatches RR_hom_mismatches_rate_percent RA_het_mismatches_rate_percent AA_hom_mimatches_rate_percent all_mismatches_rate_percent\n";
+	if (ploidy > 1) fd1 << "id start_bin end_bin avg_bin RR_hom_matches RA_het_matches AA_hom_matches RR_hom_mismatches RA_het_mismatches AA_hom_mismatches RR_hom_mismatches_rate_percent RA_het_mismatches_rate_percent AA_hom_mismatches_rate_percent all_mismatches_rate_percent\n";
 	else fd1 << "id start_bin end_bin avg_bin R_matches A_matches R_mismatches A_mismatches R_mismatches_rate_percent A_mismatches_rate_percent all_mismatches_rate_percent\n";
 
 	for (int b = 0 ; b < N_BIN_CAL ; b++) {
@@ -418,7 +418,7 @@ void call_set::writeData(std::string fout) {
 
 	fd1<<"#Genotype concordance by calibration bin (Variants: SNPs + indels)\n";
 	fd1 << "#GCsVC" << " ";
-	if (ploidy > 1) fd1 << "id start_bin end_bin avg_bin RR_hom_matches RA_het_matches AA_hom_matches RR_hom_mismatches RA_het_mismatches AA_hom_mismatches RR_hom_mismatches_rate_percent RA_het_mismatches_rate_percent AA_hom_mimatches_rate_percent all_mismatches_rate_percent\n";
+	if (ploidy > 1) fd1 << "id start_bin end_bin avg_bin RR_hom_matches RA_het_matches AA_hom_matches RR_hom_mismatches RA_het_mismatches AA_hom_mismatches RR_hom_mismatches_rate_percent RA_het_mismatches_rate_percent AA_hom_mismatches_rate_percent all_mismatches_rate_percent\n";
 	else fd1 << "id start_bin end_bin avg_bin R_matches A_matches R_mismatches A_mismatches R_mismatches_rate_percent A_mismatches_rate_percent all_mismatches_rate_percent\n";
 
 	for (int b = 0 ; b < N_BIN_CAL ; b++) {
