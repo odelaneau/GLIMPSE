@@ -59,6 +59,9 @@ sudo dnf install gcc-c++ make pkg-config \
 
 Not all Fedora-based distributions (e.g., Amazon Linux) make `htslib-devel` and `libdeflate-devel` available in their package repositories. If these packages are not found, you will need to build them from source (see below).
 
+{: .note }
+> On aarch64/ARM64, also install `clang` (`sudo apt-get install clang` or `sudo dnf install clang`). The build uses it by default there because it is much faster than g++; see [Compile GLIMPSE2]({% link docs/installation/compile_glimpse2.md %}).
+
 After installing packages, build with `make system` from the GLIMPSE2 root directory. The build system will automatically locate libraries using `pkg-config` (for HTSlib) and by searching standard installation paths.
 
 ### Linux (from source)

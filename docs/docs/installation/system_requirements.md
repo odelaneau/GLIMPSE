@@ -44,6 +44,9 @@ g++ --version
 ```
 </div>
 
+{: .note }
+> On aarch64/ARM64, install Clang as well (`sudo apt install clang` on Debian/Ubuntu). The build uses it by default there because it is much faster than GCC; see [Compile GLIMPSE2]({% link docs/installation/compile_glimpse2.md %}).
+
 ### macOS (Apple Silicon)
 
 macOS builds use the Apple Clang compiler included with Xcode Command Line Tools. To install:

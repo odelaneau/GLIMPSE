@@ -69,12 +69,17 @@ make system
 
 The `system` target auto-detects your OS, architecture, and library locations. It searches standard installation paths across all major Linux distributions (Debian/Ubuntu, Fedora/RHEL, Arch, openSUSE, etc.) and macOS Homebrew. If `pkg-config` is installed, it is used for more precise HTSlib detection.
 
-| Platform | Compiler | Detection method |
+| Platform | Default compiler | Detection method |
 |----------|----------|-----------------|
-| Linux (all distros) | g++ | Searches `/usr/lib`, `/usr/lib64`, `/usr/local/lib`, Debian multiarch paths |
+| Linux x86_64 | g++ | Searches `/usr/lib`, `/usr/lib64`, `/usr/local/lib`, Debian multiarch paths |
+| Linux aarch64/ARM64 | clang++ (see below) | Searches `/usr/lib`, `/usr/lib64`, `/usr/local/lib`, Debian multiarch paths |
 | macOS ARM64 | clang++ | Searches `/opt/homebrew/lib`, plus pkg-config |
 
 On x86_64, the phase module automatically enables AVX2/FMA SIMD instructions. On ARM64 platforms, SIMD is provided via NEON instructions through the SIMDe compatibility library.
+
+On ARM64 Linux the default compiler is `clang++`, because clang generates much faster NEON code than g++ for the SIMDe-translated phase kernels. On AWS Graviton4, GLIMPSE2_phase built with clang 18 ran its HMM iterations about 2.5x faster than with GCC 13 (about 2.2x end to end), and clang 23 was a further ~18% faster, so use the newest clang available. If `clang++` is not found, the build falls back to `g++` and prints a warning. Versioned packages such as `clang-18` install only `clang++-18`, so pass that compiler explicitly.
+
+To use a specific compiler on any platform, set `CXX`, e.g. `make system CXX=clang++-18` or `make system CXX=g++`.
 
 ### Custom build (other targets)
 

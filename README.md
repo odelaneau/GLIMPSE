@@ -65,6 +65,8 @@ git clone --recursive https://github.com/odelaneau/GLIMPSE.git
 cd GLIMPSE
 make system
 ```
+
+On aarch64, also install `clang`: the build uses it by default there because it makes GLIMPSE2_phase much faster.
 </details>
 
 For detailed instructions including building dependencies from source, see the [step-by-step guide on the website](https://odelaneau.github.io/GLIMPSE/docs/installation).
