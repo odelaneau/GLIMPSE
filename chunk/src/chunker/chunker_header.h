@@ -61,7 +61,7 @@ struct chunk_info
 		assert(_buf_start < _buf_stop);
 		assert(_cnk_start < _cnk_stop);
 		assert(_buf_start <= _cnk_start);
-		assert(_buf_stop >= _buf_stop);
+		assert(_buf_stop >= _cnk_stop);
 
 		buf_start.push_back(_buf_start);
 		buf_stop.push_back(_buf_stop);
