@@ -231,33 +231,57 @@ void ligater::ligate() {
 	int n_threads = options["threads"].as < int > ();
 	if (n_threads > 1) if (bcf_sr_set_threads(sr, n_threads) < 0) vrb.error("Failed to create threads");
 
-	bcf_hdr_t * out_hdr = NULL;
+	struct input_chunk {
+		std::string filename;
+		int chrid;	//contig id in out_hdr
+		int pos;	//position of the first record
+	};
+	std::vector<input_chunk> chunks(nfiles);
+	bcf_hdr_t * out_hdr = NULL;	//headers merged in input-list order
 	bcf1_t *line_t = bcf_init();
-	std::vector<int> start_pos(nfiles);
+	std::string fploidy0;	//FPLOIDY of the first file ("" if absent); all files must agree
 
-	for (int f = 0, prev_chrid = -1 ; f < nfiles ; f ++)
+	for (int f = 0 ; f < nfiles ; f ++)
 	{
 		htsFile *fp = hts_open(filenames[f].c_str(), "r"); if ( !fp ) vrb.error("Failed to open [" + filenames[f] + "] (" + std::string(strerror(errno)) + "). The file may be missing, unreadable, or (if cloud-streamed) the read may have failed.");
 		bcf_hdr_t *hdr = bcf_hdr_read(fp); if ( !hdr ) vrb.error("Failed to parse header of [" + filenames[f] +"]. The file may be malformed or truncated (e.g. an incomplete cloud-stream).");
-		out_hdr = bcf_hdr_merge(out_hdr,hdr);
-        if ( bcf_hdr_nsamples(hdr) != bcf_hdr_nsamples(out_hdr) ) vrb.error("Different number of samples in " + filenames[f] + ".");
-        for (int j=0; j<bcf_hdr_nsamples(hdr); j++)
-        	if ( std::string(out_hdr->samples[j]) != std::string(hdr->samples[j]) )  vrb.error("Different sample names in " + filenames[f] + ".");
-
-        int ret = bcf_read(fp, hdr, line_t);
-		if ( ret!=0 ) vrb.error("Empty file detected: " + filenames[f] +".");
-        else
-        {
-            int chrid = bcf_hdr_id2int(out_hdr,BCF_DT_CTG,bcf_seqname(hdr,line_t));
-            start_pos[f] = chrid==prev_chrid ? line_t->pos : -1;
-            prev_chrid = chrid;
-        }
-        bcf_hdr_destroy(hdr);
-        if ( hts_close(fp)!=0 ) vrb.error("Close failed: " + filenames[f] + ".");
+		out_hdr = bcf_hdr_merge(out_hdr,hdr);	//samples come from the first file only (merge does not add samples)
+		if ( bcf_hdr_nsamples(hdr) != bcf_hdr_nsamples(out_hdr) ) vrb.error("Different number of samples in " + filenames[f] + ".");
+		for (int j=0; j<bcf_hdr_nsamples(hdr); j++)
+			if ( std::string(out_hdr->samples[j]) != std::string(hdr->samples[j]) )  vrb.error("Different sample names in " + filenames[f] + ".");
+		//Chunks imputed with different ploidy (e.g. chrX PAR vs non-PAR) cannot be ligated together:
+		//phase cannot be carried across them and the output header can only hold one FPLOIDY.
+		//All files must agree: all with the same FPLOIDY, or all without it (older GLIMPSE versions).
+		bcf_hrec_t * hrec_fploidy = bcf_hdr_get_hrec(hdr, BCF_HL_GEN, "FPLOIDY", NULL, NULL);
+		const std::string fploidy = hrec_fploidy ? std::string(hrec_fploidy->value) : "";
+		if (f == 0) fploidy0 = fploidy;
+		else if (fploidy != fploidy0) vrb.error("Files [" + filenames[0] + "] (FPLOIDY=" + (fploidy0.empty() ? "missing" : fploidy0) + ") and [" + filenames[f] + "] (FPLOIDY=" + (fploidy.empty() ? "missing" : fploidy) + ") have different ploidy and cannot be ligated together. Ligate them separately (e.g. PAR and non-PAR regions of chrX).");
+		if ( bcf_read(fp, hdr, line_t)!=0 ) vrb.error("Empty file detected: " + filenames[f] +".");
+		chunks[f] = {filenames[f], bcf_hdr_id2int(out_hdr,BCF_DT_CTG,bcf_seqname(hdr,line_t)), (int)line_t->pos};
+		bcf_hdr_destroy(hdr);
+		if ( hts_close(fp)!=0 ) vrb.error("Close failed: " + filenames[f] + ".");
 	}
 	bcf_destroy(line_t);
 
-    for (int i=1; i<nfiles; i++) if ( start_pos[i-1]!=-1 && start_pos[i]!=-1 && start_pos[i]<start_pos[i-1] ) vrb.error("The files not in ascending order");
+	//Order chunks by first position within each contig. Contigs keep their order in out_hdr: the
+	//headers' contig list if they have one (e.g. phase --contigs-fai), else order of first appearance.
+	auto by_locus = [](const input_chunk & a, const input_chunk & b) { return std::tie(a.chrid, a.pos) < std::tie(b.chrid, b.pos); };
+	if (!std::is_sorted(chunks.begin(), chunks.end(), by_locus))
+	{
+		vrb.bullet("Input files are not sorted by contig and position: sorting them");
+		std::stable_sort(chunks.begin(), chunks.end(), by_locus);
+	}
+
+	std::vector<int> start_pos(nfiles);
+	for (int f = 0 ; f < nfiles ; f ++)
+	{
+		filenames[f] = chunks[f].filename;
+
+		const bool same_contig = f > 0 && chunks[f].chrid == chunks[f-1].chrid;
+		if (same_contig && chunks[f].pos == chunks[f-1].pos)
+			vrb.error("Files [" + chunks[f-1].filename + "] and [" + filenames[f] + "] both start at " + std::string(bcf_hdr_id2name(out_hdr, chunks[f].chrid)) + ":" + stb.str(chunks[f].pos + 1) + ". Duplicate or nested chunks cannot be ligated.");
+		start_pos[f] = same_contig ? chunks[f].pos : -1;
+	}
     int i = 0, nrm = 0;
     /*
     while ( i<out_hdr->nhrec )
@@ -343,6 +367,10 @@ void ligater::ligate() {
         int new_file = 0;
         while ( sr->nreaders < 2 && ifname < nfiles )
         {
+            //Overlapping chunks are opened mid-stream, so reaching a chunk that continues a contig with
+            //no reader open means it shares no records with the previous one
+            if ( sr->nreaders==0 && start_pos[ifname]!=-1 )
+                vrb.warning("Files [" + filenames[ifname-1] + "] and [" + filenames[ifname] + "] do not overlap: gap on " + prev_chr + " before position " + stb.str(start_pos[ifname] + 1) + ". Phase cannot be aligned across the gap; is a chunk missing from the input list?");
             if ( !bcf_sr_add_reader (sr, filenames[ifname].c_str())) vrb.error("Failed to open/index [" + filenames[ifname] + "]: " + std::string(bcf_sr_strerror(sr->errnum)) + ". The file may be missing, malformed, or (if cloud-streamed) the read may have failed.");
             new_file = 1;
             ifname++;

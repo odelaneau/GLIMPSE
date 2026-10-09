@@ -18,12 +18,13 @@ parent: Documentation
 ### Description
 Ligatation of multiple phased BCF/VCF files into a single whole chromosome file. GLIMPSE2 is run in chunks that are ligated into chromosome-wide files maintaining the phasing.
 
+The input files can be listed in any order. Chunks are sorted by position within each contig, and contigs follow the contig order of the input headers, or the order in which they first appear in the list if the headers do not list all contigs. Consecutive chunks of a contig must overlap so that their phase can be aligned; GLIMPSE2_ligate warns when they do not.
+
 ### Usage
 Simple run
 
 <div class="code-example" markdown="1">
 ```bash
-#ls -1v in order to keep the order within the chromosome
 ls -1v chr20/*.imputed.bcf > list_imputed_files_chr20.txt
 
 GLIMPSE2_ligate --input list_imputed_files_chr20.txt --output ligated_chr20.bcf --threads 2
