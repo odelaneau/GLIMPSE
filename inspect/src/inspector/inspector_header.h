@@ -40,6 +40,10 @@ public:
 	ref_haplotype_set H;
 	variant_map V;
 
+	//OUTPUT
+	std::string out_file_format;	//htslib mode string; empty when no haplotype output was requested
+	bool out_file_indexed = false;
+
 	//CONSTRUCTOR
 	inspector();
 	~inspector();
@@ -50,6 +54,7 @@ public:
 	void check_options();
 	void read_binary_panel();
 	void print_statistics();
+	void write_haplotypes();
 	void inspect(std::vector < std::string > &);
 };
 

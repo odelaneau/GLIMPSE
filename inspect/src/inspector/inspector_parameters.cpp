@@ -29,7 +29,8 @@
 void inspector::declare_options() {
 	bpo::options_description opt_base ("Basic options");
 	opt_base.add_options()
-			("help", "Produces help message");
+			("help", "Produces help message")
+			("threads,T", bpo::value<int>()->default_value(1), "Number of threads used to compress the haplotype output");
 
 	bpo::options_description opt_input ("Input parameters");
 	opt_input.add_options()
@@ -37,6 +38,9 @@ void inspector::declare_options() {
 
 	bpo::options_description opt_output ("Output files");
 	opt_output.add_options()
+			("output,O", bpo::value< std::string >(), "Write the reference haplotypes of the core (output) region to this VCF/BCF file, one haploid sample per haplotype")
+			("include-buffers", "Also write the variants in the buffer regions, flagged with INFO/BUFFER")
+			("compression-level", bpo::value< int >()->default_value(6), "Compression level for VCF/BCF output: 0 = none (still BGZF-framed and indexable), 1 = fastest, 9 = smallest. Ignored for plain .vcf output.")
 			("log", bpo::value< std::string >(), "Log file");
 
 	descriptions.add(opt_base).add(opt_input).add(opt_output);
@@ -65,4 +69,25 @@ void inspector::parse_command_line(std::vector < std::string > & args) {
 void inspector::check_options() {
 	if (!options.count("input"))
 		vrb.error("You must specify --input / -I");
+
+	if (options["threads"].as < int > () < 1)
+		vrb.error("Number of threads is a strictly positive number.");
+
+	const int compression_level = options["compression-level"].as < int > ();
+	if (compression_level < 0 || compression_level > 9)
+		vrb.error("Compression level must be between 0 and 9.");
+
+	if (!options.count("output")) {
+		if (options.count("include-buffers")) vrb.error("--include-buffers requires --output");
+		return;
+	}
+
+	const std::string fname = options["output"].as < std::string > ();
+	auto ends_with = [&fname](const std::string & suffix) { return fname.size() > suffix.size() && fname.compare(fname.size() - suffix.size(), suffix.size(), suffix) == 0; };
+	if (ends_with(".bcf")) { out_file_format = "wb"; out_file_indexed = true; }
+	else if (ends_with(".vcf.gz")) { out_file_format = "wz"; out_file_indexed = true; }
+	else if (ends_with(".vcf")) out_file_format = "w";
+	else vrb.error("Cannot determine the output format of [" + fname + "]: the file name must end in .bcf, .vcf.gz or .vcf");
+	//htslib takes the compression level as a digit in the mode string
+	if (out_file_indexed) out_file_format += std::to_string(compression_level);
 }

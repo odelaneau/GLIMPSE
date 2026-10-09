@@ -8,7 +8,7 @@ layout: default
 All notable changes to this project are documented in this file.
 
 ## Unreleased
-	* Added `GLIMPSE2_inspect` tool to print summary statistics (region, genetic-map span, haplotype count, variant-type and allele-frequency breakdowns) for a binary reference panel (`.bin`) produced by `GLIMPSE2_split_reference`.
+	* Added `GLIMPSE2_inspect` tool to print summary statistics (region, genetic-map span, haplotype count, variant-type and allele-frequency breakdowns) for a binary reference panel (`.bin`) produced by `GLIMPSE2_split_reference`, and optionally write its reference haplotypes as VCF/BCF (`--output`).
 
 ## v2.0.0
 	* Major release. Introduced speedups and accuracy improvements. Version used for the preprint. (https://doi.org/10.1101/2022.11.28.518213)
