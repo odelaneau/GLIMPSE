@@ -540,7 +540,7 @@ void call_set::readData(std::vector < std::string > & ftruth, std::vector < std:
 										GLs[gpos+1] = (gt == 1);
 										GLs[gpos+ploidy] = gt == ploidy;
 									}
-									DPs[i] = D > 0 ? dp_arr_t[i] : 0;
+									DPs[i] = D > dp_arr_t[i] ? 0 : dp_arr_t[i] 
 								}
 								else
 								{
@@ -558,7 +558,7 @@ void call_set::readData(std::vector < std::string > & ftruth, std::vector < std:
 										GLs[gpos+1] = unphred[std::min(pl_arr_t[index+1],255)];
 										GLs[gpos+ploidy] = unphred[std::min(pl_arr_t[index+ploidy],255)];
 									}
-									DPs[i] = D > 0 ? dp_arr_t[i] : 0;
+									DPs[i] = D > dp_arr_t[i] ? 0 : dp_arr_t[i] 
 								}
 								if (flip) { float_swap = GLs[gpos+ploidy]; GLs[gpos+ploidy] = GLs[gpos+0]; GLs[gpos+0] = float_swap; }
 							}
