@@ -618,15 +618,22 @@ void haplotype_set::init_common(const int k, const int l, const int prev_ref_rac
 		f_k[htr] = f_dash;
 		g_k[htr] = g_dash;
 	}
-	std::vector<bool> map_big_small(n_ref_haps, true);
+	//Remove the rare block's haplotypes from the full PBWT order, keeping the others in order,
+	//then append the block's haplotypes in their post-block order. small_idx is strictly
+	//increasing, so this slides each run between consecutive removed positions down in one
+	//block copy (dst < src, so a forward copy is safe) rather than testing every position.
 	const std::vector<int>& small_idx = A_small_idx[l];
-	for (int htr=0; htr<small_idx.size(); ++htr) map_big_small[small_idx[htr]] = false;
-	int n_zeros = small_idx[0];
-	for (int htr=n_zeros+1; htr<n_ref_haps; ++htr)
-		if (map_big_small[htr]) pbwt_array_A[n_zeros++] = pbwt_array_A[htr];
-
-	for (int htr=0; htr<pbwt_small_A.size(); ++htr,++n_zeros)
-		pbwt_array_A[n_zeros]=pbwt_small_A[htr];
+	const int n_small = small_idx.size();
+	int* A = pbwt_array_A.data();
+	int n_kept = small_idx[0];
+	for (int i = 0; i < n_small; ++i)
+	{
+		const int gap_start = small_idx[i] + 1;
+		const int gap_end = (i + 1 < n_small) ? small_idx[i + 1] : n_ref_haps;
+		std::copy(A + gap_start, A + gap_end, A + n_kept);
+		n_kept += gap_end - gap_start;
+	}
+	std::copy(pbwt_small_A.begin(), pbwt_small_A.end(), A + n_kept);
 }
 
 void haplotype_set::init_rare(const variant_map & M, const int k, const int l)
