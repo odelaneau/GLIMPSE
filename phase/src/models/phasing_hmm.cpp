@@ -280,7 +280,7 @@ void phasing_hmm::rephaseHaplotypes(std::vector < bool > & H0, std::vector < boo
 			p10 = std::clamp(p10/sum, 0.0f,1.0f);
 			sum = p01+p10;
 			const bool rf = (rng.getFloat()*sum) < p01;
-			// rf == true samples the (h0 carries 0, h1 carries 1) configuration, with prob p01
+			// if rf == true then h0 carries 0, h1 carries 1. rf sampled with prob p01
 			H0[VAR_ABS[curr_idx_locus]] = !rf;
 			H1[VAR_ABS[curr_idx_locus]] = rf;
 			curr_missing_locus++;
