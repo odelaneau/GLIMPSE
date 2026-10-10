@@ -150,19 +150,27 @@ void conditioning_set::compactSelection(const int ind, const int iter)
 	//of 8 still go through set() to preserve any pre-existing content in the row's
 	//last byte. Bit ordering matches set(): col 0 -> MSB ... col 7 -> LSB.
 	const int n_states_full = (n_states / 8) * 8;
+	//Rows and the state list are read through locals: each byte written below is an
+	//unsigned char store, which may alias any member, so reading them through H, Hvar
+	//and idxHaps_ref would reload them for every byte.
+	const unsigned int * states = idxHaps_ref.data();
 	for (int labs = 0, lrel = 0, lcom = 0 ; labs < n_tot_sites ; labs ++) {
 		if (var_type[labs] == TYPE_COMMON) {
+			const unsigned char * ref_row = H.HvarRef.rowBytes(lcom);
+			unsigned char * hvar_row = Hvar.rowBytes(lrel);
+			//The 8 bits are written out rather than looped over: clang vectorises such a loop
+			//into per-lane byte inserts, which is slower than this scalar form.
+			auto ref_bit = [ref_row](const unsigned int col) { return (unsigned char)((ref_row[col >> 3] >> (7 - (col & 7))) & 1); };
 			for (int k = 0 ; k < n_states_full ; k += 8) {
-				const unsigned char b =
-					((unsigned char)H.HvarRef.get(lcom, idxHaps_ref[k+0]) << 7) |
-					((unsigned char)H.HvarRef.get(lcom, idxHaps_ref[k+1]) << 6) |
-					((unsigned char)H.HvarRef.get(lcom, idxHaps_ref[k+2]) << 5) |
-					((unsigned char)H.HvarRef.get(lcom, idxHaps_ref[k+3]) << 4) |
-					((unsigned char)H.HvarRef.get(lcom, idxHaps_ref[k+4]) << 3) |
-					((unsigned char)H.HvarRef.get(lcom, idxHaps_ref[k+5]) << 2) |
-					((unsigned char)H.HvarRef.get(lcom, idxHaps_ref[k+6]) << 1) |
-					((unsigned char)H.HvarRef.get(lcom, idxHaps_ref[k+7]) << 0);
-				Hvar.setByte(lrel, k, b);
+				hvar_row[k >> 3] =
+					(ref_bit(states[k+0]) << 7) |
+					(ref_bit(states[k+1]) << 6) |
+					(ref_bit(states[k+2]) << 5) |
+					(ref_bit(states[k+3]) << 4) |
+					(ref_bit(states[k+4]) << 3) |
+					(ref_bit(states[k+5]) << 2) |
+					(ref_bit(states[k+6]) << 1) |
+					(ref_bit(states[k+7]) << 0);
 			}
 			for (int k = n_states_full ; k < n_states ; k++)
 				Hvar.set(lrel, k, H.HvarRef.get(lcom, idxHaps_ref[k]));
