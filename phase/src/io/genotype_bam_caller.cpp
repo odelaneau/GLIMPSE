@@ -442,7 +442,8 @@ void standard_errmod(call_t& caller, const variant* variant)
 	    	caller.gls.read_depth = caller.bca.max_dp;
 	    }
 	    std::fill(caller.bcr.p.begin(), caller.bcr.p.end(), 0.0f);
-	    std::sort(caller.bca.bases.begin(), caller.bca.bases.end());
+	    // Sort only the kept bases: sorting them all would undo the shuffle and keep the lowest-quality ones
+	    std::sort(caller.bca.bases.begin(), caller.bca.bases.begin() + caller.gls.read_depth);
 
 		while (j<caller.gls.read_depth)
 		{
