@@ -486,12 +486,12 @@ void standard_errmod(call_t& caller, const variant* variant)
 	        	const float one_minus_err = calling_utils::log10_one_minus_err[qual];
 	        	const float err = calling_utils::log10_err[qual];
 
-	        	caller.bcr.p[base*N_ALLELES+base] += one_minus_err;
+	        	caller.bcr.p[base*N_ALLELES+base] += one_minus_err*n_identical_reads;
 
 				for (ii = 0; ii < N_ALLELES; ++ii)
 				{
 					if (ii==base) continue;
-					caller.bcr.p[ii*N_ALLELES+ii] += err;
+					caller.bcr.p[ii*N_ALLELES+ii] += err*n_identical_reads;
 				}
 	        }
 	        caller.gls.dp_ind+=n_identical_reads;
