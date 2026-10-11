@@ -428,11 +428,12 @@ void standard_errmod(call_t& caller, const variant* variant)
 
 	const int sploidy = caller.ploidy;
 
-	caller.gls.dp_ind = 0;
-	if (caller.gls.read_depth == 0) return;
+	if (caller.gls.read_depth == 0) { caller.gls.dp_ind = 0; return; }
 
+	// snp_called: a SNP directly following another SNP at the same position (split multiallelic) reuses its reads, likelihood matrix and depth
 	if (!caller.snp_called)
 	{
+		caller.gls.dp_ind = 0;
 		int ii,k,j=0;
 	    if (caller.gls.read_depth > caller.bca.max_dp)
 	    {
