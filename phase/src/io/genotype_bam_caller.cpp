@@ -264,7 +264,7 @@ int genotype_bam_caller::glimpse_mpileup_reg(int i)
 			{
 				int max_llk = 0;
 				for (int j=1;j<sample_ploidyP1;++j) if (caller.gls.llk[j] > caller.gls.llk[max_llk]) max_llk=j;
-				for (int j=0; j<sample_ploidyP1; ++j) GLs[sample_ploidyP1 * i_site+j] = (unsigned char) std::min(static_cast<int>(-10*(caller.gls.llk[j]- max_llk)),255);
+				for (int j=0; j<sample_ploidyP1; ++j) GLs[sample_ploidyP1 * i_site+j] = (unsigned char) std::min(static_cast<int>(std::lround(-10*(caller.gls.llk[j]- caller.gls.llk[max_llk]))),255);
 				if (!(GLs[sample_ploidyP1 * i_site+0] == GLs[sample_ploidyP1 * i_site+1] && GLs[sample_ploidyP1 * i_site+0] == GLs[sample_ploidyP1 * i_site+sample_ploidy]))
 					G.vecG[i]->flat[i_site] = false;
 			}
