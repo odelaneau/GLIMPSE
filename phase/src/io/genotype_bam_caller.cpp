@@ -27,6 +27,9 @@
 #include <thread>
 #include <chrono>
 
+// True for A, C, G or T in either case: the only alleles the SNP model can compare read bases with
+static bool is_acgt(const char c) { return seq_nt16_int[seq_nt16_table[(unsigned char) c]] < N_ALLELES; }
+
 static int read_bam(void *data, bam1_t *b)
 {
 	aux_t * aux = (aux_t*) data;
@@ -257,6 +260,15 @@ int genotype_bam_caller::glimpse_mpileup_reg(int i)
 			const variant * variant_site = V.vec_pos[i_site];
 			const bool is_indel = variant_site->type == VCF_INDEL;
 			const bool is_delet = is_indel ? variant_site->alt.size() == 1 : 0;
+
+			// Records with a '*', symbolic or N allele get no GLs; skipping them leaves snp_called as the preceding record set it
+			if (!is_indel && !(is_acgt(variant_site->ref[0]) && is_acgt(variant_site->alt[0])))
+			{
+				++G.stats.depth_count[i][0];
+				G.stats.cov_ind[i].push(0);
+				++i_site;
+				continue;
+			}
 
 			group_reads[is_indel + is_delet] (caller, variant_site);
 			compute_llk[is_indel] (caller, variant_site);
