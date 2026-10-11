@@ -242,11 +242,17 @@ int genotype_bam_caller::glimpse_mpileup_reg(int i)
 	const int sample_ploidyP1 = mpileup_data.tar_ploidy[i]+1;
 
 	caller.n_plp = 0;
-	caller.s_plp = bam_plp_init(read_bam, (void*)&aux_data);
+	// Only the multi-file pileup API (here over one file) detects overlapping mates. Where both mates of a proper
+	// pair cover a base, htslib sets one quality to 0 and the other to their sum if the bases agree, or to 0.8x the
+	// higher one if not, so each fragment counts once
+	void * aux_ptr = &aux_data;
+	caller.s_plp = bam_mplp_init(1, read_bam, &aux_ptr);
+	if (bam_mplp_init_overlaps(caller.s_plp) < 0) { bam_mplp_destroy(caller.s_plp); return -1; }
 	unsigned long linecount = 0, prevstart = 0, prevend = 0;
 	const bam_pileup1_t * v_plp;
+	int plp_ret;
 
-	while (((caller.v_plp = bam_plp_auto(caller.s_plp, &tid, &pos, &caller.n_plp)) != 0) && i_site < n_sites_reg)
+	while (((plp_ret = bam_mplp_auto(caller.s_plp, &tid, &pos, &caller.n_plp, &caller.v_plp)) > 0) && i_site < n_sites_reg)
 	{
 		if (pos+1 < beg) continue;
 		if (pos+1 > end) break;
@@ -301,9 +307,9 @@ int genotype_bam_caller::glimpse_mpileup_reg(int i)
 
 	caller.gls.dp_ind =0;
 
-	bam_plp_reset(caller.s_plp);
-	bam_plp_destroy(caller.s_plp);
-    return caller.n_plp < 0 ? -1 : 0;
+	bam_mplp_reset(caller.s_plp);
+	bam_mplp_destroy(caller.s_plp);
+    return plp_ret < 0 ? -1 : 0;
 }
 
 
@@ -325,7 +331,8 @@ void bcf_call_glfgen_min(call_t& caller, const variant* variant)
 
 		int b = seq_nt16_int[bam_seqi(bam_get_seq(p->b), p->qpos)]; // base
 		int q = (int)bam_get_qual(p->b)[p->qpos];
-		if (b > 3 || q < caller.bca.min_bq) continue;
+		// Quality 0 also marks the dropped copy of a base covered by both mates, so it is skipped even with --baseq 0
+		if (b > 3 || q == 0 || q < caller.bca.min_bq) continue;
 		q = std::min(q, MAX_BASE_QUALITY);
 		caller.bca.bases.push_back(q<<5 | (int)bam_is_rev(p->b)<<4 | b);
 	}
