@@ -30,6 +30,10 @@
 // True for A, C, G or T in either case: the only alleles the SNP model can compare read bases with
 static bool is_acgt(const char c) { return seq_nt16_int[seq_nt16_table[(unsigned char) c]] < N_ALLELES; }
 
+// Errors made before sequencing (PCR, cluster amplification) occur at roughly 1e-4 per base, so no base is more
+// reliable than Q40 whatever quality the sequencer reports
+constexpr int MAX_BASE_QUALITY = 40;
+
 static int read_bam(void *data, bam1_t *b)
 {
 	aux_t * aux = (aux_t*) data;
@@ -322,6 +326,7 @@ void bcf_call_glfgen_min(call_t& caller, const variant* variant)
 		int b = seq_nt16_int[bam_seqi(bam_get_seq(p->b), p->qpos)]; // base
 		int q = (int)bam_get_qual(p->b)[p->qpos];
 		if (b > 3 || q < caller.bca.min_bq) continue;
+		q = std::min(q, MAX_BASE_QUALITY);
 		caller.bca.bases.push_back(q<<5 | (int)bam_is_rev(p->b)<<4 | b);
 	}
 	caller.gls.read_depth = caller.bca.bases.size();
