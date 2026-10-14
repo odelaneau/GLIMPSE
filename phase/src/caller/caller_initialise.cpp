@@ -156,7 +156,7 @@ void caller::read_files_and_initialise() {
 	for (int t = 0 ; t < HMM.size() ; t ++)
 	{
 		COND[t] = new conditioning_set(V,H,H.n_ref_haps,ne, kinit, kpbwt, err_imp, err_phase, use_list);
-		HMM[t] = new imputation_hmm(COND[t]);
+		HMM[t] = new imputation_hmm(COND[t], options["hmm-checkpoint-block"].as < int > ());
 		if (H.max_ploidy > 1) DMM[t] = new phasing_hmm(COND[t]);
 	}
 
