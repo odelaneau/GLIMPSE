@@ -27,6 +27,9 @@
 #include <thread>
 #include <chrono>
 
+// True for A, C, G or T in either case: the only alleles the SNP model can compare read bases with
+static bool is_acgt(const char c) { return seq_nt16_int[seq_nt16_table[(unsigned char) c]] < N_ALLELES; }
+
 static int read_bam(void *data, bam1_t *b)
 {
 	aux_t * aux = (aux_t*) data;
@@ -258,13 +261,22 @@ int genotype_bam_caller::glimpse_mpileup_reg(int i)
 			const bool is_indel = variant_site->type == VCF_INDEL;
 			const bool is_delet = is_indel ? variant_site->alt.size() == 1 : 0;
 
+			// Records with a '*', symbolic or N allele get no GLs; skipping them leaves snp_called as the preceding record set it
+			if (!is_indel && !(is_acgt(variant_site->ref[0]) && is_acgt(variant_site->alt[0])))
+			{
+				++G.stats.depth_count[i][0];
+				G.stats.cov_ind[i].push(0);
+				++i_site;
+				continue;
+			}
+
 			group_reads[is_indel + is_delet] (caller, variant_site);
 			compute_llk[is_indel] (caller, variant_site);
 			if (caller.gls.dp_ind > 0)
 			{
 				int max_llk = 0;
 				for (int j=1;j<sample_ploidyP1;++j) if (caller.gls.llk[j] > caller.gls.llk[max_llk]) max_llk=j;
-				for (int j=0; j<sample_ploidyP1; ++j) GLs[sample_ploidyP1 * i_site+j] = (unsigned char) std::min(static_cast<int>(-10*(caller.gls.llk[j]- max_llk)),255);
+				for (int j=0; j<sample_ploidyP1; ++j) GLs[sample_ploidyP1 * i_site+j] = (unsigned char) std::min(static_cast<int>(std::lround(-10*(caller.gls.llk[j]- caller.gls.llk[max_llk]))),255);
 				if (!(GLs[sample_ploidyP1 * i_site+0] == GLs[sample_ploidyP1 * i_site+1] && GLs[sample_ploidyP1 * i_site+0] == GLs[sample_ploidyP1 * i_site+sample_ploidy]))
 					G.vecG[i]->flat[i_site] = false;
 			}
@@ -428,11 +440,12 @@ void standard_errmod(call_t& caller, const variant* variant)
 
 	const int sploidy = caller.ploidy;
 
-	caller.gls.dp_ind = 0;
-	if (caller.gls.read_depth == 0) return;
+	if (caller.gls.read_depth == 0) { caller.gls.dp_ind = 0; return; }
 
+	// snp_called: a SNP directly following another SNP at the same position (split multiallelic) reuses its reads, likelihood matrix and depth
 	if (!caller.snp_called)
 	{
+		caller.gls.dp_ind = 0;
 		int ii,k,j=0;
 	    if (caller.gls.read_depth > caller.bca.max_dp)
 	    {
@@ -441,7 +454,8 @@ void standard_errmod(call_t& caller, const variant* variant)
 	    	caller.gls.read_depth = caller.bca.max_dp;
 	    }
 	    std::fill(caller.bcr.p.begin(), caller.bcr.p.end(), 0.0f);
-	    std::sort(caller.bca.bases.begin(), caller.bca.bases.end());
+	    // Sort only the kept bases: sorting them all would undo the shuffle and keep the lowest-quality ones
+	    std::sort(caller.bca.bases.begin(), caller.bca.bases.begin() + caller.gls.read_depth);
 
 		while (j<caller.gls.read_depth)
 		{
@@ -485,12 +499,12 @@ void standard_errmod(call_t& caller, const variant* variant)
 	        	const float one_minus_err = calling_utils::log10_one_minus_err[qual];
 	        	const float err = calling_utils::log10_err[qual];
 
-	        	caller.bcr.p[base*N_ALLELES+base] += one_minus_err;
+	        	caller.bcr.p[base*N_ALLELES+base] += one_minus_err*n_identical_reads;
 
 				for (ii = 0; ii < N_ALLELES; ++ii)
 				{
 					if (ii==base) continue;
-					caller.bcr.p[ii*N_ALLELES+ii] += err;
+					caller.bcr.p[ii*N_ALLELES+ii] += err*n_identical_reads;
 				}
 	        }
 	        caller.gls.dp_ind+=n_identical_reads;
