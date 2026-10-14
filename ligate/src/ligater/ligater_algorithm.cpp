@@ -393,6 +393,9 @@ void ligater::ligate() {
         int nret;
         while ( (nret = bcf_sr_next_line(sr)) )
         {
+            //A later-starting chunk that ends before the earlier one is nested in it
+            if ( sr->nreaders==2 && bcf_sr_has_line(sr,0) && !bcf_sr_has_line(sr,1) && bcf_sr_region_done(sr,1) )
+                vrb.error("File [" + std::string(sr->readers[1].fname) + "] is nested inside [" + std::string(sr->readers[0].fname) + "]. Nested chunks cannot be ligated.");
             if ( !bcf_sr_has_line(sr,0) ) if ( bcf_sr_region_done(sr,0) )  bcf_sr_remove_reader(sr, 0);
 
             // Get a line to learn about current position
