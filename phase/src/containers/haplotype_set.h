@@ -58,7 +58,12 @@ public:
 	//PBWT
 	int pbwt_depth;
 	float pbwt_modulo_cm;
-	std::vector < int > pbwt_array_V;
+
+	//Alleles of the current common site's column in the previous PBWT order, one bit per
+	//position (ALT=1), plus the ALT count before each 64-bit word. read_full_pbwt_av fills
+	//these; pbwt_rank() answers rank queries from them.
+	std::vector < uint64_t > pbwt_col_bits;
+	std::vector < int > pbwt_col_prefix;
 
 	//FM
 	std::vector < int > pbwt_index;
@@ -144,6 +149,14 @@ public:
 	void selectKrare(const int htr, const int k, const int ref_rac_l, const std::vector < int >& pbwt_array, const int k0, const unsigned char a);
 	void select_common_pd_fg(const int k, const int l_hq, const int l_all, const int ref_rac_l, const int prev_ref_rac_l);
 	void select_rare_pd_fg(const int k, const int ref_rac_l);
+
+	//Number of ALT alleles among the first x (0..n_ref_haps) haplotypes of the previous PBWT
+	//order at the current common site.
+	inline int pbwt_rank(const int x) const
+	{
+		const int w = x >> 6;
+		return pbwt_col_prefix[w] + __builtin_popcountll(pbwt_col_bits[w] & ((1ULL << (x & 63)) - 1));
+	}
 
 	void update_checksum(checksum &crc) const
 	{
