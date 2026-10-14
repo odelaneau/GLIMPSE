@@ -89,7 +89,7 @@ GLIMPSE2_phase --bam-list bams_1.0x.txt --reference binary_reference_panel_chr20
 | \-\-call-indels     | NA      | NA        | **Expert setting.** Use the calling model to produce genotype likelihoods at indels. However the likelihoods from low-coverage data can be miscalibrated, therefore by default GLIMPSE does only imputation into the haplotype scaffold (assuming flat likelihoods)
 | \-F \[ \-\-fasta \] | FILE    | NA        | Faidx-indexed reference sequence file in the appropriate genome build. Necessary for CRAM files
 | \-\-mapq            | INT     | 10        | Minimum mapping quality for a read to be considered
-| \-\-baseq           | INT     | 10        | Minimum phred-scalde based quality to be considered
+| \-\-baseq           | INT     | 10        | Minimum phred-scaled base quality to be considered. Qualities above 40 are used as 40. Where the mates of a proper pair overlap, each base is counted once
 | \-\-max-depth       | INT     | 40        | **Expert setting.** Max read depth at a site. If the number of reads exceeds this number, the reads at the sites are downsampled (e.g. to avoid artifactual coverage increases).
 | \-\-keep-orphan-reads | NA      | NA        | **Expert setting.** Keep paired end reads where one of mates is unmapped
 | \-\-ignore-orientation | NA      | NA        | **Expert setting.** Ignore the orientation of mate pairs
