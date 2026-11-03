@@ -28,6 +28,10 @@
 
 #include <utils/otools.h>
 
+#define OFILE_VCFU	0
+#define OFILE_VCFC	1
+#define OFILE_BCFC	2
+
 class ligater {
 public:
 	//COMMAND LINE OPTIONS
@@ -50,6 +54,10 @@ public:
 	std::vector < int > nmism;
 
 	std::vector < int > nsites_buff_d2;
+
+	//OUTPUT FILE
+	std::string out_file_format;	//htslib mode string
+	unsigned int out_file_type;		//one of OFILE_*
 
 	int32_t *GTa, *GTb, mGTa, mGTb;
 

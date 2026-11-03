@@ -93,5 +93,6 @@ The per-sample outputs (`*.error.spl.txt.gz`, `*.rsquare.spl.txt.gz`) have one r
 | Option name 	       | Argument| Default  | Description |
 |:---------------------|:--------|:---------|:-------------------------------------|
 | \-O \[\-\-output \]  | STRING  | NA       | Prefix of the output files (extensions are automatically added) |
+| \-\-compression-level| INT     | 6        | Compression level for the \-\-out-rej-sites/\-\-out-conc-sites/\-\-out-disc-sites BCFs: 0 = none (still BGZF-framed and indexable), 1 = fastest, 9 = smallest. |
 | \-\-log              | STRING  | NA       | Log file  |
 

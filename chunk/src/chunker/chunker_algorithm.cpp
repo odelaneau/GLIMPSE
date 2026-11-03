@@ -167,31 +167,40 @@ void chunker::split_sequential(output_file & fd, long int & cidx, std::string & 
 	}
 }
 
+//Sets left_idx/right_idx to the closest indices whose buffers [left_idx, start_idx) and (stop_idx, right_idx]
+//hold at least buffer_count common variants, buffer_cm cM and buffer_mb bp, or to the region edge if none do.
 void chunker::add_buffer(const long int start_idx, const long int stop_idx, long int& left_idx, long int& right_idx)
 {
+	const long int n_all = (long int) positions_all_mb.size();
+	const long int n_common = (long int) positions_common_mb.size();
+
 	long int left_mb_size = -1, left_count = -1;
 	float left_cm_size = -1;
-	if (start_idx > buffer_count) {
-		left_idx = start_idx - buffer_count;
+	const long int n_common_before_start = all2common[start_idx];
+	if (n_common_before_start >= buffer_count) {
+		//Start just after the buffer_count-th common variant before start_idx, so the first step lands on it
+		left_idx = common2all[n_common_before_start - buffer_count] + 1;
 		do {
-			left_idx --;
-			left_count = start_idx - left_idx + 1;
+			left_idx--;
+			left_count = n_common_before_start - all2common[left_idx];
 			left_mb_size = positions_all_mb[start_idx] - positions_all_mb[left_idx];
 			left_cm_size = positions_all_cm[start_idx] - positions_all_cm[left_idx];
-		} while (((left_idx > 0) && ((left_cm_size < buffer_cm) || (left_mb_size < buffer_mb) || left_count < buffer_count)));
+		} while ((left_idx > 0) && ((left_cm_size < buffer_cm) || (left_mb_size < buffer_mb) || left_count < buffer_count));
 	} else { left_idx = 0; }
 
 	long int right_mb_size = -1, right_count = -1;
 	float right_cm_size = -1;
-	if (stop_idx < (positions_all_mb.size() - buffer_count)) {
-		right_idx = stop_idx + buffer_count - 1;
+	const long int n_common_through_stop = (stop_idx + 1 < n_all) ? all2common[stop_idx + 1] : n_common;
+	if (n_common_through_stop + buffer_count <= n_common) {
+		//Start just before the buffer_count-th common variant after stop_idx, so the first step lands on it
+		right_idx = common2all[n_common_through_stop + buffer_count - 1] - 1;
 		do {
-			right_idx ++;
-			right_count = right_idx - stop_idx + 1;
+			right_idx++;
+			right_count = ((right_idx + 1 < n_all) ? all2common[right_idx + 1] : n_common) - n_common_through_stop;
 			right_mb_size = positions_all_mb[right_idx] - positions_all_mb[stop_idx];
 			right_cm_size = positions_all_cm[right_idx] - positions_all_cm[stop_idx];
-		} while (((right_idx < (positions_all_mb.size() - 1)) && ((right_cm_size < buffer_cm) || (right_mb_size < buffer_mb) || right_count < buffer_count)));
-	} else { right_idx = positions_all_mb.size() - 1; }
+		} while ((right_idx < n_all - 1) && ((right_cm_size < buffer_cm) || (right_mb_size < buffer_mb) || right_count < buffer_count));
+	} else { right_idx = n_all - 1; }
 }
 
 void chunker::chunk() {

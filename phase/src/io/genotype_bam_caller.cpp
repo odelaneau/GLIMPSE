@@ -27,6 +27,13 @@
 #include <thread>
 #include <chrono>
 
+// True for A, C, G or T in either case: the only alleles the SNP model can compare read bases with
+static bool is_acgt(const char c) { return seq_nt16_int[seq_nt16_table[(unsigned char) c]] < N_ALLELES; }
+
+// Errors made before sequencing (PCR, cluster amplification) occur at roughly 1e-4 per base, so no base is more
+// reliable than Q40 whatever quality the sequencer reports
+constexpr int MAX_BASE_QUALITY = 40;
+
 static int read_bam(void *data, bam1_t *b)
 {
 	aux_t * aux = (aux_t*) data;
@@ -235,11 +242,17 @@ int genotype_bam_caller::glimpse_mpileup_reg(int i)
 	const int sample_ploidyP1 = mpileup_data.tar_ploidy[i]+1;
 
 	caller.n_plp = 0;
-	caller.s_plp = bam_plp_init(read_bam, (void*)&aux_data);
+	// Only the multi-file pileup API (here over one file) detects overlapping mates. Where both mates of a proper
+	// pair cover a base, htslib sets one quality to 0 and the other to their sum if the bases agree, or to 0.8x the
+	// higher one if not, so each fragment counts once
+	void * aux_ptr = &aux_data;
+	caller.s_plp = bam_mplp_init(1, read_bam, &aux_ptr);
+	if (bam_mplp_init_overlaps(caller.s_plp) < 0) { bam_mplp_destroy(caller.s_plp); return -1; }
 	unsigned long linecount = 0, prevstart = 0, prevend = 0;
 	const bam_pileup1_t * v_plp;
+	int plp_ret;
 
-	while (((caller.v_plp = bam_plp_auto(caller.s_plp, &tid, &pos, &caller.n_plp)) != 0) && i_site < n_sites_reg)
+	while (((plp_ret = bam_mplp_auto(caller.s_plp, &tid, &pos, &caller.n_plp, &caller.v_plp)) > 0) && i_site < n_sites_reg)
 	{
 		if (pos+1 < beg) continue;
 		if (pos+1 > end) break;
@@ -258,13 +271,22 @@ int genotype_bam_caller::glimpse_mpileup_reg(int i)
 			const bool is_indel = variant_site->type == VCF_INDEL;
 			const bool is_delet = is_indel ? variant_site->alt.size() == 1 : 0;
 
+			// Records with a '*', symbolic or N allele get no GLs; skipping them leaves snp_called as the preceding record set it
+			if (!is_indel && !(is_acgt(variant_site->ref[0]) && is_acgt(variant_site->alt[0])))
+			{
+				++G.stats.depth_count[i][0];
+				G.stats.cov_ind[i].push(0);
+				++i_site;
+				continue;
+			}
+
 			group_reads[is_indel + is_delet] (caller, variant_site);
 			compute_llk[is_indel] (caller, variant_site);
 			if (caller.gls.dp_ind > 0)
 			{
 				int max_llk = 0;
 				for (int j=1;j<sample_ploidyP1;++j) if (caller.gls.llk[j] > caller.gls.llk[max_llk]) max_llk=j;
-				for (int j=0; j<sample_ploidyP1; ++j) GLs[sample_ploidyP1 * i_site+j] = (unsigned char) std::min(static_cast<int>(-10*(caller.gls.llk[j]- max_llk)),255);
+				for (int j=0; j<sample_ploidyP1; ++j) GLs[sample_ploidyP1 * i_site+j] = (unsigned char) std::min(static_cast<int>(std::lround(-10*(caller.gls.llk[j]- caller.gls.llk[max_llk]))),255);
 				if (!(GLs[sample_ploidyP1 * i_site+0] == GLs[sample_ploidyP1 * i_site+1] && GLs[sample_ploidyP1 * i_site+0] == GLs[sample_ploidyP1 * i_site+sample_ploidy]))
 					G.vecG[i]->flat[i_site] = false;
 			}
@@ -285,9 +307,9 @@ int genotype_bam_caller::glimpse_mpileup_reg(int i)
 
 	caller.gls.dp_ind =0;
 
-	bam_plp_reset(caller.s_plp);
-	bam_plp_destroy(caller.s_plp);
-    return caller.n_plp < 0 ? -1 : 0;
+	bam_mplp_reset(caller.s_plp);
+	bam_mplp_destroy(caller.s_plp);
+    return plp_ret < 0 ? -1 : 0;
 }
 
 
@@ -309,7 +331,9 @@ void bcf_call_glfgen_min(call_t& caller, const variant* variant)
 
 		int b = seq_nt16_int[bam_seqi(bam_get_seq(p->b), p->qpos)]; // base
 		int q = (int)bam_get_qual(p->b)[p->qpos];
-		if (b > 3 || q < caller.bca.min_bq) continue;
+		// Quality 0 also marks the dropped copy of a base covered by both mates, so it is skipped even with --baseq 0
+		if (b > 3 || q == 0 || q < caller.bca.min_bq) continue;
+		q = std::min(q, MAX_BASE_QUALITY);
 		caller.bca.bases.push_back(q<<5 | (int)bam_is_rev(p->b)<<4 | b);
 	}
 	caller.gls.read_depth = caller.bca.bases.size();
@@ -428,11 +452,12 @@ void standard_errmod(call_t& caller, const variant* variant)
 
 	const int sploidy = caller.ploidy;
 
-	caller.gls.dp_ind = 0;
-	if (caller.gls.read_depth == 0) return;
+	if (caller.gls.read_depth == 0) { caller.gls.dp_ind = 0; return; }
 
+	// snp_called: a SNP directly following another SNP at the same position (split multiallelic) reuses its reads, likelihood matrix and depth
 	if (!caller.snp_called)
 	{
+		caller.gls.dp_ind = 0;
 		int ii,k,j=0;
 	    if (caller.gls.read_depth > caller.bca.max_dp)
 	    {
@@ -441,7 +466,8 @@ void standard_errmod(call_t& caller, const variant* variant)
 	    	caller.gls.read_depth = caller.bca.max_dp;
 	    }
 	    std::fill(caller.bcr.p.begin(), caller.bcr.p.end(), 0.0f);
-	    std::sort(caller.bca.bases.begin(), caller.bca.bases.end());
+	    // Sort only the kept bases: sorting them all would undo the shuffle and keep the lowest-quality ones
+	    std::sort(caller.bca.bases.begin(), caller.bca.bases.begin() + caller.gls.read_depth);
 
 		while (j<caller.gls.read_depth)
 		{
@@ -485,12 +511,12 @@ void standard_errmod(call_t& caller, const variant* variant)
 	        	const float one_minus_err = calling_utils::log10_one_minus_err[qual];
 	        	const float err = calling_utils::log10_err[qual];
 
-	        	caller.bcr.p[base*N_ALLELES+base] += one_minus_err;
+	        	caller.bcr.p[base*N_ALLELES+base] += one_minus_err*n_identical_reads;
 
 				for (ii = 0; ii < N_ALLELES; ++ii)
 				{
 					if (ii==base) continue;
-					caller.bcr.p[ii*N_ALLELES+ii] += err;
+					caller.bcr.p[ii*N_ALLELES+ii] += err*n_identical_reads;
 				}
 	        }
 	        caller.gls.dp_ind+=n_identical_reads;

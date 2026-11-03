@@ -60,6 +60,7 @@ void checker::declare_options() {
 	bpo::options_description opt_output ("Output files");
 	opt_output.add_options()
 			("output,O", bpo::value< std::string >(), "Prefix of the output files (extensions are automatically added)")
+			("compression-level", bpo::value< int >()->default_value(6), "Compression level for the --out-rej-sites/--out-conc-sites/--out-disc-sites BCFs: 0 = none (still BGZF-framed and indexable), 1 = fastest, 9 = smallest.")
 			("log", bpo::value< std::string >(), "Log file");
 
 	descriptions.add(opt_base).add(opt_input).add(opt_algo).add(opt_output);
@@ -97,6 +98,10 @@ void checker::check_options() {
 
 	if (options["threads"].as < int > () < 1)
 		vrb.error("Number of threads is a strictly positive number.");
+
+	const int compression_level = options["compression-level"].as < int > ();
+	if (compression_level < 0 || compression_level > 9)
+		vrb.error("Compression level must be between 0 and 9.");
 
 	//if (options.count("min-tar-gp") &&  options.count("gt-tar"))
 	//	vrb.error("Options --gt-tar and --min-tar-gp cannot be used together.");
@@ -171,4 +176,6 @@ void checker::verbose_options() {
 	vrb.bullet("Output rej. sites : " + no_yes[options.count("out-rej-sites")]);
 	vrb.bullet("Output conc sites : " + no_yes[options.count("out-conc-sites")]);
 	vrb.bullet("Output disc sites : " + no_yes[options.count("out-disc-sites")]);
+	if (options.count("out-rej-sites") || options.count("out-conc-sites") || options.count("out-disc-sites"))
+		vrb.bullet("BCF compression   : level " + stb.str(options["compression-level"].as < int > ()));
 }

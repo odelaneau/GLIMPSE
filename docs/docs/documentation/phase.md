@@ -89,7 +89,7 @@ GLIMPSE2_phase --bam-list bams_1.0x.txt --reference binary_reference_panel_chr20
 | \-\-call-indels     | NA      | NA        | **Expert setting.** Use the calling model to produce genotype likelihoods at indels. However the likelihoods from low-coverage data can be miscalibrated, therefore by default GLIMPSE does only imputation into the haplotype scaffold (assuming flat likelihoods)
 | \-F \[ \-\-fasta \] | FILE    | NA        | Faidx-indexed reference sequence file in the appropriate genome build. Necessary for CRAM files
 | \-\-mapq            | INT     | 10        | Minimum mapping quality for a read to be considered
-| \-\-baseq           | INT     | 10        | Minimum phred-scalde based quality to be considered
+| \-\-baseq           | INT     | 10        | Minimum phred-scaled base quality to be considered. Qualities above 40 are used as 40. Where the mates of a proper pair overlap, each base is counted once
 | \-\-max-depth       | INT     | 40        | **Expert setting.** Max read depth at a site. If the number of reads exceeds this number, the reads at the sites are downsampled (e.g. to avoid artifactual coverage increases).
 | \-\-keep-orphan-reads | NA      | NA        | **Expert setting.** Keep paired end reads where one of mates is unmapped
 | \-\-ignore-orientation | NA      | NA        | **Expert setting.** Ignore the orientation of mate pairs
@@ -106,6 +106,7 @@ GLIMPSE2_phase --bam-list bams_1.0x.txt --reference binary_reference_panel_chr20
 | \-\-contigs-fai      | FILE    | NA       | If specified, header contig names and their lengths are copied from the  provided fasta index file (.fai). This allows to create imputed whole-genome files as contigs are present and can be easily merged by bcftools |
 | \-\-bgen-bits        | INT     | 8        | **Expert setting.** Only used together when the output is in BGEN file format. Specifies the number of bits to be used for the encoding probabilities of the output BGEN file. If the output is in the .vcf\[.gz\]/.bcf format, this value is ignored. Accepted values: 1-32. |
 | \-\-bgen-compr       | STRING  | zstd     | **Expert setting.** Only used together when the output is in BGEN file format. Specifies the compression of the output BGEN file. If the output is in the .vcf\[.gz\]/.bcf format, this value is ignored.  Accepted values: \[no,zlib,zstd\] |
+| \-\-compression-level| INT     | 6        | Compression level for VCF/BCF output: 0 = none (still BGZF-framed and indexable), 1 = fastest, 9 = smallest. Ignored for plain .vcf and BGEN output. |
 | \-\-log              | FILE    | NA       | Log file  |
 | \-\-checkpoint-file-out | FILE | NA       | File to save checkpoint info in |
 

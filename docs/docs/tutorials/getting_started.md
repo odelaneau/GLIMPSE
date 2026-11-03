@@ -171,7 +171,7 @@ done < chunks.chr22.txt
 The output is a VCF/BCF file for each imputed chunk. We merge the chunks belonging to the same chromosome together in the next step.
 
 ### 6. Ligate chunks of the the same chromosome
-Ligation of the imputed chunks is performed using the GLIMPSE2_ligate tool. The program requires an ordered list of the imputed chunks. We recommend using appropriate naming of the files in the previous step, so that a command such as <code>ls -1v</code> can directly produce the list of files in the right order.
+Ligation of the imputed chunks is performed using the GLIMPSE2_ligate tool. The input chunks can be listed in any order: the program sorts them by position within each chromosome.
 
 GLIMPSE2_ligate only requires a list containing the imputed files that need to be ligated:
 <div class="code-example" markdown="1">
