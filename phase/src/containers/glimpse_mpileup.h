@@ -112,7 +112,7 @@ struct call_t
 	sample_gl gls;
 	bcf_call_aux_t bca;
 	bcf_call_ret1_t bcr;
-	bam_plp_t s_plp;
+	bam_mplp_t s_plp;
 	const bam_pileup1_t* v_plp;
 	int n_plp;
 	bool snp_called;
