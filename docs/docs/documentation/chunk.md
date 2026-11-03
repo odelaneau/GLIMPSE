@@ -55,10 +55,10 @@ GLIMPSE2_chunk --input file_chr20.bcf --map chr20.b38.gmap.gz --region chr20 --s
 |:---------------------|:--------|:---------|:-------------------------------------|
 | \-\-window-cm        | FLOAT   | 2.5     | Minimal window size in cM |
 | \-\-window-mb        | FLOAT   | 2.0     | Minimal window size in Mb |
-| \-\-window-count     | INT     | 20000   | Minimal window size in #variants |
+| \-\-window-count     | INT     | 20000   | Minimal window size in #common variants |
 | \-\-buffer-cm        | FLOAT   | 0.5     | Minimal buffer size in cM |
 | \-\-buffer-mb        | FLOAT   | 0.4     | Minimal buffer size in Mb |
-| \-\-buffer-count     | INT     | 2000    | Minimal buffer size in #variants |
+| \-\-buffer-count     | INT     | 2000    | Minimal buffer size in #common variants |
 
 #### Model Parameters
 
