@@ -243,7 +243,9 @@ void haplotype_set::allocatePBWT(const int _pbwt_depth, const float _pbwt_modulo
 
 	pbwt_array_A = std::vector < int > (n_ref_haps);
 	pbwt_array_B = std::vector < int > (n_ref_haps);
-	pbwt_array_V = std::vector < int >(n_ref_haps+1);
+	//n_ref_haps/64 + 1 words cover every position and also pbwt_rank(n_ref_haps)
+	pbwt_col_bits = std::vector < uint64_t > (n_ref_haps / 64 + 1);
+	pbwt_col_prefix = std::vector < int > (n_ref_haps / 64 + 1);
 	pbwt_index = std::vector < int > (n_tar_haps, 0);
 	f_k = std::vector<int>(n_tar_haps, 0);
 	g_k = std::vector<int>(n_tar_haps, n_ref_haps);
@@ -403,7 +405,10 @@ void haplotype_set::read_full_pbwt_av(const unsigned char*& pY, const int ref_ra
 	int mm;
 	const int size_a = n_ref_haps;
 	const std::array<int*,2> occ = {&u,&v};
-	pbwt_array_V[0]=0;
+	uint64_t* bits = pbwt_col_bits.data();
+	int* prefix = pbwt_col_prefix.data();
+	std::fill(pbwt_col_bits.begin(), pbwt_col_bits.end(), 0);
+	prefix[0] = 0;
 	while (m < size_a)
 	{
 		z = *pY++; //read the encoded symbol
@@ -411,7 +416,20 @@ void haplotype_set::read_full_pbwt_av(const unsigned char*& pY, const int ref_ra
 		mm = m+n; //get limit of this block
 		z >>= 7; //get the symbol itself
 		std::copy(pbwt_array_A.begin()+m, pbwt_array_A.begin()+mm, pbwt_array_B.begin() + *occ[z]); //update B, (next A)
-		z ? std::iota(pbwt_array_V.begin()+m+1, pbwt_array_V.begin()+mm+1, v-ref_rac_l+1) : std::fill(pbwt_array_V.begin()+m+1, pbwt_array_V.begin()+mm+1, v-ref_rac_l); //we pick V as we expect more fill() than iota
+		//ALT count before each word boundary within (m, mm], then the run's bits [m, mm)
+		for (int w = (m >> 6) + 1; (w << 6) <= mm; ++w) prefix[w] = v-ref_rac_l + z * ((w << 6) - m);
+		if (z)
+		{
+			const int w0 = m >> 6, w1 = (mm - 1) >> 6;
+			const uint64_t mask0 = ~0ULL << (m & 63), mask1 = ~0ULL >> (63 - ((mm - 1) & 63));
+			if (w0 == w1) bits[w0] |= mask0 & mask1;
+			else
+			{
+				bits[w0] |= mask0;
+				std::fill(bits + w0 + 1, bits + w1, ~0ULL);
+				bits[w1] |= mask1;
+			}
+		}
 		m = mm; //update position in PPA for next loop
 		*occ[z] += n; //update FM
 	}
@@ -451,9 +469,12 @@ void haplotype_set::select_common_pd_fg(const int k, const int l_hq, const int l
 		const unsigned char prev_hap = tar_hap[htr];
 		tar_hap[htr] = HvarTar.get(l_all,htr);
 
-		idx = tar_hap[htr] * (ref_rac_l + pbwt_array_V[pbwt_index[htr]]) + (1-tar_hap[htr]) * (pbwt_index[htr] - pbwt_array_V[pbwt_index[htr]]);
-		f_dash = tar_hap[htr] * (ref_rac_l + pbwt_array_V[f_k[htr]]) + (1-tar_hap[htr]) * (f_k[htr] - pbwt_array_V[f_k[htr]]);
-		g_dash = tar_hap[htr] * (ref_rac_l + pbwt_array_V[g_k[htr]]) + (1-tar_hap[htr]) * (g_k[htr] - pbwt_array_V[g_k[htr]]);
+		const int v_idx = pbwt_rank(pbwt_index[htr]);
+		const int v_f = pbwt_rank(f_k[htr]);
+		const int v_g = pbwt_rank(g_k[htr]);
+		idx = tar_hap[htr] * (ref_rac_l + v_idx) + (1-tar_hap[htr]) * (pbwt_index[htr] - v_idx);
+		f_dash = tar_hap[htr] * (ref_rac_l + v_f) + (1-tar_hap[htr]) * (f_k[htr] - v_f);
+		g_dash = tar_hap[htr] * (ref_rac_l + v_g) + (1-tar_hap[htr]) * (g_k[htr] - v_g);
 
 		if (g_dash <= f_dash)
 		{
@@ -618,15 +639,22 @@ void haplotype_set::init_common(const int k, const int l, const int prev_ref_rac
 		f_k[htr] = f_dash;
 		g_k[htr] = g_dash;
 	}
-	std::vector<bool> map_big_small(n_ref_haps, true);
+	//Remove the rare block's haplotypes from the full PBWT order, keeping the others in order,
+	//then append the block's haplotypes in their post-block order. small_idx is strictly
+	//increasing, so this slides each run between consecutive removed positions down in one
+	//block copy (dst < src, so a forward copy is safe) rather than testing every position.
 	const std::vector<int>& small_idx = A_small_idx[l];
-	for (int htr=0; htr<small_idx.size(); ++htr) map_big_small[small_idx[htr]] = false;
-	int n_zeros = small_idx[0];
-	for (int htr=n_zeros+1; htr<n_ref_haps; ++htr)
-		if (map_big_small[htr]) pbwt_array_A[n_zeros++] = pbwt_array_A[htr];
-
-	for (int htr=0; htr<pbwt_small_A.size(); ++htr,++n_zeros)
-		pbwt_array_A[n_zeros]=pbwt_small_A[htr];
+	const int n_small = small_idx.size();
+	int* A = pbwt_array_A.data();
+	int n_kept = small_idx[0];
+	for (int i = 0; i < n_small; ++i)
+	{
+		const int gap_start = small_idx[i] + 1;
+		const int gap_end = (i + 1 < n_small) ? small_idx[i + 1] : n_ref_haps;
+		std::copy(A + gap_start, A + gap_end, A + n_kept);
+		n_kept += gap_end - gap_start;
+	}
+	std::copy(pbwt_small_A.begin(), pbwt_small_A.end(), A + n_kept);
 }
 
 void haplotype_set::init_rare(const variant_map & M, const int k, const int l)
