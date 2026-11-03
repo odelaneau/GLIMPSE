@@ -24,6 +24,7 @@
  ******************************************************************************/
 
 #include <models/imputation_hmm.h>
+#include <models/buffer_utils.h>
 
 inline
 float horizontal_add (const __m256& a)
@@ -38,14 +39,15 @@ float horizontal_add (const __m256& a)
    return _mm_cvtss_f32(sums);
 }
 
-imputation_hmm::imputation_hmm(conditioning_set * _C) {
+imputation_hmm::imputation_hmm(conditioning_set * _C, const unsigned int _checkpoint_block) : checkpoint_block(_checkpoint_block), alpha_block(1) {
 	C = _C;
 	modK=0;
 	Emissions = aligned_vector32 < float > (2*C->n_tot_sites);
 }
 
 imputation_hmm::~imputation_hmm() {
-	Alpha.clear();
+	AlphaCheckpoints.clear();
+	AlphaBlock.clear();
 	AlphaSum.clear();
 	Emissions.clear();
 }
@@ -54,7 +56,11 @@ void imputation_hmm::resize()
 {
 	modK = ((C->n_states / 8) + (C->n_states % 8 ? 1 : 0))*8;
 	AlphaSum.resize(C->polymorphic_sites.size(), 0.0f);
-	Alpha.resize(C->polymorphic_sites.size() * modK, 0.0f);
+	const size_t n_sites = C->polymorphic_sites.size();
+	alpha_block = std::max < size_t > (1, std::min < size_t > (checkpoint_block ? checkpoint_block : n_sites, n_sites));
+	const size_t n_blocks = (C->polymorphic_sites.size() + alpha_block - 1) / alpha_block;
+	resize_discarding_contents(AlphaCheckpoints, n_blocks * modK);
+	resize_discarding_contents(AlphaBlock, (size_t)alpha_block * modK);
 	Beta.resize(modK);
 }
 
@@ -77,98 +83,114 @@ void imputation_hmm::computePosteriors(const std::vector < float > & HL, std::ve
 	backward(HL, flat, HP);
 }
 
-void imputation_hmm::forward(std::vector < bool > & flat) {
+void imputation_hmm::forwardSite(const int l, const std::vector < bool > & flat, const float * prev, float * curr) {
 	const __m256i _vshift_count = _mm256_set_epi32(31,30,29,28,27,26,25,24);
 	const unsigned int nstates = C->n_states;
 	const unsigned int nstatesMD8 = (nstates / 8) * 8;
 
-	for (int l = 0 ; l < C->polymorphic_sites.size() ; l ++)
+	AlphaSum[l] = 0.0f;
+	if (flat[C->polymorphic_sites[l]] || C->lq_flag[C->polymorphic_sites[l]])
 	{
-		AlphaSum[l] = 0.0f;
-		if (flat[C->polymorphic_sites[l]] || C->lq_flag[C->polymorphic_sites[l]])
+		if (l == 0)
 		{
-			if (l == 0)
+			std::fill(curr, curr + modK, 1.0f / nstates);
+			AlphaSum[l] = 1.0f;
+		}
+		else
+		{
+			const float fact1 = C->t[l-1] / nstates;
+			const float fact2 = C->nt[l-1] / AlphaSum[l-1];
+			const __m256 _fact1 = _mm256_set1_ps(fact1);
+			const __m256 _fact2 = _mm256_set1_ps(fact2);
+			__m256 _sum = _mm256_set1_ps(0.0f);
+			int k = 0;
+			for (; k < nstatesMD8; k += 8)
 			{
-				fill(Alpha.begin(), Alpha.begin()+modK, 1.0f / nstates);
-				AlphaSum[l] = 1.0f;
+				const __m256 _prob_prev = _mm256_load_ps(&prev[k]);
+				const __m256 _prob_curr = _mm256_fmadd_ps(_prob_prev, _fact2, _fact1);
+				_sum = _mm256_add_ps(_sum, _prob_curr);
+				_mm256_store_ps(&curr[k], _prob_curr);
 			}
-			else
+			if (k) AlphaSum[l] = horizontal_add(_sum);
+			for (int offset = nstatesMD8; offset < nstates ; offset ++) {
+				curr[offset] = (prev[offset] * fact2 + fact1);
+				AlphaSum[l] += curr[offset];
+			}
+		}
+	}
+	else
+	{
+		const std::array<float,2> emit = {Emissions[2*C->polymorphic_sites[l]+0], Emissions[2*C->polymorphic_sites[l]+1]};
+		const __m256 _emit0 = _mm256_set1_ps(emit[0]);
+		const __m256 _emit1 = _mm256_set1_ps(emit[1]);
+		if (l == 0)
+		{
+			const float fact1 = 1.0f / nstates;
+			const __m256 _fact1 = _mm256_set1_ps(fact1);
+			__m256 _sum = _mm256_set1_ps(0.0f);
+			int k = 0;
+			for (; k < nstatesMD8; k += 8)
 			{
-				const float fact1 = C->t[l-1] / nstates;
-				const float fact2 = C->nt[l-1] / AlphaSum[l-1];
-				const __m256 _fact1 = _mm256_set1_ps(fact1);
-				const __m256 _fact2 = _mm256_set1_ps(fact2);
-				__m256 _sum = _mm256_set1_ps(0.0f);
-				int k = 0;
-				for (; k < nstatesMD8; k += 8)
-				{
-					const __m256 _prob_prev = _mm256_load_ps(&Alpha[(l-1)*modK+k]);
-					const __m256 _prob_curr = _mm256_fmadd_ps(_prob_prev, _fact2, _fact1);
-					_sum = _mm256_add_ps(_sum, _prob_curr);
-					_mm256_store_ps(&Alpha[l*modK+k], _prob_curr);
-				}
-				if (k) AlphaSum[l] = horizontal_add(_sum);
-				for (int offset = nstatesMD8; offset < nstates ; offset ++) {
-					Alpha[l*modK+offset] = (Alpha[(l-1)*modK+offset] * fact2 + fact1);
-					AlphaSum[l] += Alpha[l*modK+offset];
-				}
+				const __m256i _bcst = _mm256_set1_epi32((unsigned int )C->Hvar.getByte(l, k));
+				const __m256i _mask = _mm256_sllv_epi32(_bcst, _vshift_count);
+				const __m256 _emiss = _mm256_blendv_ps (_emit0, _emit1, _mm256_castsi256_ps(_mask));
+				const __m256 _prob_curr = _mm256_mul_ps(_emiss, _fact1);
+				_sum = _mm256_add_ps(_sum, _prob_curr);
+				_mm256_store_ps(&curr[k], _prob_curr);
+			}
+			if (k) AlphaSum[l] = horizontal_add(_sum);
+			for (int offset = nstatesMD8; offset < nstates ; offset ++)
+			{
+				curr[offset] = emit[C->Hvar.get(l, offset)] * fact1;
+				AlphaSum[l] += curr[offset];
 			}
 		}
 		else
 		{
-			const std::array<float,2> emit = {Emissions[2*C->polymorphic_sites[l]+0], Emissions[2*C->polymorphic_sites[l]+1]};
-			const __m256 _emit0 = _mm256_set1_ps(emit[0]);
-			const __m256 _emit1 = _mm256_set1_ps(emit[1]);
-			if (l == 0)
-			{
-				const float fact1 = 1.0f / nstates;
-				const __m256 _fact1 = _mm256_set1_ps(fact1);
-				__m256 _sum = _mm256_set1_ps(0.0f);
-				int k = 0;
-				for (; k < nstatesMD8; k += 8)
-				{
-					const __m256i _bcst = _mm256_set1_epi32((unsigned int )C->Hvar.getByte(l, k));
-					const __m256i _mask = _mm256_sllv_epi32(_bcst, _vshift_count);
-					const __m256 _emiss = _mm256_blendv_ps (_emit0, _emit1, _mm256_castsi256_ps(_mask));
-					const __m256 _prob_curr = _mm256_mul_ps(_emiss, _fact1);
-					_sum = _mm256_add_ps(_sum, _prob_curr);
-					_mm256_store_ps(&Alpha[l*modK+k], _prob_curr);
-				}
-				if (k) AlphaSum[l] = horizontal_add(_sum);
-				for (int offset = nstatesMD8; offset < nstates ; offset ++)
-				{
-					Alpha[l*modK+offset] = emit[C->Hvar.get(l, offset)] * fact1;
-					AlphaSum[l] += Alpha[l*modK+offset];
-				}
-			}
-			else
-			{
-				const float fact1 = C->t[l-1] / nstates;
-				const float fact2 = C->nt[l-1] / AlphaSum[l-1];//AlphaSum2[l-1];// AlphaSum[l-1];
-				const __m256 _fact1 = _mm256_set1_ps(fact1);
-				const __m256 _fact2 = _mm256_set1_ps(fact2);
-				__m256 _sum = _mm256_set1_ps(0.0f);
+			const float fact1 = C->t[l-1] / nstates;
+			const float fact2 = C->nt[l-1] / AlphaSum[l-1];
+			const __m256 _fact1 = _mm256_set1_ps(fact1);
+			const __m256 _fact2 = _mm256_set1_ps(fact2);
+			__m256 _sum = _mm256_set1_ps(0.0f);
 
-				int k = 0;
-				for (; k < nstatesMD8; k += 8)
-				{
-					const __m256i _mask = _mm256_sllv_epi32(_mm256_set1_epi32((unsigned int )C->Hvar.getByte(l, k)), _vshift_count);
-					const __m256 _emiss = _mm256_blendv_ps (_emit0, _emit1, _mm256_castsi256_ps(_mask));
-					const __m256 _prob_prev = _mm256_load_ps(&Alpha[(l-1)*modK+k]);
-					const __m256 _prob_temp = _mm256_fmadd_ps(_prob_prev, _fact2, _fact1);
-					const __m256 _prob_curr = _mm256_mul_ps(_prob_temp, _emiss);
-					_sum = _mm256_add_ps(_sum, _prob_curr);
-					_mm256_store_ps(&Alpha[l*modK+k], _prob_curr);
-				}
-				if (k) AlphaSum[l] = horizontal_add(_sum);
-				for (int offset = nstatesMD8; offset < nstates ; offset ++)
-				{
-					Alpha[l*modK+offset] = (Alpha[(l-1)*modK+offset]*fact2+fact1)*emit[C->Hvar.get(l, offset)];
-					AlphaSum[l] += Alpha[l*modK+offset];
-				}
+			int k = 0;
+			for (; k < nstatesMD8; k += 8)
+			{
+				const __m256i _mask = _mm256_sllv_epi32(_mm256_set1_epi32((unsigned int )C->Hvar.getByte(l, k)), _vshift_count);
+				const __m256 _emiss = _mm256_blendv_ps (_emit0, _emit1, _mm256_castsi256_ps(_mask));
+				const __m256 _prob_prev = _mm256_load_ps(&prev[k]);
+				const __m256 _prob_temp = _mm256_fmadd_ps(_prob_prev, _fact2, _fact1);
+				const __m256 _prob_curr = _mm256_mul_ps(_prob_temp, _emiss);
+				_sum = _mm256_add_ps(_sum, _prob_curr);
+				_mm256_store_ps(&curr[k], _prob_curr);
+			}
+			if (k) AlphaSum[l] = horizontal_add(_sum);
+			for (int offset = nstatesMD8; offset < nstates ; offset ++)
+			{
+				curr[offset] = (prev[offset]*fact2+fact1)*emit[C->Hvar.get(l, offset)];
+				AlphaSum[l] += curr[offset];
 			}
 		}
 	}
+}
+
+void imputation_hmm::forward(std::vector < bool > & flat) {
+	// Rows go into the block buffer, slot l % alpha_block; the first row of each block is also kept
+	// as the checkpoint from which backward() recomputes the block.
+	for (int l = 0 ; l < C->polymorphic_sites.size() ; l ++)
+	{
+		const float * prev = l ? &AlphaBlock[(size_t)((l-1) % alpha_block) * modK] : nullptr;
+		float * curr = &AlphaBlock[(size_t)(l % alpha_block) * modK];
+		forwardSite(l, flat, prev, curr);
+		if (l % alpha_block == 0) std::copy(curr, curr + modK, AlphaCheckpoints.begin() + (size_t)(l / alpha_block) * modK);
+	}
+}
+
+void imputation_hmm::recomputeBlock(const int block, const std::vector < bool > & flat) {
+	const int first = block * alpha_block;
+	const int last = std::min(first + (int)alpha_block, (int)C->polymorphic_sites.size()) - 1;
+	std::copy(AlphaCheckpoints.begin() + (size_t)block * modK, AlphaCheckpoints.begin() + (size_t)(block + 1) * modK, AlphaBlock.begin());
+	for (int l = first + 1 ; l <= last ; l ++) forwardSite(l, flat, &AlphaBlock[(size_t)(l - first - 1) * modK], &AlphaBlock[(size_t)(l - first) * modK]);
 }
 
 void imputation_hmm::backward(const std::vector < float > & HL, std::vector < bool > & flat, std::vector < float > & HP)
@@ -184,6 +206,10 @@ void imputation_hmm::backward(const std::vector < float > & HL, std::vector < bo
 	__m256 _sum,  _prob0, _prob1;
 	for (int l = C->polymorphic_sites.size()-1 ; l >= 0 ; l --)
 	{
+		// forward() leaves the final block in the buffer; every earlier block is recomputed on entry.
+		if ((l % alpha_block == alpha_block - 1) && (l != C->polymorphic_sites.size()-1)) recomputeBlock(l / alpha_block, flat);
+		const float * alpha_l = &AlphaBlock[(size_t)(l % alpha_block) * modK];
+
 		betaSum=0.0f;
 		prob_hid[0]=0.0f;
 		prob_hid[1]=0.0f;
@@ -204,7 +230,7 @@ void imputation_hmm::backward(const std::vector < float > & HL, std::vector < bo
 					const __m256i _mask_curr = _mm256_sllv_epi32(_mm256_set1_epi32((unsigned int )C->Hvar.getByte(l, k)), _vshift_count);
 					const __m256 _mask0 = _mm256_blendv_ps (_one, _zero, _mm256_castsi256_ps(_mask_curr));
 					const __m256 _mask1 = _mm256_blendv_ps (_zero, _one, _mm256_castsi256_ps(_mask_curr));
-					const __m256 _alphas = _mm256_load_ps(&Alpha[l*modK+k]);
+					const __m256 _alphas = _mm256_load_ps(&alpha_l[k]);
 					_prob0 = _mm256_add_ps(_prob0, _mm256_mul_ps(_alphas, _mask0));
 					_prob1 = _mm256_add_ps(_prob1, _mm256_mul_ps(_alphas, _mask1));
 					_mm256_store_ps(&Beta[k], _fact1);
@@ -217,7 +243,7 @@ void imputation_hmm::backward(const std::vector < float > & HL, std::vector < bo
 				for (int offset = nstatesMD8; offset < nstates ; offset ++)
 				{
 					Beta[offset] = fact1;
-					prob_hid[C->Hvar.get(l, offset)] += Alpha[l*modK+offset];
+					prob_hid[C->Hvar.get(l, offset)] += alpha_l[offset];
 				}
 				betaSum = 1.0f;
 			}
@@ -236,7 +262,7 @@ void imputation_hmm::backward(const std::vector < float > & HL, std::vector < bo
 					const __m256 _mask1 = _mm256_blendv_ps (_zero, _one, _mm256_castsi256_ps(_mask_curr));
 					const __m256 _prob_prev = _mm256_load_ps(&Beta[k]);
 					const __m256 _prob_curr = _mm256_fmadd_ps(_prob_prev, _fact2, _fact1);
-					const __m256 _alphas = _mm256_load_ps(&Alpha[l*modK+k]);
+					const __m256 _alphas = _mm256_load_ps(&alpha_l[k]);
 					const __m256 _dotprod = _mm256_mul_ps(_alphas, _prob_curr);
 					_prob0 = _mm256_add_ps(_prob0, _mm256_mul_ps(_dotprod, _mask0));
 					_prob1 = _mm256_add_ps(_prob1, _mm256_mul_ps(_dotprod, _mask1));
@@ -252,7 +278,7 @@ void imputation_hmm::backward(const std::vector < float > & HL, std::vector < bo
 				for (int offset = nstatesMD8; offset < nstates ; offset ++)
 				{
 					Beta[offset] = Beta[offset] * fact2 + fact1;
-					prob_hid[C->Hvar.get(l, offset)] += Alpha[l*modK+offset] * Beta[offset];
+					prob_hid[C->Hvar.get(l, offset)] += alpha_l[offset] * Beta[offset];
 					betaSum += Beta[offset];
 				}
 			}
@@ -283,7 +309,7 @@ void imputation_hmm::backward(const std::vector < float > & HL, std::vector < bo
 					const __m256 _emiss = _mm256_blendv_ps (_emit0, _emit1, _mm256_castsi256_ps(_mask_curr));
 					const __m256 _mask0 = _mm256_blendv_ps (_one, _zero, _mm256_castsi256_ps(_mask_curr));
 					const __m256 _mask1 = _mm256_blendv_ps (_zero, _one, _mm256_castsi256_ps(_mask_curr));
-					const __m256 _alphas = _mm256_load_ps(&Alpha[l*modK+k]);
+					const __m256 _alphas = _mm256_load_ps(&alpha_l[k]);
 					const __m256 _prob_next = _mm256_mul_ps(_emiss, _fact1);
 					_prob0 = _mm256_add_ps(_prob0, _mm256_mul_ps(_alphas, _mask0));
 					_prob1 = _mm256_add_ps(_prob1, _mm256_mul_ps(_alphas, _mask1));
@@ -298,7 +324,7 @@ void imputation_hmm::backward(const std::vector < float > & HL, std::vector < bo
 				}
 				for (int offset = nstatesMD8; offset < nstates ; offset ++)
 				{
-					prob_hid[C->Hvar.get(l, offset)] += Alpha[l*modK+offset];
+					prob_hid[C->Hvar.get(l, offset)] += alpha_l[offset];
 					Beta[offset] = emit[C->Hvar.get(l, offset)] * fact1;
 					betaSum += Beta[offset];
 				}
@@ -318,7 +344,7 @@ void imputation_hmm::backward(const std::vector < float > & HL, std::vector < bo
 					const __m256 _mask0 = _mm256_blendv_ps (_one, _zero, _mm256_castsi256_ps(_mask_curr));
 					const __m256 _mask1 = _mm256_blendv_ps (_zero, _one, _mm256_castsi256_ps(_mask_curr));
 					const __m256 _prob_prev = _mm256_load_ps(&Beta[k]);
-					const __m256 _alphas = _mm256_load_ps(&Alpha[l*modK+k]);
+					const __m256 _alphas = _mm256_load_ps(&alpha_l[k]);
 					const __m256 _prob_curr = _mm256_fmadd_ps(_prob_prev, _fact2, _fact1);
 					const __m256 _dotprod = _mm256_mul_ps(_alphas, _prob_curr);
 					const __m256 _prob_next = _mm256_mul_ps(_prob_curr, _emiss);
@@ -336,7 +362,7 @@ void imputation_hmm::backward(const std::vector < float > & HL, std::vector < bo
 				for (int offset = nstatesMD8; offset < nstates ; offset ++)
 				{
 					Beta[offset] = Beta[offset] * fact2 + fact1;
-					prob_hid[C->Hvar.get(l, offset)] += Alpha[l*modK+offset] * Beta[offset];
+					prob_hid[C->Hvar.get(l, offset)] += alpha_l[offset] * Beta[offset];
 					Beta[offset] *= emit[C->Hvar.get(l, offset)];
 					betaSum += Beta[offset];
 				}
