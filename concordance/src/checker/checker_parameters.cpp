@@ -36,8 +36,8 @@ void checker::declare_options() {
 	bpo::options_description opt_input ("Input parameters");
 	opt_input.add_options()
 			("input", bpo::value< std::string >(), "File with four columns listing in order: regions frequencies validation and imputed dataset. For genome-wide concordance, add more lines specifying different chromosomes.")
-			("samples", bpo::value< std::string >(), "List of samples to process, one sample ID per line")
-			("gt-val", "Uses hard called genotypes rather than phread-scaled likelihoods for the validation dataset, reading them from FORMAT/GT field.")
+			("samples", bpo::value< std::string >(), "List of samples to process, one per line: the sample ID in the imputed file, optionally followed by the ID of the validation sample to compare it against (default: the same ID). Blank lines and lines starting with # are ignored.")
+			("gt-val", "Uses hard called genotypes rather than phred-scaled likelihoods for the validation dataset, reading them from FORMAT/GT field.")
 			("gt-tar", "Uses FORMAT/GT field to determine the best-guess genotype rather than the FORMAT/GP (default). FORMAT/DS are FORMAT/GP fields are still required for calibration and rsquared calculations.");
 
 

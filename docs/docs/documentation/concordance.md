@@ -29,6 +29,24 @@ GLIMPSE2_concordance --gt-val --ac-bins 1 5 10 20 50 100 200 500 1000 2000 5000 
 ```
 </div>
 
+#### Sample aliasing
+
+By default, samples are matched between the imputed and validation files by ID. To compare imputed samples against a validation sample with a different ID, for example the same truth sample imputed at several depths, give `--samples` a second column holding the validation sample ID:
+
+<div class="code-example" markdown="1">
+```
+NA12878.0_5x  NA12878
+NA12878.1x    NA12878
+NA12878.2x    NA12878
+HG00096
+HG00097
+```
+</div>
+
+Here the three NA12878 rows are all compared against the validation sample `NA12878`, while `HG00096` and `HG00097` have the same ID in both files and need no second column. Columns are separated by spaces or tabs; blank lines and lines starting with `#` are ignored. Rows naming a sample that is missing from either file are skipped with a warning.
+
+The per-sample outputs (`*.error.spl.txt.gz`, `*.rsquare.spl.txt.gz`) have one row per imputed sample, labelled with its imputed ID. The pooled outputs (`*.error.grp.txt.gz`, `*.error.cal.txt.gz`, `*.rsquare.grp.txt.gz`) combine all imputed samples, so each row that shares a validation sample is counted separately. For pooled metrics of a single condition, run the concordance on that condition alone.
+
 ---
 
 ### Command line options
@@ -46,8 +64,8 @@ GLIMPSE2_concordance --gt-val --ac-bins 1 5 10 20 50 100 200 500 1000 2000 5000 
 | Option name 	       | Argument| Default  | Description |
 |:---------------------|:--------|:---------|:-------------------------------------|
 | \-\-input            | FILE    | NA       | File with four columns listing in order: regions frequencies validation and imputed dataset. For genome-wide concordance, add more lines specifying different chromosomes. |
-| \-\-samples          | FILE    | NA       | List of samples to process, one sample ID per line. |
-| \-\-gt-val           | NA      | NA       | Uses hard called genotypes rather than phread-scaled likelihoods for the validation dataset, reading them from FORMAT/GT field. |
+| \-\-samples          | FILE    | NA       | List of samples to process, one per line: the sample ID in the imputed file, optionally followed by the ID of the validation sample to compare it against (default: the same ID). Blank lines and lines starting with # are ignored. |
+| \-\-gt-val           | NA      | NA       | Uses hard called genotypes rather than phred-scaled likelihoods for the validation dataset, reading them from FORMAT/GT field. |
 | \-\-gt-tar           | NA      | NA       | Uses FORMAT/GT field to determine the best-guess genotype rather than the FORMAT/GP (default). FORMAT/DS are FORMAT/GP fields are still required for calibration and rsquared calculations. |
 
 
