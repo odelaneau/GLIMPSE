@@ -165,24 +165,21 @@ public:
 	void computeCalibration(std::string output);
 };
 
+// Bin b holds max(GP) in [b/N_BIN_CAL, (b+1)/N_BIN_CAL), the range writeData labels it with; the
+// last bin also holds GP = 1. The small offset keeps 3-decimal GPs that sit on a bin edge (e.g.
+// 0.53, parsed as 0.52999997f) in the bin that starts there.
 inline
 int call_set::getCalibrationBin(float gp0, float gp1) {
 	float maxv = 0.0f;
 	if (gp0 > maxv) { maxv = gp0; }
 	if (gp1 > maxv) { maxv = gp1; }
-	return (int)trunc(maxv * (N_BIN_CAL-1));
+	return std::min((int)(maxv * N_BIN_CAL + 1e-3f), N_BIN_CAL-1);
 }
 
 inline
 int call_set::getCalibrationBin(float gp0, float gp1, float gp2) {
 	//should not be affected by ploidy: gp1=gp2 with ploidy=1
-	/*
-	float maxv = 0.0f;
-	if (gp0 > maxv) maxv = gp0;
-	if (gp1 > maxv) maxv = gp1;
-	if (gp2 > maxv) maxv = gp2;
-	*/
-	return (int)trunc(fmaxf(gp0, fmaxf(gp1, gp2)) * (N_BIN_CAL-1));
+	return std::min((int)(fmaxf(gp0, fmaxf(gp1, gp2)) * N_BIN_CAL + 1e-3f), N_BIN_CAL-1);
 }
 
 inline
