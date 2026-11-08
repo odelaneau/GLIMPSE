@@ -115,6 +115,9 @@ void chunker::readData(std::string fmain, std::string region, long int nthreads)
 			}
 		}
 	}
+	//errnum is set on a read or parse failure, which otherwise ends the loop like the end of the file.
+	//A missing BGZF EOF marker also sets it, at open; htslib warns about that, so it is not an error.
+	if (sr->errnum && sr->errnum != no_eof) vrb.error("Error while reading [" + fmain + "]: " + std::string(bcf_sr_strerror(sr->errnum)));
 	bcf_sr_destroy(sr);
 	if (itmp) free(itmp);
 	if (vAC) free(vAC);
