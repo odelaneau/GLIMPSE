@@ -51,6 +51,7 @@ public:
 	std::set < std::string > initializing_samples;
 	std::map < std::string, int> ploidy_samples;
 	std::vector<int> ploidy_ref_samples;
+	bool samples_file_reported = false;	//set_ploidy_tar can run twice; report the --samples-file counts once
 
 	//CONSTRUCTORS/DESCTRUCTORS
 	genotype_reader(haplotype_set &, genotype_set &, variant_map &, glimpse_mpileup & M, const float _sparse_maf,const bool _inputGL, const bool _impute_refonly, const bool keep_mono, const bool use_gl_indels);

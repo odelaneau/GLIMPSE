@@ -84,6 +84,7 @@ void genotype_reader::readInitializingSamples(string ftext) {
 void genotype_reader::readSamplesFilePloidy(std::string ftext) {
 	std::string buffer;
 	input_file fd (ftext);
+	if (fd.fail()) vrb.error("Cannot open samples file [" + ftext + "]");
 
 	bool repeated_samples=false;
 	std::vector<std::string> tokens(2);
@@ -95,6 +96,7 @@ void genotype_reader::readSamplesFilePloidy(std::string ftext) {
 		else repeated_samples=true;
 	}
 	if (repeated_samples) vrb.warning("Repeated sample in the file. Kept first instance");
+	if (ploidy_samples.empty()) vrb.warning("The samples file [" + ftext + "] lists no samples, so all target samples are treated as diploid.");
 	fd.close();
 }
 
@@ -530,14 +532,19 @@ void genotype_reader::set_ploidy_tar()
 	M.n_tar_haploid=0;
 	if (ploidy_samples.size() > 0)
 	{
+		int n_listed = 0;
 		for (int i = 0 ; i < M.n_tar_samples ; i ++)
 		{
 			M.tar_ind2gt[i] = 2*M.n_tar_diploid + M.n_tar_haploid;
 			M.tar_ind2pl[i] = 3*M.n_tar_diploid + 2*M.n_tar_haploid;
-			M.tar_ploidy[i] = (ploidy_samples.find(M.tar_sample_names[i])!=ploidy_samples.end()) ? ploidy_samples[M.tar_sample_names[i]] : 2;
+			const bool listed = ploidy_samples.find(M.tar_sample_names[i]) != ploidy_samples.end();
+			M.tar_ploidy[i] = listed ? ploidy_samples[M.tar_sample_names[i]] : 2;
+			n_listed += listed;
 			(M.tar_ploidy[i] > 1) ? ++M.n_tar_diploid : ++M.n_tar_haploid;
 		}
 		M.n_tar_haps = 2*M.n_tar_diploid + M.n_tar_haploid;
+		if (!samples_file_reported) vrb.bullet("Ploidy from --samples-file: " + stb.str(M.n_tar_haploid) + " haploid / " + stb.str(M.n_tar_diploid) + " diploid target samples (" + stb.str(n_listed) + " of the " + stb.str(ploidy_samples.size()) + " samples in the file are targets)");
+		samples_file_reported = true;
 	}
 	else
 	{	//default 2 ploidy
