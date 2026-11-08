@@ -678,7 +678,7 @@ void call_set::readData(std::vector < std::string > & ftruth, std::vector < std:
 									else
 									{
 
-										if (std::isnan( gp_arr_e[ploidy_e_record*i+0]) || std::isnan( gp_arr_e[ploidy_e_record*i+1]) || std::isnan( gp_arr_e[ploidy_e_record*i+2]))
+										if (std::isnan( gp_arr_e[ploidy_e_record*i+0]) || std::isnan( gp_arr_e[ploidy_e_record*i+1]) || std::isnan( gp_arr_e[ploidy_e_record*i+ploidy]))
 										{
 											if (!nan_printed)
 											{
