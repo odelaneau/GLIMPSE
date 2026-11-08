@@ -573,6 +573,8 @@ void call_set::readData(std::vector < std::string > & ftruth, std::vector < std:
 							// Iterate over imputed rows (N) rather than truth columns (K):
 							// when K < N, multiple imputed rows alias the same truth column
 							// and each needs its own per-row write into GLs/DPs below.
+							// DP is used only when --min-val-dp > 0 (getTruth applies the threshold);
+							// the site check above guarantees FORMAT/DP is present in that case.
 							for(int i = 0 ; i < N ; i ++)
 							{
 								const int t_col = imputed_to_truth_col[i];
@@ -598,7 +600,7 @@ void call_set::readData(std::vector < std::string > & ftruth, std::vector < std:
 										GLs[gpos+1] = (gt == 1);
 										GLs[gpos+ploidy] = gt == ploidy;
 									}
-									DPs[i] = D > dp_arr_t[t_col] ? 0 : dp_arr_t[t_col];
+									DPs[i] = D > 0 ? dp_arr_t[t_col] : 0;
 								}
 								else
 								{
@@ -616,7 +618,7 @@ void call_set::readData(std::vector < std::string > & ftruth, std::vector < std:
 										GLs[gpos+1] = unphred[std::min(pl_arr_t[index+1],255)];
 										GLs[gpos+ploidy] = unphred[std::min(pl_arr_t[index+ploidy],255)];
 									}
-									DPs[i] = D > dp_arr_t[t_col] ? 0 : dp_arr_t[t_col];
+									DPs[i] = D > 0 ? dp_arr_t[t_col] : 0;
 								}
 								if (flip) { float_swap = GLs[gpos+ploidy]; GLs[gpos+ploidy] = GLs[gpos+0]; GLs[gpos+0] = float_swap; }
 							}
