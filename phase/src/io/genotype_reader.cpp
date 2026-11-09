@@ -95,6 +95,8 @@ void genotype_reader::readSamplesFilePloidy(std::string ftext) {
 		if (ploidy_samples.find(tokens[0]) == ploidy_samples.end()) ploidy_samples.insert(std::make_pair(tokens[0],mapPloidy[tokens[1]]));
 		else repeated_samples=true;
 	}
+	// A file that opens but fails mid-read (e.g. a truncated .gz) ends the loop like end of file.
+	if (fd.bad()) vrb.error("Cannot read samples file [" + ftext + "]; it may be truncated or corrupt");
 	if (repeated_samples) vrb.warning("Repeated sample in the file. Kept first instance");
 	if (ploidy_samples.empty()) vrb.warning("The samples file [" + ftext + "] lists no samples, so all target samples are treated as diploid.");
 	fd.close();
