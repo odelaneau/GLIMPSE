@@ -528,7 +528,11 @@ void call_set::readData(std::vector < std::string > & ftruth, std::vector < std:
 					else ngp_e = bcf_get_format_float(hdr_estimated, line_e, "GP", &gp_arr_e, &ngp_arr_e);
 
 					long int n_validation_marker=0;
-					if ((naf_f==1)&&(npl_t%n_true_samples==0)&&(gt_target||((nds_e==n_esti_samples)&&(ngp_e%n_esti_samples==0)))&&((ndp_t==n_true_samples) || D==0))
+					// htslib returns a negative count when a field is missing (-1 % 1, -2 % 2, -3 % 1 and -3 % 3
+					// are all 0), so the validation count must be positive, and each sample's values must cover
+					// the indices read below: GT up to [ploidy-1] with --gt-val, PL up to [ploidy].
+					const bool truth_ok = npl_t > 0 && npl_t % n_true_samples == 0 && npl_t / n_true_samples >= (gt_validation ? ploidy : ploidyP1);
+					if ((naf_f==1)&&truth_ok&&(gt_target||((nds_e==n_esti_samples)&&(ngp_e%n_esti_samples==0)))&&((ndp_t==n_true_samples) || D==0))
 					{
 						// Meta data for variant
 						const int ploidy_gt_e_record=ngt_e/n_esti_samples;
@@ -915,7 +919,7 @@ void call_set::readData(std::vector < std::string > & ftruth, std::vector < std:
 		n_variants_all_chromosomes += nvariantvalall;
 		if (afnobin > 0) vrb.bullet("#variants discarded as no associated bin can be set (e.g. AF<=0 or AF>1 or no group) = " + stb.str(afnobin));
 		if (nvarianttot==0) vrb.error("No variant found in the intersection of files. Files are probably not aligned correctly. Please verify that chromosome names and regions are matching for the imputed, validation and allele frequency file.");
-		if (nvariantvalall==0) vrb.error("No usable validation variant has been found in the intersection of files. Verify that the validation file has FORMAT/PL and FORMAT/DP fields defined, the imputed file has FORMAT/DS and FORMAT/GP fields defined in the same region and the allele frequency file has the INFO/AF (or --af-tag) field defined at every marker.");
+		if (nvariantvalall==0) vrb.error("No usable validation variant has been found in the intersection of files. Verify that the validation file has FORMAT/PL (FORMAT/GT with --gt-val) and FORMAT/DP fields defined, the imputed file has FORMAT/DS and FORMAT/GP fields defined in the same region and the allele frequency file has the INFO/AF (or --af-tag) field defined at every marker, and that the validation and imputed genotypes have the same ploidy.");
 
 		vrb.print("");
 		vrb.bullet("#variants in the overlap (biallelic SNPs and indels) = " + stb.str(nvarianttot));
