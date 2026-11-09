@@ -76,7 +76,7 @@ void genotype_writer::writeGenotypes(const std::string fname, OutputFormat outpu
 	if (H.fploidy>0) bcf_hdr_append(hdr, "##INFO=<ID=INFO,Number=A,Type=Float,Description=\"IMPUTE info quality score for diploid samples\">");
 	bcf_hdr_append(hdr, "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Phased genotypes\">");
 	bcf_hdr_append(hdr, "##FORMAT=<ID=DS,Number=1,Type=Float,Description=\"Genotype dosage\">");
-	bcf_hdr_append(hdr, "##FORMAT=<ID=GP,Number=3,Type=Float,Description=\"Genotype posteriors\">");
+	bcf_hdr_append(hdr, "##FORMAT=<ID=GP,Number=G,Type=Float,Description=\"Genotype posteriors\">");
 	bcf_hdr_append(hdr, std::string("##NMAIN="+stb.str(n_main)).c_str());
 	bcf_hdr_append(hdr, std::string("##FPLOIDY="+stb.str(H.fploidy)).c_str());
 
