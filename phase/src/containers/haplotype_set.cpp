@@ -362,6 +362,7 @@ void haplotype_set::matchHapsFromCompressedPBWTSmall(const variant_map & M, cons
 	counter_rare_restarts=0;
 	int l_hq=0;
 	int last_k=-1; int l_all=0;
+	int prev_hq_com_k=-1; //site index of the previous high-quality common site
 	for (int k = 0 ; k < n_tot_sites ; k ++)
 	{
 		if (M.vec_pos[k]->LQ)
@@ -372,12 +373,13 @@ void haplotype_set::matchHapsFromCompressedPBWTSmall(const variant_map & M, cons
 
 		if (flag_common[k])
 		{
-			if (A_small_idx[l_hq].size() > 0 && !(last_k>=0 && flag_common[last_k])) init_common(k,l_hq, prev_ref_rac_l_com);
+			if (A_small_idx[l_hq].size() > 0 && !(last_k>=0 && flag_common[last_k])) init_common(k,l_hq, prev_ref_rac_l_com, prev_hq_com_k);
 			ref_rac_l_com = M.vec_pos[k]->cref;
 			read_full_pbwt_av(pY, ref_rac_l_com);
 			select_common_pd_fg(k, l_hq, l_all, ref_rac_l_com,prev_ref_rac_l_com);
 			prev_ref_rac_l_com=ref_rac_l_com;
 			++l_all; ++l_hq;
+			prev_hq_com_k = k;
 		}
 		else
 		{
@@ -580,9 +582,12 @@ void haplotype_set::select_rare_pd_fg(const int k, const int ref_rac_l)
 	}
 }
 
-void haplotype_set::init_common(const int k, const int l, const int prev_ref_rac_l_com)
+void haplotype_set::init_common(const int k, const int l, const int prev_ref_rac_l_com, const int prev_com_k)
 {
 	if (A_small_idx[l].size() <= 0) return;
+	//l counts high-quality common sites only, whereas common2tot is indexed by all common sites, so
+	//the caller passes the previous high-quality common site (-1 before the first one; use site 0).
+	const int k_prev = std::max(prev_com_k, 0);
 
 	int j=0;
 	for (int htr=0; htr<n_tar_haps; ++htr)
@@ -597,8 +602,8 @@ void haplotype_set::init_common(const int k, const int l, const int prev_ref_rac
 			if(g_dash <= f_dash)
 			{
 				counter_sel_gf++;
-				selectK(htr, common2tot[l-1], prev_ref_rac_l_com, pbwt_array_A, K, tar_hap[htr]);
-				length_sel_gf.push(cm_pos[common2tot[l-1]] - cm_pos[last_reset[htr]]);
+				selectK(htr, k_prev, prev_ref_rac_l_com, pbwt_array_A, K, tar_hap[htr]);
+				length_sel_gf.push(cm_pos[k_prev] - cm_pos[last_reset[htr]]);
 
 				f_dash = 0;
 				g_dash = n_ref_haps;
@@ -619,19 +624,19 @@ void haplotype_set::init_common(const int k, const int l, const int prev_ref_rac
 			if(g_dash <= f_dash) //TODO check this
 			{
 				counter_sel_gf++;
-				if (cm_pos[common2tot[l-1]] - cm_pos[last_reset[htr]] > pbwt_modulo_cm/5.0f) //only long matches, e.g. 0.02cM
+				if (cm_pos[k_prev] - cm_pos[last_reset[htr]] > pbwt_modulo_cm/5.0f) //only long matches, e.g. 0.02cM
 				{
 					counter_sel_gf++;
-					selectK(htr, common2tot[l-1], prev_ref_rac_l_com, pbwt_array_A, K, tar_hap[htr]);
-					length_sel_gf.push(cm_pos[common2tot[l-1]] - cm_pos[last_reset[htr]]);
+					selectK(htr, k_prev, prev_ref_rac_l_com, pbwt_array_A, K, tar_hap[htr]);
+					length_sel_gf.push(cm_pos[k_prev] - cm_pos[last_reset[htr]]);
 				}
 				/*
-				selectK(htr, common2tot[l-1], prev_ref_rac_l_com, pbwt_array_A, pbwt_depth/4, tar_hap[htr]);
-				length_sel_gf.push(cm_pos[common2tot[l-1]] - cm_pos[last_reset[htr]]);
+				selectK(htr, k_prev, prev_ref_rac_l_com, pbwt_array_A, pbwt_depth/4, tar_hap[htr]);
+				length_sel_gf.push(cm_pos[k_prev] - cm_pos[last_reset[htr]]);
 				*/
 				f_dash = 0;
 				g_dash = n_ref_haps - A_small_idx[l].size();
-				last_reset[htr] = common2tot[l-1];
+				last_reset[htr] = k_prev;
 			}
 		}
 
