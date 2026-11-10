@@ -137,6 +137,7 @@ void ref_genotype_reader::scanGenotypesCommon(bcf_srs_t * sr,const std::string f
 	#else
 		n_ref_samples = bcf_hdr_nsamples(sr->readers[ref_sr_n].header);
 	#endif
+	if (n_ref_samples == 0) vrb.error("The reference panel [" + fref + "] has no samples (is it a sites-only file?). GLIMPSE2_split_reference needs the phased haplotypes of the reference panel.");
 	//n_ref_samples = bcf_hdr_nsamples(sr->readers[ref_sr_n].header);
 	H.n_tot_sites = 0;
 
