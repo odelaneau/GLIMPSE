@@ -73,6 +73,14 @@ For detailed instructions including building dependencies from source, see the [
 
 #### Docker images
 
+##### Building the image
+The `Dockerfile` builds an image with all the GLIMPSE2 tools plus bcftools, bgzip and tabix, for linux/amd64 and linux/arm64. `docker-build.sh` builds it from a commit or tag:
+```
+./docker-build.sh v2.1.0                             # glimpse:2.1.0 for this machine
+./docker-build.sh v2.1.0 --push ghcr.io/me/glimpse   # both architectures, pushed to a registry
+```
+See the [Docker page on the website](https://odelaneau.github.io/GLIMPSE/docs/installation/docker) for building by hand and the build options.
+
 ##### Dockerhub
 You can find GLIMPSE on docker hub at this link:
 https://hub.docker.com/r/simrub/glimpse/
