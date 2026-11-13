@@ -39,7 +39,7 @@ You'll find there a folder containing all the software packages and other utilit
 - **chunk**: program to define chunks where to run phasing and imputation.
 - **common**: basic source files used by different tools.
 - **concordance**: program to verify the accuracy of low-coverage imputation against high-coverage genomes
-- **docker**: all scripts needed to build a docker file comprising all binaries
+- **Dockerfile**: builds a Docker image with all the binaries (see the Docker page)
 - **docs**: documentation in html
 - **inspect**: program to print summary statistics for a binary reference panel (.bin) file
 - **ligate**: ligate multiple imputed BCF/VCF files into a single chromosome-length file
