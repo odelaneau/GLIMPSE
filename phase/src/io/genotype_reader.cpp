@@ -783,12 +783,22 @@ void genotype_reader::parseRefGenotypes(bcf_srs_t * sr) {
 	bool a = false;
 	int *ptr;
 	float *ptr_f;
+	int rAC=0, nAC=0, *vAC = NULL;
+	int rAN=0, nAN=0, *vAN = NULL;
 
 	while (bcf_sr_next_line (sr))
 	{
 		if (bcf_sr_get_line(sr, 0)->n_allele != 2) continue; //always ref
 
 		line_ref =  bcf_sr_get_line(sr, 0);
+
+		//Skip the monomorphic records scanGenotypesCommon skipped, so that i_site indexes the same sites
+		rAC = bcf_get_info_int32(sr->readers[0].header, line_ref, "AC", &vAC, &nAC);
+		rAN = bcf_get_info_int32(sr->readers[0].header, line_ref, "AN", &vAN, &nAN);
+		if ((nAC!=1)||(nAN!=1)) vrb.error("VCF for reference panel needs AC/AN INFO fields to be present");
+		calt = vAC[0]; cref = (vAN[0] - vAC[0]);
+		if (std::min(calt, cref) == 0 && !keep_mono) continue;
+
 		if (i_site==0) set_ploidy_ref(sr,0);
 
 		ngt_ref = bcf_get_genotypes(sr->readers[0].header, line_ref, &gt_arr_ref, &ngt_arr_ref);
@@ -817,6 +827,8 @@ void genotype_reader::parseRefGenotypes(bcf_srs_t * sr) {
 	}
 	if (sr->errnum) vrb.error("Error while parsing reference panel: " + std::string(bcf_sr_strerror(sr->errnum)));
 	free(gt_arr_ref);
+	free(vAC);
+	free(vAN);
 
 	// Report
 	vrb.bullet("Reference panel parsing done ("+stb.str(tac.rel_time()*1.0/1000, 2) + "s)");
