@@ -141,7 +141,7 @@ public:
 	//PBWT ROUTINES
 	void allocatePBWT(const int _pbwt_depth, const float _pbwt_modulo_cm, const variant_map & V, const genotype_set & G, const int _Kinit, const int _Kpbwt);
 	void matchHapsFromCompressedPBWTSmall(const variant_map & V, const bool main_iteration);
-	void init_common(const int k, const int l, const int ref_rac_l_com);
+	void init_common(const int k, const int l, const int ref_rac_l_com, const int prev_com_k);
 	void init_rare(const variant_map & M,const int k, const int l);
 	void read_full_pbwt_av(const unsigned char*& pY, const int ref_rac_l);
 	void read_small_pbwt_av(const unsigned char*& pY, const int ref_rac_l, const bool update_v);
