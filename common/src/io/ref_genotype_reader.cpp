@@ -183,6 +183,10 @@ void ref_genotype_reader::scanGenotypesCommon(bcf_srs_t * sr,const std::string f
 		V.push(new variant (line_ref->pos + 1, std::string(line_ref->d.id), line_ref->d.allele[0], line_ref->d.allele[1], line_type, V.size(), cref, calt, line_type==VCF_SNP && (line_ref->pos != prev_pos)));
 		prev_pos=line_ref->pos;
 	}
+	//errnum is set on a read or parse failure, which otherwise ends the loop like the end of the file.
+	//A missing BGZF EOF marker also sets it, at open; htslib warns about that and the file may be
+	//complete, so it is not an error here.
+	if (sr->errnum && sr->errnum != no_eof) vrb.error("Error while scanning the reference panel [" + fref + "]: " + std::string(bcf_sr_strerror(sr->errnum)));
 	free(vAC);
 	free(vAN);
 	if (H.n_tot_sites == 0) vrb.error("No variants to be imputed in files");
@@ -232,6 +236,9 @@ void ref_genotype_reader::parseRefGenotypes(bcf_srs_t * sr,const std::string fre
 		calt = vAC[0]; cref = (vAN[0] - vAC[0]);
 
 		if (std::min(calt, cref) == 0 && !keep_mono) continue;
+		//The scan and parse passes read the same file with the same filters, so a site beyond
+		//the scanned count means one pass was cut short.
+		if (i_site >= H.n_tot_sites) vrb.error("The reference panel [" + fref + "] has more sites in the parsing pass than in the scanning pass (" + stb.str(H.n_tot_sites) + "); a read was probably cut short.");
 
 		#ifdef __XSI__
 			ngt_ref = c_xcf_get_genotypes(c_xcf_p, 0, sr->readers[0].header, line_ref, &gt_arr_ref, &ngt_arr_ref);
@@ -279,6 +286,8 @@ void ref_genotype_reader::parseRefGenotypes(bcf_srs_t * sr,const std::string fre
 	#ifdef __XSI__
 		c_xcf_delete(c_xcf_p);
 	#endif
+	if (sr->errnum && sr->errnum != no_eof) vrb.error("Error while parsing the reference panel [" + fref + "]: " + std::string(bcf_sr_strerror(sr->errnum)));
+	if (i_site != H.n_tot_sites) vrb.error("The reference panel [" + fref + "] has " + stb.str(i_site) + " sites in the parsing pass but " + stb.str(H.n_tot_sites) + " in the scanning pass; a read was probably cut short.");
 	free(gt_arr_ref);
 
 	// Report
