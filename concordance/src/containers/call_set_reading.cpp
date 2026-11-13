@@ -37,6 +37,22 @@ std::map<int, std::string> fploidy_to_msg = {
 };
 
 
+// Returns a copy of the first record of fname within region (to be freed with bcf_destroy), or
+// nullptr if the region holds none. It uses its own reader so that the main synced reader is
+// never rewound: bcf_sr_seek(sr, NULL, 0) keeps the records the readers have already buffered,
+// returns them first and then again when the region restarts.
+static bcf1_t * first_record_in_region(const std::string & fname, const std::string & region)
+{
+	bcf_srs_t * sr = bcf_sr_init();
+	sr->require_index = 1;
+	bcf_sr_set_regions(sr, region.c_str(), 0);
+	if (!bcf_sr_add_reader(sr, fname.c_str())) vrb.error("Failed to open file [" + fname + "]: " + std::string(bcf_sr_strerror(sr->errnum)));
+	bcf1_t * line = bcf_sr_next_line(sr) ? bcf_dup(bcf_sr_get_line(sr, 0)) : nullptr;
+	if (sr->errnum) vrb.error("Error reading [" + fname + "]: " + std::string(bcf_sr_strerror(sr->errnum)));
+	bcf_sr_destroy(sr);
+	return line;
+}
+
 void call_set::readData(std::vector < std::string > & ftruth, std::vector < std::string > & festimated, std::vector < std::string > & ffrequencies, std::vector < std::string > & region, bpo::variables_map& options, const float gp_filter, const std::string out_filename) {
 	tac.clock();
 	int n_true_samples, n_esti_samples;
@@ -244,17 +260,15 @@ void call_set::readData(std::vector < std::string > & ftruth, std::vector < std:
 			}
 			else
 			{
-				int nset=0;
-				while (!bcf_sr_has_line(sr,1)) bcf_sr_next_line (sr);
-
-				if (!bcf_sr_has_line(sr,1)) vrb.error("No marker found in the intersection for the imputed file.");
+				bcf1_t * line = first_record_in_region(festimated[f], region[f]);
+				if (!line) vrb.error("No marker found in region [" + region[f] + "] of the imputed file [" + festimated[f] + "].");
 
 				int * gt_fields = NULL;
 				int n_gt_fields = 0;
 
-				bcf1_t * line =  bcf_sr_get_line(sr, 1);
 				bcf_subset(hdr_estimated, line, n_estimated_subset_names, estimated_imap);
 				int ngt = bcf_get_genotypes(hdr_estimated, line, &gt_fields, &n_gt_fields);
+				if (ngt <= 0) vrb.error("No FORMAT/GT in the first record of region [" + region[f] + "] of the imputed file [" + festimated[f] + "], which is needed to read the ploidy of each sample.");
 				const int line_max_ploidy = ngt/n_esti_samples;
 				assert(line_max_ploidy==ploidy); //we do not allow missing data
 				int j=0;
@@ -267,7 +281,7 @@ void call_set::readData(std::vector < std::string > & ftruth, std::vector < std:
 					++j;
 				}
 				//assert(n_diploid > 0 && n_haploid > 0);
-				bcf_sr_seek (sr, NULL, 0);
+				bcf_destroy(line);
 
 				if (n_diploid == 0 && n_haploid == 0) vrb.error("No samples found.");
 				free(gt_fields);
@@ -278,10 +292,11 @@ void call_set::readData(std::vector < std::string > & ftruth, std::vector < std:
 				std::vector<int> ac_bin = {4,16,80,400,1000,2000,5000,10000,20000,50000,100000,200000,500000,1000000,2000000,5000000,10000000,20000000,50000000,100000000};
 				if (options.count("ac-bins")) ac_bin = options["ac-bins"].as < std::vector < int > > ();
 
-				int nset=0;
-				while (! bcf_sr_has_line(sr,2)) bcf_sr_next_line (sr);
+				bcf1_t * line = first_record_in_region(ffrequencies[f], region[f]);
+				if (!line) vrb.error("No record found in region [" + region[f] + "] of the frequency file [" + ffrequencies[f] + "], which is needed to read INFO/AN for --allele-counts/--ac-bins.");
 				int *itmp=NULL, mitmp=0, tret=0;
-				tret = bcf_get_info_int32(sr->readers[2].header, bcf_sr_get_line(sr,2), "AN", &itmp, &mitmp);
+				tret = bcf_get_info_int32(sr->readers[2].header, line, "AN", &itmp, &mitmp);
+				bcf_destroy(line);
 			    if ( tret==1 && itmp[0] > 0)
 			    {
 			    	int AN = itmp[0] / ploidy;
@@ -297,7 +312,6 @@ void call_set::readData(std::vector < std::string > & ftruth, std::vector < std:
 
 			    	L=bins.size()-1;
 			    } else vrb.error("ERROR reading AN field required for --allele-counts option");
-				bcf_sr_seek (sr, NULL, 0);
 				if (itmp) free(itmp);
 			}
 
