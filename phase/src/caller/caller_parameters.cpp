@@ -105,7 +105,7 @@ void caller::parse_command_line(std::vector < std::string > & args) {
 	try {
 		bpo::store(bpo::command_line_parser(args).options(descriptions).run(), options);
 		bpo::notify(options);
-	} catch ( const boost::program_options::error& e ) { std::cerr << "Error parsing command line arguments: " << std::string(e.what()) << std::endl; exit(0); }
+	} catch ( const boost::program_options::error& e ) { std::cerr << "Error parsing command line arguments: " << std::string(e.what()) << std::endl; exit(1); }
 
 	if (options.count("log") && !vrb.open_log(options["log"].as < std::string > ()))
 		vrb.error("Impossible to create log file [" + options["log"].as < std::string > () +"]");

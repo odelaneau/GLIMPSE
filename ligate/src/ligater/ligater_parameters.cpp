@@ -50,7 +50,7 @@ void ligater::parse_command_line(std::vector < std::string > & args) {
 	try {
 		bpo::store(bpo::command_line_parser(args).options(descriptions).run(), options);
 		bpo::notify(options);
-	} catch ( const boost::program_options::error& e ) { std::cerr << "Error parsing command line arguments: " << std::string(e.what()) << std::endl; exit(0); }
+	} catch ( const boost::program_options::error& e ) { std::cerr << "Error parsing command line arguments: " << std::string(e.what()) << std::endl; exit(1); }
 
 	vrb.title("[GLIMPSE2] Ligate multiple output files into chromosome-wide files");
 	vrb.bullet("Authors              : Simone RUBINACCI & Olivier DELANEAU, University of Lausanne");
