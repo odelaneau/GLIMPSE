@@ -82,6 +82,11 @@ void call_set::readData(std::vector < std::string > & ftruth, std::vector < std:
 	stats2D r2_variant;
 	output_file out_file_r2_sites("");
 
+	// The BCF per-site outputs are written with the frequency file's header, so they can only hold
+	// the records of a single --input line. The r2 text output covers every line.
+	if ((out_rej_sites || out_conc_sites || out_disc_sites) && ftruth.size() > 1)
+		vrb.error("--out-rej-sites, --out-conc-sites and --out-disc-sites support a single --input line, but " + stb.str(ftruth.size()) + " were given. Run one --input line at a time to get these outputs.");
+
 	for (int f = 0 ; f < ftruth.size() ; f ++)
 	{
 		vrb.title("Reading set of input files [" + stb.str(f+1) + "/" + stb.str(ftruth.size()) + "]");
@@ -452,7 +457,8 @@ void call_set::readData(std::vector < std::string > & ftruth, std::vector < std:
 		htsFile * out_fp_disc_sites = nullptr;
 		bcf_hdr_t * out_hdr_disc_sites = nullptr;
 
-		if (out_r2_per_site)
+		// Opened at the first line, once its inputs have been checked, and closed after the last.
+		if (out_r2_per_site && f == 0)
 		{
 			std::string out_filename_full = out_filename + "_r2_sites.txt.gz";
 			out_file_r2_sites.open(out_filename_full);
@@ -921,7 +927,6 @@ void call_set::readData(std::vector < std::string > & ftruth, std::vector < std:
 		bcf_hdr_destroy(hdr_estimated);
 		bcf_sr_destroy(sr);
 
-		if (out_r2_per_site) out_file_r2_sites.close();
 		if (out_rej_sites)
 		{
 			bcf_hdr_destroy(out_hdr_rej_sites);
@@ -984,6 +989,7 @@ void call_set::readData(std::vector < std::string > & ftruth, std::vector < std:
 		vrb.bullet("Error rate in this file = " + ra + "% [SNPs = " + rs + "%, indels = " + ri + "%)]");
 
 	}
+	if (out_r2_per_site) out_file_r2_sites.close();
 	free(truth_imap);
 	free(estimated_imap);
 	for (int i = 0; i < n_estimated_subset_names; i++) free(estimated_subset_names[i]);
