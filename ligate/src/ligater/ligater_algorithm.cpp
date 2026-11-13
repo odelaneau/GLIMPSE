@@ -87,6 +87,7 @@ void ligater::phase_update(bcf_hdr_t *hdr, bcf1_t *line, const bool uphalf)
 {
 	int nGTs = bcf_get_genotypes(hdr, line, &GTa, &mGTa);
 	if ( nGTs <= 0 ) return;    // GT field is not present
+	if ( nGTs != 2*bcf_hdr_nsamples(hdr) ) return;    // not diploid-width (e.g. all-haploid FPLOIDY=1): no phase to swap
 	for (auto i=0; i<bcf_hdr_nsamples(hdr); i++)
     {
 		if ( !swap_phase[uphalf][i] ) continue;
@@ -170,7 +171,10 @@ void ligater::scan_overlap(const int ifname, const char * seek_chr, int seek_pos
 		if ( nGTsa <= 0 || nGTsb <= 0 )
 			vrb.error("GT field is not present in overlap at position: " + std::to_string(line0->pos + 1));
 
-		update_distances();
+		// update_distances reads two alleles per sample. All-haploid chunks (FPLOIDY=1, e.g. male
+		// chrX non-PAR) have one allele per sample and no phase to align, so they are not compared;
+		// haploid samples in mixed-ploidy chunks are padded with vector_end and skipped per sample.
+		if ( nGTsa == 2*nsamples && nGTsb == 2*nsamples ) update_distances();
 		last_pos = line0->pos;
 		++n_sites_buff;
 		++n_sites_tot;
