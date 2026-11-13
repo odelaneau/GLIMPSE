@@ -542,7 +542,14 @@ void call_set::readData(std::vector < std::string > & ftruth, std::vector < std:
 					else ngp_e = bcf_get_format_float(hdr_estimated, line_e, "GP", &gp_arr_e, &ngp_arr_e);
 
 					long int n_validation_marker=0;
-					if ((naf_f==1)&&(npl_t%n_true_samples==0)&&(gt_target||((nds_e==n_esti_samples)&&(ngp_e%n_esti_samples==0)))&&((ndp_t==n_true_samples) || D==0))
+					// htslib returns a negative count when a field is missing (-1 % 1, -2 % 2, -3 % 1 and -3 % 3
+					// are all 0), so each count must be positive, and each sample's values must cover the
+					// indices read below: GT up to [ploidy-1], PL and GP up to [ploidy].
+					const bool truth_ok = npl_t > 0 && npl_t % n_true_samples == 0 && npl_t / n_true_samples >= (gt_validation ? ploidy : ploidyP1);
+					const bool esti_ok = ngt_e > 0 && ngt_e % n_esti_samples == 0 && ngt_e / n_esti_samples >= ploidy
+							&& (gt_target || (nds_e == n_esti_samples && ngp_e > 0 && ngp_e % n_esti_samples == 0 && ngp_e / n_esti_samples >= ploidyP1));
+					const bool dp_ok = ndp_t == n_true_samples || D == 0;
+					if (naf_f == 1 && truth_ok && esti_ok && dp_ok)
 					{
 						// Meta data for variant
 						const int ploidy_gt_e_record=ngt_e/n_esti_samples;
@@ -664,7 +671,9 @@ void call_set::readData(std::vector < std::string > & ftruth, std::vector < std:
 									{
 										if (use_gp_filter)
 										{
-											if ( (pl_arr_e[ploidy_e_record*i+0]==bcf_int32_missing || pl_arr_e[ploidy_e_record*i+1]==bcf_int32_missing || pl_arr_e[ploidy_e_record*i+ploidy]==bcf_int32_missing)
+											// A target record without FORMAT/PL (ngp_e = -3) or with too few values per sample.
+											if ( ploidy_e_record < ploidyP1
+													|| (pl_arr_e[ploidy_e_record*i+0]==bcf_int32_missing || pl_arr_e[ploidy_e_record*i+1]==bcf_int32_missing || pl_arr_e[ploidy_e_record*i+ploidy]==bcf_int32_missing)
 													|| (pl_arr_e[ploidy_e_record*i+0]==bcf_int32_vector_end || pl_arr_e[ploidy_e_record*i+1]==bcf_int32_vector_end || pl_arr_e[ploidy_e_record*i+ploidy]==bcf_int32_vector_end)
 													|| (pl_arr_e[ploidy_e_record*i+0]<0) || (pl_arr_e[ploidy_e_record*i+1]<0) || (pl_arr_e[ploidy_e_record*i+ploidy]<0))
 											{
@@ -694,7 +703,7 @@ void call_set::readData(std::vector < std::string > & ftruth, std::vector < std:
 									else
 									{
 
-										if (std::isnan( gp_arr_e[ploidy_e_record*i+0]) || std::isnan( gp_arr_e[ploidy_e_record*i+1]) || std::isnan( gp_arr_e[ploidy_e_record*i+2]))
+										if (std::isnan( gp_arr_e[ploidy_e_record*i+0]) || std::isnan( gp_arr_e[ploidy_e_record*i+1]) || std::isnan( gp_arr_e[ploidy_e_record*i+ploidy]))
 										{
 											if (!nan_printed)
 											{
@@ -931,7 +940,8 @@ void call_set::readData(std::vector < std::string > & ftruth, std::vector < std:
 		n_variants_all_chromosomes += nvariantvalall;
 		if (afnobin > 0) vrb.bullet("#variants discarded as no associated bin can be set (e.g. AF<=0 or AF>1 or no group) = " + stb.str(afnobin));
 		if (nvarianttot==0) vrb.error("No variant found in the intersection of files. Files are probably not aligned correctly. Please verify that chromosome names and regions are matching for the imputed, validation and allele frequency file.");
-		if (nvariantvalall==0) vrb.error("No usable validation variant has been found in the intersection of files. Verify that the validation file has FORMAT/PL and FORMAT/DP fields defined, the imputed file has FORMAT/DS and FORMAT/GP fields defined in the same region and the allele frequency file has the INFO/AF (or --af-tag) field defined at every marker.");
+		const std::string esti_fields = !gt_target ? "FORMAT/GT, FORMAT/DS and FORMAT/GP fields" : (use_gp_filter ? "FORMAT/GT and FORMAT/PL fields (PL for --min-tar-gp)" : "FORMAT/GT field");
+		if (nvariantvalall==0) vrb.error("No usable validation variant has been found in the intersection of files. Verify that the validation file has FORMAT/PL (FORMAT/GT with --gt-val) and FORMAT/DP fields defined, the imputed file has " + esti_fields + " defined in the same region and the allele frequency file has the INFO/AF (or --af-tag) field defined at every marker, and that the validation and imputed genotypes have the same ploidy.");
 
 		vrb.print("");
 		vrb.bullet("#variants in the overlap (biallelic SNPs and indels) = " + stb.str(nvarianttot));
