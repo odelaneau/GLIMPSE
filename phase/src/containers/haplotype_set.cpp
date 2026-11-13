@@ -240,6 +240,8 @@ void haplotype_set::allocatePBWT(const int _pbwt_depth, const float _pbwt_modulo
 		vrb.bullet("No PBWT allocated (Kpbwt=0 or Kpbwt >= n_ref_haps)");
 		return;
 	}
+	if (n_com_sites_hq == 0)
+		vrb.error("The imputation region has no high-quality common variants (SNPs with MAF >= the sparse MAF that do not share a position with the previous record) for the sparse PBWT selection to use. Use a larger region.");
 
 	pbwt_array_A = std::vector < int > (n_ref_haps);
 	pbwt_array_B = std::vector < int > (n_ref_haps);
@@ -301,7 +303,7 @@ void haplotype_set::allocatePBWT(const int _pbwt_depth, const float _pbwt_modulo
 		}
 		++l_hq;
 	}
-	if  (pbwt_grp.back() < n_com_sites_hq) pbwt_grp.push_back(n_com_sites_hq);
+	if  (pbwt_grp.empty() || pbwt_grp.back() < n_com_sites_hq) pbwt_grp.push_back(n_com_sites_hq);
 	nstored = pbwt_grp.size();
 
 	K=pbwt_depth;
