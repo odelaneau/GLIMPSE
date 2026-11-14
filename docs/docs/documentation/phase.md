@@ -70,6 +70,7 @@ GLIMPSE2_phase --bam-list bams_1.0x.txt --reference binary_reference_panel_chr20
 | \-\-min-gl          | FLOAT   | 1e-10     | **Expert setting.** Minimim haploid likelihood |
 | \-\-err-imp         | FLOAT   | 1e-12     | **Expert setting.** Imputation HMM error rate |
 | \-\-err-phase       | FLOAT   | 1e-4      | **Expert setting.** Phasing HMM error rate |
+| \-\-hmm-checkpoint-block | INT | 64        | **Expert setting.** Keep the imputation HMM's forward probabilities only every N sites and recompute the rest when needed, which greatly reduces memory; output is unchanged. 0 (or any value at least the number of sites) keeps every site, using much more memory but avoiding the recomputation. |
 
 #### Selection parameters
 
