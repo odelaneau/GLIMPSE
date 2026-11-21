@@ -42,7 +42,7 @@ using aligned_vector32 = std::vector<T, boost::alignment::aligned_allocator < T,
 #define VAR_PEAK_HOM -1
 #define VAR_FLAT_HET -2
 
-#define ALLELE(hap , pos) ((hap) & (1<<(pos)))
+#define ALLELE(hap , pos) (((hap) & (1<<(pos)))>>(pos))
 
 inline
 float horizontal_add (const __m256& a) //@simo: implemented horizontal add with instructions in the 4B minimum
