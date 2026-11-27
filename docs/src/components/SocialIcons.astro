@@ -1,0 +1,38 @@
+---
+import Default from '@astrojs/starlight/components/SocialIcons.astro';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const links = [
+	{ label: 'Install', href: `${base}/install/` },
+	{ label: 'Tutorial', href: `${base}/tutorial/getting-started/` },
+	{ label: 'Documentation', href: `${base}/tools/` },
+	{ label: 'Changelog', href: `${base}/changelog/` },
+];
+---
+
+<nav class="top-links" aria-label="Main">
+	{links.map((l) => <a href={l.href}>{l.label}</a>)}
+</nav>
+<Default {...Astro.props}><slot /></Default>
+
+<style>
+	.top-links {
+		display: none;
+		gap: 1.5rem;
+		margin-inline-end: 0.5rem;
+	}
+	.top-links a {
+		color: var(--sl-color-gray-2);
+		font-size: var(--sl-text-sm);
+		font-weight: 500;
+		text-decoration: none;
+	}
+	.top-links a:hover {
+		color: var(--sl-color-white);
+	}
+	@media (min-width: 50rem) {
+		.top-links {
+			display: flex;
+		}
+	}
+</style>

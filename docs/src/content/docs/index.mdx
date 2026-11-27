@@ -1,0 +1,97 @@
+---
+title: GLIMPSE2
+description: Phasing and imputation of low-coverage whole-genome sequencing data.
+template: splash
+head:
+  - tag: title
+    content: GLIMPSE2 | Low-coverage phasing and imputation
+hero:
+  tagline: Phasing and imputation of low-coverage whole-genome sequencing data, designed for reference panels with hundreds of thousands of samples.
+  image:
+    html: '<img class="glimpse-logo" src="/GLIMPSE/glimpse_logo.png" alt="GLIMPSE2 logo" />'
+  actions:
+    - text: Install
+      link: install/
+      icon: download
+    - text: Tutorial
+      link: tutorial/getting-started/
+      variant: secondary
+      icon: right-arrow
+    - text: Documentation
+      link: tools/
+      variant: secondary
+      icon: open-book
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+GLIMPSE2 builds on the [GLIMPSE model](https://www.nature.com/articles/s41588-020-00756-0) and puts the emphasis on rare variants. It takes a reference panel and low-coverage BAM/CRAM files, or genotype likelihoods, and returns phased and imputed genotypes. A chromosome is cut into chunks that are processed independently, and `phase`, the only expensive step, runs on all of them in parallel.
+
+## How it works
+
+```bash
+# 1. Cut the chromosome into imputation chunks
+GLIMPSE2_chunk --input panel.sites.vcf.gz --region chr22 \
+  --map chr22.b38.gmap.gz --output chunks.txt
+
+# 2. Convert the reference panel to the binary format, once per chunk.
+#    This is done once per panel, and works for any sample.
+GLIMPSE2_split_reference --reference panel.bcf --map chr22.b38.gmap.gz \
+  --input-region $IRG --output-region $ORG --output panel/chr22
+
+# 3. Impute and phase, once per chunk, in parallel
+GLIMPSE2_phase --bam-file sample.bam \
+  --reference panel/chr22_${CHR}_${START}_${END}.bin \
+  --output imputed/chunk.bcf
+
+# 4. Ligate the chunks into a chromosome
+GLIMPSE2_ligate --input chunks.list.txt --output chr22.imputed.bcf
+```
+
+The [tutorial](tutorial/getting-started/) goes through each step with a 1x NA12878 sample and the 1000 Genomes reference panel.
+
+## Tools
+
+<CardGrid>
+	<LinkCard title="chunk" description="Define imputation regions along a chromosome." href="tools/chunk/" />
+	<LinkCard title="split_reference" description="Convert a reference panel to the binary format." href="tools/split_reference/" />
+	<LinkCard title="phase" description="Impute and phase from reads or genotype likelihoods." href="tools/phase/" />
+	<LinkCard title="ligate" description="Join chunks into a chromosome-wide file." href="tools/ligate/" />
+	<LinkCard title="concordance" description="Genotyping and switch error rates against truth data." href="tools/concordance/" />
+	<LinkCard title="inspect" description="Summarise a binary reference panel." href="tools/inspect/" />
+</CardGrid>
+
+## What's new in 2.1
+
+- **Faster, with less memory.** In our benchmarks `phase` is about 1.5 to 5 times faster and uses 2 to 5 times less memory than 2.0.1, depending on the panel and the input.
+- **ARM64.** GLIMPSE2 now builds and runs natively on Linux aarch64 and on Apple silicon.
+- **`inspect`**, a new tool to summarise a binary reference panel.
+- **Checkpoints** in `phase`, so a preempted cloud job can resume.
+- **Bug fixes.** Several of them change the output, so read [what changed](changelog/#changes-to-output) before comparing against results from 2.0.1.
+
+The [changelog](changelog/) has the details and the benchmarks.
+
+## GLIMPSE1 or GLIMPSE2?
+
+For most applications, use GLIMPSE2. It is faster, handles much larger reference panels, and is the version we maintain.
+
+[GLIMPSE1](glimpse1/index.html) has not been updated for a while, and we would not recommend it in general. It is only worth a look for its joint model, which helps with many samples at higher coverage (above 0.5x) and small reference panels, and which GLIMPSE2 does not have: GLIMPSE2 imputes from a reference panel only.
+
+## Related software
+
+GLIMPSE is part of a family of methods from the same group.
+
+- [SHAPEIT5](https://odelaneau.github.io/shapeit5/) phases large sequencing cohorts, with a focus on rare variants. Use it to build the phased reference panel that GLIMPSE2 imputes from.
+- [IMPUTE5](https://jmarchini.org/software/) imputes SNP array data against large reference panels.
+
+## Citation
+
+If you use GLIMPSE2, please cite:
+
+> Rubinacci S, Hofmeister RJ, Sousa da Mota B, Delaneau O. **Imputation of low-coverage sequencing data from 150,119 UK Biobank genomes.** *Nature Genetics* 55, 1088–1090 (2023). [doi:10.1038/s41588-023-01438-3](https://doi.org/10.1038/s41588-023-01438-3)
+
+and the original method:
+
+> Rubinacci S, Ribeiro DM, Hofmeister RJ, Delaneau O. **Efficient phasing and imputation of low-coverage sequencing data using large reference panels.** *Nature Genetics* 53, 120–126 (2021). [doi:10.1038/s41588-020-00756-0](https://doi.org/10.1038/s41588-020-00756-0)
+
+GLIMPSE is developed by Simone Rubinacci and Olivier Delaneau and distributed under the [MIT license](https://github.com/odelaneau/GLIMPSE/blob/master/LICENSE). Bug reports and pull requests are welcome on [GitHub](https://github.com/odelaneau/GLIMPSE/issues).

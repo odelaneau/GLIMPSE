@@ -105,3 +105,8 @@ tutorial/GLIMPSE_concordance/
 tutorial/bin/
 
 3rd_party/
+
+# Starlight docs
+docs/dist/
+docs/.astro/
+docs/node_modules/

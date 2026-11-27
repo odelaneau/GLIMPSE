@@ -1,0 +1,26 @@
+:root {
+	/* dark theme (Starlight default): low = dark tint, high = light tint */
+	--sl-color-accent-low: #0d2b5e;
+	--sl-color-accent: #2a7fff;
+	--sl-color-accent-high: #a9c8ff;
+}
+:root[data-theme='light'] {
+	--sl-color-accent-low: #d7e6ff;
+	--sl-color-accent: #1a63d6;
+	--sl-color-accent-high: #0b3d8f;
+}
+:root {
+	--sl-font-system-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+}
+/* wide option tables: let them scroll rather than squash */
+.sl-markdown-content table { display: block; overflow-x: auto; }
+.pipeline li { margin-bottom: 0.4rem; }
+.sl-markdown-content td:first-child { white-space: nowrap; }
+
+.hero { padding-block: 2rem 0; }
+
+/* a little wider than the default 45rem */
+:root { --sl-content-width: 52rem; }
+/* the logo has black strokes: keep it legible on dark backgrounds */
+:root[data-theme='dark'] .glimpse-logo { background: #fff; }
+.glimpse-logo { width: 100%; max-width: 34rem; height: auto; border-radius: 12px; }
