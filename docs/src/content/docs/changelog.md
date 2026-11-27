@@ -24,7 +24,7 @@ GLIMPSE2 2.1 imputes substantially faster and with much less memory than 2.0.1 (
 
 For example, one sample against the 150,000-haplotype panel took 83 s and 2.4 GB of memory with v2.0.1, and 16 s and 1.1 GB with 2.1, on x86-64. Memory is peak resident memory. Each figure is the median of two runs on AWS m8a (AMD EPYC, g++ 13) or m8g (Graviton4, clang 23). v2.0.1 does not build on ARM64, so the ARM64 baseline is v2.0.1 plus the changes needed to build there.
 
-The gains come from improvements in the state selection and in the imputation HMM. None of them changes the output.
+The gains come from a faster sparse-PBWT state selection (which dominates run time on large panels), faster construction of the conditioning states and HMM inner loops, and an imputation HMM that keeps only every 64th forward row and recomputes the rest (`--hmm-checkpoint-block`). None of these changes alters output.
 
 ### New
 
