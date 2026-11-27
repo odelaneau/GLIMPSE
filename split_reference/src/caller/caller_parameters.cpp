@@ -66,6 +66,7 @@ void caller::parse_command_line(std::vector < std::string > & args) {
 	vrb.bullet("Version       	 : GLIMPSE2_split_reference v" + std::string(LIGATE_VERSION) + " / commit = " + std::string(__COMMIT_ID__) + " / release = " + std::string (__COMMIT_DATE__));
 	vrb.bullet("Citation	         : Nature Genetics 55, 1088-1090 (2023). DOI: https://doi.org/10.1038/s41588-023-01438-3");
 	vrb.bullet("        	         : Nature Genetics 53, 120–126 (2021). DOI: https://doi.org/10.1038/s41588-020-00756-0");
+	vrb.bullet("Libraries            : " + library_versions());
 	vrb.bullet("Run date      	 : " + tac.date());
 
 	if (options.count("help")) { std::cout << descriptions << std::endl; std::exit(0); }
