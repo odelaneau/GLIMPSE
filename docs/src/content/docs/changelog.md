@@ -17,6 +17,7 @@ GLIMPSE2 2.1 imputes substantially faster and with much less memory than 2.0.1, 
 * GLIMPSE2_phase: **retries transient read errors** (with exponential backoff) when reading BAM/CRAM, `--input-gl` and binary reference files, e.g. when streaming from cloud storage, and stops with an error if a BAM/CRAM cannot be read to the end instead of imputing from the part it read. GLIMPSE2_ligate and GLIMPSE2_concordance now report read errors instead of stopping early without one.
 * GLIMPSE2_phase: `--hmm-checkpoint-block` (default 64) sets the memory/recomputation trade-off of the imputation HMM; 0 stores every forward row, as 2.0.1 did.
 * `--compression-level` for the VCF/BCF output of GLIMPSE2_phase, GLIMPSE2_ligate, GLIMPSE2_concordance and GLIMPSE2_inspect.
+* The log banner of every tool shows the HTSlib and Boost versions it uses. This helps when a binary reference panel (`.bin`) cannot be read: panels written with Boost 1.84 or newer cannot be read by Boost 1.83 or older.
 * `-T` as a short form of `--threads` in every tool, and `-I` for `GLIMPSE2_ligate --input`.
 * GLIMPSE2_ligate: the input chunks no longer need to be listed in order; they are sorted by contig and position.
 * GLIMPSE2_concordance: an optional second column in the `--samples` file names the validation sample an imputed sample is compared with, so one truth sample can score several imputed copies (e.g. the same sample at different coverages).
