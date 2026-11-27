@@ -106,7 +106,7 @@ If you use GLIMPSE2, please cite:
 
 GLIMPSE is developed and maintained by Simone Rubinacci (University of Helsinki) and Olivier Delaneau (Regeneron).
 
-We thank Tim Fennell and Fulcrum Genomics for the performance, memory, build and Docker work in 2.1, and Chris Kachulis and Michael Gatzen (Broad Institute) for cloud-computing support (checkpointing and retries) and bug fixes.
+We thank Tim Fennell and Fulcrum Genomics for the performance, memory, build and Docker work in 2.1, and Chris Kachulis and Michael Gatzen (Broad Institute) for improving cloud-computing support (checkpointing and retries) and bug fixes.
 
 ### License
 

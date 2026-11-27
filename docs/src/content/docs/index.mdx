@@ -25,30 +25,32 @@ hero:
 
 import { CardGrid, LinkCard } from '@astrojs/starlight/components';
 
-GLIMPSE2 builds on the [GLIMPSE model](https://www.nature.com/articles/s41588-020-00756-0) and puts the emphasis on rare variants. It takes a reference panel and low-coverage BAM/CRAM files, or genotype likelihoods, and returns phased and imputed genotypes. A chromosome is cut into chunks that are processed independently, and `phase`, the only expensive step, runs on all of them in parallel.
+## What is GLIMPSE2?
+
+GLIMPSE2 phases and imputes genotypes from low-coverage whole-genome sequencing, using a reference panel of phased haplotypes. It builds on the [GLIMPSE model](https://www.nature.com/articles/s41588-020-00756-0), with an emphasis on rare variants and on reference panels with hundreds of thousands of samples.
+
+- **Input:** low-coverage BAM/CRAM files or genotype likelihoods, and a phased reference panel.
+- **Output:** phased and imputed genotypes for every sample.
+- **Scale:** the chromosome is cut into chunks that are processed independently, so the one expensive step, `phase`, runs on all of them in parallel.
 
 ## How it works
 
-```bash
-# 1. Cut the chromosome into imputation chunks
-GLIMPSE2_chunk --input panel.sites.vcf.gz --region chr22 \
-  --map chr22.b38.gmap.gz --output chunks.txt
+<div class="pipeline">
+  <div class="step"><b>1 · chunk</b><span>Cut the chromosome into chunks</span></div>
+  <div class="arrow">→</div>
+  <div class="group">
+    <div class="row">
+      <div class="step"><b>2 · split_reference</b><span>Prepare the reference panel for the chunk</span></div>
+      <div class="arrow">→</div>
+      <div class="step"><b>3 · phase</b><span>Impute and phase your samples</span></div>
+    </div>
+    <div class="label">for each chunk, in parallel</div>
+  </div>
+  <div class="arrow">→</div>
+  <div class="step"><b>4 · ligate</b><span>Join the chunks into a chromosome</span></div>
+</div>
 
-# 2. Convert the reference panel to the binary format, once per chunk.
-#    This is done once per panel, and works for any sample.
-GLIMPSE2_split_reference --reference panel.bcf --map chr22.b38.gmap.gz \
-  --input-region $IRG --output-region $ORG --output panel/chr22
-
-# 3. Impute and phase, once per chunk, in parallel
-GLIMPSE2_phase --bam-file sample.bam \
-  --reference panel/chr22_${CHR}_${START}_${END}.bin \
-  --output imputed/chunk.bcf
-
-# 4. Ligate the chunks into a chromosome
-GLIMPSE2_ligate --input chunks.list.txt --output chr22.imputed.bcf
-```
-
-The [tutorial](tutorial/getting-started/) goes through each step with a 1x NA12878 sample and the 1000 Genomes reference panel.
+Step 2 is done once per reference panel and reused for any sample. The [tutorial](tutorial/getting-started/) runs every step on a 1x NA12878 sample and the 1000 Genomes reference panel.
 
 ## Tools
 
@@ -98,6 +100,6 @@ and the original method:
 
 GLIMPSE is developed and maintained by Simone Rubinacci (University of Helsinki) and Olivier Delaneau (Regeneron).
 
-We thank Tim Fennell and Fulcrum Genomics for the performance, memory, build and Docker work in 2.1, and Chris Kachulis and Michael Gatzen (Broad Institute) for cloud-computing support (checkpointing and retries) and bug fixes.
+We thank Tim Fennell and Fulcrum Genomics for the performance, memory, build and Docker work in 2.1, and Chris Kachulis and Michael Gatzen (Broad Institute) for improving cloud-computing support (checkpointing and retries) and bug fixes.
 
 GLIMPSE is distributed under the [MIT license](https://github.com/odelaneau/GLIMPSE/blob/master/LICENSE). Bug reports and pull requests are welcome on [GitHub](https://github.com/odelaneau/GLIMPSE/issues).
