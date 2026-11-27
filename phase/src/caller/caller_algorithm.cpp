@@ -28,6 +28,9 @@
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/archive/binary_iarchive.hpp>
 #include <filesystem>
+#ifdef __GLIBC__
+#include <malloc.h>
+#endif
 
 const std::string stage_names[3] = {"Init", "Burn-in", "Main"};
 
@@ -94,6 +97,15 @@ void caller::phase_iteration() {
 		H.updateHaplotypes(G);
 		H.transposeRareTar();
 		H.matchHapsFromCompressedPBWTSmall(V, current_stage == STAGE_MAIN);
+	}
+	//SvarRef is only read to build the sparse PBWT and by the initial state selection, so free it once, before the
+	//first per-sample work. glibc keeps freed heap memory resident; malloc_trim returns it, and what loading the panel freed.
+	if (!H.SvarRef.empty()) {
+		H.SvarRef.clear();
+		H.SvarRef.shrink_to_fit();
+#ifdef __GLIBC__
+		malloc_trim(0);
+#endif
 	}
 
 	tac.clock();
