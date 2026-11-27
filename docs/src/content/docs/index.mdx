@@ -1,0 +1,156 @@
+---
+title: GLIMPSE2
+description: Phasing and imputation of low-coverage whole-genome sequencing data.
+template: splash
+head:
+  - tag: title
+    content: GLIMPSE2 | Low-coverage phasing and imputation
+hero:
+  tagline: Phasing and imputation of low-coverage whole-genome sequencing data, designed for reference panels with hundreds of thousands of samples.
+  image:
+    html: '<img class="glimpse-logo" src="/GLIMPSE/glimpse_logo.png" alt="GLIMPSE2 logo" />'
+  actions:
+    - text: Install
+      link: install/
+      icon: download
+    - text: Tutorial
+      link: tutorial/getting-started/
+      variant: secondary
+      icon: right-arrow
+    - text: Documentation
+      link: tools/
+      variant: secondary
+      icon: open-book
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## What is GLIMPSE2?
+
+GLIMPSE2 phases and imputes genotypes from low-coverage whole-genome sequencing, using a reference panel of phased haplotypes. It builds on the [GLIMPSE model](https://www.nature.com/articles/s41588-020-00756-0), with an emphasis on rare variants and on reference panels with hundreds of thousands of samples.
+
+- **Input:** low-coverage BAM/CRAM files or genotype likelihoods, and a phased reference panel.
+- **Output:** phased and imputed genotypes for every sample.
+- **Scale:** the chromosome is cut into chunks that are processed independently, so the one expensive step, `phase`, runs on all of them in parallel.
+
+## How it works
+
+<div class="dia">
+<svg class="dia-wide" viewBox="0 0 900 310" role="img" aria-label="chunk and the optional split_reference both feed phase, which is run for each new set of targets, once per chunk, in parallel; phase feeds ligate">
+  <rect class="box" x="10" y="10" width="240" height="90" rx="12"/>
+  <text class="t" x="30" y="42">1 · chunk</text>
+  <text class="d" x="30" y="66">Cut the chromosome</text>
+  <text class="d" x="30" y="84">into chunks</text>
+
+  <rect class="box opt" x="10" y="190" width="240" height="112" rx="12"/>
+  <text class="t" x="30" y="220">2 · split_reference</text>
+  <text class="d" x="30" y="244">Convert the panel to the</text>
+  <text class="d" x="30" y="262">binary format</text>
+  <text class="n" x="30" y="288">optional · once per panel</text>
+
+  <path class="ln" d="M130 100 V176"/><polygon class="ah" points="122,174 138,174 130,188"/>
+  <path class="ln" d="M250 55 H300 V147"/>
+  <path class="ln" d="M250 240 H300 V147"/>
+  <path class="ln" d="M300 147 H336"/><polygon class="ah" points="334,139 334,155 348,147"/>
+
+  <rect class="stack" x="370" y="57" width="230" height="30" rx="12"/>
+  <rect class="stack" x="360" y="67" width="250" height="30" rx="12"/>
+  <rect class="box ph" x="350" y="77" width="270" height="140" rx="12"/>
+  <text class="t big" x="372" y="112">3 · phase</text>
+  <text class="d" x="372" y="138">Impute and phase your samples</text>
+  <rect class="pill" x="372" y="154" width="226" height="26" rx="13"/>
+  <text class="pt" x="485" y="172">run for each new set of targets</text>
+  <text class="n" x="372" y="204">once per chunk, in parallel</text>
+
+  <path class="ln" d="M620 147 H696"/><polygon class="ah" points="694,139 694,155 708,147"/>
+
+  <rect class="box" x="710" y="102" width="180" height="90" rx="12"/>
+  <text class="t" x="730" y="134">4 · ligate</text>
+  <text class="d" x="730" y="158">Join the chunks into</text>
+  <text class="d" x="730" y="176">a chromosome</text>
+</svg>
+<svg class="dia-tall" viewBox="0 0 360 474" role="img" aria-label="chunk and the optional split_reference both feed phase, which is run for each new set of targets, once per chunk, in parallel; phase feeds ligate">
+  <rect class="box" x="10" y="10" width="140" height="90" rx="12"/>
+  <text class="t" x="24" y="42">1 · chunk</text>
+  <text class="d" x="24" y="68">Cut into chunks</text>
+
+  <rect class="box opt" x="180" y="10" width="170" height="90" rx="12"/>
+  <text class="t sm" x="194" y="38">2 · split_reference</text>
+  <text class="d" x="194" y="60">Binary panel format</text>
+  <text class="n sm" x="194" y="84">optional · once per panel</text>
+
+  <path class="ln" d="M150 55 H166"/><polygon class="ah" points="164,48 164,62 178,55"/>
+  <path class="ln" d="M80 100 V140 H180"/>
+  <path class="ln" d="M265 100 V140 H180"/>
+  <path class="ln" d="M180 140 V176"/><polygon class="ah" points="172,174 188,174 180,188"/>
+
+  <rect class="stack" x="60" y="182" width="240" height="16" rx="10"/>
+  <rect class="stack" x="50" y="192" width="260" height="16" rx="10"/>
+  <rect class="box ph" x="40" y="200" width="280" height="130" rx="12"/>
+  <text class="t big" x="60" y="232">3 · phase</text>
+  <text class="d" x="60" y="256">Impute and phase your samples</text>
+  <rect class="pill" x="60" y="268" width="240" height="26" rx="13"/>
+  <text class="pt" x="180" y="286">run for each new set of targets</text>
+  <text class="n" x="60" y="316">once per chunk, in parallel</text>
+
+  <path class="ln" d="M180 330 V366"/><polygon class="ah" points="172,364 188,364 180,378"/>
+  <rect class="box" x="70" y="382" width="220" height="82" rx="12"/>
+  <text class="t" x="90" y="410">4 · ligate</text>
+  <text class="d" x="90" y="434">Join the chunks into</text>
+  <text class="d" x="90" y="452">a chromosome</text>
+</svg>
+</div>
+
+Step 2 is optional: `phase` also reads a VCF/BCF reference panel directly, but the binary format gives major speedups on large panels. It is done once per panel and reused for any sample. The [tutorial](tutorial/getting-started/) runs every step on a 1x NA12878 sample and the 1000 Genomes reference panel.
+
+## Tools
+
+<CardGrid>
+	<LinkCard title="chunk" description="Define imputation regions along a chromosome." href="tools/chunk/" />
+	<LinkCard title="split_reference" description="Convert a reference panel to the binary format." href="tools/split_reference/" />
+	<LinkCard title="phase" description="Impute and phase from reads or genotype likelihoods." href="tools/phase/" />
+	<LinkCard title="ligate" description="Join chunks into a chromosome-wide file." href="tools/ligate/" />
+	<LinkCard title="concordance" description="Genotyping and switch error rates against truth data." href="tools/concordance/" />
+	<LinkCard title="inspect" description="Summarise a binary reference panel." href="tools/inspect/" />
+</CardGrid>
+
+## What's new in 2.1
+
+- **Faster, with less memory.** In our benchmarks `phase` is about 1.5 to 5 times faster and uses 2 to 5 times less memory than 2.0.1, depending on the panel and the input.
+- **ARM64.** GLIMPSE2 now builds and runs natively on Linux aarch64 and on Apple silicon.
+- **`inspect`**, a new tool to summarise a binary reference panel.
+- **Checkpoints** in `phase`, so a preempted cloud job can resume.
+- **Bug fixes.** Several of them change the output, so read [what changed](changelog/#changes-to-output) before comparing against results from 2.0.1.
+
+The [changelog](changelog/) has the full list of changes.
+
+## GLIMPSE1 or GLIMPSE2?
+
+For most applications, use GLIMPSE2. It is faster, handles much larger reference panels, and is the version we maintain.
+
+[GLIMPSE1](glimpse1/index.html) has not been updated for a while, and we would not recommend it in general. It is only worth a look for its joint model, which helps with many samples at higher coverage (above 0.5x) and small reference panels, and which GLIMPSE2 does not have: GLIMPSE2 imputes from a reference panel only.
+
+## Related software
+
+GLIMPSE is part of a family of methods from the same group.
+
+- [SHAPEIT5](https://odelaneau.github.io/shapeit5/) phases large sequencing cohorts, with a focus on rare variants. Use it to build the phased reference panel that GLIMPSE2 imputes from.
+- [IMPUTE5](https://jmarchini.org/software/) imputes SNP array data against large reference panels.
+
+## Citation
+
+If you use GLIMPSE2, please cite:
+
+> Rubinacci S, Hofmeister RJ, Sousa da Mota B, Delaneau O. **Imputation of low-coverage sequencing data from 150,119 UK Biobank genomes.** *Nature Genetics* 55, 1088–1090 (2023). [doi:10.1038/s41588-023-01438-3](https://doi.org/10.1038/s41588-023-01438-3)
+
+and the original method:
+
+> Rubinacci S, Ribeiro DM, Hofmeister RJ, Delaneau O. **Efficient phasing and imputation of low-coverage sequencing data using large reference panels.** *Nature Genetics* 53, 120–126 (2021). [doi:10.1038/s41588-020-00756-0](https://doi.org/10.1038/s41588-020-00756-0)
+
+## Acknowledgements
+
+GLIMPSE is developed and maintained by Simone Rubinacci (University of Helsinki) and Olivier Delaneau (Regeneron).
+
+We thank Tim Fennell and Fulcrum Genomics for the performance, memory, build and Docker work in 2.1, and Chris Kachulis and Michael Gatzen (Broad Institute) for improving cloud-computing support (checkpointing and retries) and bug fixes.
+
+GLIMPSE is distributed under the [MIT license](https://github.com/odelaneau/GLIMPSE/blob/master/LICENSE). Bug reports and pull requests are welcome on [GitHub](https://github.com/odelaneau/GLIMPSE/issues).

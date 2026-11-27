@@ -1,0 +1,112 @@
+---
+title: "Build from source"
+description: "Compile the GLIMPSE2 tools on Linux or macOS."
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+GLIMPSE2 builds on Linux (x86_64 and aarch64) and on macOS with Apple silicon. On a standard system it takes three steps: install the libraries, clone the repository, run `make system`.
+
+## What you need
+
+- **A C++17 compiler**: GCC 8 or newer, or a recent Clang. On aarch64 use Clang, which makes `GLIMPSE2_phase` about twice as fast there (see [Choosing the compiler](#choosing-the-compiler)).
+- **On x86_64, a CPU with AVX2 and FMA** to run `GLIMPSE2_phase`. On Linux, `grep -ow -e avx2 -e fma /proc/cpuinfo | sort -u` should print both.
+- **Libraries:**
+  - [HTSlib](https://github.com/samtools/htslib) 1.7 or newer. Avoid 1.22 and 1.23, with which `GLIMPSE2_concordance` can crash.
+  - [Boost](https://www.boost.org) 1.65 or newer: `iostreams`, `program_options` and `serialization`, as static libraries.
+  - libdeflate, zlib, bzip2, xz (liblzma), libcurl and OpenSSL.
+- [SIMDe](https://github.com/simd-everywhere/simde) is bundled as a git submodule, so there is nothing to install.
+
+:::caution[Boost and shared reference panels]
+Binary reference panels (`.bin`) are Boost serialization archives, and Boost 1.83 or older cannot read panels written with 1.84 or newer. Many distributions still ship an older Boost, for example Ubuntu 24.04 with 1.83. If you need to exchange panels with the [Docker image](../docker/), Bioconda or other recent builds, use Boost 1.84 or newer. [Building the dependencies yourself](../dependencies/) is the easiest way to get it.
+:::
+
+## 1. Install the libraries
+
+<Tabs syncKey="os">
+  <TabItem label="Debian / Ubuntu">
+    ```bash
+    sudo apt install build-essential git pkg-config libhts-dev libhtscodecs-dev \
+      libboost-iostreams-dev libboost-program-options-dev libboost-serialization-dev \
+      libdeflate-dev zlib1g-dev libbz2-dev liblzma-dev libcurl4-openssl-dev libssl-dev
+    ```
+    On aarch64, add `clang`.
+  </TabItem>
+  <TabItem label="Fedora / RHEL / Rocky">
+    ```bash
+    sudo dnf install gcc-c++ make git pkg-config htslib-devel boost-devel boost-static \
+      libdeflate-devel zlib-devel bzip2-devel xz-devel libcurl-devel openssl-devel
+    ```
+    On aarch64, add `clang`. Some Fedora-based systems, Amazon Linux for example, don't package `htslib-devel` or `libdeflate-devel`. In that case, [build the dependencies yourself](../dependencies/).
+  </TabItem>
+  <TabItem label="macOS">
+    Install the Xcode command line tools, which include Clang, and then the libraries with [Homebrew](https://brew.sh):
+
+    ```bash
+    xcode-select --install
+    brew install htslib boost libdeflate
+    ```
+  </TabItem>
+</Tabs>
+
+## 2. Get the code
+
+```bash
+git clone --recursive https://github.com/odelaneau/GLIMPSE.git
+cd GLIMPSE
+```
+
+`--recursive` fetches the SIMDe submodule. If you cloned without it, run `git submodule update --init`.
+
+## 3. Build
+
+```bash
+make system
+```
+
+This builds all six tools. Each binary is written to the `bin/` folder of its tool, for example `phase/bin/GLIMPSE2_phase`. Check that it runs:
+
+```bash
+phase/bin/GLIMPSE2_phase --help
+```
+
+`make system` finds the libraries on its own. It searches the standard locations on Linux and macOS Homebrew, and uses `pkg-config` for HTSlib if it is installed. To build one tool only, run `make system` inside its folder, for example `cd phase && make system`.
+
+## Choosing the compiler
+
+The default compiler is `g++` on x86_64 Linux and `clang++` on macOS and on aarch64 Linux. On aarch64, Clang matters: the `GLIMPSE2_phase` kernels are written with x86 AVX2 instructions that SIMDe translates to NEON, and Clang compiles that code much faster than GCC. On AWS Graviton4, `GLIMPSE2_phase` built with Clang 18 ran its HMM iterations about 2.5 times faster than with GCC 13, and Clang 23 was another 18% faster, so use the newest Clang you can. If there is no `clang++`, the build falls back to `g++` and warns you.
+
+To pick a compiler yourself, set `CXX`. A versioned package such as `clang-18` installs only `clang++-18`, so name it explicitly:
+
+```bash
+make system CXX=clang++-18
+```
+
+## If the build can't find a library
+
+Point `make` at the right directories:
+
+```bash
+make system SYS_HTSLIB_INC=/path/to/include SYS_HTSLIB_LIBDIR=/path/to/lib \
+  SYS_BOOST_INC=/path/to/include SYS_BOOST_LIB=/path/to/lib
+```
+
+| Variable | What it points to |
+|:---------|:------------------|
+| `SYS_HTSLIB_INC` | The directory that contains `htslib/hts.h`. |
+| `SYS_HTSLIB_LIBDIR` | The directory that contains `libhts.a` (or `libhts.so`). |
+| `SYS_BOOST_INC` | The directory that contains `boost/`. |
+| `SYS_BOOST_LIB` | The directory that contains `libboost_iostreams.a`, `libboost_program_options.a` and `libboost_serialization.a`. |
+
+All the build settings live in `common.mk` at the root of the repository, shared by every tool, so a change there applies everywhere.
+
+## The repository
+
+| Folder | Contents |
+|:-------|:---------|
+| `chunk`, `split_reference`, `phase`, `ligate`, `concordance`, `inspect` | The six tools. Each has `src/`, `obj/` and `bin/`, and a `makefile` that includes the shared `../common.mk`. |
+| `common` | Source files used by several tools. |
+| `maps` | Genetic maps for b37 and b38. |
+| `tutorial` | The data and scripts used by the [tutorial](../../tutorial/getting-started/). |
+| `Dockerfile` | Builds the [Docker image](../docker/). |
+| `versions` | The version number. |

@@ -1,0 +1,49 @@
+:root {
+	/* dark theme (Starlight default): low = dark tint, high = light tint */
+	--sl-color-accent-low: #0d2b5e;
+	--sl-color-accent: #2a7fff;
+	--sl-color-accent-high: #a9c8ff;
+}
+:root[data-theme='light'] {
+	--sl-color-accent-low: #d7e6ff;
+	--sl-color-accent: #1a63d6;
+	--sl-color-accent-high: #0b3d8f;
+}
+:root {
+	--sl-font-system-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+}
+/* wide option tables: let them scroll rather than squash */
+.sl-markdown-content table { display: block; overflow-x: auto; }
+.pipeline li { margin-bottom: 0.4rem; }
+.sl-markdown-content td:first-child { white-space: nowrap; }
+
+.hero { padding-block: 2rem 0; }
+
+/* a little wider than the default 45rem */
+:root { --sl-content-width: 52rem; }
+/* the logo has black strokes: keep it legible on dark backgrounds */
+:root[data-theme='dark'] .glimpse-logo { background: #fff; }
+.glimpse-logo { width: 100%; max-width: 34rem; height: auto; border-radius: 12px; }
+
+/* home page: pipeline diagram (inline SVG) */
+.dia { margin: 1.5rem 0 0.5rem; }
+.dia svg { width: 100%; height: auto; display: block; font-family: var(--sl-font-system); }
+.dia-tall { display: none !important; max-width: 24rem; margin: 0 auto; }
+.dia .box { fill: var(--sl-color-bg-nav); stroke: var(--sl-color-gray-4); stroke-width: 1.5; }
+.dia .box.opt { stroke-dasharray: 6 5; }
+.dia .box.ph { fill: var(--sl-color-accent-low); stroke: var(--sl-color-accent); stroke-width: 2; }
+.dia .stack { fill: var(--sl-color-accent-low); stroke: var(--sl-color-accent); stroke-width: 1.5; opacity: 0.55; }
+.dia .ln { fill: none; stroke: var(--sl-color-gray-3); stroke-width: 2; stroke-linejoin: round; }
+.dia .ah { fill: var(--sl-color-gray-3); }
+.dia text { fill: var(--sl-color-gray-2); font-size: 14px; }
+.dia text.t { fill: var(--sl-color-text-accent); font-family: var(--sl-font-mono); font-weight: 700; font-size: 17px; }
+.dia text.t.big { font-size: 20px; }
+.dia text.t.sm { font-size: 15px; }
+.dia text.n { fill: var(--sl-color-text-accent); font-size: 13px; }
+.dia .pill { fill: var(--sl-color-accent); }
+.dia text.pt { fill: #fff; font-weight: 600; font-size: 14px; text-anchor: middle; }
+@media (max-width: 50rem) {
+  .dia-wide { display: none !important; }
+  .dia-tall { display: block !important; }
+}
+.dia text.n.sm { font-size: 12px; }
