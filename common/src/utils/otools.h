@@ -68,6 +68,7 @@ extern "C" {
 #include <utils/random_number.h>
 #include <utils/basic_stats.h>
 #include <utils/basic_algos.h>
+#include <utils/library_versions.h>
 #include <utils/string_utils.h>
 #include <utils/timer.h>
 #include <utils/verbose.h>
