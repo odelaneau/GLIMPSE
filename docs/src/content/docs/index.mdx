@@ -40,7 +40,7 @@ GLIMPSE2 phases and imputes genotypes from low-coverage whole-genome sequencing,
   <div class="arrow">→</div>
   <div class="group">
     <div class="row">
-      <div class="step"><b>2 · split_reference</b><span>Prepare the reference panel for the chunk</span></div>
+      <div class="step optional"><b>2 · split_reference</b><span>Convert the reference panel to the binary format</span><i>optional · once per panel</i></div>
       <div class="arrow">→</div>
       <div class="step"><b>3 · phase</b><span>Impute and phase your samples</span></div>
     </div>
@@ -50,7 +50,7 @@ GLIMPSE2 phases and imputes genotypes from low-coverage whole-genome sequencing,
   <div class="step"><b>4 · ligate</b><span>Join the chunks into a chromosome</span></div>
 </div>
 
-Step 2 is done once per reference panel and reused for any sample. The [tutorial](tutorial/getting-started/) runs every step on a 1x NA12878 sample and the 1000 Genomes reference panel.
+Step 2 is optional: `phase` also reads a VCF/BCF reference panel directly, but the binary format gives major speedups on large panels. It is done once per panel and reused for any sample. The [tutorial](tutorial/getting-started/) runs every step on a 1x NA12878 sample and the 1000 Genomes reference panel.
 
 ## Tools
 

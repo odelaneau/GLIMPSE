@@ -15,22 +15,37 @@
 
 **[Website](https://odelaneau.github.io/GLIMPSE/)** · **[Install](https://odelaneau.github.io/GLIMPSE/install/)** · **[Tutorial](https://odelaneau.github.io/GLIMPSE/tutorial/getting-started/)** · **[Documentation](https://odelaneau.github.io/GLIMPSE/tools/)** · **[Changelog](https://odelaneau.github.io/GLIMPSE/changelog/)**
 
-### Tools
+### What is GLIMPSE2?
 
-GLIMPSE2 takes a reference panel and low-coverage BAM/CRAM files, or genotype likelihoods, and returns phased and imputed genotypes. It is made of these tools:
+GLIMPSE2 phases and imputes genotypes from low-coverage whole-genome sequencing, using a reference panel of phased haplotypes. It builds on the [GLIMPSE model](https://www.nature.com/articles/s41588-020-00756-0), with an emphasis on rare variants and on reference panels with hundreds of thousands of samples.
 
-- **GLIMPSE2_chunk** splits the genome into chunks for imputation and phasing
-- **GLIMPSE2_split_reference** creates the reference panel representation used by GLIMPSE2_phase. It allows major speedups for large reference panels.
-- **GLIMPSE2_phase** imputes and phases low-coverage sequencing data
-- **GLIMPSE2_ligate** concatenates phased chunks of data into chromosome-wide phased files
-- **GLIMPSE2_concordance** measures imputation accuracy against high-coverage genomes
-- **GLIMPSE2_inspect** summarises a binary reference panel
+- **Input:** low-coverage BAM/CRAM files or genotype likelihoods, and a phased reference panel.
+- **Output:** phased and imputed genotypes for every sample.
+- **Scale:** the chromosome is cut into chunks that are processed independently, so the one expensive step, `phase`, runs on all of them in parallel.
+
+### How it works
+
+`chunk` → `split_reference` (optional, once per panel) → `phase` (for each chunk, in parallel) → `ligate`
+
+1. **`GLIMPSE2_chunk`** cuts the chromosome into chunks.
+2. **`GLIMPSE2_split_reference`** converts the reference panel to the binary format. This step is optional: `phase` also reads a VCF/BCF panel directly, but the binary format gives major speedups on large panels. It is done once per panel and reused for any sample.
+3. **`GLIMPSE2_phase`** imputes and phases your samples, once per chunk.
+4. **`GLIMPSE2_ligate`** joins the imputed chunks into a chromosome.
+
+Two more tools: **`GLIMPSE2_concordance`** measures imputation accuracy against high-coverage genomes, and **`GLIMPSE2_inspect`** summarises a binary reference panel.
 
 Tutorials, documentation and installation instructions are on the [website](https://odelaneau.github.io/GLIMPSE/). The release history is in the [changelog](https://odelaneau.github.io/GLIMPSE/changelog/).
 
-### GLIMPSE1
+### GLIMPSE1 or GLIMPSE2?
 
-GLIMPSE2 imputes from a reference panel of samples only. For the joint model, useful with many samples at higher coverage (>0.5x) and small reference panels, see the [GLIMPSE1 website](https://odelaneau.github.io/GLIMPSE/glimpse1/index.html) and the [GLIMPSE1 branch](https://github.com/odelaneau/GLIMPSE/tree/glimpse1).
+For most applications, use GLIMPSE2. It is faster, handles much larger reference panels, and is the version we maintain.
+
+[GLIMPSE1](https://odelaneau.github.io/GLIMPSE/glimpse1/index.html) has not been updated for a while, and we would not recommend it in general. It is only worth a look for its joint model, which helps with many samples at higher coverage (above 0.5x) and small reference panels, and which GLIMPSE2 does not have: GLIMPSE2 imputes from a reference panel only. The code is on the [GLIMPSE1 branch](https://github.com/odelaneau/GLIMPSE/tree/glimpse1).
+
+### Related software
+
+- [SHAPEIT5](https://odelaneau.github.io/shapeit5/) phases large sequencing cohorts, with a focus on rare variants. Use it to build the phased reference panel that GLIMPSE2 imputes from.
+- [IMPUTE5](https://jmarchini.org/software/) imputes SNP array data against large reference panels.
 
 ### Building from source
 
@@ -101,6 +116,10 @@ To run the tools you can use 'GLIMPSE_[tool name]_v1.1.1' (e.g. GLIMPSE_phase_v1
 If you use GLIMPSE2, please cite:
 
 > Rubinacci S, Hofmeister RJ, Sousa da Mota B, Delaneau O. **Imputation of low-coverage sequencing data from 150,119 UK Biobank genomes.** *Nature Genetics* 55, 1088-1090 (2023). [doi:10.1038/s41588-023-01438-3](https://doi.org/10.1038/s41588-023-01438-3)
+
+and the original method:
+
+> Rubinacci S, Ribeiro DM, Hofmeister RJ, Delaneau O. **Efficient phasing and imputation of low-coverage sequencing data using large reference panels.** *Nature Genetics* 53, 120-126 (2021). [doi:10.1038/s41588-020-00756-0](https://doi.org/10.1038/s41588-020-00756-0)
 
 ### Acknowledgements
 

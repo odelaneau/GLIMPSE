@@ -39,3 +39,5 @@
   .pipeline, .pipeline .group .row { flex-direction: column; }
   .pipeline .arrow { transform: rotate(90deg); }
 }
+.pipeline .step.optional { border-style: dashed; }
+.pipeline .step i { display: block; margin-top: 0.45rem; font-size: 0.75rem; font-style: normal; color: var(--sl-color-text-accent); }
