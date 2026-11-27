@@ -1,0 +1,30 @@
+cff-version: 1.2.0
+title: GLIMPSE
+message: "If you use GLIMPSE2 in your work, please cite the paper below."
+type: software
+license: MIT
+repository-code: "https://github.com/odelaneau/GLIMPSE"
+url: "https://odelaneau.github.io/GLIMPSE/"
+authors:
+  - family-names: Rubinacci
+    given-names: Simone
+  - family-names: Delaneau
+    given-names: Olivier
+preferred-citation:
+  type: article
+  title: "Imputation of low-coverage sequencing data from 150,119 UK Biobank genomes"
+  authors:
+    - family-names: Rubinacci
+      given-names: Simone
+    - family-names: Hofmeister
+      given-names: Robin J.
+    - family-names: Sousa da Mota
+      given-names: Bárbara
+    - family-names: Delaneau
+      given-names: Olivier
+  journal: "Nature Genetics"
+  volume: 55
+  start: 1088
+  end: 1090
+  year: 2023
+  doi: "10.1038/s41588-023-01438-3"
