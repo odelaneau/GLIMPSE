@@ -16,7 +16,7 @@
 
 **Current release: v2.0.0**. Release date: Dec 07, 2022
 
-For details of past changes please see [CHANGELOG](docs/CHANGELOG.md).
+For details of past changes please see [CHANGELOG](https://odelaneau.github.io/GLIMPSE/changelog/).
 
 ### License
 

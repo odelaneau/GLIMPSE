@@ -1,11 +1,11 @@
 #!/bin/bash
 
 #compile
-cd ../chunk; make clean; make -j desktop; chmod u+x bin/GLIMPSE2_chunk
-cd ../split_reference; make clean; make -j desktop; chmod u+x bin/GLIMPSE2_split_reference
-cd ../phase; make clean; make -j  desktop; chmod u+x bin/GLIMPSE2_phase
-cd ../ligate; make clean; make -j desktop; chmod u+x bin/GLIMPSE2_ligate
-cd ../concordance; make clean; make -j desktop; chmod u+x bin/GLIMPSE2_concordance
+cd ../chunk; make clean; make -j system; chmod u+x bin/GLIMPSE2_chunk
+cd ../split_reference; make clean; make -j system; chmod u+x bin/GLIMPSE2_split_reference
+cd ../phase; make clean; make -j system; chmod u+x bin/GLIMPSE2_phase
+cd ../ligate; make clean; make -j system; chmod u+x bin/GLIMPSE2_ligate
+cd ../concordance; make clean; make -j system; chmod u+x bin/GLIMPSE2_concordance
 
 #symlinks
 cd ../tutorial
