@@ -7,6 +7,14 @@ The `Dockerfile` at the root of the repository builds an image with all the GLIM
 
 The amd64 image needs a CPU with AVX2 and FMA; on Linux, `grep -ow -e avx2 -e fma /proc/cpuinfo | sort -u` should print both.
 
+## Pull the image
+
+Images for each release are on [Docker Hub](https://hub.docker.com/r/simrub/glimpse/), and the tags match the release versions:
+
+```bash
+docker pull simrub/glimpse:2.1.0
+```
+
 ## Build the image
 
 `docker-build.sh` at the root of the repository builds the image from a commit or tag. It checks the ref out in a temporary worktree (so uncommitted changes are not built), sets the commit and date the tools report, and names the image after the version in `versions/versions.h`:

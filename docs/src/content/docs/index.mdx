@@ -36,18 +36,14 @@ GLIMPSE2 phases and imputes genotypes from low-coverage whole-genome sequencing,
 ## How it works
 
 <div class="pipeline">
-  <div class="step"><b>1 · chunk</b><span>Cut the chromosome into chunks</span></div>
-  <div class="arrow">→</div>
-  <div class="group">
-    <div class="row">
-      <div class="step optional"><b>2 · split_reference</b><span>Convert the reference panel to the binary format</span><i>optional · once per panel</i></div>
-      <div class="arrow">→</div>
-      <div class="step"><b>3 · phase</b><span>Impute and phase your samples</span></div>
-    </div>
-    <div class="label">for each chunk, in parallel</div>
-  </div>
-  <div class="arrow">→</div>
-  <div class="step"><b>4 · ligate</b><span>Join the chunks into a chromosome</span></div>
+  <div class="step s-chunk"><b>1 · chunk</b><span>Cut the chromosome into chunks</span></div>
+  <div class="arrow down a-down"></div>
+  <div class="step optional s-split"><b>2 · split_reference</b><span>Convert the reference panel to the binary format</span><i>optional · once per panel</i></div>
+  <div class="arrow right a-r1"></div>
+  <div class="arrow right a-r2"></div>
+  <div class="step phase s-phase"><b>3 · phase</b><span>Impute and phase your samples</span><i>run for every new target, once per chunk, in parallel</i></div>
+  <div class="arrow right a-r3"></div>
+  <div class="step s-ligate"><b>4 · ligate</b><span>Join the chunks into a chromosome</span></div>
 </div>
 
 Step 2 is optional: `phase` also reads a VCF/BCF reference panel directly, but the binary format gives major speedups on large panels. It is done once per panel and reused for any sample. The [tutorial](tutorial/getting-started/) runs every step on a 1x NA12878 sample and the 1000 Genomes reference panel.

@@ -77,39 +77,23 @@ On aarch64, also install `clang`: the build uses it by default there because it 
 
 For detailed instructions including building dependencies from source, see the [step-by-step guide on the website](https://odelaneau.github.io/GLIMPSE/install/build/).
 
-#### Docker images
+#### Docker image
 
-##### Building the image
-The `Dockerfile` builds an image with all the GLIMPSE2 tools plus bcftools, bgzip and tabix, for linux/amd64 and linux/arm64. `docker-build.sh` builds it from a commit or tag:
+Images for each release are on [Docker Hub](https://hub.docker.com/r/simrub/glimpse/), for linux/amd64 and linux/arm64. They contain all the GLIMPSE2 tools plus bcftools, bgzip and tabix, and the tags match the release versions:
+
+```bash
+docker pull simrub/glimpse:2.1.0
+docker run --rm -v "$PWD":/data -w /data simrub/glimpse:2.1.0 GLIMPSE2_phase --help
 ```
+
+To build the image yourself from a commit or tag, use `docker-build.sh`:
+
+```bash
 ./docker-build.sh v2.1.0                             # glimpse:2.1.0 for this machine
 ./docker-build.sh v2.1.0 --push ghcr.io/me/glimpse   # both architectures, pushed to a registry
 ```
+
 See the [Docker page on the website](https://odelaneau.github.io/GLIMPSE/install/docker/) for building by hand and the build options.
-
-##### Dockerhub
-You can find GLIMPSE on docker hub at this link:
-https://hub.docker.com/r/simrub/glimpse/
-
-##### Local download from Github releases
-
-###### GLIMPSE v2.0.0:
-```
-wget https://github.com/odelaneau/GLIMPSE/releases/download/v2.0.0/glimpse_v2.0.0-27-g0919952_20221207.tar.gz
-docker load < glimpse_v2.0.0-27-g0919952_20221207.tar.gz
-# test docker run using -it
-docker run -it glimpse:v2.0.0-27-g0919952_20221207
-```
-To run the tools you can use 'GLIMPSE2_[tool name]' (e.g. GLIMPSE2_phase) inside the docker run (-it) session 
-
-###### GLIMPSE v1.1.1:
-```
-wget https://github.com/odelaneau/GLIMPSE/releases/download/v1.1.1/glimpse_v1.1.1-c27e90d_20210521.tar.gz
-docker load < glimpse_v1.1.1-c27e90d_20210521.tar.gz
-# test docker run using -it
-docker run -it glimpse:v1.1.1-c27e90d_20210521
-```
-To run the tools you can use 'GLIMPSE_[tool name]_v1.1.1' (e.g. GLIMPSE_phase_v1.1.1) inside the docker run (-it) session 
 
 ### Citation
 
