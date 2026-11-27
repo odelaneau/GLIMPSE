@@ -2,44 +2,35 @@
   <a href="https://odelaneau.github.io/GLIMPSE/">
     <img height="150" src="docs/assets/images/branding/glimpse_logo_400x171.png">
   </a>
-  <h1 align="center">GLIMPSE</h1>
+  <h1 align="center">GLIMPSE2</h1>
+  <p align="center">Phasing and imputation of low-coverage whole-genome sequencing data, designed for reference panels with hundreds of thousands of samples.</p>
 </p>
 
-[![GitHub license](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/odelaneau/GLIMPSE/blob/master/LICENSE)
+[![GitHub Releases](https://img.shields.io/github/v/release/odelaneau/GLIMPSE?label=release)](https://github.com/odelaneau/GLIMPSE/releases)
+[![Release date](https://img.shields.io/github/release-date/odelaneau/GLIMPSE?label=released)](https://github.com/odelaneau/GLIMPSE/releases)
 [![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat-square)](http://bioconda.github.io/recipes/glimpse-bio/README.html)
 [![Anaconda-Server Badge](https://anaconda.org/bioconda/glimpse-bio/badges/downloads.svg)](https://anaconda.org/bioconda/glimpse-bio)
 [![Docker hub](https://img.shields.io/docker/pulls/simrub/glimpse)](https://hub.docker.com/r/simrub/glimpse/)
-[![GitHub Releases](https://img.shields.io/github/v/release/odelaneau/GLIMPSE)](https://github.com/odelaneau/GLIMPSE/releases)
+[![GitHub license](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/odelaneau/GLIMPSE/blob/master/LICENSE)
 
+**[Website](https://odelaneau.github.io/GLIMPSE/)** · **[Install](https://odelaneau.github.io/GLIMPSE/install/)** · **[Tutorial](https://odelaneau.github.io/GLIMPSE/tutorial/getting-started/)** · **[Documentation](https://odelaneau.github.io/GLIMPSE/tools/)** · **[Changelog](https://odelaneau.github.io/GLIMPSE/changelog/)**
 
-### Versions
+### Tools
 
-**Current release: v2.0.0**. Release date: Dec 07, 2022
-
-For details of past changes please see [CHANGELOG](https://odelaneau.github.io/GLIMPSE/changelog/).
-
-### License
-
-GLIMPSE is available under a MIT license. For more information please see the [LICENSE](LICENSE).
- 
-### Features
-GLIMPSE2 is a set of tools for phasing and imputation for low-coverage sequencing datasets:
+GLIMPSE2 takes a reference panel and low-coverage BAM/CRAM files, or genotype likelihoods, and returns phased and imputed genotypes. It is made of these tools:
 
 - **GLIMPSE2_chunk** splits the genome into chunks for imputation and phasing
 - **GLIMPSE2_split_reference** creates the reference panel representation used by GLIMPSE2_phase. It allows major speedups for large reference panels.
-- **GLIMPSE2_phase** program to impute and phase low coverage sequencing data
+- **GLIMPSE2_phase** imputes and phases low-coverage sequencing data
 - **GLIMPSE2_ligate** concatenates phased chunks of data into chromosome-wide phased files
+- **GLIMPSE2_concordance** measures imputation accuracy against high-coverage genomes
+- **GLIMPSE2_inspect** summarises a binary reference panel
 
-### Documentation and tutorials
-
-Visit our website for tutorials, documentation and installation instructions:
-
-https://odelaneau.github.io/GLIMPSE/
+Tutorials, documentation and installation instructions are on the [website](https://odelaneau.github.io/GLIMPSE/). The release history is in the [changelog](https://odelaneau.github.io/GLIMPSE/changelog/).
 
 ### GLIMPSE1
 
-At the moment, GLIMPSE2 performs imputation only from a reference panel of samples. To use the joint-model, particularly useful for many samples at higher coverages (>0.5x) and small reference panels, please visit the GLIMPSE1 website and checkout the [GLIMPSE1 branch](https://github.com/odelaneau/GLIMPSE/tree/glimpse1).
-
+GLIMPSE2 imputes from a reference panel of samples only. For the joint model, useful with many samples at higher coverage (>0.5x) and small reference panels, see the [GLIMPSE1 website](https://odelaneau.github.io/GLIMPSE/glimpse1/index.html) and the [GLIMPSE1 branch](https://github.com/odelaneau/GLIMPSE/tree/glimpse1).
 
 ### Building from source
 
@@ -69,7 +60,7 @@ make system
 On aarch64, also install `clang`: the build uses it by default there because it makes GLIMPSE2_phase much faster.
 </details>
 
-For detailed instructions including building dependencies from source, see the [step-by-step guide on the website](https://odelaneau.github.io/GLIMPSE/docs/installation).
+For detailed instructions including building dependencies from source, see the [step-by-step guide on the website](https://odelaneau.github.io/GLIMPSE/install/build/).
 
 #### Docker images
 
@@ -79,7 +70,7 @@ The `Dockerfile` builds an image with all the GLIMPSE2 tools plus bcftools, bgzi
 ./docker-build.sh v2.1.0                             # glimpse:2.1.0 for this machine
 ./docker-build.sh v2.1.0 --push ghcr.io/me/glimpse   # both architectures, pushed to a registry
 ```
-See the [Docker page on the website](https://odelaneau.github.io/GLIMPSE/docs/installation/docker) for building by hand and the build options.
+See the [Docker page on the website](https://odelaneau.github.io/GLIMPSE/install/docker/) for building by hand and the build options.
 
 ##### Dockerhub
 You can find GLIMPSE on docker hub at this link:
@@ -104,3 +95,19 @@ docker load < glimpse_v1.1.1-c27e90d_20210521.tar.gz
 docker run -it glimpse:v1.1.1-c27e90d_20210521
 ```
 To run the tools you can use 'GLIMPSE_[tool name]_v1.1.1' (e.g. GLIMPSE_phase_v1.1.1) inside the docker run (-it) session 
+
+### Citation
+
+If you use GLIMPSE2, please cite:
+
+> Rubinacci S, Hofmeister RJ, Sousa da Mota B, Delaneau O. **Imputation of low-coverage sequencing data from 150,119 UK Biobank genomes.** *Nature Genetics* 55, 1088-1090 (2023). [doi:10.1038/s41588-023-01438-3](https://doi.org/10.1038/s41588-023-01438-3)
+
+### Acknowledgements
+
+GLIMPSE is developed and maintained by Simone Rubinacci (University of Helsinki) and Olivier Delaneau (Regeneron).
+
+We thank Tim Fennell and Fulcrum Genomics for the performance, memory, build and Docker work in 2.1, and Chris Kachulis and Michael Gatzen (Broad Institute) for cloud-computing support (checkpointing and retries) and bug fixes.
+
+### License
+
+GLIMPSE is available under the MIT license. For more information please see the [LICENSE](LICENSE).
