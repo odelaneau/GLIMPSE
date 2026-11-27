@@ -35,15 +35,70 @@ GLIMPSE2 phases and imputes genotypes from low-coverage whole-genome sequencing,
 
 ## How it works
 
-<div class="pipeline">
-  <div class="step s-chunk"><b>1 · chunk</b><span>Cut the chromosome into chunks</span></div>
-  <div class="arrow down a-down"></div>
-  <div class="step optional s-split"><b>2 · split_reference</b><span>Convert the reference panel to the binary format</span><i>optional · once per panel</i></div>
-  <div class="arrow right a-r1"></div>
-  <div class="arrow right a-r2"></div>
-  <div class="step phase s-phase"><b>3 · phase</b><span>Impute and phase your samples</span><i>run for every new target, once per chunk, in parallel</i></div>
-  <div class="arrow right a-r3"></div>
-  <div class="step s-ligate"><b>4 · ligate</b><span>Join the chunks into a chromosome</span></div>
+<div class="dia">
+<svg class="dia-wide" viewBox="0 0 900 310" role="img" aria-label="chunk and the optional split_reference both feed phase, which is run for every new target, once per chunk, in parallel; phase feeds ligate">
+  <rect class="box" x="10" y="10" width="240" height="90" rx="12"/>
+  <text class="t" x="30" y="42">1 · chunk</text>
+  <text class="d" x="30" y="66">Cut the chromosome</text>
+  <text class="d" x="30" y="84">into chunks</text>
+
+  <rect class="box opt" x="10" y="190" width="240" height="112" rx="12"/>
+  <text class="t" x="30" y="220">2 · split_reference</text>
+  <text class="d" x="30" y="244">Convert the panel to the</text>
+  <text class="d" x="30" y="262">binary format</text>
+  <text class="n" x="30" y="288">optional · once per panel</text>
+
+  <path class="ln" d="M130 100 V176"/><polygon class="ah" points="122,174 138,174 130,188"/>
+  <path class="ln" d="M250 55 H300 V147"/>
+  <path class="ln" d="M250 240 H300 V147"/>
+  <path class="ln" d="M300 147 H336"/><polygon class="ah" points="334,139 334,155 348,147"/>
+
+  <rect class="stack" x="370" y="57" width="230" height="30" rx="12"/>
+  <rect class="stack" x="360" y="67" width="250" height="30" rx="12"/>
+  <rect class="box ph" x="350" y="77" width="270" height="140" rx="12"/>
+  <text class="t big" x="372" y="112">3 · phase</text>
+  <text class="d" x="372" y="138">Impute and phase your samples</text>
+  <rect class="pill" x="372" y="154" width="226" height="26" rx="13"/>
+  <text class="pt" x="485" y="172">run for every new target</text>
+  <text class="n" x="372" y="204">once per chunk, in parallel</text>
+
+  <path class="ln" d="M620 147 H696"/><polygon class="ah" points="694,139 694,155 708,147"/>
+
+  <rect class="box" x="710" y="102" width="180" height="90" rx="12"/>
+  <text class="t" x="730" y="134">4 · ligate</text>
+  <text class="d" x="730" y="158">Join the chunks into</text>
+  <text class="d" x="730" y="176">a chromosome</text>
+</svg>
+<svg class="dia-tall" viewBox="0 0 360 474" role="img" aria-label="chunk and the optional split_reference both feed phase, which is run for every new target, once per chunk, in parallel; phase feeds ligate">
+  <rect class="box" x="10" y="10" width="140" height="90" rx="12"/>
+  <text class="t" x="24" y="42">1 · chunk</text>
+  <text class="d" x="24" y="68">Cut into chunks</text>
+
+  <rect class="box opt" x="180" y="10" width="170" height="90" rx="12"/>
+  <text class="t sm" x="194" y="38">2 · split_reference</text>
+  <text class="d" x="194" y="60">Binary panel format</text>
+  <text class="n sm" x="194" y="84">optional · once per panel</text>
+
+  <path class="ln" d="M150 55 H166"/><polygon class="ah" points="164,48 164,62 178,55"/>
+  <path class="ln" d="M80 100 V140 H180"/>
+  <path class="ln" d="M265 100 V140 H180"/>
+  <path class="ln" d="M180 140 V176"/><polygon class="ah" points="172,174 188,174 180,188"/>
+
+  <rect class="stack" x="60" y="182" width="240" height="16" rx="10"/>
+  <rect class="stack" x="50" y="192" width="260" height="16" rx="10"/>
+  <rect class="box ph" x="40" y="200" width="280" height="130" rx="12"/>
+  <text class="t big" x="60" y="232">3 · phase</text>
+  <text class="d" x="60" y="256">Impute and phase your samples</text>
+  <rect class="pill" x="60" y="268" width="240" height="26" rx="13"/>
+  <text class="pt" x="180" y="286">run for every new target</text>
+  <text class="n" x="60" y="316">once per chunk, in parallel</text>
+
+  <path class="ln" d="M180 330 V366"/><polygon class="ah" points="172,364 188,364 180,378"/>
+  <rect class="box" x="70" y="382" width="220" height="82" rx="12"/>
+  <text class="t" x="90" y="410">4 · ligate</text>
+  <text class="d" x="90" y="434">Join the chunks into</text>
+  <text class="d" x="90" y="452">a chromosome</text>
+</svg>
 </div>
 
 Step 2 is optional: `phase` also reads a VCF/BCF reference panel directly, but the binary format gives major speedups on large panels. It is done once per panel and reused for any sample. The [tutorial](tutorial/getting-started/) runs every step on a 1x NA12878 sample and the 1000 Genomes reference panel.
