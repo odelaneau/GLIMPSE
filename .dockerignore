@@ -1,0 +1,15 @@
+# Source tree only.
+*
+!chunk
+!common
+!concordance
+!inspect
+!ligate
+!phase
+!split_reference
+!versions
+!third_party/simde/simde
+!common.mk
+!makefile
+**/obj
+**/bin
